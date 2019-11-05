@@ -1,12 +1,13 @@
 # µTask, the Lighweight Automation Engine
 
-[![Release](https://badge.fury.io/gh/ovh/utask.svg)](https://github.com/ovh/utask/releases)
-[![GoDoc](https://godoc.org/github.com/ovh/utask?status.svg)](https://godoc.org/github.com/ovh/utask) 
-[![Github All Releases](https://img.shields.io/github/downloads/ovh/utask/total.svg)](https://github.com/ovh/utask/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/utask)](https://goreportcard.com/report/github.com/ovh/utask)
-[![Coverage Status](https://coveralls.io/repos/github/ovh/utask/badge.svg?branch=master)](https://coveralls.io/github/ovh/utask?branch=master)
-[![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)]() 
- 
+[![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)]()
+![GitHub last commit](https://img.shields.io/github/last-commit/ovh/utask)
+[![GoDoc](https://godoc.org/github.com/ovh/utask?status.svg)](https://godoc.org/github.com/ovh/utask)
+![GitHub stars](https://img.shields.io/github/stars/ovh/utask?style=social)
+<!-- [![Coverage Status](https://coveralls.io/repos/github/ovh/utask/badge.svg?branch=master)](https://coveralls.io/github/ovh/utask?branch=master) -->
+<!-- [![Github All Releases](https://img.shields.io/github/downloads/ovh/utask/total.svg)](https://github.com/ovh/utask/releases) -->
+<!-- [![Release](https://badge.fury.io/gh/ovh/utask.svg)](https://github.com/ovh/utask/releases) -->
  
 µTask is an automation engine built for the cloud. It is:
 - simple to operate: only a postgres DB is required
