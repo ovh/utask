@@ -1,0 +1,24 @@
+name: jsonTemplating
+description: Ensure that configuration containing json strings are not broken 
+title_format: "[test] correct json templating"
+auto_runnable: true
+inputs:
+  - name: singleString
+    description: Single line string
+  - name: multilineString
+    description: Multiline string, containing \n characters
+steps:
+  stepOne:
+    description: first step
+    action:
+      type: echo
+      configuration: 
+        output: 
+          raw-multiline: "{{.input.multilineString}}"
+          raw-single:    "{{.input.singleString}}"
+          my-json-body: >
+            {
+              "single": "{{.input.singleString}}",
+              "singleMarshalled": {{.input.singleString | jsonmarshal}},
+              "multiline": {{.input.multilineString | jsonmarshal}}
+            }

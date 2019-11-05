@@ -1,0 +1,43 @@
+name: litingError
+description: Property stepOne.notfound does not exist in stepOne.json_schema.properties
+title_format: "[test] linting error test"
+steps:
+    stepOne:
+        json_schema:
+            "$id": "randomeone.schema.json"
+            "$schema": "http://json-schema.org/draft-07/schema#"
+            title: RandomOne
+            type: object
+            definitions:
+                foo:
+                    type: object
+                    properties:
+                        bar:
+                            anyOf:
+                                - "$ref": "#/definitions/foo"
+                                - "$ref": "#/definitions/foo/definitions/baz"
+                    definitions:
+                        baz:
+                            type: string
+                            minLength: 15
+                value:
+                    type: string
+                    maxLength: 10
+            properties:
+                value:
+                    "$ref": "#/definitions/value"
+                foo:
+                    "$ref": "#/definitions/foo"
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+    stepTwo:
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "{{.step.stepOne.output.notfound}}"

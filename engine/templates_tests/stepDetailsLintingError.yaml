@@ -1,0 +1,17 @@
+name: stepDetailsLintingError
+description: stepDetails.stepNotFound does not exist
+title_format: "[test] step details linting test"
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+        conditions:
+            - type: check
+              if:
+                  - value   : '{{.step.stepNotFound.metadata.value}}'
+                    operator: EQ
+                    expected: foo
+              then:
+                  this: PRUNE

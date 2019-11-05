@@ -1,0 +1,12 @@
+name: maxRetryTemplate
+description: Resolution must be in StateBlockedMaxRetries when reaching max retry threshold
+title_format: "[test] max retry task"
+retry_max: 1
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration:
+                error_type: server
+                error_message: server error

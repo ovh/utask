@@ -1,0 +1,12 @@
+name: orphanDependencies
+description: Orhpan dependencies is forbidden
+title_format: "[test] orphan dependencies test"
+steps:
+    stepOne:
+        dependencies: [stepTwo]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar

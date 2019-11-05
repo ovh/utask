@@ -1,0 +1,63 @@
+<tag-input [(ngModel)]='filter.tags' [modelAsStrings]="true" #input (onRemove)="filterSteps()" (onAdd)="filterSteps()">
+  <tag-input-dropdown [showDropdownIfEmpty]=" true" [autocompleteItems]="presentStates">
+  </tag-input-dropdown>
+  <ng-template let-item="item" let-index="index">
+    <span *ngIf="item.startsWith('State:')">
+      <span class="fas {{getIcon(item.split(':')[1])}}"></span>
+      {{ item.split(':')[1] }}
+    </span>
+    <span *ngIf="!item.startsWith('State:')">
+      {{ item }}
+    </span>
+    <delete-icon (click)="input.onRemoveRequested(item, index)"></delete-icon>
+  </ng-template>
+</tag-input>
+
+<div style="height:600px;overflow: auto;">
+  <div class="utask_step" *ngFor="let stepName of filteredStepNames" [ngStyle]="{
+          'border-left': '1px solid '+ states[steps[stepName].state].color,
+          'border-right': '1px solid '+ states[steps[stepName].state].color,
+          'border-bottom': '1px solid '+ states[steps[stepName].state].color
+        }">
+    <div class="utask_step-name nowrap" title="{{steps[stepName].state}} - {{stepName}}" [ngStyle]="{
+          'background': states[steps[stepName].state].color,
+          'color': states[steps[stepName].state].fontColor
+       }" (click)="displayDetails[stepName] = !displayDetails[stepName]" style="cursor:pointer;">
+       
+      <span *ngIf="!displayDetails[stepName]">
+        <i class="fas fa-caret-down"></i>
+      </span>
+      <span *ngIf="displayDetails[stepName]">
+        <i class="fas fa-caret-up"></i>
+      </span>
+
+      {{steps[stepName].state}} -
+      {{stepName}}
+    </div>
+    <div class="utask_step-details" *ngIf="displayDetails[stepName]">
+      <!-- <div> -->
+        <div *ngIf="steps[stepName].output">
+          Output:
+          <editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></editor>
+        </div>
+
+        <div *ngIf="steps[stepName].error">
+          Error:
+          <editor [value]="JSON.stringify(steps[stepName].error, null, 4)" [config]="editorConfigError"></editor>
+        </div>
+
+        <small>Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong></small>
+      <!-- </div> -->
+      <!-- <button type="button" class="cp_btnlink" style="width:100%;" title="Show/Hide details"
+        (click)="displayDetails[stepName] = !displayDetails[stepName]">
+        <span *ngIf="!displayDetails[stepName]">
+          <i class="fas fa-caret-down"></i>
+        </span>
+        <span *ngIf="displayDetails[stepName]">
+          <i class="fas fa-caret-up"></i>
+        </span>
+      </button> -->
+    </div>
+    <!-- <button type="button" class="btn btn-success" (click)="previewStepDetails(steps[stepName])">Preview</button> -->
+  </div>
+</div>

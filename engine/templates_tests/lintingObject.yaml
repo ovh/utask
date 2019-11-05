@@ -1,0 +1,36 @@
+name: lintingOk
+description: Property foo.bar.grault is valid
+title_format: "[test] linting ok test"
+steps:
+    stepOne:
+        json_schema:
+            "$schema": "http://json-schema.org/draft-07/schema#"
+            type: object
+            definitions:
+                foo:
+                    type: object
+                    properties:
+                        bar:
+                            "$ref": "#/definitions/baz"
+                baz:
+                    type: object
+                    properties:
+                        grault:
+                            type: string
+            properties:
+                foo:
+                    "$ref": "#/definitions/foo"
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+    stepTwo:
+        dependencies: [stepOne]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "{{.step.stepOne.output.foo.bar.grault}}"

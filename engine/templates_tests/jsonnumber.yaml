@@ -1,0 +1,33 @@
+name: jsonnumber
+description: assert that numbers are templated correctly into step configurations
+title_format: use json.Number
+
+variables:
+- name: largeNumber
+  value: 12345678912345
+
+steps:
+  simpleStep:
+    description: apply number to step configuration
+    action:
+      type: echo
+      configuration:
+        output:
+          path: /some/api/path/{{ eval `largeNumber` }}
+  listStep:
+    description: return a list of objects with large IDs
+    action:
+      type: echo
+      configuration:
+        output:
+          - id: 1619464078
+          - id: 1619464079
+          - id: 1619464077
+  loopStep:
+    description: apply numbers to configuration
+    dependencies: [listStep]
+    foreach: '{{.step.listStep.output | jsonmarshal}}'
+    action:
+      type: echo
+      configuration:
+        output: /id/{{.iterator.id}}

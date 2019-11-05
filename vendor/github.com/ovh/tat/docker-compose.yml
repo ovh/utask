@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+ tat-db:
+  image: mongo:3.2.15
+
+ tat-cache:
+   image: redis:alpine
+   command: redis-server --requirepass tat
+   ports:
+     - "6379:6379"
+
+ tat-api:
+   image: ovhcom/tat-api:latest
+   command: sh -c "./tat-linux-amd64"
+   environment:
+     TAT_DB_ADDR: tat-db:27017
+     TAT_URL_API: ${HOSTNAME}:8080
+     TAT_NO_SMTP: "true"
+     TAT_SMTP_TLS: "false"
+     TAT_SMTP_FROM: noreply.tat@foo.tat
+     TAT_SMTP_HOST: smtp.foo.tat
+     TAT_SMTP_PORT: 25
+     TAT_LOG_LEVEL: info
+     TAT_LISTEN_PORT: 8080
+     TAT_REDIS_HOSTS: tat-cache:6379
+     TAT_REDIS_PASSWORD: tat
+   ports:
+     - "8080:8080"
+   links:
+     - tat-db
+     - tat-cache
+
+ tat-webui:
+   image: ovhcom/tat-webui:latest
+   environment:
+     BACKEND_HOST: ${HOSTNAME}
+     BACKEND_PORT: 8080
+     BACKEND_SCHEME: http
+     BACKEND_AUTOLOGIN: "false"
+     FILESYSTEM_LISTEN_PORT: 9000
+     PROCESS_NB_FORKS: 2
+     BASE_URL: /
+     WRITE_CONFIG: "true"
+     HELP_SIGNUP: "Instance_Demo"
+     LINK_HOME_LABEL_1: Documention
+     LINK_HOME_URL_1: https://ovh.github.io/tat
+     LINK_HOME_LABEL_2: Help
+     LINK_HOME_URL_2: https://github.com/ovh/tat/issues
+     LINK_MENU_LABEL_1: Docs
+     LINK_MENU_URL_1: https://ovh.github.com/tat
+     LINK_MENU_LABEL_2: Tatcli
+     LINK_MENU_URL_2: https://github.com/ovh/tatcli/releases
+     LINK_MENU_LABEL_3: Github
+     LINK_MENU_URL_3: https://ovh.github.io/tat
+   ports:
+     - "9000:9000"

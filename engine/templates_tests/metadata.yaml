@@ -1,0 +1,20 @@
+name: metadata
+description: Dummy executor returns metadata and a condition evaluates it
+title_format: Return metadata
+steps:
+    notfound:
+        action:
+            type: echo
+            configuration: 
+                metadata: {HTTPStatus: 404} 
+                error_type: client
+                error_message: object not found
+        custom_states: [NOTFOUND]
+        conditions:
+            - type: check
+              if:
+                - value: '{{.step.this.metadata.HTTPStatus}}'
+                  operator: EQ
+                  expected: 404
+              then:
+                this: NOTFOUND

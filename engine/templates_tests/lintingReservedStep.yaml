@@ -1,0 +1,8 @@
+name: lintingReservedStep
+description: template declares step called 'this', not valid
+title_format: "Don't use reserved step name"
+steps:
+    this:
+        action:
+            type: echo
+            configuration: {}

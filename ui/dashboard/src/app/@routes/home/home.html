@@ -1,0 +1,119 @@
+<div>
+  <loader *ngIf="loaders.tasks"></loader>
+  <error-message [data]="errors.tasks" *ngIf="errors.tasks && !loaders.tasks"></error-message>
+
+  <div class="main" *ngIf="!loaders.tasks && !errors.tasks">
+    <header>
+      <h1>
+        Tasks -
+        <div class="form-inline" style="display:inline-block;">
+          <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type"
+            (change)="pagination.state = pagination.type === 'resolvable' ? '' : pagination.state;search();">
+            <option value="all" *ngIf="meta.user_is_admin">All</option>
+            <option value="own">Own</option>
+            <option value="resolvable">Resolvable</option>
+          </select>
+          &nbsp;
+          <select class="form-control" id="filter_state" name="filter_state" [(ngModel)]="pagination.state"
+            (change)="search()" [disabled]="pagination.type === 'resolvable'">
+            <option value="">-- All state --</option>
+            <option value="BLOCKED">BLOCKED</option>
+            <option value="CANCELLED">CANCELLED</option>
+            <option value="DONE">DONE</option>
+            <option value="RUNNING">RUNNING</option>
+            <option value="TODO">TODO</option>
+            <option value="WONTFIX">WONTFIX</option>
+          </select>
+        </div>
+      </h1>
+    </header>
+    <section>
+      <div class="utask_bloc">
+        <header>
+          <div class="utask_bloc_header_title">Tasks</div>
+        </header>
+        <section>
+          <div class="table-striped table-condensed" infiniteScroll (scrolled)="next()">
+            <table class="table home_tasks">
+              <thead>
+                <tr>
+                  <th scope="col">Title</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="d-none d-md-table-cell">Requester</th>
+                  <th scope="col" class="d-none d-lg-table-cell">Resolver</th>
+                  <th scope="col" class="d-none d-xl-table-cell">Last activity</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of tasks">
+                  <th scope="row">
+                    <p class="task_title"><a [routerLink]="'/task/'+item.id" title="{{item.title}}" class="nowrap"
+                        style="display:block">{{item.title}}</a></p>
+                    <p class="task_id nowrap"><small>{{item.id}}</small></p>
+                  </th>
+                  <td class="utask_state_steps nowrap">
+                    <div class="utask_state_steps-state utask_state_steps-state__{{item.state}}">
+                      {{item.state}}
+                    </div>
+                    <div class="utask_state_steps-steps" *ngIf="item.state !== 'DONE'">
+                      <div class="utask_state_steps-steps-progressbar" [ngStyle]="{
+                          'width': percentages[item.id] + '%'
+                        }">
+                      </div>
+                      <div class="utask_state_steps-steps-text">{{percentages[item.id]}} %</div>
+                    </div>
+                  </td>
+                  <td class="nowrap d-none d-md-table-cell">
+                    <p class="task_title" [ngClass]="{'utask_username_me': item.requester_username === meta.username}">
+                      {{item.requester_username}}
+                    </p>
+                    <p class="task_id nowrap"><small>{{item.created | fromNow}}</small></p>
+                  </td>
+                  <td class="nowrap d-none d-lg-table-cell"><span
+                      [ngClass]="{'utask_username_me': item.resolver_username === meta.username}">{{item.resolver_username}}</span>
+                  </td>
+                  <td class="nowrap d-none d-xl-table-cell">{{item.last_activity | fromNow}}</td>
+                  <td class="task_actions">
+                    <div class="btn-group" ngbDropdown placement="bottom-right" role="group">
+                      <button class="btn btn-sm btn-secondary btn-outline-primary" ngbDropdownToggle>Actions</button>
+                      <div class="dropdown-menu" ngbDropdownMenu>
+                        <strong *ngIf="item.resolution" class="px-3 py-3" style="font-size:18px;">Resolution</strong>
+                        <button *ngIf="item.resolution" ngbDropdownItem
+                          (click)="runResolution(item.resolution, item.id); $event.stopPropagation();">
+                          Run
+                        </button>
+                        <button *ngIf="item.resolution" ngbDropdownItem
+                          (click)="pauseResolution(item.resolution, item.id); $event.stopPropagation();">
+                          Pause
+                        </button>
+                        <button *ngIf="item.resolution" ngbDropdownItem
+                          (click)="cancelResolution(item.resolution, item.id); $event.stopPropagation();">
+                          Cancel
+                        </button>
+                        <button *ngIf="item.resolution" ngbDropdownItem
+                          (click)="extendResolution(item.resolution, item.id); $event.stopPropagation();">
+                          Extend
+                        </button>
+
+                        <strong class="px-3 py-3" style="font-size:18px;">Task</strong>
+                        <button ngbDropdownItem (click)="deleteTask(item.id); $event.stopPropagation();">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="text-align:center;">
+            <button type="text" class="btn btn-outline-primary btn-secondary" (click)="next(!hasMore)"
+              *ngIf="tasks.length && hasMore" [disabled]="loaders.next">Show more</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+</div>

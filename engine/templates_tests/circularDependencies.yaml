@@ -1,0 +1,28 @@
+name: circularDependencies
+description: Circular dependencies must be forbidden
+title_format: "[test] circular dependencies test"
+steps:
+    stepOne:
+        dependencies: [stepThree]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+    stepTwo:
+        dependencies: [stepOne]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+    stepThree:
+        dependencies: [stepTwo]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar

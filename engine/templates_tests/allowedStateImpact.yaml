@@ -1,0 +1,31 @@
+name: allowedStateInmpact
+description: Impacting step's state is allowed for parent/child deps or current step
+title_format: "[test] allowed state impact test"
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+    stepTwo:
+        dependencies: [stepOne]
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+        conditions:
+            - type: check
+              if:
+                  - value   : '{{.step.stepOne.output.value}}'
+                    operator: EQ
+                    expected: foo
+              then:
+                  stepOne: TO_RETRY
+                  this: TO_RETRY
+                  stepThree: PRUNE
+    stepThree:
+        dependencies: [stepTwo]
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}

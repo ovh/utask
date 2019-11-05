@@ -1,0 +1,25 @@
+name            : get-fake-user
+title_format    : 'Get user #{{.input.id}}'
+description     : 'Get a fake user from fake API'
+
+auto_runnable: true
+allow_all_resolver_usernames: true
+allowed_resolver_tokens: []
+allowed_resolver_usernames: []
+
+inputs:
+    - name: id
+      description: 'User ID'
+      type: number
+
+result_format:
+    user: '{{.step.getUser.output.name}}'
+    profil: '{{ jsonmarshal .step.getUser.output }}'
+
+steps:
+    getUser:
+        action:
+            type: http
+            configuration:
+                method: GET
+                url: 'https://jsonplaceholder.typicode.com/users/{{.input.id}}'

@@ -1,0 +1,19 @@
+name: simpleTemplate
+description: A very simple template which must be valid and create a resolution
+title_format: "[test] a simple task"
+steps:
+	stepOne:
+		description: first step
+		action:
+			type: echo
+			configuration:
+				output:
+					foo: bar
+	stepTwo:
+		description: second step
+		dependencies: [stepOne]
+		action:
+			type: echo
+			configuration:
+				output:
+					foo: baz

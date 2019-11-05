@@ -1,0 +1,6 @@
+/.idea/
+.DS_Store
+api/bin
+api/api
+/api/tests_results.xml
+.env*

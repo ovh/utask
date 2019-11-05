@@ -1,0 +1,30 @@
+<div>
+  <nav class="navbar navbar-expand navbar-dark bg-dark" style="height:60px;border-bottom:4px solid black;">
+    <span class="navbar-brand">{{meta.application_name}}</span>
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/home">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/new">New task</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" routerLink="/templates">Templates</a>
+      </li>
+    </ul>
+    <div>
+      <ul class="navbar-nav mr-auto">
+        <li>
+          <a class="nav-link" title="{{meta.username}} is admin">
+            <span *ngIf="meta.user_is_admin" class="fas fa-user-shield"></span>
+            {{meta.username}}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <router-outlet></router-outlet>
+  </div>
+</div>

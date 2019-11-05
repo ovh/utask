@@ -1,0 +1,208 @@
+@import "styles/colors.sass"
+
+@import 'tippy.js/dist/tippy.css'
+
+@import "../node_modules/bootstrap/scss/bootstrap.scss"
+
+@import "styles/bloc.sass"
+@import "styles/step.sass"
+@import "styles/editor.sass"
+@import "styles/comment.sass"
+
+.fa-user-shield
+  color: gold
+
+.cp_btnlink
+  border: none
+  background: none
+  color: #999
+  text-transform: capitalize
+  text-decoration: unset
+  padding: 4px
+  &:hover
+    color: #333
+    text-decoration: underline
+    &:focus
+      outline: none
+
+.nowrap
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.lds-grid
+  position: relative
+  width: 64px
+  height: 64px
+  margin: 32px auto
+  div
+    position: absolute
+    width: 13px
+    height: 13px
+    border-radius: 50%
+    background: #00a2bf
+    animation: lds-grid 1.2s linear infinite
+    &:nth-child(1)
+      top: 6px
+      left: 6px
+      animation-delay: 0s
+    &:nth-child(2)
+      top: 6px
+      left: 26px
+      animation-delay: -0.4s
+    &:nth-child(3)
+      top: 6px
+      left: 45px
+      animation-delay: -0.8s
+    &:nth-child(4)
+      top: 26px
+      left: 6px
+      animation-delay: -0.4s
+    &:nth-child(5)
+      top: 26px
+      left: 26px
+      animation-delay: -0.8s
+    &:nth-child(6)
+      top: 26px
+      left: 45px
+      animation-delay: -1.2s
+    &:nth-child(7)
+      top: 45px
+      left: 6px
+      animation-delay: -0.8s
+    &:nth-child(8)
+      top: 45px
+      left: 26px
+      animation-delay: -1.2s
+    &:nth-child(9)
+      top: 45px
+      left: 45px
+      animation-delay: -1.6s
+
+@keyframes lds-grid
+  0%,
+  100%
+    opacity: 1
+  50%
+    opacity: 0.5
+
+.bloc_status
+  display: inline-block
+  padding: 2px 8px
+  text-align: center
+  color: #333
+  background: #F0F0F0
+  border-radius: 4px
+
+.task_state
+  &_WONTFIX,
+  &_CANCELLED
+    background: $color-warning
+    color: white
+
+  &_BLOCKED
+    background: $color-danger
+    color: white
+
+  &_DONE
+    background: $color-success
+    color: white
+
+  &_TODO, &_RUNNING
+    background: $color-primary
+    color: white
+
+.resolution_state
+  &_WONTFIX, &_CANCELLED, &_PAUSED
+    background: $color-warning !important
+    color: white !important
+  &_SERVER_ERROR, &_ERROR, &_BLOCKED_MAXRETRIES, &_BLOCKED, &_BLOCKED_BADREQUEST
+    background: $color-danger !important
+    color: white !important
+  &_DONE
+    background: $color-success !important
+    color: white !important
+  &_TODO, &_RUNNING
+    background: $color-primary !important
+    color: white !important
+
+.row
+  margin-left:0
+  margin-right:0
+g.node.node_selected polygon
+  stroke-width: 8
+  stroke-opacity: 0.5
+  stroke-linejoin: round
+  animation-duration: 0.3s
+  animation-name: slidein
+  animation-timing-function: ease-out
+g.node
+  cursor: pointer
+
+.edge_unselected path
+  opacity:0.05
+  stroke: black!important
+
+.label_unselected text
+  opacity:0
+
+.node_unselected
+  polygon
+    opacity:0.2
+  text
+    opacity:0
+
+@media (min-width: 576px)
+.modal-dialog
+  max-width: 90%
+
+.highlight
+  background: #f6f7f5
+  border: 2px solid #e1e4df
+  border-radius: 6px
+  padding: 1.25rem
+  box-shadow: none
+
+.input__required label:after, label.input__required
+  content: " *"
+  color: $color-danger
+
+.main
+  > header
+    margin: 16px 0px 24px 18px
+
+  .utask_username_me
+    font-weight: bold
+
+.home_tasks
+  > tbody > tr
+    > th, > td
+      max-width: 30vw
+      padding: 0rem 0.75rem
+      > .task_title
+        margin: 4px 0 -6px 0
+      > .task_id
+        margin: 0
+        font-weight: 100
+        color:#676767
+    > .task_actions
+      padding: 0.5rem
+
+
+
+// .table-responsive
+//   z-index: 999
+//   overflow-y: auto !important
+
+//   .dropdown-menu
+//     overflow-y: visible !important
+//     left:-80px !important
+//     button
+//       overflow-y: visible !important
+
+.container-fluid
+  padding-bottom:96px
+
+
+.node:focus
+  outline: unset

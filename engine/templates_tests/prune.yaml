@@ -1,0 +1,44 @@
+name: pruneSteps
+description: Description
+title_format: "[test] prune steps test"
+inputs:
+    - name: skipStepOne
+steps:
+    stepOne:
+        description: Will be in STATE_PRUNE if .input.skipStepOne == skip, or in StateDone otherwise
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+        conditions:
+            - type: skip
+              if:
+                  - value   : '{{.input.skipStepOne}}'
+                    operator: EQ
+                    expected: skip
+                    message : If input = skip, prune the step
+              then:
+                  this: PRUNE
+    stepTwo:
+        description: Will be in StateDone
+        action:
+            type: echo
+            configuration: {output: {state: foo}}
+        custom_states: [CUSTOM_STATE]
+    stepThree:
+        description: Will be in STATE_PRUNE since stepTwo will be in StateDone
+        dependencies: ["stepTwo:CUSTOM_STATE"]
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+    stepFour:
+        description: Will be in STATE_PRUNE since stepThree will be in STATE_PRUNE
+        dependencies: [stepThree]
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+    stepFive:
+        description: Will be in STATE_PRUNE if stepOne is in STATE_PRUNE, or in StateDone otherwise
+        dependencies: [stepOne]
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}

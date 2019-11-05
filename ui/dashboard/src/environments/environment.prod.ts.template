@@ -1,0 +1,4 @@
+export const environment = {
+  production: true,
+  apiBaseUrl: '<%= PREFIX_API_BASE_URL %>',
+};

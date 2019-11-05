@@ -1,0 +1,11 @@
+name: clientErrorTemplate
+description: Bad request must block the resolution
+title_format: "[test] client error task"
+steps:
+    stepOne:
+        description: first step
+        action:
+            type: echo
+            configuration:
+                error_type: client
+                error_message: client error

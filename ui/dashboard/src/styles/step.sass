@@ -1,0 +1,57 @@
+.utask_step
+  .utask_step-name
+    color: white
+    padding: 4px 8px
+  .utask_step-details
+    // background: white
+    color: #333
+    padding: 4px 8px
+  
+  margin-bottom: 8px
+
+.utask_state_steps
+  padding: 0 !important
+  .utask_state_steps-state
+    padding: 0.25rem 0.75rem 1.25rem 0.75rem
+    text-align: center
+    font-weight: 600
+
+    &__DONE
+      background: $color-success
+      color: white
+      padding: 0.75rem
+    &__RUNNING
+      background: $color-primary
+      color: white
+    &__CANCELLED, &__WONTFIX
+      background: $color-warning
+      color: white
+    &__BLOCKED
+      background: $color-danger
+      color: white
+    &__TODO
+      background: $color-primary
+      color: white
+
+
+  .utask_state_steps-steps
+    position: relative
+    margin-top: -15px
+    height: 15px
+    width: 100%
+    border-top: 1px solid white
+    background: #DDD
+    
+    .utask_state_steps-steps-progressbar
+      background: #AAA
+      height: 15px
+    
+    .utask_state_steps-steps-text
+      position: relative
+      width: 100%
+      margin-top: -15px
+      height: 15px
+      color: #333
+      font-size: 10px
+      text-align: center
+      font-weight: bold

@@ -1,0 +1,17 @@
+name: base-output
+description: assert that base_output transforms a step output
+title_format: "[test] a simple task"
+inputs:
+- name: id
+  description: Object ID
+steps:
+	stepOne:
+		description: first step
+		action:
+			type: echo
+			base_output:
+				id: "{{.input.id}}"
+			configuration:
+				output:
+					foo: bar
+

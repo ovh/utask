@@ -1,0 +1,21 @@
+name: base-configuration
+description: base_configuration testing template
+title_format: "[test] a simple task"
+steps:
+    stepOne:
+        description: first step
+        action:
+            type: echo
+            configuration:
+                error_message: error1
+            base_configuration: testingcfg
+    stepTwo:
+        description: second step
+        action:
+            type: echo
+            configuration:
+                error_message: error2
+            base_configuration: testingcfg
+base_configurations:
+    testingcfg:
+        output: testingoutput

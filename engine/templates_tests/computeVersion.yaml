@@ -1,0 +1,57 @@
+name: computeVersion
+description: Ensure that json schema version are normalized
+title_format: "[test] compute version test"
+steps:
+    stepOne:
+        description: Will not change $schema value
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            "$schema": "http://json-schema.org/draft-07/schema#"
+            type: object
+            properties: {foo: {type: string}}
+    stepTwo:
+        description: Will not change $schema value
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            "$schema": "http://json-schema.org/draft-06/schema#"
+            type: object
+            properties: {foo: {type: string}}
+    stepThree:
+        description: Will not change $schema value
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            "$schema": "http://json-schema.org/draft-04/schema#"
+            type: object
+            properties: {foo: {type: string}}
+    stepFour:
+        description: "Will set $schema to http://json-schema.org/draft-04/schema#"
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            version: 4
+            type: object
+            properties: {foo: {type: string}}
+    stepFive:
+        description: "Will set $schema to http://json-schema.org/draft-07/schema# (latest at time of writing)"
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            version: versionNotFound
+            type: object
+            properties: {foo: {type: string}}
+    stepSix:
+        description: "Will set $schema to http://json-schema.org/draft-07/schema# (latest at time of writing)"
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        json_schema:
+            type: object
+            properties: {foo: {type: string}}

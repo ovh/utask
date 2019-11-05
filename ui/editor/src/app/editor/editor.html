@@ -1,0 +1,34 @@
+<div>
+  <nav class="navbar navbar-expand navbar-dark bg-dark" style="height:60px;border-bottom:4px solid black;">
+    <span class="navbar-brand">UTask Template Editor</span>  
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" (click)="download()">Download</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" (click)="askImport()">Import</a>
+      </li>
+      <li class="nav-item" ngbDropdown>
+        <a class="nav-link" ngbDropdownToggle href="#" id="navbarDropdown">
+          Add steps
+        </a>
+        <div ngbDropdownMenu aria-labelledby="navbarDropdown">
+          <a ngbDropdownItem (click)="addStep(key)" *ngFor="let key of objectKeys(types)">
+            {{types[key].name}} step
+          </a>
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="row">
+    <div class="col-6">
+      <div id="ace-editor" fullHeight></div>
+    </div>
+    <div class="col-6">
+      <!-- <pre>{{editor.error | json}}</pre> -->
+      <steps-viewer [steps]="steps" (select)="selectStep($event)" *ngIf="steps.length && !editor.error"></steps-viewer>
+    </div>
+  </div>
+</div>

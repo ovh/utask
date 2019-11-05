@@ -1,0 +1,22 @@
+name: retryloop
+description: contains a step that iterates over a collection of inputs
+title_format: "[test] foreach input step"
+steps:
+    generateItems:
+        description: generate list for next step
+        foreach: '["a","b","c"]'
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: 'foo-{{.iterator}}'
+                    bar: 'bar-{{.iterator}}'
+        conditions:
+            - type: check
+              if:
+                - value: '{{.step.this.output.foo}}'
+                  operator: EQ
+                  expected: foo-c
+              then:
+                generateItems: TO_RETRY
+

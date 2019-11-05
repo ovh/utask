@@ -1,0 +1,17 @@
+name: variableEval
+description: Variable evaluation
+title_format: "[test] check variables"
+variables:
+- name: truc
+  expression: >
+    2 + 2; // javascript
+- name: bidule
+  value: 5
+steps:
+    renderVariables:
+        action:
+            type: echo
+            configuration: 
+                output: 
+                    truc:   "{{eval `truc`}}"
+                    bidule: "{{eval `bidule`}}"

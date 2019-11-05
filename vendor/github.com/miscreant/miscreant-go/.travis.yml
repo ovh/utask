@@ -1,0 +1,22 @@
+language: go
+go: 1.11
+
+matrix:
+  fast_finish: true
+  include:
+  - name: go vet
+    script: go vet ./...
+  - name: go test
+    script: go test -v -race ./...
+  - name: gofmt
+    script: diff -u <(echo -n) <(gofmt -d -s .)
+  - name: golint
+    install: go get -u github.com/golang/lint/golint
+    script: golint -set_exit_status ./...
+  - name: errcheck
+    install: go get -u github.com/kisielk/errcheck
+    script: errcheck ./...
+
+branches:
+  only:
+  - master

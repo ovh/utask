@@ -1,0 +1,42 @@
+name: anyDependency
+description: Dependency on a step with state 'ANY' should wait for final state on every step and prevent pruning of subsequent steps
+title_format: "[test] dependency on steps with any state"
+steps:
+    firstStepSuccess:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+    firstStepNotFound:
+        action:
+            type: echo
+            configuration: {output: {HTTPStatus: "404"}}
+        custom_states: [NOT_FOUND]
+        conditions:
+            - type: check
+              if:
+                  - value: '{{.step.this.output.HTTPStatus}}'
+                    operator: EQ
+                    expected: 404
+              then:
+                  this: NOT_FOUND
+    secondStepRunsIfAny:
+        dependencies: ['firstStepSuccess:ANY','firstStepNotFound:ANY']
+        custom_states: [VERY_BAD_ERROR]
+        action:
+            type: echo
+            configuration: {output: {i_ran_anyway: 'yes'}}
+    thirdStepRunsIfSecondOK:
+        dependencies: ['secondStepRunsIfAny']
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+    thirdStepRunsIfSecondKO: # this will be pruned, impossible dependency
+        dependencies: ['secondStepRunsIfAny:VERY_BAD_ERROR']
+        action:
+            type: echo
+            configuration: {output: {i_will: be_pruned}}
+    fourthStepWillNotBePruned:
+        dependencies: ['thirdStepRunsIfSecondOK:ANY', 'thirdStepRunsIfSecondKO:ANY']
+        action:
+            type: echo
+            configuration: {output: {result: we_made_it}}

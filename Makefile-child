@@ -1,0 +1,12 @@
+all:
+	GO111MODULE=on go get -d -v  ./...
+	GO111MODULE=on go build -o utask ./cmd/utask
+	for p in $$(ls ./plugins); do if [ -d ./plugins/$$p ]; then GO111MODULE=on go build --buildmode=plugin -o ./plugins/$$p.so ./plugins/$$p/*.go; fi; done
+	for p in $$(ls ./init);    do if [ -d ./init/$$p ];    then GO111MODULE=on go build --buildmode=plugin -o ./init/$$p.so    ./init/$$p/*.go;    fi; done
+
+clean:
+	rm -f utask
+	rm -f plugins/*.so
+	rm -f init/*.so
+
+package:

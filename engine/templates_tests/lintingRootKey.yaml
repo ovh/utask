@@ -1,0 +1,36 @@
+name: lintingRootKey
+description: linting root key template
+title_format: "[test] linting root key test"
+steps:
+    stepOne:
+        json_schema:
+            "$schema": "http://json-schema.org/draft-07/schema#"
+            type: object
+            definitions:
+                foo:
+                    type: object
+                    properties:
+                        grault:
+                            type: string
+            properties:
+                foo:
+                    "$ref": "#/definitions/foo"
+                bar:
+                    type: object
+                    properties:
+                        baz:
+                            type: string
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+    stepTwo:
+        dependencies: [stepOne]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "{{.step.stepOne.output.grault}}"

@@ -1,0 +1,11 @@
+name: nextRetryTemplate
+description: Resolution in state StateError must schedule a next retry timestamp
+title_format: "[test] next retry task"
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration:
+                error_type: server
+                error_message: server error

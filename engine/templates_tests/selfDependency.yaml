@@ -1,0 +1,12 @@
+name: selfDependency
+description: Self dependency must be forbidden
+title_format: "[test] self dependency test"
+steps:
+    stepOne:
+        dependencies: [stepOne]
+        description:
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar

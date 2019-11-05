@@ -1,0 +1,51 @@
+<div class="main">
+  <header>
+    <h1>Templates</h1>
+  </header>
+  <section>
+    <div class="table-responsive table-striped table-condensed">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <ng-template ngFor let-template [ngForOf]="templates">
+            <tr (click)="display[template.name] = !display[template.name];">
+              <td>
+                <span *ngIf="!display[template.name];"><span class="fas fa-caret-down"></span></span>
+                <span *ngIf="display[template.name];"><span class="fas fa-caret-up"></span></span>
+              </td>
+              <th scope="row" class="nowrap" style="max-width: 20vw;">
+                {{template.name}}
+              </th>
+              <td class="nowrap" style="max-width: 30vw;">
+                {{template.description}}
+              </td>
+              <td>
+                <span class="badge badge-success" *ngIf="template.auto_runnable">Auto runnable</span>
+                <span class="badge badge-warning" *ngIf="template.allow_all_resolver_usernames">Allow all resolver
+                  usernames</span>
+                <span class="badge badge-danger" *ngIf="template.blocked">Blocked</span>
+              </td>
+            </tr>
+            <tr *ngIf="display[template.name]">
+              <td>
+
+              </td>
+              <td colspan="3">
+                <template-details [templateName]="template.name"></template-details>
+              </td>
+            </tr>
+          </ng-template>
+
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

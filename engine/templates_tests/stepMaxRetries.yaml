@@ -1,0 +1,12 @@
+name: stepMaxRetries
+description: Resolution must be in StateBlockedBadRequest when a step reach it's max retry threshold
+title_format: "[test] tep max retries test"
+steps:
+    stepOne:
+        max_retries: 1
+        description:
+        action:
+            type: echo
+            configuration:
+                error_type: server
+                error_message: server error

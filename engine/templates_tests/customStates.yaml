@@ -1,0 +1,10 @@
+name: customStates
+description: Using builtin states as custom states is forbidden
+title_format: "[test] custom state test"
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+        custom_states: [SERVER_ERROR]

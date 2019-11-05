@@ -1,0 +1,22 @@
+name: forbiddenStateInmpact
+description: Impacting step's state is forbidden for non-parent/child deps
+title_format: "[test] forbidden state impact test"
+steps:
+    stepOne:
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}
+        conditions:
+            - type: check
+              if:
+                  - value   : '{{.step.stepOne.output.value}}'
+                    operator: EQ
+                    expected: foo
+              then:
+                  stepTwo: PRUNE
+    stepTwo:
+        description:
+        action:
+            type: echo
+            configuration: {output: {value: foo}}

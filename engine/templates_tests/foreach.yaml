@@ -1,0 +1,70 @@
+name: foreachLoop
+description: contains a step that iterates over a collection of inputs
+title_format: "[test] foreach input step"
+inputs:
+    - name: list
+      collection: true
+steps:
+    emptyLoop:
+        description: a foreach step with empty input
+        foreach: '[]'
+        action:
+            type: echo
+            configuration:
+                output: {foo: bar}
+    generateItems:
+        description: generate list for next step
+        foreach: '{{.input.list | jsonmarshal}}'
+        conditions:
+            - type: skip
+              if:
+                - value: '{{.iterator}}'
+                  operator: EQ
+                  expected: a
+              then:
+                this: PRUNE
+            - type: check
+              if:
+                - value: '{{.iterator}}'
+                  operator: EQ
+                  expected: b
+              then:
+                bStep: B
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: 'foo-{{.iterator}}'
+                    bar: 'bar-{{.iterator}}'
+    concatItems:
+        description:  transform a list of items
+        dependencies: [generateItems]
+        foreach: '{{.step.generateItems.children | jsonmarshal}}'
+        conditions:
+            - type: check
+              if:
+                - value: '{{.step.this.output.concat}}'
+                  operator: EQ
+                  expected: foo-c-bar-c
+              then:
+                this: PRUNE
+        action:
+            type: echo
+            configuration:
+                output: {concat: '{{.iterator.output.foo}}-{{.iterator.output.bar}}'}
+    bStep:
+        description: impacted by concatItems b step
+        dependencies: [generateItems]
+        custom_states: [B]
+        action:
+            type: echo
+            configuration:
+                output: {foo: 42}
+    finalStep:
+        description: pruned by concatItems("c")
+        dependencies: [concatItems]
+        action:
+            type: echo
+            configuration:
+                output: {foo: bar}
+             
