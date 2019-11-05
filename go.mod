@@ -68,3 +68,6 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
+
+// Until https://github.com/tjarratt/babble/pull/6 is merged
+replace github.com/tjarratt/babble => github.com/codeactual/babble v0.0.0-20190902213713-06cd230ffb31
