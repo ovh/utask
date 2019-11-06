@@ -95,6 +95,15 @@ var (
 	}
 )
 
+func TestUtils(t *testing.T) {
+	tester := iffy.NewTester(t, hdl)
+
+	tester.AddCall("testMetrics", http.MethodGet, "/metrics", "").
+		Checkers(iffy.ExpectStatus(200))
+
+	tester.Run()
+}
+
 func TestPasswordInput(t *testing.T) {
 	tester := iffy.NewTester(t, hdl)
 

@@ -1,0 +1,35 @@
+os:
+  - linux
+
+language: go
+go:
+  - 1.12
+  - 1.13
+go_import_path: github.com/ovh/utask
+
+cache:
+  directories:
+    - $GOPATH/src/github.com/ovh/utask/vendor
+
+addons:
+  postgresql: "9.5"
+
+env:
+  global:
+  - GO111MODULE=on
+  - DEV=true
+  - PG_USER=travis
+  - PG_PASSWORD=travispwd
+  - PG_HOST=localhost
+  - PG_PORT=5432
+  - PG_DATABASENAME=travisdb
+  - PSQL_BIN="psql travisdb"
+
+before_script:
+  - psql -c 'create database travisdb;' -U postgres
+
+script:
+  - make test-travis
+
+after_success:
+  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN

@@ -1,22 +1,21 @@
 # µTask, the Lighweight Automation Engine
 
+[![Build Status](https://travis-ci.org/ovh/utask.svg?branch=master)](https://travis-ci.org/ovh/utask)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/utask)](https://goreportcard.com/report/github.com/ovh/utask)
-[![Maintenance](https://img.shields.io/maintenance/yes/2019.svg)]()
-![GitHub last commit](https://img.shields.io/github/last-commit/ovh/utask)
+[![Coverage Status](https://coveralls.io/repos/github/ovh/utask/badge.svg?branch=master)](https://coveralls.io/github/ovh/utask?branch=master)
 [![GoDoc](https://godoc.org/github.com/ovh/utask?status.svg)](https://godoc.org/github.com/ovh/utask)
-![GitHub stars](https://img.shields.io/github/stars/ovh/utask?style=social)
-<!-- [![Coverage Status](https://coveralls.io/repos/github/ovh/utask/badge.svg?branch=master)](https://coveralls.io/github/ovh/utask?branch=master) -->
-<!-- [![Github All Releases](https://img.shields.io/github/downloads/ovh/utask/total.svg)](https://github.com/ovh/utask/releases) -->
-<!-- [![Release](https://badge.fury.io/gh/ovh/utask.svg)](https://github.com/ovh/utask/releases) -->
+[![GitHub stars](https://img.shields.io/github/stars/ovh/utask)](https://github.com/ovh/utask/stargazers)
+![GitHub last commit](https://img.shields.io/github/last-commit/ovh/utask)
+[![GitHub license](https://img.shields.io/github/license/ovh/utask)](https://github.com/ovh/utask/blob/master/LICENSE)
  
 µTask is an automation engine built for the cloud. It is:
-- simple to operate: only a postgres DB is required
-- secure: all data is encrypted, only visible to authorized users
-- extensible: you can develop custom actions in golang
+- **simple to operate**: only a postgres DB is required
+- **secure**: all data is encrypted, only visible to authorized users
+- **extensible**: you can develop custom actions in golang
 
 µTask allows you to model business processes in a **declarative yaml format**. Describe a set of inputs and a graph of actions and their inter-dependencies: µTask will asynchronously handle the execution of each action, working its way around transient errors and keeping a trace of all intermediary states until completion.
 
-## Contents
+## Table of contents
 
 - [Quick Start](#quickstart)
 - [Configuration](#configuration)
@@ -40,6 +39,17 @@ $ docker-compose up
 
 Go to `http://localhost:8081/ui/dashboard` on your browser, or explore the API schema on `http://localhost:8081/unsecured/spec.json`.
 
+Request a new task:
+![](./assets/img/utask_new_task.png)
+
+Get an overview of all tasks:
+![](./assets/img/utask_dashboard.png)
+
+Get a detailed view of a running task:
+![](./assets/img/utask_running.png)
+
+Browse available task templates:
+![](./assets/img/utask_templates.png)
 
 ## Configuration 🔨 <a name="configuration"></a>
 
@@ -66,7 +76,11 @@ The vanilla version of µTask doesn't handle authentication by itself, it is mea
 For development purposes, an optional `basic-auth` configstore item can be provided to define a mapping of usernames and passwords. This is not meant for use in production.
 
 Extending this basic authentication mechanism is possible by developing an "init" plugin, as described below.
- 
+
+## Examples
+
+Checkout the [µTask examples directory](./examples).
+
 ## Authoring Task Templates <a name="templates"></a>
 
 A process that can be executed by µTask is modelled as a `task template`: it is written in yaml format and describes a sequence of steps, their interdepencies, and additional conditions and constraints to control the flow of execution.
@@ -87,67 +101,6 @@ A user can be allowed to resolve a task in three ways:
 - `.step.[STEP_NAME].metadata.HTTPStatus`: field `HTTPStatus` from the metadata of a named step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
-
-### Example
-
-Here's a (contrived) example of a task template, showcasing many of its capabilities. A description of each property is provided below. 
-
-The `hello-world-now` template takes in a `language` input parameter, which admits two possible values, and adopts its default value if no input is provided. The first step of the task is an external API call to retrieve the current UTC time. A second step waits for completion of the first step, then prints out a message conditioned by the input parameter. A final result is built from the output of both steps and shown to the task's requester.
-
-```yaml
-name:             hello-world-now
-description:      Say hello to the world, now!
-long_description: This task prints out a greeting to the entire world, after retrieving the current UTC time from an external API
-doc_link:         https://en.wikipedia.org/wiki/%22Hello,_World!%22_program
-
-title_format:     Say hello in {{.input.language}}
-result_format:
-  echo_message: '{{.step.sayHello.output.message}}'
-  echo_when:    '{{.step.sayHello.output.when}}'
-
-allowed_resolver_usernames:   []
-allow_all_resolver_usernames: true
-auto_runnable: true
-blocked:       false
-hidden:        false
-
-variables:
-- name: english-message
-  value: Hello World!
-- name: spanish-message
-  expression: |-
-    // a short javascript snippet
-    var h = 'Hola';
-    var m = 'mundo';
-    h + ' ' + m + '!';
-
-inputs:
-- name: language
-  description: The language in which you wish to greet the world
-  legal_values: [english, spanish]
-  optional: true
-  default: english
-
-steps:
-  getTime:
-    description: Get UTC time
-    action:
-      type: http
-      configuration:
-        url: http://worldclockapi.com/api/json/utc/now
-        method: GET
-  sayHello:
-    description: Echo a greeting in your language of choice
-    dependencies: [getTime]
-    action:
-      type: echo
-      configuration:
-        output:
-          message: >-
-            {{if (eq .input.language `english`)}}{{eval `english-message`}}
-            {{else if (eq .input.language `spanish`)}}{{eval `spanish-message`}}{{end}}
-          when: '{{.step.getTime.output.currentDateTime}}'
-```
 
 ### Basic properties
 
@@ -205,37 +158,143 @@ The flow of this sequence can further be controlled with **conditions** on the s
 - to skip a step altogether
 - to analyze its outcome and override the engine's default behaviour
 
-#### Basic Step Properties 
+TODO step.conditions examples
+
+#### Basic Properties 
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
-- `action`: the step's workload, defined by a `type` and a `configuration` (see Builtin actions below)
 - `dependencies`: a list of step names on which this step waits before running
+- `retry_pattern`: (seconds|minutes|hours) define on what temporal order of magnitude the re-runs of this step should be spread 
 
-#### Advanced Step Properties 
+#### Action
 
-- `retry_pattern`: (seconds|minutes|hours) define on what temporal order of magnitude the re-runs of this step should be spread
+The `action` field of a step defines the actual workload to be performed. It consists of at least a `type` chosen among the registered action plugins, and a `configuration` fitting that plugin. See below for a detailed description of builtin plugins. For information on how to develop your own action plugins, refer to [this section](#plugins).
 
+When an `action`'s configuration is repeated across several steps, it can be factored by defining `base_configurations` at the root of the template. For example:
 
-### Builtin actions
+```yaml
+base_configurations:
+  postMessage:
+    method: POST
+    url: http://message.board/new
+``` 
 
-#### echo
+This base configuration can then be leveraged by any step wanting to post a message, with different bodies:
 
-#### http
+```yaml
+steps:
+  sayHello:
+    description: Say hello on the message board
+    action:
+      type: http
+      base_configuration: postMessage
+      configuration:
+        body: Hello
+  sayGoodbye:
+    description: Say goodbye on the message board
+    dependencies: [sayHello]
+    action:
+      type: http
+      base_configuration: postMessage
+      configuration:
+        body: Goodbye
+```
 
-#### ssh
+These two step definitions are the equivalent of: 
 
-#### subtask
+```yaml
+steps:
+  sayHello:
+    description: Say hello on the message board
+    action:
+      type: http
+      configuration:
+        body: Hello
+        method: POST
+        url: http://message.board/new
+  sayGoodbye:
+    description: Say goodbye on the message board
+    dependencies: [sayHello]
+    action:
+      type: http
+      configuration:
+        body: Goodbye
+        method: POST
+        url: http://message.board/new
+```
 
-#### notify
+The output of an action can be enriched by means of a `base_output`. For example, in a template with an input field named `id`, value `1234` and a call to a service which returns the following payload:
 
-#### apiovh
+```js
+{
+  "name": "username"
+}
+```
+
+The following action definition:
+
+```yaml
+steps:
+  getUser:
+    description: Prefix an ID received as input, return both
+    action:
+      type: http
+      base_output:
+        id: "{{.input.id}}"
+      configuration:
+        method: GET
+        url: http://directory/user/{{.input.id}}
+```
+
+Will render the following output, a combination of the action's raw output and the base_output:
+
+```js
+{
+  "id": "1234",
+  "name": "username"
+}
+```
+
+#### Builtin actions
+
+Plugin name|Description|Configuration  
+---|---|---
+**`echo`** | Print out a pre-determined result | `output`: an object with the complete output of the step
+           || `metadata`: an object containing the metadata returned by the step
+           || `error_message`: for testing purposes, an error message to simulate execution failure
+           || `error_type`: (client/server) for testing purposes: `client` error blocks execution, `server` lets the step be retried
+**`http`** | Make an http request | `url`: destination for the http call, including host, path and query params
+           || `method`: http method (GET/POST/PUT/DELETE)
+           || `body`: a string representing the payload to be sent with the request
+           || `headers`: a list of headers, represented as objects composed of `name` amd `value`
+**`subtask`** | Spawn a new task on µTask | `template`: the name of a task template, as accepted through µTask's  API
+              || `inputs`: a map of named values, as accepted on µTask's API
+**`notify`**  | Dispatch a notification over a registered channel | `message`: the main payload of the notification
+              || `fields`: a collection of extra fields to annotate the message
+              || `backends`: a collection of the backends over which the message will be dispatched (values accepted: named backends as configured in [`utask-cfg`](./config/README.md))
+**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/))| `path`: http route + query params
+              || `method`: http method (GET/POST/PUT/DELETE)
+              || `body`: a string representing the payload to be sent with the request
+**`ssh`**     | Connect remotely to a system and run commands on it| TODO
  
+#### Loops
+
+A step can be configured to take a json-formatted collection as input, in its `foreach` property. It will be executed once for each element in the collection, and its result will be a collection of each iteration. This scheme makes it possible to chain several steps with the `foreach` property.
+
+TODO provide an example
+
 ## Extending µTask with plugins <a name="plugins"></a>
+
+TODO
 
 ### Action Plugins
 
+TODO
+
 ### Init Plugins
+
+TODO
  
 ## Contributing <a name="contributing"></a>
  
@@ -267,7 +326,7 @@ to hear from you! Take a look at [CONTRIBUTING.md](https://github.com/ovh/utask/
  
 ## Related links
  
- * Contribute: [https://github.com/ovh/utask/blob/master/CONTRIBUTING.md](https://github.com/ovh/utask/blob/master/CONTRIBUTING.md)
+ * Contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
  * Report bugs: [https://github.com/ovh/utask/issues](https://github.com/ovh/utask/issues)
  * Get latest version: [https://github.com/ovh/utask/releases](https://github.com/ovh/utask/releases)
- * License: [https://github.com/ovh/utask/blob/master/LICENSE](https://github.com/ovh/utask/blob/master/LICENSE)
+ * License: [LICENSE](LICENSE)
