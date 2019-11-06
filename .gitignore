@@ -18,6 +18,7 @@
 vault.json
 /utask
 vaultfile.json
+.DS_Store
 
 # Related to UI
 ui/dashboard/dist

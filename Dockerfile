@@ -16,7 +16,7 @@ FROM golang:1.12.7
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
 RUN make re
-RUN mv Makefile-child Makefile
+RUN mv hack/Makefile-child Makefile
 
 RUN mkdir -p /app/plugins /app/templates /app/config /app/init /app/static/dashboard /app/static/editor
 WORKDIR /app

@@ -1,10 +1,10 @@
-FROM ovhcom/utask:1.0.0 AS builder
+FROM ovhcom/utask:v1.0.0 AS builder
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
 RUN make
 
-FROM ovhcom/utask:1.0.0 # TODO switch to lighter base image, discard source code
+FROM ovhcom/utask:v1.0.0
 
 COPY templates  /app/templates
 COPY --from=builder /go/src/github.com/ovh/utask/plugins /app/plugins

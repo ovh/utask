@@ -20,9 +20,9 @@ require_exec() {
     done
 }
 
-require PGUSER PGPASSWORD PGHOST PGPORT PSQL_BIN
+require PG_USER PG_PASSWORD PG_HOST PG_PORT PG_DATABASENAME PSQL_BIN
 
-export CFG_DATABASE="postgres://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/postgres?connect_timeout=5&sslmode=disable"
+export CFG_DATABASE="postgres://$PG_USER:$PG_PASSWORD@$PG_HOST:$PG_PORT/$PG_DATABASENAME?connect_timeout=5&sslmode=disable"
 
 mkdir -p $PWD/config
 export CONFIGURATION_FROM=filetree:$PWD/config,env:CFG
@@ -51,6 +51,9 @@ EOF
 
 echo "Running commands..."
 
-$*
+($*)
+result=$?
 
 echo "Done, cleaning up..."
+
+exit $result
