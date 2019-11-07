@@ -8,7 +8,7 @@ import "github.com/ovh/utask"
 
 var (
 	senders = make(map[string]NotificationSender)
-	// Actions represents configuration of each notify actions
+	// actions represents configuration of each notify actions
 	actions utask.NotifyActions
 )
 

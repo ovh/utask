@@ -1,16 +1,16 @@
-package tatnotify
+package tat
 
 import (
 	"fmt"
 
-	"github.com/ovh/tat"
+	tatlib "github.com/ovh/tat"
 
 	"github.com/ovh/utask/pkg/notify"
 )
 
 const (
-	// Tat represents tat as notify backend
-	Tat string = "tat"
+	// Type represents Tat as notify backend
+	Type string = "tat"
 )
 
 var labelColors = []string{
@@ -21,18 +21,18 @@ var labelColors = []string{
 	"#FF2D00",
 }
 
-// TatNotificationSender is a notify.NotificationSender implementation
+// NotificationSender is a notify.NotificationSender implementation
 // capable of sending formatted notifications over TaT (github.com/ovh/tat)
-type TatNotificationSender struct {
+type NotificationSender struct {
 	tatURL      string
 	tatUser     string
 	tatPassword string
 	tatTopic    string
 }
 
-// NewTatNotificationSender instantiates a TatNotificationSender
-func NewTatNotificationSender(url, user, pass, topic string) (*TatNotificationSender, error) {
-	tn := &TatNotificationSender{
+// NewTatNotificationSender instantiates a NotificationSender
+func NewTatNotificationSender(url, user, pass, topic string) (*NotificationSender, error) {
+	tn := &NotificationSender{
 		tatURL:      url,
 		tatUser:     user,
 		tatPassword: pass,
@@ -46,14 +46,14 @@ func NewTatNotificationSender(url, user, pass, topic string) (*TatNotificationSe
 }
 
 // Send dispatches a notify.Payload to TaT
-func (tn *TatNotificationSender) Send(p notify.Payload) {
+func (tn *NotificationSender) Send(p notify.Payload) {
 	client, err := tn.spawnTatClient()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	_, err = client.MessageAdd(
-		tat.MessageJSON{
+		tatlib.MessageJSON{
 			Text:   p.Message(),
 			Labels: taskLabels(p.Fields()),
 			Topic:  tn.tatTopic,
@@ -67,18 +67,18 @@ func (tn *TatNotificationSender) Send(p notify.Payload) {
 	// TODO update message afterwards, selecting on #id:xxx
 }
 
-func (tn *TatNotificationSender) spawnTatClient() (*tat.Client, error) {
-	return tat.NewClient(tat.Options{
+func (tn *NotificationSender) spawnTatClient() (*tatlib.Client, error) {
+	return tatlib.NewClient(tatlib.Options{
 		URL:      tn.tatURL,
 		Username: tn.tatUser,
 		Password: tn.tatPassword,
 	})
 }
 
-func taskLabels(fields []string) []tat.Label {
-	l := make([]tat.Label, 0)
+func taskLabels(fields []string) []tatlib.Label {
+	l := make([]tatlib.Label, 0)
 	for i, f := range fields {
-		l = append(l, tat.Label{
+		l = append(l, tatlib.Label{
 			Text:  f,
 			Color: labelColors[i%len(labelColors)],
 		})
