@@ -7,7 +7,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/ovh/utask)](https://github.com/ovh/utask/stargazers)
 ![GitHub last commit](https://img.shields.io/github/last-commit/ovh/utask)
 [![GitHub license](https://img.shields.io/github/license/ovh/utask)](https://github.com/ovh/utask/blob/master/LICENSE)
- 
+
+<img src="./assets/img/utask.png" width="50%" align="right">
+
 µTask is an automation engine built for the cloud. It is:
 - **simple to operate**: only a postgres DB is required
 - **secure**: all data is encrypted, only visible to authorized users
