@@ -19,6 +19,7 @@ vault.json
 /utask
 vaultfile.json
 .DS_Store
+install-utask.sh
 
 # Related to UI
 ui/dashboard/dist

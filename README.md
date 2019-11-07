@@ -18,6 +18,7 @@
 ## Table of contents
 
 - [Quick Start](#quickstart)
+- [Operating in production](#operating)
 - [Configuration](#configuration)
 - [Authoring Task Templates](#templates)
 - [Extending µTask with plugins](#plugins)
@@ -25,19 +26,20 @@
 
 ## Quick start <a name="quickstart"></a>
 
-Build standalone µTask binary:
+### Running with docker-compose
+
+Download our latest install script, setup your environment and launch your own local instance of µTask. 
 
 ```bash
-$ make all
+mkdir utask && cd utask
+wget https://github.com/ovh/utask/releases/latest/download/install-utask.sh
+sh install-utask.sh
+docker-compose up
 ```
 
-Boot µTask along with its postgres database:
+All the configuration for the application is found in the environment variables in docker-compose.yaml. You'll see that basic auth is setup for user `admin` with password `1234`. Try logging in with this user on the graphical dashboard: [http://localhost:8081/ui/dashboard](http://localhost:8081/ui/dashboard).
 
-```bash
-$ docker-compose up
-```
-
-Go to `http://localhost:8081/ui/dashboard` on your browser, or explore the API schema on `http://localhost:8081/unsecured/spec.json`.
+You can also explore the API schema: [http://localhost:8081/unsecured/spec.json](http://localhost:8081/unsecured/spec.json).
 
 Request a new task:
 ![](./assets/img/utask_new_task.png)
@@ -50,6 +52,39 @@ Get a detailed view of a running task:
 
 Browse available task templates:
 ![](./assets/img/utask_templates.png)
+
+### Running with your own postgres service
+
+Alternatively, you can clone this repository and build the µTask binary:
+
+```bash
+make all
+```
+
+## Operating in production <a name="operating"></a>
+
+The folder you created in the previous step is meant to become a git repo where you version your own task templates and plugins. Re-download and run the latest install script to bump your version of µTask.
+
+You'll deploy your version of µTask by building a docker image based on the official µTask image, which will include your extensions. See the Dockerfile generated during installation.
+
+### Architecture
+
+µTask is designed to run a task scheduler and perform the task workloads within a single runtime: work is not delegated to external agents. Multiple instances of the application will coordinate around a single postgres database: each will be able to determine independently which tasks are available. When an instance of µTask decides to execute a task, it will take hold of that task to avoid collisions, then release it at the end of an execution cycle. 
+
+A task will keep running as long as its steps are successfully executed. If a task's execution is interrupted before completion, it will become available to be re-collected by one of the active instances of µTask. That means that execution might start in one instance and resume on a different one.
+
+### Maintenance procedures
+
+#### Key rotation
+
+1. Generate a new key with [symmecrypt](https://github.com/ovh/symmecrypt), with the 'storage' label.
+2. Add it to your configuration items. The library will take all keys into account and use the latest possible key, falling back to older keys when finding older data.
+3. Set your API in maintenance mode (env var or command line arg, see config below): all write actions will be refused when you reboot the API.
+4. Reboot API.
+5. Make a POST request on the /key-rotate endpoint of the API.
+6. All data will be encrypted with the latest key, you can delete older keys.
+7. De-activate maintenance mode.
+8. Reboot API.
 
 ## Configuration 🔨 <a name="configuration"></a>
 
@@ -77,11 +112,9 @@ For development purposes, an optional `basic-auth` configstore item can be provi
 
 Extending this basic authentication mechanism is possible by developing an "init" plugin, as described below.
 
-## Examples
+## Authoring Task Templates <a name="templates"></a>
 
 Checkout the [µTask examples directory](./examples).
-
-## Authoring Task Templates <a name="templates"></a>
 
 A process that can be executed by µTask is modelled as a `task template`: it is written in yaml format and describes a sequence of steps, their interdepencies, and additional conditions and constraints to control the flow of execution.
 
@@ -158,9 +191,58 @@ The flow of this sequence can further be controlled with **conditions** on the s
 - to skip a step altogether
 - to analyze its outcome and override the engine's default behaviour
 
-TODO step.conditions examples
+Several conditions can be specified, the first one to evaluate as `true` is applied. A condition is composed of:
+- a `type` (skip or check) 
+- a list of `if` assertions (`value`, `operator`, `expected`) which all have to be true (AND on the collection), 
+- a `then` object to impact the state of steps (`this` refers to the current step)
+- an optional `message` to convey the intention of the condition, making it easier to inspect tasks
 
-#### Basic Properties 
+Here's an example of a `skip` condition. The value of an input is evaluated to determine the result: if the value of `runType` is `dry`, the `createUser` step will not be executed, its state will be set directly to DONE.
+```yaml
+inputs:
+- name: runType
+  description: Run this task with/without side effects
+  legal_values: [dry, wet]
+steps:
+  createUser:
+    description: Create new user
+    action:
+      ... etc...
+    conditions:
+    - type: skip
+      if:
+      - value: '{{.input.runType}}'
+        operator: EQ
+        expected: dry
+      then:
+        this: DONE
+      message: Dry run, skip user creation
+```
+
+Here's an example of a `check` condition. Here the return of an http call is inspected: a 404 status will put the step in a custom NOT_FOUND state. The default behavior would be to consider any 4xx status as a client error, which blocks execution of the task. The check condition allows you to consider this situation as normal, and proceed with other steps that take the NOT_FOUND state into account (creating the missing resource, for instance).
+
+```yaml
+steps:
+  getUser:
+    description: Get user
+    custom_states: [NOT_FOUND]
+    action: 
+      type: http
+      configuration:
+        url: http://example.org/user/{{.input.id}}
+        method: GET
+    conditions:
+    - type: check
+      if:
+      - value: '{{.step.getUser.metadata.HTTPStatus}}'
+        operator: EQ
+        expected: '404'
+      then:
+        this: NOT_FOUND
+      message: User {{.input.id}} not found
+```
+
+#### Basic Step Properties 
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
@@ -258,31 +340,68 @@ Will render the following output, a combination of the action's raw output and t
 
 #### Builtin actions
 
-Plugin name|Description|Configuration  
----|---|---
-**`echo`** | Print out a pre-determined result | `output`: an object with the complete output of the step
-           || `metadata`: an object containing the metadata returned by the step
-           || `error_message`: for testing purposes, an error message to simulate execution failure
-           || `error_type`: (client/server) for testing purposes: `client` error blocks execution, `server` lets the step be retried
-**`http`** | Make an http request | `url`: destination for the http call, including host, path and query params
-           || `method`: http method (GET/POST/PUT/DELETE)
-           || `body`: a string representing the payload to be sent with the request
-           || `headers`: a list of headers, represented as objects composed of `name` amd `value`
-**`subtask`** | Spawn a new task on µTask | `template`: the name of a task template, as accepted through µTask's  API
-              || `inputs`: a map of named values, as accepted on µTask's API
-**`notify`**  | Dispatch a notification over a registered channel | `message`: the main payload of the notification
-              || `fields`: a collection of extra fields to annotate the message
-              || `backends`: a collection of the backends over which the message will be dispatched (values accepted: named backends as configured in [`utask-cfg`](./config/README.md))
-**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/))| `path`: http route + query params
-              || `method`: http method (GET/POST/PUT/DELETE)
-              || `body`: a string representing the payload to be sent with the request
-**`ssh`**     | Connect remotely to a system and run commands on it| TODO
+Browse [builtin actions](./pkg/plugins/builtin)
+
+|Plugin name|Description|Configuration  
+|---|---|---
+|**`echo`** | Print out a pre-determined result | `output`: an object with the complete output of the step
+|           || `metadata`: an object containing the metadata returned by the step
+|           || `error_message`: for testing purposes, an error message to simulate execution failure
+|           || `error_type`: (client/server) for testing purposes: `client` error blocks execution, `server` lets the step be retried
+|**`http`** | Make an http request | `url`: destination for the http call, including host, path and query params
+|           || `method`: http method (GET/POST/PUT/DELETE)
+|           || `body`: a string representing the payload to be sent with the request
+|           || `headers`: a list of headers, represented as objects composed of `name` amd `value`
+|**`subtask`** | Spawn a new task on µTask | `template`: the name of a task template, as accepted through µTask's  API
+|              || `inputs`: a map of named values, as accepted on µTask's API
+|**`notify`**  | Dispatch a notification over a registered channel | `message`: the main payload of the notification
+|              || `fields`: a collection of extra fields to annotate the message
+|              || `backends`: a collection of the backends over which the message will be dispatched (values accepted: named backends as configured in [`utask-cfg`](./config/README.md))
+|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/))| `path`: http route + query params
+|              || `method`: http method (GET/POST/PUT/DELETE)
+|              || `body`: a string representing the payload to be sent with the request
+|**`ssh`**     | Connect to a remote system and run commands on it| `user`: username for the connection
+|              || `target`: address of the remote machine
+|              || `hops`: a list of intermediate addresses (bastions)
+|              || `script`: multiline text, commands to be run on the machine's shell
+|              || `result`: an object to extract the values of variables from the machine's shell (TODO example needed)
+|              || `ssh_key`: private ssh key, preferrably retrieved from {{.config}}
+|              || `ssh_key_passphrase`: passphrase for the key, if any
+|              || `allow_exit_non_zero`: allow a non-zero exit code to be considered as a successful step (bool default `false`)
+
  
 #### Loops
 
 A step can be configured to take a json-formatted collection as input, in its `foreach` property. It will be executed once for each element in the collection, and its result will be a collection of each iteration. This scheme makes it possible to chain several steps with the `foreach` property.
 
-TODO provide an example
+For the following step definition (note json-format of `foreach`):
+```yaml
+steps:
+  prefixStrings:
+    description: Process a collection of strings, adding a prefix
+    foreach: '[{"id":"a"},{"id":"b"},{"id":"c"}]'  
+    action:
+      type: echo
+      configuration:
+        output:
+          prefixed: pre-{{.iterator.id}}
+```
+
+The following output can be expected to be accessible at `{{.step.prefixStrings.children}}`
+```js
+[{
+  "prefixed": "pre-a"
+},{
+  "prefixed": "pre-b"
+},{
+  "prefixed": "pre-c"
+}]
+```
+
+This output can be then passed to another step in json format:
+```yaml
+foreach: '{{.step.prefixStrings.children | jsonmarshal}}'
+```
 
 ## Extending µTask with plugins <a name="plugins"></a>
 

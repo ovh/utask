@@ -4,7 +4,7 @@ set -e
 dst=$1
 if [ -z "$1" ]
 then
-    dst="install.sh"
+    dst="install-utask.sh"
 fi
 
 write_block() {

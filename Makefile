@@ -6,7 +6,7 @@ TEST_LOCATION	= ./...
 TEST_CMD		= go test -v -mod=vendor -cover ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
-VERSION			= 1.0.0
+VERSION			= v1.0.0
 LAST_COMMIT		= `git rev-parse HEAD`
 VERSION_PKG		= github.com/ovh/utask
 
@@ -28,9 +28,6 @@ all: ${BINARY}
 ${BINARY}: 
 	$(call build_binary,${BINARY})
 
-generate-install-script:
-	bash hack/generate-install-script.sh
-
 docker:
 	@echo docker build enabled!
 	$(eval DOCKER=1)
@@ -39,6 +36,9 @@ clean:
 	rm -f ${BINARY}
 
 re: clean all
+
+release:
+	bash hack/generate-install-script.sh
 
 test:
 	go get github.com/jstemmer/go-junit-report

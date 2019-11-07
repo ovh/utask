@@ -47,7 +47,7 @@ steps:
       configuration:
         output:
           message: >-
-            {{if (eq .input.language `english`)}}{{eval `english-message`}}
-            {{else if (eq .input.language `spanish`)}}{{eval `spanish-message`}}{{end}}
+            {{if (eq .input.language "english")}}{{eval "english-message"}}
+            {{else if (eq .input.language "spanish")}}{{eval "spanish-message"}}{{end}}
           when: '{{.step.getTime.output.currentDateTime}}'
 
