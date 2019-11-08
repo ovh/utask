@@ -14,7 +14,7 @@ var (
 )
 
 // Config describes transparently the outcome of execution
-// payload:  an arbitrary object, equivalent to a successful return
+// output:   an arbitrary object, equivalent to a successful return
 // metadata: the metadata returned by execution, if any
 // error_message: the outcome of a non-successful execution
 // error_type:    choose between client|server, to trigger different behavior (blocked VS retry)
