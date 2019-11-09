@@ -67,6 +67,8 @@ func (sn *NotificationSender) Send(p notify.Payload) {
 		return
 	}
 
+	defer resp.Body.Close()
+
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	if buf.String() != "ok" {
