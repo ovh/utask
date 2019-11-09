@@ -1,4 +1,4 @@
-# µTask, the Lighweight Automation Engine
+# µTask, the Lightweight Automation Engine
 
 [![Build Status](https://travis-ci.org/ovh/utask.svg?branch=master)](https://travis-ci.org/ovh/utask)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/utask)](https://goreportcard.com/report/github.com/ovh/utask)
