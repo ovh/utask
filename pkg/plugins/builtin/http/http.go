@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
@@ -21,16 +22,24 @@ var (
 
 // HTTPConfig is the configuration needed to perform an http call
 type HTTPConfig struct {
-	URL     string   `json:"url"`
-	Method  string   `json:"method"`
-	Body    string   `json:"body,omitempty"`
-	Headers []Header `json:"headers,omitempty"`
+	URL           string    `json:"url"`
+	Method        string    `json:"method"`
+	Body          string    `json:"body,omitempty"`
+	Headers       []Header  `json:"headers,omitempty"`
+	TimeoutSecond int       `json:"timeout_second,omitempty"`
+	HTTPBasicAuth BasicAuth `json:"basic_auth,omitempty"`
 }
 
 // Header represents an http header
 type Header struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+// BasicAuth represents a http basic auth
+type BasicAuth struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
 }
 
 func validConfig(config interface{}) error {
@@ -58,6 +67,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("Failed to create http request: %s", err.Error())
 	}
 
+	if cfg.HTTPBasicAuth.User != "" && cfg.HTTPBasicAuth.Password != "" {
+		req.SetBasicAuth(cfg.HTTPBasicAuth.User, cfg.HTTPBasicAuth.Password)
+	}
+
 	// best-effort match the body's content-type
 	var i interface{}
 	reader := bytes.NewReader(body)
@@ -71,7 +84,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		req.Header.Set(h.Name, h.Value)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	httpClient := &http.Client{}
+
+	if cfg.TimeoutSecond > 0 {
+		httpClient = &http.Client{
+			Timeout: time.Duration(cfg.TimeoutSecond) * time.Second,
+		}
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("http request failed: %s", err.Error())
 	}
