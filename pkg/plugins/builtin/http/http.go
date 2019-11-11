@@ -28,6 +28,7 @@ type HTTPConfig struct {
 	Headers       []Header  `json:"headers,omitempty"`
 	TimeoutSecond int       `json:"timeout_second,omitempty"`
 	HTTPBasicAuth BasicAuth `json:"basic_auth,omitempty"`
+	DenyRedirects bool      `json:"deny_redirects,omitempty"`
 }
 
 // Header represents an http header
@@ -87,8 +88,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	httpClient := &http.Client{}
 
 	if cfg.TimeoutSecond > 0 {
-		httpClient = &http.Client{
-			Timeout: time.Duration(cfg.TimeoutSecond) * time.Second,
+		httpClient.Timeout = time.Duration(cfg.TimeoutSecond) * time.Second
+	}
+
+	if cfg.DenyRedirects {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
 		}
 	}
 
