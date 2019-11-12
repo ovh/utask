@@ -14,14 +14,14 @@ import (
 	"github.com/ovh/utask/pkg/utils"
 )
 
-// the http plugin performs an http call
+// the HTTP plugin performs an HTTP call
 var (
 	Plugin = taskplugin.New("http", "0.6", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
 	)
 )
 
-// HTTPConfig is the configuration needed to perform an http call
+// HTTPConfig is the configuration needed to perform an HTTP call
 type HTTPConfig struct {
 	URL            string       `json:"url"`
 	Method         string       `json:"method"`
@@ -30,22 +30,22 @@ type HTTPConfig struct {
 	TimeoutSeconds int          `json:"timeout_seconds,omitempty"`
 	HTTPBasicAuth  BasicAuth    `json:"basic_auth,omitempty"`
 	DenyRedirects  bool         `json:"deny_redirects,omitempty"`
-	Parameters     []Parameters `json:"parameters,omitempty"`
+	Parameters     []Parameter `json:"parameters,omitempty"`
 }
 
-// Header represents an http header
+// Header represents an HTTP header
 type Header struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-// Parameters represents http parameters
-type Parameters struct {
+// Parameter represents HTTP parameters
+type Parameter struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-// BasicAuth represents a http basic auth
+// BasicAuth represents a HTTP basic auth
 type BasicAuth struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
@@ -56,7 +56,7 @@ func validConfig(config interface{}) error {
 	switch cfg.Method {
 	case "GET", "POST", "PUT", "DELETE":
 	default:
-		return fmt.Errorf("Unknown method for http runner: %s", cfg.Method)
+		return fmt.Errorf("Unknown method for HTTP runner: %s", cfg.Method)
 	}
 
 	if cfg.TimeoutSeconds < 0 {
@@ -117,7 +117,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("http request failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("HTTP request failed: %s", err.Error())
 	}
 
 	return httputil.UnmarshalResponse(resp)

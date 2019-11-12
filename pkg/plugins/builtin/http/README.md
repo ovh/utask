@@ -18,8 +18,8 @@ action:
     timeout_seconds: 5
     # optional
     basic_auth:
-      user: test
-      password: test
+      user: {{.config.basicAuth.user}}
+      password: {{.config.basicAuth.password}}
     # optional
     deny_redirects: false
     # optional
@@ -28,8 +28,8 @@ action:
       value: bar
     # optional
     headers:
-    - name:  Authorization
-      value: Basic {{.config.basicAuth}}
+    - name:  x-request-id
+      value: xxx-yyy-zzz
     # optional
     body: |
       {

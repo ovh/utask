@@ -365,7 +365,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |           || `timeout_seconds`: an unsigned int representing a custom HTTP client timeout in seconds
 |           || `basic_auth`: a single object composed of `user` and `password` to enable HTTP basic auth
 |           || `deny_redirects`: a boolean representing the policy of redirects
-|           || `parameters`: a list of HTTP parameters, represented as objects composed of `key` and `value`
+|           || `parameters`: a list of HTTP query parameters, represented as objects composed of `key` and `value`
 |**`subtask`** | Spawn a new task on µTask | `template`: the name of a task template, as accepted through µTask's  API
 |              || `inputs`: a map of named values, as accepted on µTask's API
 |**`notify`**  | Dispatch a notification over a registered channel | `message`: the main payload of the notification
