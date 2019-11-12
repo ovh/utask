@@ -18,7 +18,7 @@ const (
 	LT     = "LT"
 	GE     = "GE"
 	LE     = "LE"
-	REGEXP = "regexp"
+	REGEXP = "REGEXP"
 )
 
 type (
@@ -51,7 +51,7 @@ func (a *Assert) Eval(v *values.Values, item interface{}, stepName string) error
 		valStr := strings.Replace(string(val), "<no value>", "", -1)
 		expStr := strings.Replace(string(expected), "<no value>", "", -1)
 
-		switch a.Operator {
+		switch strings.ToUpper(a.Operator) { // normalized operator, accept both lower case and upper case from template
 		case EQ:
 			if valStr != expStr {
 				return ErrConditionNotMet(fmt.Sprintf("Condition not met: expected '%s', got '%s': %s", expStr, valStr, a.Message))
@@ -100,7 +100,7 @@ func (a *Assert) Eval(v *values.Values, item interface{}, stepName string) error
 // ie. the operator is among the accepted values listed above
 func (a *Assert) Valid() error {
 	if a != nil {
-		switch a.Operator {
+		switch strings.ToUpper(a.Operator) {
 		case EQ, NE, GT, LT, GE, LE:
 		case REGEXP:
 			if _, err := regexp.Compile(a.Expected); err != nil {

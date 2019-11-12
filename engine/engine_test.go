@@ -162,9 +162,12 @@ func TestSimpleTemplate(t *testing.T) {
 	res, err := runTask("simple.yaml", input, nil)
 
 	assert.Equal(t, nil, err)
-	assert.Equal(t, resolution.StateDone, res.State)
+	assert.Equal(t, resolution.StateError, res.State)
 	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
 	assert.Equal(t, step.StateDone, res.Steps["stepTwo"].State)
+	assert.Equal(t, step.StateServerError, res.Steps["stepThree"].State)
+
+	assert.Equal(t, "FAIL!", res.Values.GetError("stepThree"))
 }
 
 func TestClientError(t *testing.T) {
