@@ -9,8 +9,8 @@ import (
 
 	"github.com/Masterminds/sprig"
 	"github.com/juju/errors"
-	"github.com/robertkrimen/otto"
 	"github.com/ovh/utask"
+	"github.com/robertkrimen/otto"
 )
 
 // keys to store/retrieve data from a Values struct
@@ -26,6 +26,7 @@ const (
 	OutputKey   = "output"
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
+	ErrorKey    = "error"
 )
 
 // Values is a container for all the live data of a running task
@@ -124,6 +125,21 @@ func (v *Values) UnsetChildren(stepName string) {
 	v.unsetStepData(stepName, ChildrenKey)
 }
 
+// GetError returns the error resulting from a failed step
+func (v *Values) GetError(stepName string) interface{} {
+	return v.getStepData(stepName, ErrorKey)
+}
+
+// SetChildren stores the error resulting from a failed step
+func (v *Values) SetError(stepName string, value interface{}) {
+	v.setStepData(stepName, ErrorKey, value)
+}
+
+// UnsetChildren empties the error from a failed step
+func (v *Values) UnsetError(stepName string) {
+	v.unsetStepData(stepName, ErrorKey)
+}
+
 func (v *Values) getStepData(stepName, field string) interface{} {
 	stepmap := v.m[StepKey].(map[string]interface{})
 	if stepmap[stepName] == nil {
@@ -213,6 +229,9 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 		v.SetChildren(utask.This, v.GetChildren(stepName))
 		defer v.UnsetChildren(utask.This)
+
+		v.SetError(utask.This, v.GetError(stepName))
+		defer v.UnsetError(utask.This)
 	}
 
 	err = tmpl.Execute(b, v.m)

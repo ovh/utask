@@ -17,3 +17,11 @@ steps:
 			configuration:
 				output:
 					foo: baz
+	stepThree:
+		description: third step, fails
+		dependencies: [stepTwo]
+		action:
+			type: echo
+			configuration:
+				error_message: FAIL!
+				

@@ -348,6 +348,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			res.Values.SetOutput(s.Name, s.Output)
 			res.Values.SetMetadata(s.Name, s.Metadata)
 			res.Values.SetChildren(s.Name, s.Children)
+			res.Values.SetError(s.Name, s.Error)
 
 			// call after-run step logic
 			modifiedSteps := map[string]bool{

@@ -460,6 +460,7 @@ func (r *Resolution) setSteps(st map[string]*step.Step) {
 		r.Values.SetOutput(name, s.Output)
 		r.Values.SetMetadata(name, s.Metadata)
 		r.Values.SetChildren(name, s.Children)
+		r.Values.SetError(s.Name, s.Error)
 	}
 }
 
