@@ -15,25 +15,32 @@ import (
 
 // the http plugin performs an http call
 var (
-	Plugin = taskplugin.New("http", "0.5", exec,
+	Plugin = taskplugin.New("http", "0.6", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
 	)
 )
 
 // HTTPConfig is the configuration needed to perform an http call
 type HTTPConfig struct {
-	URL           string    `json:"url"`
-	Method        string    `json:"method"`
-	Body          string    `json:"body,omitempty"`
-	Headers       []Header  `json:"headers,omitempty"`
-	TimeoutSecond int       `json:"timeout_second,omitempty"`
-	HTTPBasicAuth BasicAuth `json:"basic_auth,omitempty"`
-	DenyRedirects bool      `json:"deny_redirects,omitempty"`
+	URL           string       `json:"url"`
+	Method        string       `json:"method"`
+	Body          string       `json:"body,omitempty"`
+	Headers       []Header     `json:"headers,omitempty"`
+	TimeoutSecond int          `json:"timeout_second,omitempty"`
+	HTTPBasicAuth BasicAuth    `json:"basic_auth,omitempty"`
+	DenyRedirects bool         `json:"deny_redirects,omitempty"`
+	Parameters    []Parameters `json:"parameters,omitempty"`
 }
 
 // Header represents an http header
 type Header struct {
 	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// Parameters represents http parameters
+type Parameters struct {
+	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
@@ -67,6 +74,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to create http request: %s", err.Error())
 	}
+
+	q := req.URL.Query()
+	for _, p := range cfg.Parameters {
+		q.Add(p.Key, p.Value)
+	}
+	req.URL.RawQuery = q.Encode()
 
 	if cfg.HTTPBasicAuth.User != "" && cfg.HTTPBasicAuth.Password != "" {
 		req.SetBasicAuth(cfg.HTTPBasicAuth.User, cfg.HTTPBasicAuth.Password)
