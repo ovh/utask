@@ -21,21 +21,23 @@ type NotificationSender struct {
 	httpClient *http.Client
 }
 
-type slackFormattedBody struct {
+type formattedSlackRequest struct {
 	Text   string `json:"text,omitempty"`
 	Blocks []struct {
-		Type    string `json:"type"`
-		BlockID string `json:"block_id"`
-		Text    struct {
+		Type string `json:"type"`
+		Text struct {
 			Type string `json:"type"`
 			Text string `json:"text"`
-		} `json:"text"`
-		Accessory struct {
-			Type     string `json:"type"`
-			ImageURL string `json:"image_url"`
-			AltText  string `json:"alt_text"`
-		} `json:"accessory"`
-	} `json:"blocks,omitempty"`
+		} `json:"text,omitempty"`
+		Fields []struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"fields,omitempty"`
+		Elements []struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"elements,omitempty"`
+	} `json:"blocks"`
 }
 
 // NewSlackNotificationSender instantiates a NotificationSender
@@ -48,7 +50,7 @@ func NewSlackNotificationSender(webhookURL string) *NotificationSender {
 
 // Send dispatches a notify.Payload to Slack
 func (sn *NotificationSender) Send(p notify.Payload) {
-	slackfb := &slackFormattedBody{
+	slackfb := &formattedSlackRequest{
 		Text: p.Message(),
 	}
 
