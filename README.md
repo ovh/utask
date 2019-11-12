@@ -8,14 +8,22 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/ovh/utask)
 [![GitHub license](https://img.shields.io/github/license/ovh/utask)](https://github.com/ovh/utask/blob/master/LICENSE)
 
-<img src="./assets/img/utask.png" width="50%" align="right">
-
 µTask is an automation engine built for the cloud. It is:
 - **simple to operate**: only a postgres DB is required
 - **secure**: all data is encrypted, only visible to authorized users
 - **extensible**: you can develop custom actions in golang
 
 µTask allows you to model business processes in a **declarative yaml format**. Describe a set of inputs and a graph of actions and their inter-dependencies: µTask will asynchronously handle the execution of each action, working its way around transient errors and keeping a trace of all intermediary states until completion.
+
+<img src="./assets/img/utask.png" width="50%" align="right">
+
+Here are some example usecases for µTask:
+- empower your internal PaaS ecosystem by connecting services through a single entry point
+- automate a sequence of API calls across services, replacing ad-hoc scripts without version control
+- formalize user requests: user A requests access to a resource, user B validates and triggers a sequence of actions fulfilling the request
+- trigger remediation commands across a farm of machines over ssh
+
+µTask keeps a structured and encrypted trace of every process that it runs, for you to audit. 
 
 ## Table of contents
 
@@ -112,7 +120,7 @@ The vanilla version of µTask doesn't handle authentication by itself, it is mea
 
 For development purposes, an optional `basic-auth` configstore item can be provided to define a mapping of usernames and passwords. This is not meant for use in production.
 
-Extending this basic authentication mechanism is possible by developing an "init" plugin, as described below.
+Extending this basic authentication mechanism is possible by developing an "init" plugin, as described [below](#plugins).
 
 ## Authoring Task Templates <a name="templates"></a>
 
@@ -366,7 +374,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |              || `target`: address of the remote machine
 |              || `hops`: a list of intermediate addresses (bastions)
 |              || `script`: multiline text, commands to be run on the machine's shell
-|              || `result`: an object to extract the values of variables from the machine's shell (TODO example needed)
+|              || `result`: an object to extract the values of variables from the machine's shell
 |              || `ssh_key`: private ssh key, preferrably retrieved from {{.config}}
 |              || `ssh_key_passphrase`: passphrase for the key, if any
 |              || `allow_exit_non_zero`: allow a non-zero exit code to be considered as a successful step (bool default `false`)
@@ -407,16 +415,82 @@ foreach: '{{.step.prefixStrings.children | jsonmarshal}}'
 
 ## Extending µTask with plugins <a name="plugins"></a>
 
-TODO
+µTask is extensible with [golang plugins](https://golang.org/pkg/plugin/) compiled in *.so format. Two kinds of plugins exist:
+- action plugins, that you can re-use in your task templates to implement steps
+- init plugins, a way to customize the authentication mechanism of the API, and to draw data from different providers of the configstore library
+
+The installation script for utask creates a folder structure that will automatically package and build your code in a docker image, with your plugins ready to be loaded by the main binary at boot time. Create a separate folder for each of your plugins, within either the `plugins` or the `init` folders.
 
 ### Action Plugins
 
-TODO
+Action plugins allow you to extend the kind of work that can be performed during a task. An action plugin has a name, that will be referred to as the action `type` in a template. It declares a configuration structure, a validation function for the data received from the template as configuration, and an execution function which performs an action based on valid configuration.
+
+Create a new folder within the `plugins` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `TaskPlugin` defined in the `plugins` package: 
+
+```golang
+type TaskPlugin interface {
+	ValidConfig(baseConfig json.RawMessage, config json.RawMessage) error
+	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, error)
+	Context(stepName string) interface{}
+	PluginName() string
+	PluginVersion() string
+	MetadataSchema() json.RawMessage
+}
+```
+
+The `taskplugin` [package](./pkg/plugins/taskplugin/taskplugin.go) provides helper functions to build a Plugin: 
+
+```golang
+package main
+
+import (
+	"github.com/ovh/utask/pkg/plugins/taskplugin"
+)
+
+var (
+	Plugin = taskplugin.New("my-plugin", "v0.1", exec,
+		taskplugin.WithConfig(validConfig, Config{}))
+)
+
+type Config struct { ... }
+
+func validConfig(config interface{}) (err error) {
+  cfg := config.(*Config)
+  ...
+  return
+}
+
+func exec(stepName string, config interface{}, ctx interface{}) (output interface{}, metadata interface{}, err error) {
+  cfg := config.(*Config)
+  ...
+  return
+}
+```
 
 ### Init Plugins
 
-TODO
- 
+Init plugins allow you to customize your instance of µtask by giving you access to its underlying configuration store and its API server. 
+
+Create a new folder within the `init` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `InitializerPlugin` defined in the `plugins` package: 
+
+```golang
+type Service struct {
+	Store  *configstore.Store
+	Server *api.Server
+}
+
+type InitializerPlugin interface {
+	Init(service *Service) error // access configstore and server to customize µTask
+	Description() string         // describe what the initialization plugin does
+}
+```
+
+As of version `v1.0.0`, this is meant to give you access to two features:
+- `service.Store` exposes the `RegisterProvider(name string, f configstore.Provider)` method that allow you to plug different data sources for you configuration, which are not available by default in the main runtime
+- `service.Server` exposes the `WithAuth(authProvider func(*http.Request) (string, error))` method, where you can provide a custom source of authentication and authorization based on the incoming http requests
+
+If you develop more than one initialization plugin, they will all be loaded in alphabetical order. You might want to provide a default initialization, plus more specific behaviour under certain scenarios.
+
 ## Contributing <a name="contributing"></a>
  
 ### Backend
