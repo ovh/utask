@@ -3,6 +3,7 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -22,14 +23,14 @@ var (
 
 // HTTPConfig is the configuration needed to perform an http call
 type HTTPConfig struct {
-	URL           string       `json:"url"`
-	Method        string       `json:"method"`
-	Body          string       `json:"body,omitempty"`
-	Headers       []Header     `json:"headers,omitempty"`
-	TimeoutSecond int          `json:"timeout_second,omitempty"`
-	HTTPBasicAuth BasicAuth    `json:"basic_auth,omitempty"`
-	DenyRedirects bool         `json:"deny_redirects,omitempty"`
-	Parameters    []Parameters `json:"parameters,omitempty"`
+	URL            string       `json:"url"`
+	Method         string       `json:"method"`
+	Body           string       `json:"body,omitempty"`
+	Headers        []Header     `json:"headers,omitempty"`
+	TimeoutSeconds int          `json:"timeout_seconds,omitempty"`
+	HTTPBasicAuth  BasicAuth    `json:"basic_auth,omitempty"`
+	DenyRedirects  bool         `json:"deny_redirects,omitempty"`
+	Parameters     []Parameters `json:"parameters,omitempty"`
 }
 
 // Header represents an http header
@@ -57,6 +58,11 @@ func validConfig(config interface{}) error {
 	default:
 		return fmt.Errorf("Unknown method for http runner: %s", cfg.Method)
 	}
+
+	if cfg.TimeoutSeconds < 0 {
+		return errors.New("timeout_seconds field can't be < 0")
+	}
+
 	return nil
 }
 
@@ -98,10 +104,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		req.Header.Set(h.Name, h.Value)
 	}
 
-	httpClient := &http.Client{}
-
-	if cfg.TimeoutSecond > 0 {
-		httpClient.Timeout = time.Duration(cfg.TimeoutSecond) * time.Second
+	httpClient := &http.Client{
+		// 0 by default
+		Timeout: time.Duration(cfg.TimeoutSeconds) * time.Second,
 	}
 
 	if cfg.DenyRedirects {

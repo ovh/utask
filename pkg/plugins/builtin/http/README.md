@@ -10,12 +10,27 @@ An action of type `http` requires the following kind of configuration:
 action:
   type: http
   configuration:
+    # mandatory
     url: http://example.org/user
+    # mandatory
     method: POST
+    # optional
+    timeout_seconds: 5
+    # optional
+    basic_auth:
+      user: test
+      password: test
+    # optional
+    deny_redirects: false
+    # optional
+    parameters:
+    - key: foo
+      value: bar
+    # optional
     headers:
     - name:  Authorization
       value: Basic {{.config.basicAuth}}
-    # body is optional, not used for method GET
+    # optional
     body: |
       {
         "name": "pablo"
