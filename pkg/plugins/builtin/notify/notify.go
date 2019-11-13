@@ -19,16 +19,15 @@ var (
 // consisting of a message and extra fields
 // implements notify.Payload
 type Config struct {
-	Msg      string   `json:"message"`
-	Flds     []string `json:"fields"`
-	Backends []string `json:"backends"`
+	Msg      string            `json:"message"`
+	Flds     map[string]string `json:"fields"`
+	Backends []string          `json:"backends"`
 }
 
 // Message returns the config's message
-func (nc *Config) Message() string { return nc.Msg }
-
-// Fields returns the config's fields
-func (nc *Config) Fields() []string { return nc.Flds }
+func (nc *Config) Message() *notify.Message {
+	return &notify.Message{MainMessage: nc.Msg, Fields: nc.Flds}
+}
 
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)

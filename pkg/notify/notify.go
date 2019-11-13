@@ -14,7 +14,7 @@ var (
 
 // Payload is the holder of data to be sent as a notification
 type Payload interface {
-	MessageFields() *TaskStateUpdate
+	Message() *Message
 }
 
 // NotificationSender is an object capable of sending a payload

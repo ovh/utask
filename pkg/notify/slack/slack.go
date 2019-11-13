@@ -51,7 +51,7 @@ func NewSlackNotificationSender(webhookURL string) *NotificationSender {
 
 // Send dispatches a notify.Payload to Slack
 func (sn *NotificationSender) Send(p notify.Payload, name string) {
-	slackfb := formatSendRequest(p.MessageFields(), name)
+	slackfb := formatSendRequest(p.Message(), name)
 
 	slackBody, _ := json.Marshal(slackfb)
 
@@ -78,7 +78,7 @@ func (sn *NotificationSender) Send(p notify.Payload, name string) {
 	}
 }
 
-func formatSendRequest(tsu *notify.TaskStateUpdate, name string) *formattedSlackRequest {
+func formatSendRequest(m *notify.Message, name string) *formattedSlackRequest {
 	var fsr formattedSlackRequest
 
 	sec := "section"
@@ -87,55 +87,18 @@ func formatSendRequest(tsu *notify.TaskStateUpdate, name string) *formattedSlack
 	// First line title
 	fsr.Blocks[0].Type = sec
 	fsr.Blocks[0].Text.Type = mrk
-	fsr.Blocks[0].Text.Text = tsu.Title
+	fsr.Blocks[0].Text.Text = m.MainMessage
 
 	// Fields
-	fid := 0
-	// ID
+	id := 0
 	fsr.Blocks[1].Type = sec
-	fsr.Blocks[1].Fields[fid].Type = mrk
-	fsr.Blocks[1].Fields[0].Text = fmt.Sprintf("*ID:*\n%s", tsu.PublicID)
-	fid++
-
-	// Status
-	fsr.Blocks[1].Type = sec
-	fsr.Blocks[1].Fields[fid].Type = mrk
-	fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Status:*\n%s", tsu.State)
-	fid++
-
-	// Template
-	fsr.Blocks[1].Type = sec
-	fsr.Blocks[1].Fields[fid].Type = mrk
-	fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Template:*\n%s", tsu.TemplateName)
-	fid++
-
-	// Steps
-	fsr.Blocks[1].Type = sec
-	fsr.Blocks[1].Fields[fid].Type = mrk
-	fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Steps:*\n%d/%d", tsu.StepsDone, tsu.StepsTotal)
-	fid++
-
-	// Requester
-	if tsu.RequesterUsername != "" {
-		fsr.Blocks[1].Type = sec
-		fsr.Blocks[1].Fields[fid].Type = mrk
-		fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Requester:*\n%s", tsu.RequesterUsername)
-		fid++
-	}
-
-	// Resolver
-	if tsu.ResolverUsername != nil && *tsu.ResolverUsername != "" {
-		fsr.Blocks[1].Type = sec
-		fsr.Blocks[1].Fields[fid].Type = mrk
-		fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Resolver:*\n%s", *tsu.ResolverUsername)
-		fid++
-	}
-
-	// Potential Resolvers
-	if tsu.PotentialResolvers != nil && len(tsu.PotentialResolvers) > 0 {
-		fsr.Blocks[1].Type = sec
-		fsr.Blocks[1].Fields[fid].Type = mrk
-		fsr.Blocks[1].Fields[fid].Text = fmt.Sprintf("*Potential Resolvers:*\n%s", strings.Join(tsu.PotentialResolvers, " "))
+	for key, value := range m.Fields {
+		if len(value) > 0 {
+			fsr.Blocks[1].Fields[id].Type = mrk
+			trimStr := strings.Replace(key, "_", " ", -1)
+			fsr.Blocks[1].Fields[id].Text = fmt.Sprintf("*%s:*\n%s", strings.Title(trimStr), value)
+			id++
+		}
 	}
 
 	// Separator
