@@ -14,8 +14,8 @@ import (
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
-	"github.com/wi2L/fizz"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/api/handler"

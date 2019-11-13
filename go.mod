@@ -57,7 +57,6 @@ require (
 	github.com/tjarratt/babble v0.0.0-20140317234543-2cf06e8d98b0 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/wI2L/fizz v0.0.0-20190425144348-6274bc96d962
-	github.com/wi2L/fizz v0.0.0-20190425144348-6274bc96d962
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
 	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72 // indirect
