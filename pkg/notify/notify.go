@@ -14,14 +14,13 @@ var (
 
 // Payload is the holder of data to be sent as a notification
 type Payload interface {
-	Message() string
-	Fields() []string
+	MessageFields() *TaskStateUpdate
 }
 
 // NotificationSender is an object capable of sending a payload
 // over a notification channel, as determined by its implementation
 type NotificationSender interface {
-	Send(p Payload)
+	Send(p Payload, name string)
 }
 
 // RegisterSender adds a NotificationSender to the pool of available senders
@@ -56,8 +55,8 @@ func Send(p Payload, params utask.NotifyActionsParameters) {
 
 	// Empty NotifyBackends list means any
 	if len(params.NotifyBackends) == 0 {
-		for _, s := range senders {
-			go s.Send(p)
+		for name, s := range senders {
+			go s.Send(p, name)
 		}
 		return
 	}
@@ -67,7 +66,7 @@ func Send(p Payload, params utask.NotifyActionsParameters) {
 		for nsname, ns := range senders {
 			switch n {
 			case nsname:
-				go ns.Send(p)
+				go ns.Send(p, nsname)
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package tat
 
 import (
 	"fmt"
+	"strings"
 
 	tatlib "github.com/ovh/tat"
 
@@ -19,6 +20,7 @@ var labelColors = []string{
 	"#04756F",
 	"#D90000",
 	"#FF2D00",
+	"#0080FF",
 }
 
 // NotificationSender is a notify.NotificationSender implementation
@@ -46,16 +48,19 @@ func NewTatNotificationSender(url, user, pass, topic string) (*NotificationSende
 }
 
 // Send dispatches a notify.Payload to TaT
-func (tn *NotificationSender) Send(p notify.Payload) {
+func (tn *NotificationSender) Send(p notify.Payload, name string) {
 	client, err := tn.spawnTatClient()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	text, labels := formatSendRequest(p.MessageFields(), name)
+
 	_, err = client.MessageAdd(
 		tatlib.MessageJSON{
-			Text:   p.Message(),
-			Labels: taskLabels(p.Fields()),
+			Text:   text,
+			Labels: labels, //taskLabels(p.Fields()),
 			Topic:  tn.tatTopic,
 		},
 	)
@@ -84,4 +89,31 @@ func taskLabels(fields []string) []tatlib.Label {
 		})
 	}
 	return l
+}
+
+func formatSendRequest(tsu *notify.TaskStateUpdate, name string) (string, []tatlib.Label) {
+	text := fmt.Sprintf(
+		"#task #id:%s %s",
+		tsu.PublicID,
+		tsu.Title,
+	)
+
+	l := []string{
+		fmt.Sprintf("state:%s", tsu.State),
+		fmt.Sprintf("template:%s", tsu.TemplateName),
+		fmt.Sprintf("steps:%d/%d", tsu.StepsDone, tsu.StepsTotal),
+		fmt.Sprintf("backend_name:%s", name),
+	}
+
+	if tsu.RequesterUsername != "" {
+		l = append(l, fmt.Sprintf("requester:%s", tsu.RequesterUsername))
+	}
+	if tsu.ResolverUsername != nil && *tsu.ResolverUsername != "" {
+		l = append(l, fmt.Sprintf("resolver:%s", *tsu.ResolverUsername))
+	}
+	if tsu.PotentialResolvers != nil && len(tsu.PotentialResolvers) > 0 {
+		l = append(l, fmt.Sprintf("potential_resolvers: %s", strings.Join(tsu.PotentialResolvers, " ")))
+	}
+
+	return text, taskLabels(l)
 }
