@@ -30,13 +30,13 @@ type Config struct {
 	Body         string   `json:"body"`
 }
 
-const emailTemplate = `From: {{.From}}<br />
-To: {{.To}}<br />
-Subject: {{.Subject}}<br />
-MIME-version: 1.0<br />
-Content-Type: text/html; charset="UTF-8"<br />
-<br />
-{{.Body}}`
+const emailTemplate = "From: {{.From}}\r\n" +
+	"To: {{.To}}\r\n" +
+	"Subject: {{.Subject}}\r\n" +
+	"MIME-version: 1.0\r\n" +
+	"Content-Type: text/html; charset=\"UTF-8\"\r\n" +
+	"\r\n" +
+	"{{.Body}}"
 
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)
@@ -94,9 +94,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	err := smtp.SendMail(
-		fmt.Sprintf("%s:%d", cfg.SMTPHostname, int(cfg.SMTPPort)),
+		fmt.Sprintf("%s:%d", cfg.SMTPHostname, cfg.SMTPPort),
 		auth,
-		cfg.SMTPUsername,
+		cfg.From,
 		cfg.To,
 		buffer.Bytes())
 	if err != nil {
