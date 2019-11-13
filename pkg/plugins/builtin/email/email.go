@@ -2,6 +2,7 @@ package email
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/smtp"
 	"strings"
@@ -38,6 +39,30 @@ Content-Type: text/html; charset="UTF-8"<br />
 {{.Body}}`
 
 func validConfig(config interface{}) error {
+	cfg := config.(*Config)
+
+	if cfg.SMTPUsername == "" {
+		return errors.New("smtp_username is missing")
+	}
+	if cfg.SMTPPassword == "" {
+		return errors.New("smtp_password is missing")
+	}
+	if cfg.From == "" {
+		return errors.New("from is missing")
+	}
+	if len(cfg.To) == 0 {
+		return errors.New("to is missing")
+	}
+	if cfg.SMTPHostname == "" {
+		return errors.New("smtp_hostname is missing")
+	}
+	if cfg.Subject == "" {
+		return errors.New("subject is missing")
+	}
+	if cfg.Body == "" {
+		return errors.New("body is missing")
+	}
+
 	return nil
 }
 
