@@ -19,9 +19,9 @@ action:
     # mandatory, string
     smtp_hostname: {{.config.smtp.hostname}}
     # mandatory, string
-    from: foo@ovh.cloud
+    from: foo@example.org
     # mandatory, string
-    to: [bar@ovh.cloud, hey@ovh.cloud]
+    to: [bar@example.org, hey@example.org]
     # mandatory, string
     subject: Hello from µTask
     # mandatory, string
