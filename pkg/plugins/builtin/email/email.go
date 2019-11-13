@@ -19,14 +19,14 @@ var (
 
 // Config is the configuration needed to send an email
 type Config struct {
-	SMTPUsername string
-	SMTPPassword string
-	SMTPPort     uint
-	SMTPHost     string
-	From         string
-	To           []string
-	Subject      string
-	Body         string
+	SMTPUsername string   `json:"smtp_username"`
+	SMTPPassword string   `json:"smtp_password"`
+	SMTPPort     uint     `json:"smtp_port,omitempty"`
+	SMTPHostname string   `json:"smtp_hostname"`
+	From         string   `json:"from"`
+	To           []string `json:"to"`
+	Subject      string   `json:"subject"`
+	Body         string   `json:"body"`
 }
 
 const emailTemplate = `From: {{.From}}<br />
@@ -61,10 +61,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	template := template.Must(template.New("emailTemplate").Parse(emailTemplate))
 	template.Execute(buffer, &parameters)
 
-	auth := smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPHost)
+	auth := smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPHostname)
+
+	port := cfg.SMTPPort
+	if port == 0 {
+		port = 25
+	}
 
 	err := smtp.SendMail(
-		fmt.Sprintf("%s:%d", cfg.SMTPHost, int(cfg.SMTPPort)),
+		fmt.Sprintf("%s:%d", cfg.SMTPHostname, int(cfg.SMTPPort)),
 		auth,
 		cfg.SMTPUsername,
 		cfg.To,
