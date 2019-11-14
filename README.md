@@ -13,26 +13,53 @@
 - **secure**: all data is encrypted, only visible to authorized users
 - **extensible**: you can develop custom actions in golang
 
-µTask allows you to model business processes in a **declarative yaml format**. Describe a set of inputs and a graph of actions and their inter-dependencies: µTask will asynchronously handle the execution of each action, working its way around transient errors and keeping a trace of all intermediary states until completion.
+µTask allows you to model business processes in a **declarative yaml format**. Describe a set of inputs and a graph of actions and their inter-dependencies: µTask will asynchronously handle the execution of each action, working its way around transient errors and keeping an encrypted, auditable trace of all intermediary states until completion.
 
 <img src="./assets/img/utask.png" width="50%" align="right">
 
-Here are some example usecases for µTask:
-- empower your internal PaaS ecosystem by connecting services through a single entry point
-- automate a sequence of API calls across services, replacing ad-hoc scripts without version control
-- formalize user requests: user A requests access to a resource, user B validates and triggers a sequence of actions fulfilling the request
-- trigger remediation commands across a farm of machines over ssh
-
-µTask keeps a structured and encrypted trace of every process that it runs, for you to audit. 
-
 ## Table of contents
 
+- [Real-world examples](#examples)
 - [Quick Start](#quickstart)
 - [Operating in production](#operating)
 - [Configuration](#configuration)
 - [Authoring Task Templates](#templates)
 - [Extending µTask with plugins](#plugins)
 - [Contributing](#contributing)
+
+## Real-world examples <a name="examples"></a>
+
+Here are a few real-world examples that can be implemented with µTask:
+
+### Kubernetes ingress TLS certificate provisioning
+
+A new ingress is created on the production kubernetes cluster. A hook triggers a µTask template that:
+- generates a private key
+- requests a new certificate
+- meets the certificate issuer's challenges
+- commits the resulting certificate back to the cluster
+
+### New team member bootstrap
+
+A new member joins the team. The team leader starts a task specifying the new member's name, that:
+- asks the new team member to generate an SSH key pair and copy the public key in a µTask-generated form
+- registers the public SSH key centrally
+- creates accounts on internal services (code repository, CI/CD, internal PaaS, ...) for the new team member
+- triggers another task to spawn a development VM
+- sends a welcome email full of GIFs
+
+### Payments API asynchronous processing
+
+The payments API receives a request that requires an asynchronous antifraud check. It spawns a task on its companion µTask instance that:
+- calls a first risk-assessing API which returns a number
+- if the risk is low, the task succeeds immediately
+- otherwise it calls a SaaS antifraud solution API which returns a score
+- if the score is good, the task succeeds
+- if the score is very bad, the task fails
+- if it is in between, it triggers a human investigation step where an operator can enter a score in a µTask-generated form
+- when it is done, the task sends an event to the payments API to notify of the result
+
+The payments API keeps a reference to the running workflow via its task ID. Operators of the payments API can follow the state of current tasks by requesting the µTask instance directly. Depending on the payments API implementation, it may allow its callers to follow a task's state.
 
 ## Quick start <a name="quickstart"></a>
 
