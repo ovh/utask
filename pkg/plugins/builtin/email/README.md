@@ -20,7 +20,7 @@ action:
     smtp_hostname: {{.config.smtp.hostname}}
     # mandatory, string
     from: foo@example.org
-    # mandatory, string
+    # mandatory, string collection
     to: [bar@example.org, hey@example.org]
     # mandatory, string
     subject: Hello from µTask
