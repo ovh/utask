@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"mime"
 	"net/smtp"
 	"strings"
 	"text/template"
@@ -22,7 +23,7 @@ var (
 type Config struct {
 	SMTPUsername string   `json:"smtp_username"`
 	SMTPPassword string   `json:"smtp_password"`
-	SMTPPort     uint     `json:"smtp_port,omitempty"`
+	SMTPPort     uint16   `json:"smtp_port,omitempty"`
 	SMTPHostname string   `json:"smtp_hostname"`
 	From         string   `json:"from"`
 	To           []string `json:"to"`
@@ -77,7 +78,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}{
 		cfg.From,
 		strings.Join(cfg.To, ","),
-		cfg.Subject,
+		mime.BEncoding.Encode("UTF-8", cfg.Subject),
 		cfg.Body,
 	}
 
