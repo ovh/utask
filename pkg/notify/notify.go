@@ -12,15 +12,10 @@ var (
 	actions utask.NotifyActions
 )
 
-// Payload is the holder of data to be sent as a notification
-type Payload interface {
-	Message() *Message
-}
-
-// NotificationSender is an object capable of sending a payload
+// NotificationSender is an object capable of sending a Message struct
 // over a notification channel, as determined by its implementation
 type NotificationSender interface {
-	Send(p Payload, name string)
+	Send(m *Message, name string)
 }
 
 // RegisterSender adds a NotificationSender to the pool of available senders
@@ -47,8 +42,8 @@ func ListActions() utask.NotifyActions {
 	return actions
 }
 
-// Send dispatches a Payload over all registered senders
-func Send(p Payload, params utask.NotifyActionsParameters) {
+// Send dispatches a Message struct over all registered senders
+func Send(m *Message, params utask.NotifyActionsParameters) {
 	if params.Disabled {
 		return
 	}
@@ -56,7 +51,7 @@ func Send(p Payload, params utask.NotifyActionsParameters) {
 	// Empty NotifyBackends list means any
 	if len(params.NotifyBackends) == 0 {
 		for name, s := range senders {
-			go s.Send(p, name)
+			go s.Send(m, name)
 		}
 		return
 	}
@@ -66,7 +61,7 @@ func Send(p Payload, params utask.NotifyActionsParameters) {
 		for nsname, ns := range senders {
 			switch n {
 			case nsname:
-				go ns.Send(p, nsname)
+				go ns.Send(m, nsname)
 			}
 		}
 	}

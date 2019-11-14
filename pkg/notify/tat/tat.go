@@ -47,14 +47,14 @@ func NewTatNotificationSender(url, user, pass, topic string) (*NotificationSende
 }
 
 // Send dispatches a notify.Payload to TaT
-func (tn *NotificationSender) Send(p notify.Payload, name string) {
+func (tn *NotificationSender) Send(m *notify.Message, name string) {
 	client, err := tn.spawnTatClient()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	msg := p.Message()
+	msg := m.Message()
 
 	labels := formatSendRequest(msg, name)
 

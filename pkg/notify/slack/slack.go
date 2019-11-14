@@ -24,21 +24,21 @@ type NotificationSender struct {
 }
 
 type formattedSlackRequest struct {
-	Blocks []struct {
-		Type string `json:"type"`
-		Text struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		} `json:"text,omitempty"`
-		Fields []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		} `json:"fields,omitempty"`
-		Elements []struct {
-			Type string `json:"type"`
-			Text string `json:"text"`
-		} `json:"elements,omitempty"`
-	} `json:"blocks"`
+	Blocks []blockSlackRequest `json:"blocks"`
+}
+
+type blockSlackRequest struct {
+	Type     string                `json:"type"`
+	Text     textSlackRequest      `json:"text,omitempty"`
+	Fields   []fieldSlackRequest   `json:"fields,omitempty"`
+	Elements []elementSlackRequest `json:"elements,omitempty"`
+}
+
+type elementSlackRequest fieldSlackRequest
+type textSlackRequest fieldSlackRequest
+type fieldSlackRequest struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
 }
 
 // NewSlackNotificationSender instantiates a NotificationSender
@@ -50,8 +50,8 @@ func NewSlackNotificationSender(webhookURL string) *NotificationSender {
 }
 
 // Send dispatches a notify.Payload to Slack
-func (sn *NotificationSender) Send(p notify.Payload, name string) {
-	slackfb := formatSendRequest(p.Message(), name)
+func (sn *NotificationSender) Send(m *notify.Message, name string) {
+	slackfb := formatSendRequest(m.Message(), name)
 
 	slackBody, _ := json.Marshal(slackfb)
 
@@ -84,20 +84,25 @@ func formatSendRequest(m *notify.Message, name string) *formattedSlackRequest {
 	sec := "section"
 	mrk := "mrkdwn"
 
+	fsr.Blocks = make([]blockSlackRequest, 4)
+
 	// First line title
 	fsr.Blocks[0].Type = sec
 	fsr.Blocks[0].Text.Type = mrk
 	fsr.Blocks[0].Text.Text = m.MainMessage
 
 	// Fields
-	id := 0
 	fsr.Blocks[1].Type = sec
+	fsr.Blocks[1].Fields = make([]fieldSlackRequest, 0)
 	for key, value := range m.Fields {
 		if len(value) > 0 {
-			fsr.Blocks[1].Fields[id].Type = mrk
 			trimStr := strings.Replace(key, "_", " ", -1)
-			fsr.Blocks[1].Fields[id].Text = fmt.Sprintf("*%s:*\n%s", strings.Title(trimStr), value)
-			id++
+			fsr.Blocks[1].Fields = append(
+				fsr.Blocks[1].Fields,
+				fieldSlackRequest{
+					Type: mrk,
+					Text: fmt.Sprintf("*%s:*\n%s", strings.Title(trimStr), value),
+				})
 		}
 	}
 
@@ -106,6 +111,7 @@ func formatSendRequest(m *notify.Message, name string) *formattedSlackRequest {
 
 	// Sent context
 	fsr.Blocks[3].Type = "context"
+	fsr.Blocks[3].Elements = make([]elementSlackRequest, 1)
 	fsr.Blocks[3].Elements[0].Type = mrk
 	fsr.Blocks[3].Elements[0].Text = fmt.Sprintf("🚀 Sent from %s", name)
 

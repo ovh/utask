@@ -52,9 +52,11 @@ func validConfig(config interface{}) error {
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*Config)
-	notify.Send(cfg, utask.NotifyActionsParameters{
-		Disabled:       false,
-		NotifyBackends: cfg.Backends,
-	})
+	notify.Send(
+		cfg.Message(),
+		utask.NotifyActionsParameters{
+			Disabled:       false,
+			NotifyBackends: cfg.Backends,
+		})
 	return nil, nil, nil
 }
