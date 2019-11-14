@@ -104,5 +104,5 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
 
-	return nil, nil, nil
+	return &parameters, nil, nil
 }
