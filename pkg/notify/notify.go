@@ -3,8 +3,8 @@ package notify
 import "github.com/ovh/utask"
 
 // utask should be able to notify about inner task events through different channels
-// relevant information for the outside world is described by the Payload type
-// this package allows for the registration of different senders, capable of handling this payload
+// relevant information for the outside world is described by the Message struct
+// this package allows for the registration of different senders, capable of handling the Message struct
 
 var (
 	senders = make(map[string]NotificationSender)

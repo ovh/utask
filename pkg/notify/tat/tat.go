@@ -46,7 +46,7 @@ func NewTatNotificationSender(url, user, pass, topic string) (*NotificationSende
 	return tn, nil
 }
 
-// Send dispatches a notify.Payload to TaT
+// Send dispatches a notify.Message to TaT
 func (tn *NotificationSender) Send(m *notify.Message, name string) {
 	client, err := tn.spawnTatClient()
 	if err != nil {
