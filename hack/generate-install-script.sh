@@ -1,4 +1,5 @@
-#!/usr/bin/bash
+#!/bin/bash
+
 set -e
 
 dst=$1
@@ -18,8 +19,9 @@ write_block() {
 touch $dst
 
 cat <<EOF >$dst
-#!/usr/bin/bash
-set -e 
+#!/bin/bash
+
+set -e
 
 mkdir -p templates sql plugins init
 

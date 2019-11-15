@@ -1,3 +1,4 @@
+#!/bin/bash
 
 while DEV=true ./../utask
 do
