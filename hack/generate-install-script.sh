@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 dst=$1
@@ -19,6 +20,7 @@ touch $dst
 
 cat <<EOF >$dst
 #!/bin/bash
+
 set -e
 
 mkdir -p templates sql plugins init
