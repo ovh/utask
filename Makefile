@@ -6,7 +6,7 @@ TEST_LOCATION	= ./...
 TEST_CMD		= go test -v -mod=vendor -cover ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
-VERSION			= v1.0.1
+VERSION         = `git describe --tags $(git rev-list --tags --max-count=1)`
 LAST_COMMIT		= `git rev-parse HEAD`
 VERSION_PKG		= github.com/ovh/utask
 
