@@ -2,6 +2,7 @@ version: "3"
 services:
   utask:
     build: .
+    command: ["/wait-for-it.sh", "db:5432", "--", "/app/utask"]
     environment:
       DEBUG:              'true'
       DEV:                'true'
@@ -14,6 +15,8 @@ services:
       - 8081:8081
     volumes:
       - "./templates:/app/templates:ro"
+    depends_on:
+      - db
   db:
     image: postgres:9.5.3
     environment:
