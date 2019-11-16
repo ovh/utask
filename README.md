@@ -399,7 +399,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |           || `parameters`: a list of HTTP query parameters, represented as objects composed of `key` and `value`
 |**`subtask`** | Spawn a new task on µTask 
 |              || `template`: the name of a task template, as accepted through µTask's  API
-|              || `inputs`: a map of named values, as accepted on µTask's API
+|              || `input`: a map of named values, as accepted on µTask's API
 |**`notify`**  | Dispatch a notification over a registered channel 
 |              || `message`: the main payload of the notification
 |              || `fields`: a collection of extra fields to annotate the message

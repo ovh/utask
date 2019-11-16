@@ -37,4 +37,8 @@ write_block "sql/schema.sql"       sql/schema.sql
 echo "### TEMPLATES" >> $dst
 write_block "templates/hello-world-now.yaml" ./examples/templates/hello-world-now.yaml
 
+version=`git describe --tags $(git rev-list --tags --max-count=1)`
+# weird sed: for compatibility with both linux and macos 
+sed -i.bak "s/DOCKER_TAG/$version/" ./$dst && rm $dst.bak
+
 echo "install script saved at $dst"
