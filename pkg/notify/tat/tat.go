@@ -54,13 +54,11 @@ func (tn *NotificationSender) Send(m *notify.Message, name string) {
 		return
 	}
 
-	msg := m.Message()
-
-	labels := formatSendRequest(msg, name)
+	labels := formatSendRequest(m, name)
 
 	_, err = client.MessageAdd(
 		tatlib.MessageJSON{
-			Text:   msg.MainMessage,
+			Text:   m.MainMessage,
 			Labels: labels,
 			Topic:  tn.tatTopic,
 		},

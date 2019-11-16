@@ -51,7 +51,7 @@ func NewSlackNotificationSender(webhookURL string) *NotificationSender {
 
 // Send dispatches a notify.Message to Slack
 func (sn *NotificationSender) Send(m *notify.Message, name string) {
-	slackfb := formatSendRequest(m.Message(), name)
+	slackfb := formatSendRequest(m, name)
 
 	slackBody, _ := json.Marshal(slackfb)
 

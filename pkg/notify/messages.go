@@ -24,11 +24,6 @@ type TaskStateUpdate struct {
 	StepsTotal         int
 }
 
-// Message returns a task state change struct
-func (m *Message) Message() *Message {
-	return m
-}
-
 // WrapTaskStateUpdate returns a Message struct formatted for a task state change
 func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	var m Message
