@@ -8,9 +8,11 @@ then
     dst="install-utask.sh"
 fi
 
+version=`git describe --tags $(git rev-list --tags --max-count=1)`
+
 write_block() {
     echo "cat <<EOF >$1" >> $dst
-    cat $2 >> $dst
+    sed "s/DOCKER_TAG/$version/" $2 >> $dst
     echo "EOF" >> $dst
     echo "" >> $dst
     echo "" >> $dst
@@ -36,9 +38,5 @@ write_block "sql/schema.sql"       sql/schema.sql
 
 echo "### TEMPLATES" >> $dst
 write_block "templates/hello-world-now.yaml" ./examples/templates/hello-world-now.yaml
-
-version=`git describe --tags $(git rev-list --tags --max-count=1)`
-# weird sed: for compatibility with both linux and macos 
-sed -i.bak "s/DOCKER_TAG/$version/" ./$dst && rm $dst.bak
 
 echo "install script saved at $dst"
