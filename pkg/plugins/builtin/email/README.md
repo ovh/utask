@@ -35,7 +35,7 @@ action:
 
 ## Note
 
-The plugin returns an object to reuse some parameters in a future components:
+The plugin returns an object to reuse the parameters in a future component:
 
 ```json
 {
