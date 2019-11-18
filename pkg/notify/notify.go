@@ -3,25 +3,19 @@ package notify
 import "github.com/ovh/utask"
 
 // utask should be able to notify about inner task events through different channels
-// relevant information for the outside world is described by the Payload type
-// this package allows for the registration of different senders, capable of handling this payload
+// relevant information for the outside world is described by the Message struct
+// this package allows for the registration of different senders, capable of handling the Message struct
 
 var (
 	senders = make(map[string]NotificationSender)
-	// Actions represents configuration of each notify actions
+	// actions represents configuration of each notify actions
 	actions utask.NotifyActions
 )
 
-// Payload is the holder of data to be sent as a notification
-type Payload interface {
-	Message() string
-	Fields() []string
-}
-
-// NotificationSender is an object capable of sending a payload
+// NotificationSender is an object capable of sending a Message struct
 // over a notification channel, as determined by its implementation
 type NotificationSender interface {
-	Send(p Payload)
+	Send(m *Message, name string)
 }
 
 // RegisterSender adds a NotificationSender to the pool of available senders
@@ -48,16 +42,16 @@ func ListActions() utask.NotifyActions {
 	return actions
 }
 
-// Send dispatches a Payload over all registered senders
-func Send(p Payload, params utask.NotifyActionsParameters) {
+// Send dispatches a Message struct over all registered senders
+func Send(m *Message, params utask.NotifyActionsParameters) {
 	if params.Disabled {
 		return
 	}
 
 	// Empty NotifyBackends list means any
 	if len(params.NotifyBackends) == 0 {
-		for _, s := range senders {
-			go s.Send(p)
+		for name, s := range senders {
+			go s.Send(m, name)
 		}
 		return
 	}
@@ -67,7 +61,7 @@ func Send(p Payload, params utask.NotifyActionsParameters) {
 		for nsname, ns := range senders {
 			switch n {
 			case nsname:
-				go ns.Send(p)
+				go ns.Send(m, nsname)
 			}
 		}
 	}

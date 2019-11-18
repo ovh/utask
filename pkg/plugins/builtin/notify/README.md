@@ -12,8 +12,10 @@ action:
   configuration:
     # the payload of your notification
     message: Hello World! 
-    # a list of extra fields, to contextualize your message
-    fields: [tag:urgent, tag:english] 
+    # a list of extra fields as map of string, to contextualize your message
+    fields: 
+      randomfield: urgent 
+      language: english
     # a list of destination backends as defined in 'utask-cfg' (will be sent to ALL backends if left empty or null)
     backends: [tat-internal, slack-customers] 
 ```

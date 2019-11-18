@@ -48,6 +48,7 @@ postgres://user:pass@db/utask?sslmode=disable
     // notify_config contains a map of named notification configurations, composed of a type and config data, 
     // implemented notifiers include: 
     // - tat (github.com/ovh/tat)
+    // - slack webhook (https://api.slack.com/messaging/webhooks)
     "notify_config": {
         "tat-internal": {
             "type": "tat",
@@ -57,6 +58,12 @@ postgres://user:pass@db/utask?sslmode=disable
                 "url": "http://localhost:9999/tat",
                 "topic": "utask.notifications"
             }
+        },
+        "slack-webhook": {
+            "type": "slack",
+            "config": {
+                "webhook_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            }
         }
     },
     // notify_actions specifies a notification config for existing events in µTask
@@ -65,7 +72,7 @@ postgres://user:pass@db/utask?sslmode=disable
     "notify_actions": {
         "task_state_action": {
             "disabled": false, // set to true to avoid sending out notification
-            "notify_backends": ["tat-internal"] // choose among the named configs in notify_config, leave empty to broadcast on every notification backend
+            "notify_backends": ["tat-internal", "slack-webhook"] // choose among the named configs in notify_config, leave empty to broadcast on any notification backend
         }
     },
     // database_config holds configuration to fine-tune DB connection

@@ -546,7 +546,7 @@ var (
 )
 
 func (t *Task) notifyState(potentialResolvers []string) {
-	notify.Send(notify.TaskStateUpdate{
+	tsu := &notify.TaskStateUpdate{
 		Title:              t.Title,
 		PublicID:           t.PublicID,
 		State:              t.State,
@@ -556,5 +556,10 @@ func (t *Task) notifyState(potentialResolvers []string) {
 		ResolverUsername:   t.ResolverUsername,
 		StepsDone:          t.StepsDone,
 		StepsTotal:         t.StepsTotal,
-	}, notify.ListActions().TaskStateAction)
+	}
+
+	notify.Send(
+		notify.WrapTaskStateUpdate(tsu),
+		notify.ListActions().TaskStateAction,
+	)
 }
