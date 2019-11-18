@@ -1,18 +1,21 @@
 project_name: utask
 
 builds:
-  - binary: utask
+  - 
+    id: utask
+
+    main: ./cmd/utask
+
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
     flags:
       - -mod=vendor
     ldflags:
-      - -X ${VERSION_PKG}.Commit=${LAST_COMMIT} -X ${VERSION_PKG}.Version=${VERSION}"
+      - -X github.com/ovh/utask.Commit=${ .Env.LASTCOMMIT } -X github.com/ovh/utask.Version=${ .Env.VERSION }"
     goos:
       - darwin
       - linux
-      - openbsd
 
     goarch:
       - amd64
@@ -27,11 +30,13 @@ changelog:
       - '^docs:'
       - '^test:'
 
-archive:
-  name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-  replacements:
-    linux: Linux
-    amd64: x86_64
+archives:
+  - 
+    id: utask
+    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      linux: Linux
+      amd64: x86_64
 
 release:
   github:
