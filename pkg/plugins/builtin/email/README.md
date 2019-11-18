@@ -35,4 +35,16 @@ action:
 
 ## Note
 
+The plugin returns an object to reuse some parameters in a future components:
+
+```json
+{
+  "from_address":"foo@example.org",
+  "from_name":"uTask bot",
+  "to": ["bar@example.org", "hey@example.org"],
+  "subject":"Hello from µTask",
+  "body":"I love baguette"
+}
+```
+
 Sensitive data should be retrieved from configstore and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.

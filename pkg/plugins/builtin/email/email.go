@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	mail "gopkg.in/mail.v2"
+
+	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
 // the email plugin send email
