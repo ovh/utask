@@ -14,12 +14,16 @@ action:
     smtp_username: {{.config.smtp.username}}
     # mandatory, string
     smtp_password: {{.config.smtp.password}}
-    # optional, uint (default is 25)
+    # mandatory, uint
     smtp_port: {{.config.smtp.port}}
     # mandatory, string
     smtp_hostname: {{.config.smtp.hostname}}
+    # optional, boolean
+    smtp_skip_tls_verify: true
     # mandatory, string
-    from: foo@example.org
+    from_address: foo@example.org
+    # optional, string
+    from_name: uTask bot
     # mandatory, string collection
     to: [bar@example.org, hey@example.org]
     # mandatory, string
