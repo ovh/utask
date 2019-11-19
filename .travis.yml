@@ -7,9 +7,7 @@ go:
   - 1.13
 go_import_path: github.com/ovh/utask
 
-cache:
-  directories:
-    - $GOPATH/src/github.com/ovh/utask/vendor
+cache: apt
 
 addons:
   postgresql: "9.5"
@@ -33,3 +31,6 @@ script:
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - curl -sL https://git.io/goreleaser | head -n -2 | bash
+  - tar -xf /tmp/goreleaser.tar.gz -C $GOPATH/bin
+  - make run-goreleaser
