@@ -44,9 +44,8 @@ func validConfig(config interface{}) error {
 		return errors.New("smtp_password is missing")
 	}
 
-	smtpp, err := strconv.Atoi(cfg.SMTPPort)
-	if smtpp <= 0 || err != nil || cfg.SMTPPort == "" {
-		return fmt.Errorf("smtp_port is missing or wrong %s", err)
+	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 64); err != nil {
+		return fmt.Errorf("smtp_port is missing or wrong %s", err.Error())
 	}
 
 	if cfg.SMTPHostname == "" {
@@ -96,10 +95,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Body,
 	)
 
-	port, _ := strconv.Atoi(cfg.SMTPPort)
+	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)
 	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify)
 
-	d := mail.NewDialer(cfg.SMTPHostname, port, cfg.SMTPUsername, cfg.SMTPPassword)
+	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS}
 	if err := d.DialAndSend(message); err != nil {
 		fmt.Errorf("Send email failed: %s", err.Error())
