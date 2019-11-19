@@ -6,7 +6,11 @@ TEST_LOCATION	= ./...
 TEST_CMD		= go test -v -mod=vendor -cover ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
-VERSION			= `git describe --tags $(git rev-list --tags --max-count=1)`
+VERSION 		:= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)
+ifndef VERSION
+	VERSION = $(shell git describe --tags $(git rev-list --tags --max-count=1))-dev
+endif
+
 LAST_COMMIT		= `git rev-parse HEAD`
 VERSION_PKG		= github.com/ovh/utask
 
@@ -59,7 +63,7 @@ run-test-stack:
 run-test-stack-docker:
 	bash hack/test-docker.sh bash hack/interactive.sh
 
-package:
+run-goreleaser:
+	VERSION_PKG=${VERSION_PKG} LASTCOMMIT=${LAST_COMMIT} VERSION=${VERSION} goreleaser --snapshot --rm-dist
 
-testbb:
-	
+package:

@@ -9,10 +9,13 @@ builds:
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
+
     flags:
       - -mod=vendor
+
     ldflags:
-      - -X github.com/ovh/utask.Commit=${ .Env.LASTCOMMIT } -X github.com/ovh/utask.Version=${ .Env.VERSION }"
+      - -X {{.Env.VERSION_PKG}}.Commit={{.Env.LASTCOMMIT}} -X {{.Env.VERSION_PKG}}.Version={{.Env.VERSION}}
+
     goos:
       - darwin
       - linux
