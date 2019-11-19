@@ -8,7 +8,7 @@ TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
 VERSION 		:= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)
 ifndef VERSION
-	VERSION = $(shell git describe --tags $(git rev-list --tags --max-count=1))-dev
+	VERSION = $(shell git describe --abbrev=3 --tags $(git rev-list --tags --max-count=1))-dev
 endif
 
 LAST_COMMIT		= `git rev-parse HEAD`
@@ -16,6 +16,10 @@ VERSION_PKG		= github.com/ovh/utask
 
 DOCKER			= 0
 DOCKER_OPT		=
+
+define goreleaser
+	VERSION_PKG=${VERSION_PKG} LASTCOMMIT=${LAST_COMMIT} VERSION=${VERSION} goreleaser --rm-dist $(1)
+endef
 
 define build_binary
 	GO111MODULE=on go build -mod=vendor -ldflags "-X ${VERSION_PKG}.Commit=${LAST_COMMIT} -X ${VERSION_PKG}.Version=${VERSION}" \
@@ -64,6 +68,12 @@ run-test-stack-docker:
 	bash hack/test-docker.sh bash hack/interactive.sh
 
 run-goreleaser:
-	VERSION_PKG=${VERSION_PKG} LASTCOMMIT=${LAST_COMMIT} VERSION=${VERSION} goreleaser --snapshot --rm-dist
+ifneq (,$(findstring -dev,$(VERSION)))
+	@echo Run Goreleaser in snapshot mod
+	$(call goreleaser,--snapshot)
+else
+	@echo Run Goreleaser in release mod
+	$(call goreleaser)
+endif
 
 package:
