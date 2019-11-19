@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	mail "gopkg.in/mail.v2"
 
@@ -22,9 +23,9 @@ var (
 type Config struct {
 	SMTPUsername      string   `json:"smtp_username"`
 	SMTPPassword      string   `json:"smtp_password"`
-	SMTPPort          uint16   `json:"smtp_port"`
+	SMTPPort          string   `json:"smtp_port"`
 	SMTPHostname      string   `json:"smtp_hostname"`
-	SMTPSkipTLSVerify bool     `json:"smtp_skip_tls_verify,omitempty"`
+	SMTPSkipTLSVerify string   `json:"smtp_skip_tls_verify,omitempty"`
 	FromAddress       string   `json:"from_address"`
 	FromName          string   `json:"from_name,omitempty"`
 	To                []string `json:"to"`
@@ -38,24 +39,38 @@ func validConfig(config interface{}) error {
 	if cfg.SMTPUsername == "" {
 		return errors.New("smtp_username is missing")
 	}
+
 	if cfg.SMTPPassword == "" {
 		return errors.New("smtp_password is missing")
 	}
-	if cfg.SMTPPort == 0 {
-		return errors.New("smtp_port is missing")
+
+	smtpp, err := strconv.Atoi(cfg.SMTPPort)
+	if smtpp <= 0 || err != nil || cfg.SMTPPort == "" {
+		return fmt.Errorf("smtp_port is missing or wrong %s", err)
 	}
+
 	if cfg.SMTPHostname == "" {
 		return errors.New("smtp_hostname is missing")
 	}
+
+	if cfg.SMTPSkipTLSVerify != "" {
+		if _, err := strconv.ParseBool(cfg.SMTPSkipTLSVerify); err != nil {
+			return fmt.Errorf("smtp_skip_tls_verify is wrong %s", err)
+		}
+	}
+
 	if cfg.FromAddress == "" {
 		return errors.New("from_address is missing")
 	}
+
 	if len(cfg.To) == 0 {
 		return errors.New("to is missing")
 	}
+
 	if cfg.Subject == "" {
 		return errors.New("subject is missing")
 	}
+
 	if cfg.Body == "" {
 		return errors.New("body is missing")
 	}
@@ -81,8 +96,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Body,
 	)
 
-	d := mail.NewDialer(cfg.SMTPHostname, int(cfg.SMTPPort), cfg.SMTPUsername, cfg.SMTPPassword)
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: cfg.SMTPSkipTLSVerify}
+	port, _ := strconv.Atoi(cfg.SMTPPort)
+	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify)
+
+	d := mail.NewDialer(cfg.SMTPHostname, port, cfg.SMTPUsername, cfg.SMTPPassword)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS}
 	if err := d.DialAndSend(message); err != nil {
 		fmt.Errorf("Send email failed: %s", err.Error())
 	}

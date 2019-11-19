@@ -14,12 +14,12 @@ action:
     smtp_username: {{.config.smtp.username}}
     # mandatory, string
     smtp_password: {{.config.smtp.password}}
-    # mandatory, uint
+    # mandatory, string as uint
     smtp_port: {{.config.smtp.port}}
     # mandatory, string
     smtp_hostname: {{.config.smtp.hostname}}
-    # optional, boolean
-    smtp_skip_tls_verify: true
+    # optional, string as boolean
+    smtp_skip_tls_verify: "true"
     # mandatory, string
     from_address: foo@example.org
     # optional, string
