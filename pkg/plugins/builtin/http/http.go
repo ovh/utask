@@ -3,9 +3,9 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/ovh/utask"
@@ -23,13 +23,13 @@ var (
 
 // HTTPConfig is the configuration needed to perform an HTTP call
 type HTTPConfig struct {
-	URL            string       `json:"url"`
-	Method         string       `json:"method"`
-	Body           string       `json:"body,omitempty"`
-	Headers        []Header     `json:"headers,omitempty"`
-	TimeoutSeconds int          `json:"timeout_seconds,omitempty"`
-	HTTPBasicAuth  BasicAuth    `json:"basic_auth,omitempty"`
-	DenyRedirects  bool         `json:"deny_redirects,omitempty"`
+	URL            string      `json:"url"`
+	Method         string      `json:"method"`
+	Body           string      `json:"body,omitempty"`
+	Headers        []Header    `json:"headers,omitempty"`
+	TimeoutSeconds string      `json:"timeout_seconds,omitempty"`
+	HTTPBasicAuth  BasicAuth   `json:"basic_auth,omitempty"`
+	DenyRedirects  string      `json:"deny_redirects,omitempty"`
 	Parameters     []Parameter `json:"parameters,omitempty"`
 }
 
@@ -59,8 +59,16 @@ func validConfig(config interface{}) error {
 		return fmt.Errorf("Unknown method for HTTP runner: %s", cfg.Method)
 	}
 
-	if cfg.TimeoutSeconds < 0 {
-		return errors.New("timeout_seconds field can't be < 0")
+	if cfg.TimeoutSeconds != "" {
+		if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
+			return fmt.Errorf("timeout_seconds is wrong %s", err.Error())
+		}
+	}
+
+	if cfg.DenyRedirects != "" {
+		if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
+			return fmt.Errorf("deny_redirects is wrong %s", err.Error())
+		}
 	}
 
 	return nil
@@ -104,12 +112,16 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		req.Header.Set(h.Name, h.Value)
 	}
 
+	ts, _ := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16)
+
 	httpClient := &http.Client{
 		// 0 by default
-		Timeout: time.Duration(cfg.TimeoutSeconds) * time.Second,
+		Timeout: time.Duration(ts) * time.Second,
 	}
 
-	if cfg.DenyRedirects {
+	dr, _ := strconv.ParseBool(cfg.DenyRedirects)
+
+	if dr {
 		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
