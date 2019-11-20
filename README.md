@@ -422,11 +422,6 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |              || `smtp_password`: password of SMTP server
 |              || `smtp_port`: port of SMTP server
 |              || `smtp_hostname`: hostname of SMTP server
-|**`email`**   | Send an email
-|              || `smtp_username`: username of SMTP server
-|              || `smtp_password`: password of SMTP server
-|              || `smtp_port`: port of SMTP server
-|              || `smtp_hostname`: hostname of SMTP server
 |              || `smtp_skip_tls_verif`: Skip or not TLS insecure verify
 |              || `from_address`: from which email you want to send the message
 |              || `from_name`: from which name you want to send the message
