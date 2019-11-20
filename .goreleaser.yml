@@ -1,0 +1,48 @@
+project_name: utask
+
+builds:
+  - 
+    id: utask
+
+    main: ./cmd/utask
+
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+
+    flags:
+      - -mod=vendor
+
+    ldflags:
+      - -X {{.Env.VERSION_PKG}}.Commit={{.Env.LASTCOMMIT}} -X {{.Env.VERSION_PKG}}.Version={{.Env.VERSION}}
+
+    goos:
+      - darwin
+      - linux
+
+    goarch:
+      - amd64
+
+checksum:
+  name_template: '{{ .ProjectName }}_checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+archives:
+  - 
+    id: utask
+    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    replacements:
+      linux: Linux
+      amd64: x86_64
+
+release:
+  github:
+    owner: ovh
+    name: utask
+  draft: true

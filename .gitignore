@@ -35,3 +35,6 @@ ui/editor/node_modules
 # Related to config
 config/*
 !config/README.md
+
+# Related to Goreleaser
+dist/
