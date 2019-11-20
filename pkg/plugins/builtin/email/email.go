@@ -100,7 +100,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify)
 
 	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
-	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS}
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS, ServerName: cfg.SMTPHostname}
 	if err := d.DialAndSend(message); err != nil {
 		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
