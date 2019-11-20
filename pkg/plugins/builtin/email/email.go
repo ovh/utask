@@ -94,6 +94,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Body,
 	)
 
+	// port and skipTLS already checked at validConfig() lvl
+	// values must be correct so errors are not evaluated
 	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)
 	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify)
 
@@ -103,7 +105,6 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
 
-	// to reuse configuration
 	params := &mailParameters{
 		cfg.FromAddress,
 		cfg.FromName,
