@@ -19,18 +19,22 @@ var (
 	)
 )
 
+type mailParameters struct {
+	FromAddress string   `json:"from_address"`
+	FromName    string   `json:"from_name,omitempty"`
+	To          []string `json:"to"`
+	Subject     string   `json:"subject"`
+	Body        string   `json:"body"`
+}
+
 // Config is the configuration needed to send an email
 type Config struct {
-	SMTPUsername      string   `json:"smtp_username"`
-	SMTPPassword      string   `json:"smtp_password"`
-	SMTPPort          string   `json:"smtp_port"`
-	SMTPHostname      string   `json:"smtp_hostname"`
-	SMTPSkipTLSVerify string   `json:"smtp_skip_tls_verify,omitempty"`
-	FromAddress       string   `json:"from_address"`
-	FromName          string   `json:"from_name,omitempty"`
-	To                []string `json:"to"`
-	Subject           string   `json:"subject"`
-	Body              string   `json:"body"`
+	SMTPUsername      string `json:"smtp_username"`
+	SMTPPassword      string `json:"smtp_password"`
+	SMTPPort          string `json:"smtp_port"`
+	SMTPHostname      string `json:"smtp_hostname"`
+	SMTPSkipTLSVerify string `json:"smtp_skip_tls_verify,omitempty"`
+	mailParameters
 }
 
 func validConfig(config interface{}) error {
@@ -82,13 +86,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	message := mail.NewMessage()
 
-	recipients := make([]string, len(cfg.To))
-	for i, recipient := range cfg.To {
-		recipients[i] = message.FormatAddress(recipient, "")
-	}
-
 	message.SetAddressHeader("From", cfg.FromAddress, cfg.FromName)
-	message.SetHeader("To", recipients...)
+	message.SetHeader("To", cfg.To...)
 	message.SetHeader("Subject", cfg.Subject)
 	message.SetBody(
 		http.DetectContentType([]byte(cfg.Body)),
@@ -101,17 +100,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS}
 	if err := d.DialAndSend(message); err != nil {
-		fmt.Errorf("Send email failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
 
 	// to reuse configuration
-	parameters := struct {
-		FromAddress string   `json:"from_address"`
-		FromName    string   `json:"from_name"`
-		To          []string `json:"to"`
-		Subject     string   `json:"subject"`
-		Body        string   `json:"body"`
-	}{
+	params := &mailParameters{
 		cfg.FromAddress,
 		cfg.FromName,
 		cfg.To,
@@ -119,5 +112,5 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Body,
 	}
 
-	return &parameters, nil, nil
+	return params, nil, nil
 }
