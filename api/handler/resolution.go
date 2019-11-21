@@ -8,6 +8,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/step"

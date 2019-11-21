@@ -6,6 +6,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/santhosh-tekuri/jsonschema"
+
 	"github.com/ovh/utask/pkg/utils"
 )
 

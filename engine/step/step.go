@@ -10,6 +10,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/pkg/jsonschema"

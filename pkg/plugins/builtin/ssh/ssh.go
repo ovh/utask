@@ -10,6 +10,7 @@ import (
 
 	"github.com/juju/errors"
 	"golang.org/x/crypto/ssh"
+
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 

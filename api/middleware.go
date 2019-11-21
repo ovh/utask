@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/auth"
 )
