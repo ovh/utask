@@ -130,12 +130,12 @@ func (v *Values) GetError(stepName string) interface{} {
 	return v.getStepData(stepName, ErrorKey)
 }
 
-// SetChildren stores the error resulting from a failed step
+// SetError stores the error resulting from a failed step
 func (v *Values) SetError(stepName string, value interface{}) {
 	v.setStepData(stepName, ErrorKey, value)
 }
 
-// UnsetChildren empties the error from a failed step
+// UnsetError empties the error from a failed step
 func (v *Values) UnsetError(stepName string) {
 	v.unsetStepData(stepName, ErrorKey)
 }

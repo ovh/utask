@@ -53,7 +53,8 @@ func authMiddleware(authProvider func(*http.Request) (string, error)) func(c *gi
 				c.AbortWithError(http.StatusUnauthorized, err)
 				return
 			}
-			c.Set(auth.IdentityProviderCtxKey, user)
+			ctxKey := string(auth.IdentityProviderCtxKey)
+			c.Set(ctxKey, user)
 			c.Next()
 		}
 	}
