@@ -241,11 +241,20 @@ func (s *Server) build(ctx context.Context) {
 				},
 				maintenanceMode,
 				tonic.Handler(handler.CancelResolution, 204))
+
 			//	authRoutes.POST("/resolution/:id/rollback",
 			//		[]fizz.OperationOption{
 			// 			fizz.Summary(""),
 			//		},
 			//		tonic.Handler(handler.ResolutionRollback, 200))
+
+			authRoutes.GET("/",
+				[]fizz.OperationOption{
+					fizz.Summary("Redirect to /meta"),
+				},
+				func(c *gin.Context) {
+					c.Redirect(http.StatusMovedPermanently, "/meta")
+				})
 
 			authRoutes.GET("/meta",
 				[]fizz.OperationOption{
@@ -306,6 +315,8 @@ type rootOut struct {
 	ApplicationName string `json:"application_name"`
 	UserIsAdmin     bool   `json:"user_is_admin"`
 	Username        string `json:"username"`
+	Version         string `json:"version"`
+	Commit          string `json:"commit"`
 }
 
 func rootHandler(c *gin.Context) (*rootOut, error) {
@@ -313,6 +324,8 @@ func rootHandler(c *gin.Context) (*rootOut, error) {
 		ApplicationName: utask.AppName(),
 		UserIsAdmin:     auth.IsAdmin(c) == nil,
 		Username:        auth.GetIdentity(c),
+		Version:         utask.Version,
+		Commit:          utask.Commit,
 	}, nil
 }
 
