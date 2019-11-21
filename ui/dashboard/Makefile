@@ -11,6 +11,7 @@ DIST_TAR=dist.tar.gz
 DIR_NODEMODULES=node_modules
 
 BASEHREF ?= /
+PORT ?= 5557
 
 all: debug clean install build
 
@@ -29,7 +30,7 @@ install:
 
 dev:
 	$(NODE) scripts/prebuild-env-dev.js
-	$(NG) serve --open --port 5557 --base-href $(BASEHREF)
+	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF)
 
 build: install
 	$(NODE) scripts/prebuild-env-dev.js
@@ -43,7 +44,7 @@ build-prod: install
 
 prod:
 	$(NODE) scripts/prebuild-env-prod.js
-	$(NG) serve --open --port 5557 --base-href $(BASEHREF) --prod
+	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF) --prod
 
 package:
 	$(UNTAR) $(DIST_TAR)
