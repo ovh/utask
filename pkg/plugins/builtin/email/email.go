@@ -96,8 +96,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	// port and skipTLS already checked at validConfig() lvl
 	// values must be correct so errors are not evaluated
-	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)
-	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify)
+	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)     // no defaults, must be set by user
+	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify) // defaults to false
 
 	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS, ServerName: cfg.SMTPHostname}
@@ -105,13 +105,5 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
 
-	params := &mailParameters{
-		cfg.FromAddress,
-		cfg.FromName,
-		cfg.To,
-		cfg.Subject,
-		cfg.Body,
-	}
-
-	return params, nil, nil
+	return &cfg.mailParameters, nil, nil
 }
