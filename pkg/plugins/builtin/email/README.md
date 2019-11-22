@@ -14,12 +14,16 @@ action:
     smtp_username: {{.config.smtp.username}}
     # mandatory, string
     smtp_password: {{.config.smtp.password}}
-    # optional, uint (default is 25)
+    # mandatory, string as uint
     smtp_port: {{.config.smtp.port}}
     # mandatory, string
     smtp_hostname: {{.config.smtp.hostname}}
+    # optional, string as boolean
+    smtp_skip_tls_verify: "true"
     # mandatory, string
-    from: foo@example.org
+    from_address: foo@example.org
+    # optional, string
+    from_name: uTask bot
     # mandatory, string collection
     to: [bar@example.org, hey@example.org]
     # mandatory, string
@@ -30,5 +34,17 @@ action:
 ```
 
 ## Note
+
+The plugin returns an object to reuse the parameters in a future component:
+
+```json
+{
+  "from_address":"foo@example.org",
+  "from_name":"uTask bot",
+  "to": ["bar@example.org", "hey@example.org"],
+  "subject":"Hello from µTask",
+  "body":"I love baguette"
+}
+```
 
 Sensitive data should be retrieved from configstore and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.

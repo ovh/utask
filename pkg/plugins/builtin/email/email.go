@@ -1,43 +1,41 @@
 package email
 
 import (
-	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
-	"mime"
-	"net/smtp"
-	"strings"
-	"text/template"
+	"net/http"
+	"strconv"
+
+	mail "gopkg.in/mail.v2"
 
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
 // the email plugin send email
 var (
-	Plugin = taskplugin.New("email", "0.1", exec,
+	Plugin = taskplugin.New("email", "0.2", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
 	)
 )
 
-// Config is the configuration needed to send an email
-type Config struct {
-	SMTPUsername string   `json:"smtp_username"`
-	SMTPPassword string   `json:"smtp_password"`
-	SMTPPort     uint16   `json:"smtp_port,omitempty"`
-	SMTPHostname string   `json:"smtp_hostname"`
-	From         string   `json:"from"`
-	To           []string `json:"to"`
-	Subject      string   `json:"subject"`
-	Body         string   `json:"body"`
+type mailParameters struct {
+	FromAddress string   `json:"from_address"`
+	FromName    string   `json:"from_name,omitempty"`
+	To          []string `json:"to"`
+	Subject     string   `json:"subject"`
+	Body        string   `json:"body"`
 }
 
-const emailTemplate = "From: {{.From}}\r\n" +
-	"To: {{.To}}\r\n" +
-	"Subject: {{.Subject}}\r\n" +
-	"MIME-version: 1.0\r\n" +
-	"Content-Type: text/html; charset=\"UTF-8\"\r\n" +
-	"\r\n" +
-	"{{.Body}}"
+// Config is the configuration needed to send an email
+type Config struct {
+	SMTPUsername      string `json:"smtp_username"`
+	SMTPPassword      string `json:"smtp_password"`
+	SMTPPort          string `json:"smtp_port"`
+	SMTPHostname      string `json:"smtp_hostname"`
+	SMTPSkipTLSVerify string `json:"smtp_skip_tls_verify,omitempty"`
+	mailParameters
+}
 
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)
@@ -45,21 +43,37 @@ func validConfig(config interface{}) error {
 	if cfg.SMTPUsername == "" {
 		return errors.New("smtp_username is missing")
 	}
+
 	if cfg.SMTPPassword == "" {
 		return errors.New("smtp_password is missing")
 	}
-	if cfg.From == "" {
-		return errors.New("from is missing")
+
+	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 64); err != nil {
+		return fmt.Errorf("smtp_port is missing or wrong %s", err.Error())
 	}
-	if len(cfg.To) == 0 {
-		return errors.New("to is missing")
-	}
+
 	if cfg.SMTPHostname == "" {
 		return errors.New("smtp_hostname is missing")
 	}
+
+	if cfg.SMTPSkipTLSVerify != "" {
+		if _, err := strconv.ParseBool(cfg.SMTPSkipTLSVerify); err != nil {
+			return fmt.Errorf("smtp_skip_tls_verify is wrong %s", err)
+		}
+	}
+
+	if cfg.FromAddress == "" {
+		return errors.New("from_address is missing")
+	}
+
+	if len(cfg.To) == 0 {
+		return errors.New("to is missing")
+	}
+
 	if cfg.Subject == "" {
 		return errors.New("subject is missing")
 	}
+
 	if cfg.Body == "" {
 		return errors.New("body is missing")
 	}
@@ -70,39 +84,26 @@ func validConfig(config interface{}) error {
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*Config)
 
-	parameters := struct {
-		From    string `json:"from"`
-		To      string `json:"to"`
-		Subject string `json:"subject"`
-		Body    string `json:"body"`
-	}{
-		cfg.From,
-		strings.Join(cfg.To, ","),
-		mime.BEncoding.Encode("UTF-8", cfg.Subject),
+	message := mail.NewMessage()
+
+	message.SetAddressHeader("From", cfg.FromAddress, cfg.FromName)
+	message.SetHeader("To", cfg.To...)
+	message.SetHeader("Subject", cfg.Subject)
+	message.SetBody(
+		http.DetectContentType([]byte(cfg.Body)),
 		cfg.Body,
-	}
+	)
 
-	buffer := new(bytes.Buffer)
+	// port and skipTLS already checked at validConfig() lvl
+	// values must be correct so errors are not evaluated
+	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)     // no defaults, must be set by user
+	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify) // defaults to false
 
-	template := template.Must(template.New("emailTemplate").Parse(emailTemplate))
-	template.Execute(buffer, &parameters)
-
-	auth := smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPHostname)
-
-	port := cfg.SMTPPort
-	if port == 0 {
-		port = 25
-	}
-
-	err := smtp.SendMail(
-		fmt.Sprintf("%s:%d", cfg.SMTPHostname, cfg.SMTPPort),
-		auth,
-		cfg.From,
-		cfg.To,
-		buffer.Bytes())
-	if err != nil {
+	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS, ServerName: cfg.SMTPHostname}
+	if err := d.DialAndSend(message); err != nil {
 		return nil, nil, fmt.Errorf("Send email failed: %s", err.Error())
 	}
 
-	return &parameters, nil, nil
+	return &cfg.mailParameters, nil, nil
 }
