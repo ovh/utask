@@ -31,17 +31,6 @@ script:
   - make
   - make release
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_TOKEN
-  file: 
-    - install-utask.sh
-    - utask
-  skip_cleanup: true
-  draft: true
-  on:
-    tags: true
-
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
   - curl -sL https://git.io/goreleaser | head -n -2 | bash
