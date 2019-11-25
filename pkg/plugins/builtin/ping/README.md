@@ -2,7 +2,7 @@
 
 This plugin send a ping.
 
-*Warn: This plugin is blocking until count is done*
+*Warn: This plugin will keep running until the count is done*
 
 ## Configuration
 
@@ -47,5 +47,3 @@ The `Metadata` to reuse the parameters in a future component:
   "interval_second": "1"
 }
 ```
-
-Sensitive data should be retrieved from configstore and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.
