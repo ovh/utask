@@ -28,9 +28,11 @@ before_script:
 
 script:
   - make test-travis
+  - make release # still don't know where to upload install-utask.sh ...
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
   - curl -sL https://git.io/goreleaser | head -n -2 | bash
   - tar -xf /tmp/goreleaser.tar.gz -C $GOPATH/bin
+  - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis, is this an OK move?
   - make run-goreleaser
