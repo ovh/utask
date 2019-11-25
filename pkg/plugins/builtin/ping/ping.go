@@ -72,6 +72,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	pinger.Count = pingDefault(cfg.Count)
 	pinger.Interval = time.Duration(pingDefault(cfg.Interval)) * time.Second
 
+	// Run() is blocking until count is done
 	pinger.Run()
 
 	so := pinger.Statistics()
