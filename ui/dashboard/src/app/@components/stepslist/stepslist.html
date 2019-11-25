@@ -35,10 +35,14 @@
       {{stepName}}
     </div>
     <div class="utask_step-details" *ngIf="displayDetails[stepName]">
-      <!-- <div> -->
         <div *ngIf="steps[stepName].output">
           Output:
           <editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></editor>
+        </div>
+
+        <div *ngIf="steps[stepName].children">
+          Children:
+          <editor [value]="JSON.stringify(steps[stepName].children, null, 4)" [config]="editorConfigChildren"></editor>
         </div>
 
         <div *ngIf="steps[stepName].error">
@@ -47,16 +51,6 @@
         </div>
 
         <small>Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong></small>
-      <!-- </div> -->
-      <!-- <button type="button" class="cp_btnlink" style="width:100%;" title="Show/Hide details"
-        (click)="displayDetails[stepName] = !displayDetails[stepName]">
-        <span *ngIf="!displayDetails[stepName]">
-          <i class="fas fa-caret-down"></i>
-        </span>
-        <span *ngIf="displayDetails[stepName]">
-          <i class="fas fa-caret-up"></i>
-        </span>
-      </button> -->
     </div>
     <!-- <button type="button" class="btn btn-success" (click)="previewStepDetails(steps[stepName])">Preview</button> -->
   </div>

@@ -27,6 +27,10 @@ export class StepsListComponent implements OnChanges {
         readonly: true,
         maxLines: 10,
     };
+    editorConfigChildren: EditorConfig = {
+        readonly: true,
+        maxLines: 20,
+    };
     filteredStepNames: [];
     states: any = null;
     JSON = JSON;
