@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/configstore"
 	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/engine/step"
 )

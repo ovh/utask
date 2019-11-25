@@ -5,6 +5,7 @@ import (
 
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/models/resolution"

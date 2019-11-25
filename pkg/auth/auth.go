@@ -12,6 +12,11 @@ import (
 	"github.com/ovh/utask/pkg/utils"
 )
 
+// CtxKey is a custom type based on string type
+// used to fix golint when IdentityProviderCtxKey
+// is set
+type CtxKey string
+
 // IdentityProviderCtxKey is the key used to store/retrieve identity data from Context
 const IdentityProviderCtxKey = "__identity_provider_key"
 
@@ -22,7 +27,7 @@ var (
 
 // WithIdentity adds identity data to a context
 func WithIdentity(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, IdentityProviderCtxKey, id)
+	return context.WithValue(ctx, CtxKey(IdentityProviderCtxKey), id)
 }
 
 // Init reads authorization from configstore, bootstraps values
