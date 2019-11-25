@@ -24,7 +24,6 @@ type pingStats struct {
 	PacketsSent int             `json:"packets_sent"`
 	PacketLoss  float64         `json:"packet_loss"`
 	IPAddr      string          `json:"ip_addr"`
-	Addr        string          `json:"addr"`
 	Rtts        []time.Duration `json:"rtts"`
 	MinRtt      time.Duration   `json:"min_rtt"`
 	MaxRtt      time.Duration   `json:"max_rtt"`
@@ -82,7 +81,6 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		PacketsSent: so.PacketsSent,
 		PacketLoss:  so.PacketLoss,
 		IPAddr:      so.IPAddr.String(),
-		Addr:        so.Addr,
 		Rtts:        so.Rtts,
 		MinRtt:      so.MinRtt,
 		MaxRtt:      so.MaxRtt,

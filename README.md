@@ -428,6 +428,10 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |              || `to`: receiver(s) of your email
 |              || `subject`: subject of your email
 |              || `body`: content of your email
+|**`ping`**    | Send a ping to an hostname *this plugin is blocking*
+|              || `hostname`: ping destination
+|              || `count`: number of ping you want execute
+|              || `interval_second`: interval between two pings
 
  
 #### Loops
