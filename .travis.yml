@@ -28,8 +28,7 @@ before_script:
 
 script:
   - make test-travis
-  - make
-  - make release
+  - make release # still don't know where to upload install-utask.sh ...
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
