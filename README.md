@@ -381,57 +381,16 @@ Will render the following output, a combination of the action's raw output and t
 
 Browse [builtin actions](./pkg/plugins/builtin)
 
-|Plugin name|Description|Configuration  
+|Plugin name|Description|Link  
 |---|---|---
-|**`echo`** | Print out a pre-determined result 
-|           || `output`: an object with the complete output of the step
-|           || `metadata`: an object containing the metadata returned by the step
-|           || `error_message`: for testing purposes, an error message to simulate execution failure
-|           || `error_type`: (client/server) for testing purposes: `client` error blocks execution, `server` lets the step be retried
-|**`http`** | Make an http request 
-|           || `url`: destination for the http call, including host, path and query params
-|           || `method`: http method (GET/POST/PUT/DELETE)
-|           || `body`: a string representing the payload to be sent with the request
-|           || `headers`: a list of headers, represented as objects composed of `name` and `value`
-|           || `timeout_seconds`: an unsigned int representing a custom HTTP client timeout in seconds
-|           || `basic_auth`: a single object composed of `user` and `password` to enable HTTP basic auth
-|           || `deny_redirects`: a boolean representing the policy of redirects
-|           || `parameters`: a list of HTTP query parameters, represented as objects composed of `key` and `value`
-|**`subtask`** | Spawn a new task on µTask 
-|              || `template`: the name of a task template, as accepted through µTask's  API
-|              || `input`: a map of named values, as accepted on µTask's API
-|**`notify`**  | Dispatch a notification over a registered channel 
-|              || `message`: the main payload of the notification
-|              || `fields`: a collection of extra fields to annotate the message
-|              || `backends`: a collection of the backends over which the message will be dispatched (values accepted: named backends as configured in [`utask-cfg`](./config/README.md))
-|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/))
-|              || `path`: http route + query params
-|              || `method`: http method (GET/POST/PUT/DELETE)
-|              || `body`: a string representing the payload to be sent with the request
-|**`ssh`**     | Connect to a remote system and run commands on it
-|              || `user`: username for the connection
-|              || `target`: address of the remote machine
-|              || `hops`: a list of intermediate addresses (bastions)
-|              || `script`: multiline text, commands to be run on the machine's shell
-|              || `result`: an object to extract the values of variables from the machine's shell
-|              || `ssh_key`: private ssh key, preferrably retrieved from {{.config}}
-|              || `ssh_key_passphrase`: passphrase for the key, if any
-|              || `allow_exit_non_zero`: allow a non-zero exit code to be considered as a successful step (bool default `false`)
-|**`email`**   | Send an email
-|              || `smtp_username`: username of SMTP server
-|              || `smtp_password`: password of SMTP server
-|              || `smtp_port`: port of SMTP server
-|              || `smtp_hostname`: hostname of SMTP server
-|              || `smtp_skip_tls_verif`: Skip or not TLS insecure verify
-|              || `from_address`: from which email you want to send the message
-|              || `from_name`: from which name you want to send the message
-|              || `to`: receiver(s) of your email
-|              || `subject`: subject of your email
-|              || `body`: content of your email
-|**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*
-|              || `hostname`: ping destination
-|              || `count`: number of ping you want execute
-|              || `interval_second`: interval between two pings
+|**`echo`** | Print out a pre-determined result | TODO: add link
+|**`http`** | Make an http request | TODO: add link
+|**`subtask`** | Spawn a new task on µTask | TODO: add link
+|**`notify`**  | Dispatch a notification over a registered channel | TODO: add link
+|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)) | TODO: add link
+|**`ssh`**     | Connect to a remote system and run commands on it | TODO: add link
+|**`email`**   | Send an email | TODO: add link
+|**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | TODO: add link
 
  
 #### Loops

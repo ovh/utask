@@ -4,6 +4,13 @@ This plugin creates a new task. A step based on this type of action will remain 
 
 ## Configuration
 
+|Field|Description  
+|---|---
+| `template` | the name of a task template, as accepted through µTask's  API
+| `input` | a map of named values, as accepted on µTask's API
+
+## Example
+
 An action of type `subtask` requires the following kind of configuration:
 
 ```yaml
