@@ -55,7 +55,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
-	github.com/tjarratt/babble v0.0.0-20140317234543-2cf06e8d98b0 // indirect
+	github.com/tjarratt/babble v0.0.0-20191126185718-ccc47f626248 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/wI2L/fizz v0.0.0-20190425144348-6274bc96d962
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -70,6 +70,3 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
-
-// Until https://github.com/tjarratt/babble/pull/6 is merged
-replace github.com/tjarratt/babble => github.com/codeactual/babble v0.0.0-20190902213713-06cd230ffb31
