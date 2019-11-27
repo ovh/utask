@@ -104,9 +104,23 @@ func TestUtils(t *testing.T) {
 	tester := iffy.NewTester(t, hdl)
 
 	tester.AddCall("testMetrics", http.MethodGet, "/metrics", "").
-		Checkers(iffy.ExpectStatus(200))
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
 
 	tester.AddCall("testPing", http.MethodGet, "/unsecured/mon/ping", "").
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("testRootHandler", http.MethodGet, "/", "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(301),
+		)
+
+	tester.AddCall("testMeta", http.MethodGet, "/meta", "").
+		Headers(regularHeaders).
 		Checkers(
 			iffy.ExpectStatus(200),
 		)
