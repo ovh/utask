@@ -64,6 +64,13 @@ func TestMain(m *testing.M) {
 	srv := api.NewServer()
 	srv.WithAuth(dumbIdentityProvider)
 
+	go srv.ListenAndServe()
+	srvx := &http.Server{Addr: fmt.Sprintf(":%d", utask.FPort)}
+	err := srvx.Shutdown(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	hdl = srv.Handler(ctx)
 
 	os.Exit(m.Run())
