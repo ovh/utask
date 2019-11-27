@@ -9,6 +9,7 @@ This plugin makes calls to the Public API of OVHCloud: [https://api.ovh.com](htt
 | `path` | http route + query params
 | `method` | http method (GET/POST/PUT/DELETE)
 | `body` | a string representing the payload to be sent with the request
+| `credentials` | a key to retrieve credentials from configstore
 
 ## Example
 
