@@ -4,6 +4,19 @@ This plugin permorms an http request.
 
 ## Configuration
 
+|Fields|Description
+|---|---
+| `url` | destination for the http call, including host, path and query params
+| `method` | http method (GET/POST/PUT/DELETE)
+| `body` | a string representing the payload to be sent with the request
+| `headers` | a list of headers, represented as objects composed of `name` and `value`
+| `timeout_seconds` | an unsigned int representing a custom HTTP client timeout in seconds
+| `basic_auth` | a single object composed of `user` and `password` to enable HTTP basic auth
+| `deny_redirects` | a boolean representing the policy of redirects
+| `parameters` | a list of HTTP query parameters, represented as objects composed of `key` and `value`
+
+## Example
+
 An action of type `http` requires the following kind of configuration:
 
 ```yaml

@@ -4,6 +4,15 @@ This plugin makes calls to the Public API of OVHCloud: [https://api.ovh.com](htt
 
 ## Configuration
 
+|Field|Description
+|---|---
+| `path` | http route + query params
+| `method` | http method (GET/POST/PUT/DELETE)
+| `body` | a string representing the payload to be sent with the request
+| `credentials` | a key to retrieve credentials from configstore
+
+## Example
+
 An action of type `apiovh` requires the following kind of configuration. The `body` field is optional:
 
 ```yaml

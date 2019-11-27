@@ -6,6 +6,14 @@ This plugin send a ping.
 
 ## Configuration
 
+|Fields|Description
+|---|---
+| `hostname` | ping destination
+| `count` | number of ping you want execute
+| `interval_second` | interval between two pings
+
+## Example
+
 An action of type `ping` requires the following kind of configuration:
 
 ```yaml
