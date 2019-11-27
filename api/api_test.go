@@ -106,6 +106,11 @@ func TestUtils(t *testing.T) {
 	tester.AddCall("testMetrics", http.MethodGet, "/metrics", "").
 		Checkers(iffy.ExpectStatus(200))
 
+	tester.AddCall("testPing", http.MethodGet, "/unsecured/mon/ping", "").
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
 	tester.Run()
 }
 
