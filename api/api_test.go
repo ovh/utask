@@ -125,7 +125,15 @@ func TestUtils(t *testing.T) {
 			iffy.ExpectStatus(200),
 		)
 
+	utask.FMaintenanceMode = true
+
+	tester.AddCall("testMaintenanceMod", http.MethodPost, "/task", "").
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(405))
+
 	tester.Run()
+
+	utask.FMaintenanceMode = false
 }
 
 func TestPasswordInput(t *testing.T) {
