@@ -381,7 +381,7 @@ Will render the following output, a combination of the action's raw output and t
 
 Browse [builtin actions](./pkg/plugins/builtin)
 
-|Plugin name|Description|Link  
+|Plugin name|Description|Documentation  
 |---|---|---
 |**`echo`** | Print out a pre-determined result | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)
 |**`http`** | Make an http request | [Access plugin doc](./pkg/plugins/builtin/http/README.md)
