@@ -383,14 +383,14 @@ Browse [builtin actions](./pkg/plugins/builtin)
 
 |Plugin name|Description|Link  
 |---|---|---
-|**`echo`** | Print out a pre-determined result | TODO: add link
-|**`http`** | Make an http request | TODO: add link
-|**`subtask`** | Spawn a new task on µTask | TODO: add link
-|**`notify`**  | Dispatch a notification over a registered channel | TODO: add link
-|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)) | TODO: add link
-|**`ssh`**     | Connect to a remote system and run commands on it | TODO: add link
-|**`email`**   | Send an email | TODO: add link
-|**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | TODO: add link
+|**`echo`** | Print out a pre-determined result | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)
+|**`http`** | Make an http request | [Access plugin doc](./pkg/plugins/builtin/http/README.md)
+|**`subtask`** | Spawn a new task on µTask | [Access plugin doc](./pkg/plugins/builtin/subtask/README.md)
+|**`notify`**  | Dispatch a notification over a registered channel | [Access plugin doc](./pkg/plugins/builtin/notify/README.md)
+|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)) | [Access plugin doc](./pkg/plugins/builtin/apiovh/README.md)
+|**`ssh`**     | Connect to a remote system and run commands on it | [Access plugin doc](./pkg/plugins/builtin/ssh/README.md)
+|**`email`**   | Send an email | [Access plugin doc](./pkg/plugins/builtin/email/README.md)
+|**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)
 
  
 #### Loops

@@ -4,7 +4,7 @@ This plugin creates a new task. A step based on this type of action will remain 
 
 ## Configuration
 
-|Field|Description  
+|Fields|Description
 |---|---
 | `template` | the name of a task template, as accepted through µTask's  API
 | `input` | a map of named values, as accepted on µTask's API

@@ -6,7 +6,7 @@ This plugin send a ping.
 
 ## Configuration
 
-|Field|Description
+|Fields|Description
 |---|---
 | `hostname` | ping destination
 | `count` | number of ping you want execute

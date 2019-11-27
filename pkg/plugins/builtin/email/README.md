@@ -4,7 +4,7 @@ This plugin send an email.
 
 ## Configuration
 
-|Field|Description
+|Fields|Description
 |---|---
 | `smtp_username` | username of SMTP server
 | `smtp_password` | password of SMTP server

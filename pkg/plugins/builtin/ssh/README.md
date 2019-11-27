@@ -4,7 +4,7 @@ This plugin connects to a remote system and performs a block of commands. It can
 
 ## Configuration
 
-|Field|Description
+|Fields|Description
 |---|---
 | `user` | username for the connection
 | `target` | address of the remote machine

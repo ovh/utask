@@ -4,7 +4,7 @@ This plugin sends a message over any of the notification channels defined in µT
 
 ## Configuration
 
-|Field|Description
+|Fields|Description
 |---|---
 | `message` | the main payload of the notification
 | `fields` | a collection of extra fields to annotate the message

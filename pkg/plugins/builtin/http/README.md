@@ -4,7 +4,7 @@ This plugin permorms an http request.
 
 ## Configuration
 
-|Field|Description  
+|Fields|Description
 |---|---
 | `url` | destination for the http call, including host, path and query params
 | `method` | http method (GET/POST/PUT/DELETE)
