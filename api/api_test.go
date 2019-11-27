@@ -70,6 +70,11 @@ func TestMain(m *testing.M) {
 }
 
 func dumbIdentityProvider(r *http.Request) (string, error) {
+	username := r.Header.Get(usernameHeaderKey)
+
+	if username != adminUser && username != regularUser {
+		return "", errors.New("unknow user")
+	}
 	return r.Header.Get(usernameHeaderKey), nil
 }
 
@@ -128,6 +133,11 @@ func TestPasswordInput(t *testing.T) {
 		Headers(regularHeaders).
 		Checkers(
 			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("getTemplateWithoutAuth", http.MethodGet, "/template/input-password", "").
+		Checkers(
+			iffy.ExpectStatus(401),
 		)
 
 	tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"input-password","input":{"verysecret":"abracadabra"}}`).
