@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -31,12 +32,14 @@ const (
 	defaultInitializersFolder = "./init"
 	defaultPluginFolder       = "./plugins"
 	defaultTemplatesFolder    = "./templates"
+	defaultScriptsFolder      = "./scripts"
 	defaultRegion             = "default"
 	defaultPort               = 8081
 
 	envInit        = "INIT"
 	envPlugins     = "PLUGINS"
 	envTemplates   = "TEMPLATES"
+	envScripts     = "SCRIPTS"
 	envRegion      = "REGION"
 	envHTTPPort    = "SERVER_PORT"
 	envDebug       = "DEBUG"
@@ -54,6 +57,7 @@ func init() {
 	viper.BindEnv(envInit)
 	viper.BindEnv(envPlugins)
 	viper.BindEnv(envTemplates)
+	viper.BindEnv(envScripts)
 	viper.BindEnv(envRegion)
 	viper.BindEnv(envHTTPPort)
 	viper.BindEnv(envDebug)
@@ -71,6 +75,7 @@ func init() {
 	flags.StringVar(&utask.FInitializersFolder, "init-path", defaultInitializersFolder, "Initializer folder absolute path")
 	flags.StringVar(&utask.FPluginFolder, "plugins-path", defaultPluginFolder, "Plugins folder absolute path")
 	flags.StringVar(&utask.FTemplatesFolder, "templates-path", defaultTemplatesFolder, "Templates folder absolute path")
+	flags.StringVar(&utask.FScriptsFolder, "scripts-path", defaultScriptsFolder, "Scripts folder absolute path")
 	flags.StringVar(&utask.FRegion, "region", defaultRegion, "Region in which instance is located")
 	flags.UintVar(&utask.FPort, "http-port", defaultPort, "HTTP port to expose")
 	flags.BoolVar(&utask.FDebug, "debug", false, "Run engine in debug mode")
@@ -79,6 +84,7 @@ func init() {
 	viper.BindPFlag(envInit, rootCmd.Flags().Lookup("init-path"))
 	viper.BindPFlag(envPlugins, rootCmd.Flags().Lookup("plugins-path"))
 	viper.BindPFlag(envTemplates, rootCmd.Flags().Lookup("templates-path"))
+	viper.BindPFlag(envScripts, rootCmd.Flags().Lookup("scripts-path"))
 	viper.BindPFlag(envRegion, rootCmd.Flags().Lookup("region"))
 	viper.BindPFlag(envHTTPPort, rootCmd.Flags().Lookup("http-port"))
 	viper.BindPFlag(envDebug, rootCmd.Flags().Lookup("debug"))
@@ -96,6 +102,7 @@ var rootCmd = &cobra.Command{
 		utask.FInitializersFolder = viper.GetString(envInit)
 		utask.FPluginFolder = viper.GetString(envPlugins)
 		utask.FTemplatesFolder = viper.GetString(envTemplates)
+		utask.FScriptsFolder = viper.GetString(envScripts)
 		utask.FRegion = viper.GetString(envRegion)
 		utask.FPort = viper.GetUint(envHTTPPort)
 		utask.FDebug = viper.GetBool(envDebug)
@@ -126,6 +133,17 @@ var rootCmd = &cobra.Command{
 		} {
 			if err != nil {
 				return err
+			}
+		}
+
+		sFiles, err := ioutil.ReadDir(utask.FScriptsFolder)
+		if err != nil {
+			return err
+		}
+
+		for _, f := range sFiles {
+			if f.Mode()&0111 == 0 && f.Name()[0] != '.' {
+				errors.New("Scripts in the folder are not all executable")
 			}
 		}
 

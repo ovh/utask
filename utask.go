@@ -29,6 +29,9 @@ var (
 	// FTemplatesFolder is the path to a folder containing
 	// .yaml templates for tasks
 	FTemplatesFolder string
+	// FScriptsFolder is the path to a folder containing
+	// scripts files used by script plugin
+	FScriptsFolder string
 	// FRegion is the region in which this instance of µTask is running
 	FRegion string
 	// FPort is the port on which the http server listens
