@@ -64,12 +64,24 @@ func TestMain(m *testing.M) {
 	srv := api.NewServer()
 	srv.WithAuth(dumbIdentityProvider)
 
+	go srv.ListenAndServe()
+	srvx := &http.Server{Addr: fmt.Sprintf(":%d", utask.FPort)}
+	err := srvx.Shutdown(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	hdl = srv.Handler(ctx)
 
 	os.Exit(m.Run())
 }
 
 func dumbIdentityProvider(r *http.Request) (string, error) {
+	username := r.Header.Get(usernameHeaderKey)
+
+	if username != adminUser && username != regularUser {
+		return "", errors.New("unknown user")
+	}
 	return r.Header.Get(usernameHeaderKey), nil
 }
 
@@ -99,9 +111,44 @@ func TestUtils(t *testing.T) {
 	tester := iffy.NewTester(t, hdl)
 
 	tester.AddCall("testMetrics", http.MethodGet, "/metrics", "").
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("testPing", http.MethodGet, "/unsecured/mon/ping", "").
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("testRootHandler", http.MethodGet, "/", "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(301),
+		)
+
+	tester.AddCall("testMeta", http.MethodGet, "/meta", "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("testMaintenanceMod", http.MethodPost, "/task", "").
+		Headers(adminHeaders).
+		Checkers(iffy.ExpectStatus(405))
+
+	tester.AddCall("testKeyRoate", http.MethodPost, "/key-rotate", "").
+		Headers(adminHeaders).
 		Checkers(iffy.ExpectStatus(200))
 
+	tester.AddCall("testIsAdmin", http.MethodPost, "/key-rotate", "").
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(401))
+
+	utask.FMaintenanceMode = true
+
 	tester.Run()
+
+	utask.FMaintenanceMode = false
 }
 
 func TestPasswordInput(t *testing.T) {
@@ -128,6 +175,11 @@ func TestPasswordInput(t *testing.T) {
 		Headers(regularHeaders).
 		Checkers(
 			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("getTemplateWithoutAuth", http.MethodGet, "/template/input-password", "").
+		Checkers(
+			iffy.ExpectStatus(401),
 		)
 
 	tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"input-password","input":{"verysecret":"abracadabra"}}`).
@@ -199,6 +251,18 @@ func TestPasswordInput(t *testing.T) {
 			iffy.ExpectStatus(200),
 			iffy.ExpectJSONBranch("state", "DONE"),
 			iffy.ExpectJSONBranch("result", "revealed", "expectopatronum"),
+		)
+
+	tester.AddCall("fetchStatistics", http.MethodGet, "/unsecured/stats", "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("task_states", "BLOCKED", "0"),
+			iffy.ExpectJSONBranch("task_states", "CANCELLED", "0"),
+			iffy.ExpectJSONBranch("task_states", "DONE", "1"),
+			iffy.ExpectJSONBranch("task_states", "RUNNING", "0"),
+			iffy.ExpectJSONBranch("task_states", "TODO", "0"),
+			iffy.ExpectJSONBranch("task_states", "WONTFIX", "0"),
 		)
 
 	tester.Run()
