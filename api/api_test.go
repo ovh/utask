@@ -132,8 +132,6 @@ func TestUtils(t *testing.T) {
 			iffy.ExpectStatus(200),
 		)
 
-	utask.FMaintenanceMode = true
-
 	tester.AddCall("testMaintenanceMod", http.MethodPost, "/task", "").
 		Headers(adminHeaders).
 		Checkers(iffy.ExpectStatus(405))
@@ -145,6 +143,8 @@ func TestUtils(t *testing.T) {
 	tester.AddCall("testIsAdmin", http.MethodPost, "/key-rotate", "").
 		Headers(regularHeaders).
 		Checkers(iffy.ExpectStatus(401))
+
+	utask.FMaintenanceMode = true
 
 	tester.Run()
 
