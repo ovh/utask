@@ -370,6 +370,8 @@ func TestStepConditionStates(t *testing.T) {
 
 func TestResolutionStateCrashed(t *testing.T) {
 	res, err := createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	assert.Nil(t, err)
+
 	res.State = resolution.StateCrashed
 	res.Steps["stepOne"].State = step.StateRunning
 	err = updateResolution(res)
@@ -382,6 +384,8 @@ func TestResolutionStateCrashed(t *testing.T) {
 
 func TestResolutionStateCancelled(t *testing.T) {
 	res, err := createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	assert.Nil(t, err)
+
 	res.State = resolution.StateCancelled
 	err = updateResolution(res)
 	assert.Nil(t, err)
@@ -393,6 +397,8 @@ func TestResolutionStateCancelled(t *testing.T) {
 
 func TestResolutionStateDone(t *testing.T) {
 	res, err := createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	assert.Nil(t, err)
+
 	res.State = resolution.StateDone
 	err = updateResolution(res)
 	assert.Nil(t, err)
@@ -404,6 +410,8 @@ func TestResolutionStateDone(t *testing.T) {
 
 func TestResolutionStateRunning(t *testing.T) {
 	res, err := createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	assert.Nil(t, err)
+
 	res.State = resolution.StateRunning
 	err = updateResolution(res)
 	assert.Nil(t, err)
