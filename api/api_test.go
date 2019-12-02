@@ -80,7 +80,7 @@ func dumbIdentityProvider(r *http.Request) (string, error) {
 	username := r.Header.Get(usernameHeaderKey)
 
 	if username != adminUser && username != regularUser {
-		return "", errors.New("unknow user")
+		return "", errors.New("unknown user")
 	}
 	return r.Header.Get(usernameHeaderKey), nil
 }
