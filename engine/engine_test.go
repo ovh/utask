@@ -370,12 +370,13 @@ func TestStepConditionStates(t *testing.T) {
 	// StateCrashed
 	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
 	res.State = resolution.StateCrashed
+	res.Steps["stepOne"].State = step.StateRunning
 	err = updateResolution(res)
 	assert.Nil(t, err)
 
 	res, err = runResolution(res)
 	assert.Nil(t, err)
-	assert.NotNil(t, res)
+	assert.Nil(t, res)
 
 	// StateCancelled
 	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
