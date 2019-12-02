@@ -408,6 +408,20 @@ func TestStepConditionStates(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestAsyncResolve(t *testing.T) {
+	res, err := createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, step.StateTODO, res.Steps["stepOne"].State)
+	assert.Equal(t, resolution.StateTODO, res.State)
+	assert.Equal(t, 0, res.Steps["stepOne"].TryCount)
+
+	err = engine.GetEngine().Resolve(res.PublicID)
+
+	assert.Nil(t, err)
+}
+
 func TestInputNumber(t *testing.T) {
 	input := map[string]interface{}{
 		"quantity": -2.3,
