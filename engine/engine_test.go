@@ -366,6 +366,46 @@ func TestStepConditionStates(t *testing.T) {
 	assert.Equal(t, 2, res.Steps["stepOne"].TryCount)
 
 	assert.Equal(t, "REGEXP_MATCH", res.Steps["stepTwo"].State)
+
+	// StateCrashed
+	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	res.State = resolution.StateCrashed
+	err = updateResolution(res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	// StateCancelled
+	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	res.State = resolution.StateCancelled
+	err = updateResolution(res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.Nil(t, res)
+	assert.NotNil(t, err)
+
+	// StateDone
+	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	res.State = resolution.StateDone
+	err = updateResolution(res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.Nil(t, res)
+	assert.NotNil(t, err)
+
+	// StateRunning
+	res, err = createResolution("stepCondition.yaml", map[string]interface{}{}, nil)
+	res.State = resolution.StateRunning
+	err = updateResolution(res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.Nil(t, res)
+	assert.NotNil(t, err)
 }
 
 func TestInputNumber(t *testing.T) {
