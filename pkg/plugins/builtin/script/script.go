@@ -1,6 +1,8 @@
 package script
 
 import (
+	"errors"
+
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
@@ -22,11 +24,19 @@ type Config struct {
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)
 
+	if cfg.File == "" {
+		return errors.New("file field is missing")
+	}
+
 	return nil
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*Config)
+
+	if cfg.File == "" {
+		return nil, nil, errors.New("file field is missing")
+	}
 
 	return nil, nil, nil
 }
