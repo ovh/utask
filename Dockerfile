@@ -11,7 +11,7 @@ RUN BASEHREF=/ui/dashboard/ PREFIX_API_BASE_URL=/ make build-prod
 WORKDIR /home/node/ui/editor
 RUN BASEHREF=/ui/editor/ make build-prod
 
-FROM golang:1.12
+FROM golang:1.13-buster
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
