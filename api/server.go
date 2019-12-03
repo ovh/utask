@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -270,13 +269,6 @@ func (s *Server) build(ctx context.Context) {
 				},
 				requireAdmin,
 				tonic.Handler(keyRotate, 200))
-
-			// plugin
-			authRoutes.GET("/plugin/script",
-				[]fizz.OperationOption{
-					fizz.Summary("List of available scripts for script plugin"),
-				},
-				listScripts)
 		}
 
 		router.GET("/unsecured/mon/ping",
@@ -317,36 +309,6 @@ func pingHandler(c *gin.Context) {
 		return
 	}
 	c.String(http.StatusOK, "pong")
-}
-
-type scriptInfo struct {
-	Name             string `json:"name"`
-	Size             int64  `json:"size"`
-	ModificationTime string `json:"modification_time"`
-}
-
-func listScripts(c *gin.Context) {
-	sFiles, err := ioutil.ReadDir(utask.FScriptsFolder)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "")
-		c.Error(err)
-		return
-	}
-
-	payload := []scriptInfo{}
-
-	for _, f := range sFiles {
-		if f.Name()[0] != '.' {
-			si := scriptInfo{
-				Name:             f.Name(),
-				Size:             f.Size(),
-				ModificationTime: f.ModTime().String(),
-			}
-			payload = append(payload, si)
-		}
-	}
-
-	c.JSON(http.StatusOK, payload)
 }
 
 type rootOut struct {

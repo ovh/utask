@@ -138,12 +138,14 @@ var rootCmd = &cobra.Command{
 
 		sFiles, err := ioutil.ReadDir(utask.FScriptsFolder)
 		if err != nil {
-			return err
+			log.Warnf("Ignoring scripts directory %s: %s", utask.FScriptsFolder, err)
 		}
 
-		for _, f := range sFiles {
-			if f.Mode()&0111 == 0 && f.Name()[0] != '.' {
-				errors.New("Scripts in the folder are not all executable")
+		if len(sFiles) > 0 {
+			for _, f := range sFiles {
+				if f.Mode()&0111 == 0 && f.Name()[0] != '.' {
+					return errors.New("Scripts in the folder are not all executable")
+				}
 			}
 		}
 
