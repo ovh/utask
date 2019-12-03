@@ -42,15 +42,28 @@ action:
     ssh_key: '{{.config.mySSHKey}}'
 ```
 
-The output resulting from this configuration will be:
+## Requirements
 
-```js
+None by default. Ssh credentials should be retrieved from `{{.config.[sshkey]}}` rather than hardcoded on the template.
+
+## Note
+
+The plugin returns two objects, the `Payload` of the execution:
+
+```json
 {
   "pid": "1234",
   "uptime": "876123"
 }
 ```
 
-## Requirements
+The `Metadata` to fetch informations about plugin execution:
 
-None by default. Ssh credentials should be retrieved from `{{.config.[sshkey]}}` rather than hardcoded on the template.
+```json
+{
+  "output": "{\"foo\":\"bar\"}}",
+	"exit_status": "0",
+	"exit_signal": "0",
+	"exit_msg": "exited 0"
+}
+```

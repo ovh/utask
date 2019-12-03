@@ -177,34 +177,36 @@ trap printResultJSON EXIT
 	}
 
 	outStr := string(output)
-	ret := map[string]interface{}{
+	metadata := map[string]interface{}{
 		"output":      outStr,
 		"exit_status": fmt.Sprint(exitStatus),
 		"exit_signal": exitSignal,
 		"exit_msg":    exitMessage,
 	}
 
-	// Unmarshal printResultJSON's output
+	payload := make(map[string]interface{})
+
 	lastNL := strings.LastIndexByte(outStr, '{')
-	if lastNL != -1 {
-		lastLine := outStr[lastNL:]
-		m := map[string]string{}
-		err = json.Unmarshal([]byte(lastLine), &m)
-		if err != nil {
-			return nil, nil, err
-		}
-		for k, v := range m {
-			_, exists := ret[k]
-			// do not overwrite entries already set by plugin (e.g. 'output')
-			if !exists {
-				ret[k] = v
-			}
-		}
+	if lastNL == -1 {
+		return nil, metadata, nil
+	}
+
+	// Unmarshal printResultJSON's output
+	lastLine := outStr[lastNL:]
+	m := map[string]string{}
+
+	err = json.Unmarshal([]byte(lastLine), &m)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for k, v := range m {
+		payload[k] = v
 	}
 
 	if exitStatus != 0 && !cfg.AllowExitNonZero {
-		return ret, nil, fmt.Errorf("Exit code %d", exitStatus)
+		return payload, metadata, fmt.Errorf("Exit code %d", exitStatus)
 	}
 
-	return ret, nil, nil
+	return payload, metadata, nil
 }
