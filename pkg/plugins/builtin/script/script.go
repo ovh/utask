@@ -23,7 +23,7 @@ var (
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File    string   `json:"file"`
+	File    string   `json:"file,required"`
 	Argv    []string `json:"argv"`
 	Timeout string   `json:"timeout"`
 }
@@ -53,6 +53,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		t, _ := strconv.ParseInt(cfg.Timeout, 10, 64)
 		timeout = time.Duration(t)
 	} else {
+		// default is 5*60 = 300 seconds or 5 minutes
 		timeout = time.Duration(300)
 	}
 
