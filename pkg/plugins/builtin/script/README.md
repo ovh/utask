@@ -45,7 +45,7 @@ The plugin returns two objects, the `Payload` who is the last returned line of y
 
 The `Metadata` to fetch informations about plugin execution:
 
-```json
+```js
 {
   "exit_code":"0",
   "exit_signal":"0",
