@@ -62,8 +62,8 @@ The `Metadata` to fetch informations about plugin execution:
 ```json
 {
   "output": "{\"foo\":\"bar\"}}",
-	"exit_status": "0",
-	"exit_signal": "0",
-	"exit_msg": "exited 0"
+  "exit_status": "0",
+  "exit_signal": "0",
+  "exit_msg": "exited 0"
 }
 ```
