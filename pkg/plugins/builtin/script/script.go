@@ -79,6 +79,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	signal := cmd.ProcessState.Sys().(syscall.WaitStatus).Signal().String()
 
+	outStr := string(out)
+
 	metadata := struct {
 		ExitCode   string `json:"exit_code"`
 		ExitSignal string `json:"exit_signal"`
@@ -86,10 +88,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}{
 		ExitCode:   fmt.Sprint(exitCode),
 		ExitSignal: signal,
-		Output:     string(out),
+		Output:     outStr,
 	}
 
-	lastNL := strings.LastIndexByte(string(out), '{')
+	lastNL := strings.LastIndexByte(outStr, '{')
 	if lastNL == -1 {
 		return nil, metadata, nil
 	}
