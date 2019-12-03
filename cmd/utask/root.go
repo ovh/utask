@@ -143,7 +143,7 @@ var rootCmd = &cobra.Command{
 
 		if len(sFiles) > 0 {
 			for _, f := range sFiles {
-				if f.Mode()&0111 == 0 && f.Name()[0] != '.' {
+				if f.Mode()&0010 == 0 && f.Name()[0] != '.' {
 					return errors.New("Scripts in the folder are not all executable")
 				}
 			}
