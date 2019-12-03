@@ -1,12 +1,13 @@
 package script
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	gexec "os/exec"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -62,18 +63,14 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	exitCode := 0
 
-	var errbuf bytes.Buffer
-	cmd.Stderr = &errbuf
-	stderr := errbuf.String()
-
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if exitError, ok := err.(*gexec.ExitError); ok {
 			exitCode = exitError.Sys().(syscall.WaitStatus).ExitStatus()
 		} else {
 			exitCode = 1
-			if stderr == "" {
-				stderr = err.Error()
+			if string(out) == "" {
+				out = []byte(err.Error())
 			}
 		}
 	} else {
@@ -82,17 +79,27 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	signal := cmd.ProcessState.Sys().(syscall.WaitStatus).Signal().String()
 
-	payload := struct {
-		ExitCode   string      `json:"exit_code"`
-		ExitSignal string      `json:"exit_signal"`
-		Stdout     interface{} `json:"stdout"`
-		Stderr     interface{} `json:"stderr"`
+	metadata := struct {
+		ExitCode   string `json:"exit_code"`
+		ExitSignal string `json:"exit_signal"`
+		Output     string `json:"output"`
 	}{
 		ExitCode:   fmt.Sprint(exitCode),
 		ExitSignal: signal,
-		Stdout:     out,
-		Stderr:     []byte(stderr),
+		Output:     string(out),
 	}
 
-	return payload, cfg, nil
+	lastNL := strings.LastIndexByte(string(out), '{')
+	if lastNL == -1 {
+		return nil, metadata, nil
+	}
+
+	lastLine := out[lastNL:]
+	payload := make(map[string]interface{})
+	err = json.Unmarshal([]byte(lastLine), &metadata)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return payload, metadata, nil
 }
