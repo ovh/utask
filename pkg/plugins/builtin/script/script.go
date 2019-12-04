@@ -24,8 +24,8 @@ var (
 // Config is the configuration needed to execute a script
 type Config struct {
 	File    string   `json:"file,required"`
-	Argv    []string `json:"argv"`
-	Timeout string   `json:"timeout"`
+	Argv    []string `json:"argv,omitempty"`
+	Timeout string   `json:"timeout_seconds,omitempty"`
 }
 
 func validConfig(config interface{}) error {

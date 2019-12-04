@@ -4,6 +4,8 @@ This plugin execute a script.
 
 *Warn: This plugin will keep running until the execution is done*
 
+*Runtime(s) must be accessible on the host you deploy µTask if you want to execute interpreted scripts: [verify shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) and available packages*
+
 *Files must be located under scripts folder with exec (+x) permissions*
 
 ## Configuration
@@ -12,7 +14,7 @@ This plugin execute a script.
 |---|---
 | `file` | file name under scripts folder
 | `argv` | a collection of script argv
-| `timeout` | timeout of the script execution
+| `timeout_seconds` | timeout of the script execution
 
 ## Example
 
@@ -30,7 +32,7 @@ action:
         - bar
     # optional, string as uint
     # default is 300 seconds, 5 minutes
-    timeout: "25"
+    timeout_seconds: "25"
 ```
 
 ## Note
