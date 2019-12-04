@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
+	"github.com/ovh/utask/pkg/plugins/builtin/script"
 )
 
 const (
@@ -50,6 +51,7 @@ func TestMain(m *testing.M) {
 	}
 
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
+	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 
 	os.Exit(m.Run())
 }
@@ -620,6 +622,28 @@ func TestBaseOutput(t *testing.T) {
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, id, output["id"])
 	assert.Equal(t, "bar", output["foo"])
+}
+
+func TestScriptPlugin(t *testing.T) {
+	file := os.Getenv("SCRIPTS") + "/hello-world.py"
+	res, err := createResolution("execScript.yaml", map[string]interface{}{"file": file}, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	payload := make(map[string]interface{})
+	payload["msg"] = "Hello world!"
+
+	metadata := script.Metadata{
+		ExitCode:     "0",
+		ProcessState: "exit status 0",
+		Output:       "{\"msg\":\"Hello world!\"}\n",
+	}
+	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
+	assert.Equal(t, metadata, res.Steps["stepOne"].Metadata)
 }
 
 func TestBaseBaseConfiguration(t *testing.T) {

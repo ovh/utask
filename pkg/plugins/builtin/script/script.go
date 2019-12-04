@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ovh/utask"
+
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
@@ -20,6 +22,12 @@ var (
 		taskplugin.WithConfig(validConfig, Config{}),
 	)
 )
+
+type Metadata struct {
+	ExitCode     string `json:"exit_code"`
+	ProcessState string `json:"process_state"`
+	Output       string `json:"output"`
+}
 
 // Config is the configuration needed to execute a script
 type Config struct {
@@ -60,7 +68,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 	defer cancel()
 
-	cmd := gexec.CommandContext(ctxe, cfg.File, cfg.Argv...)
+	cmd := gexec.CommandContext(ctxe, utask.FScriptsFolder+cfg.File, cfg.Argv...)
 
 	exitCode := 0
 
@@ -78,18 +86,14 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		exitCode = cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
 	}
 
-	signal := cmd.ProcessState.Sys().(syscall.WaitStatus).Signal().String()
+	pState := cmd.ProcessState.String()
 
 	outStr := string(out)
 
-	metadata := struct {
-		ExitCode   string `json:"exit_code"`
-		ExitSignal string `json:"exit_signal"`
-		Output     string `json:"output"`
-	}{
-		ExitCode:   fmt.Sprint(exitCode),
-		ExitSignal: signal,
-		Output:     outStr,
+	metadata := Metadata{
+		ExitCode:     fmt.Sprint(exitCode),
+		ProcessState: pState,
+		Output:       outStr,
 	}
 
 	lastNL := strings.LastIndexByte(outStr, '{')

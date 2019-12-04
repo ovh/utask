@@ -50,8 +50,8 @@ The `Metadata` to fetch informations about plugin execution:
 ```js
 {
   "exit_code":"0",
-  "exit_signal":"0",
+  "process_state":"exit status 0",
   // Output is combinated /w Stdout and Stderr
-  "output": "I'm a super happy script"
+  "output": "{\"foo\":\"bar\"}"
 }
 ```

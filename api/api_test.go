@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
+	"github.com/ovh/utask/pkg/plugins/builtin/script"
 	"github.com/ovh/utask/pkg/utils"
 )
 
@@ -49,6 +50,7 @@ func TestMain(m *testing.M) {
 	logrus.SetLevel(logrus.ErrorLevel)
 
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
+	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 
 	db.Init(store)
 

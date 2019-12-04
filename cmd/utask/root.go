@@ -32,7 +32,7 @@ const (
 	defaultInitializersFolder = "./init"
 	defaultPluginFolder       = "./plugins"
 	defaultTemplatesFolder    = "./templates"
-	defaultScriptsFolder      = "./scripts"
+	defaultScriptsFolder      = "./scripts/"
 	defaultRegion             = "default"
 	defaultPort               = 8081
 
