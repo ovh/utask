@@ -107,7 +107,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	payload := make(map[string]interface{})
 	err = json.Unmarshal([]byte(lastLine), &payload)
 	if err != nil {
-		return nil, nil, err
+		return nil, metadata, err
 	}
 
 	return payload, metadata, nil
