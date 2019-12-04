@@ -65,7 +65,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		timeout = time.Duration(120)
 	}
 
-	ctxe, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+	timeout = timeout * time.Second
+
+	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := gexec.CommandContext(ctxe, utask.FScriptsFolder+cfg.File, cfg.Argv...)
