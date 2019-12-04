@@ -61,8 +61,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		t, _ := strconv.ParseInt(cfg.Timeout, 10, 64)
 		timeout = time.Duration(t)
 	} else {
-		// default is 5*60 = 300 seconds or 5 minutes
-		timeout = time.Duration(300)
+		// default is 2*60 = 120 seconds or 2 minutes
+		timeout = time.Duration(120)
 	}
 
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout*time.Second)

@@ -31,7 +31,7 @@ action:
         - foo
         - bar
     # optional, string as uint
-    # default is 300 seconds, 5 minutes
+    # default is 120 seconds, 2 minutes
     timeout_seconds: "25"
 ```
 
