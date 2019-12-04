@@ -16,7 +16,7 @@ An action of type `notify` requires the following kind of configuration:
 
 ```yaml
 action:
-  type: echo
+  type: notify
   configuration:
     # the payload of your notification
     message: Hello World! 
