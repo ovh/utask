@@ -85,7 +85,7 @@ The `Metadata` to fetch informations about plugin execution:
 
 
     *** System restart required ***
-    {\"pid":"3931\",\"service_name\":\"nginx\",\"service_uptime\":\"1715606\"}",
+    {\"pid\":\"3931\",\"service_name\":\"nginx\",\"service_uptime\":\"1715606\"}",
   "exit_status": "0",
   "exit_signal": "0",
   "exit_msg": "exited 0"
