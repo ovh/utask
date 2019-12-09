@@ -22,7 +22,7 @@ const (
 
 // ssh plugin opens an ssh connection and runs commands on target machine
 var (
-	Plugin = taskplugin.New("ssh", "0.1", execssh,
+	Plugin = taskplugin.New("ssh", "0.2", execssh,
 		taskplugin.WithConfig(configssh, ConfigSSH{}),
 	)
 )
