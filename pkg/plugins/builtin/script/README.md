@@ -25,11 +25,10 @@ action:
   type: script
   configuration:
     # mandatory, string
-    file: example.py
+    file: hello-world.py
     # optional, a collection of string
     argv:
-        - foo
-        - bar
+        - world
     # optional, string as Duration
     # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
     # default is 2m
@@ -41,10 +40,10 @@ action:
 The plugin returns two objects, the `Payload` who is the last returned line of your script as json:
 
 ```json
-{
-  "foo":"bar",
-}
+{"msg":"Hello world!","error":{"message":"nil"}}
 ```
+
+*Your JSON must be printed on last line and followed by a return line*
 
 The `Metadata` to fetch informations about plugin execution:
 
@@ -53,6 +52,6 @@ The `Metadata` to fetch informations about plugin execution:
   "exit_code":"0",
   "process_state":"exit status 0",
   // Output is combinated /w Stdout and Stderr
-  "output": "{\"foo\":\"bar\"}"
+  "output":"Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n"
 }
 ```

@@ -97,12 +97,23 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Output:       outStr,
 	}
 
-	lastNL := strings.LastIndexByte(outStr, '{')
-	if lastNL == -1 {
+	lastIndexOutStr := strings.LastIndex(outStr, "\n")
+	if lastIndexOutStr == -1 {
+		return nil, metadata, nil
+	}
+	// In case the script only returns the one-lined JSON
+	trimedOutStr := "\n" + outStr[:lastIndexOutStr]
+
+	lastLineIndex := strings.LastIndex(trimedOutStr, "\n")
+	if lastLineIndex == -1 {
 		return nil, metadata, nil
 	}
 
-	lastLine := out[lastNL:]
+	lastLine := trimedOutStr[lastLineIndex:]
+	if !strings.Contains(lastLine, "{") {
+		return nil, metadata, nil
+	}
+
 	payload := make(map[string]interface{})
 	err = json.Unmarshal([]byte(lastLine), &payload)
 	if err != nil {

@@ -2,4 +2,5 @@
 
 import sys
 
-print('{"msg":"Hello %s!"}' % sys.argv[1])
+print('Hello world script')
+print('{"msg":"Hello %s!","error":{"message":"nil"}}' % sys.argv[1])

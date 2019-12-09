@@ -636,11 +636,12 @@ func TestScriptPlugin(t *testing.T) {
 
 	payload := make(map[string]interface{})
 	payload["msg"] = "Hello world!"
+	payload["error"] = map[string]interface{}{"message": "nil"}
 
 	metadata := script.Metadata{
 		ExitCode:     "0",
 		ProcessState: "exit status 0",
-		Output:       "{\"msg\":\"Hello world!\"}\n",
+		Output:       "Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
 	}
 	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
 	assert.Equal(t, metadata, res.Steps["stepOne"].Metadata)
