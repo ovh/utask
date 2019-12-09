@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	gexec "os/exec"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -33,7 +32,7 @@ type Metadata struct {
 type Config struct {
 	File    string   `json:"file,required"`
 	Argv    []string `json:"argv,omitempty"`
-	Timeout string   `json:"timeout_seconds,omitempty"`
+	Timeout string   `json:"timeout,omitempty"`
 }
 
 func validConfig(config interface{}) error {
@@ -44,7 +43,10 @@ func validConfig(config interface{}) error {
 	}
 
 	if cfg.Timeout != "" {
-		if _, err := strconv.ParseUint(cfg.Timeout, 10, 64); err != nil {
+		if cfg.Timeout[0] == '-' {
+			return errors.New("timeout must be positive")
+		}
+		if _, err := time.ParseDuration(cfg.Timeout); err != nil {
 			return fmt.Errorf("timeout is wrong %s", err.Error())
 		}
 	}
@@ -58,14 +60,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	var timeout time.Duration
 
 	if cfg.Timeout != "" {
-		t, _ := strconv.ParseInt(cfg.Timeout, 10, 64)
-		timeout = time.Duration(t)
+		timeout, _ = time.ParseDuration(cfg.Timeout)
 	} else {
-		// default is 2*60 = 120 seconds or 2 minutes
-		timeout = time.Duration(120)
+		// default is 2 * 1 minute = 2 minutes
+		timeout = time.Duration(2) * time.Minute
 	}
-
-	timeout = timeout * time.Second
 
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

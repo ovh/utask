@@ -14,7 +14,7 @@ This plugin execute a script.
 |---|---
 | `file` | file name under scripts folder
 | `argv` | a collection of script argv
-| `timeout_seconds` | timeout of the script execution
+| `timeout` | timeout of the script execution
 
 ## Example
 
@@ -30,9 +30,10 @@ action:
     argv:
         - foo
         - bar
-    # optional, string as uint
-    # default is 120 seconds, 2 minutes
-    timeout_seconds: "25"
+    # optional, string as Duration
+    # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+    # default is 2m
+    timeout: "25s"
 ```
 
 ## Note
