@@ -22,6 +22,7 @@ var (
 	)
 )
 
+// Metadata represents the metadata of script execution
 type Metadata struct {
 	ExitCode     string `json:"exit_code"`
 	ProcessState string `json:"process_state"`
