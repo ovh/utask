@@ -53,6 +53,7 @@ The `Metadata` to fetch informations about plugin execution:
   "process_state":"exit status 0",
   // Output is combinated /w Stdout and Stderr
   "output":"Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+  "execution_time":"846.889µs",
   "error":""
 }
 ```

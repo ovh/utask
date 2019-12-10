@@ -638,12 +638,19 @@ func TestScriptPlugin(t *testing.T) {
 	payload["error"] = map[string]interface{}{"message": "nil"}
 
 	metadata := script.Metadata{
-		ExitCode:     "0",
-		ProcessState: "exit status 0",
-		Output:       "Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+		ExitCode:      "0",
+		ProcessState:  "exit status 0",
+		Output:        "Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+		ExecutionTime: "",
+		Error:         "",
 	}
+
+	// because time can't be consistant through tests
+	metadataOutput := res.Steps["stepOne"].Metadata.(script.Metadata)
+	metadataOutput.ExecutionTime = ""
+
 	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
-	assert.Equal(t, metadata, res.Steps["stepOne"].Metadata)
+	assert.Equal(t, metadata, metadataOutput)
 }
 
 func TestBaseBaseConfiguration(t *testing.T) {

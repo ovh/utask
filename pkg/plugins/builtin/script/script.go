@@ -26,10 +26,11 @@ var (
 
 // Metadata represents the metadata of script execution
 type Metadata struct {
-	ExitCode     string `json:"exit_code"`
-	ProcessState string `json:"process_state"`
-	Output       string `json:"output"`
-	Error        string `json:"error"`
+	ExitCode      string `json:"exit_code"`
+	ProcessState  string `json:"process_state"`
+	Output        string `json:"output"`
+	ExecutionTime string `json:"execution_time"`
+	Error         string `json:"error"`
 }
 
 // Config is the configuration needed to execute a script
@@ -85,10 +86,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
 
 	exitCode := 0
-
 	metaError := ""
 
+	// start exec time timer
+	timer := time.Now()
+	// execute script
 	out, err := cmd.CombinedOutput()
+	// evaluate exec time
+	execTime := time.Since(timer)
+
 	if err != nil {
 		if exitError, ok := err.(*gexec.ExitError); ok {
 			exitCode = exitError.Sys().(syscall.WaitStatus).ExitStatus()
@@ -105,10 +111,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	outStr := string(out)
 
 	metadata := Metadata{
-		ExitCode:     fmt.Sprint(exitCode),
-		ProcessState: pState,
-		Output:       outStr,
-		Error:        metaError,
+		ExitCode:      fmt.Sprint(exitCode),
+		ProcessState:  pState,
+		Output:        outStr,
+		ExecutionTime: execTime.String(),
+		Error:         metaError,
 	}
 
 	lastIndexOutStr := strings.LastIndex(outStr, "\n")
