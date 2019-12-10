@@ -8,6 +8,7 @@ steps:
         action:
             type: script
             configuration:
+                # Only for testing purpose
                 file: ./../scripts/hello-world.sh
                 argv:
                   - world
