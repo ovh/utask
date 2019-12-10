@@ -255,15 +255,7 @@ func TestPasswordInput(t *testing.T) {
 
 	tester.AddCall("fetchStatistics", http.MethodGet, "/unsecured/stats", "").
 		Headers(regularHeaders).
-		Checkers(
-			iffy.ExpectStatus(200),
-			iffy.ExpectJSONBranch("task_states", "BLOCKED", "0"),
-			iffy.ExpectJSONBranch("task_states", "CANCELLED", "0"),
-			iffy.ExpectJSONBranch("task_states", "DONE", "1"),
-			iffy.ExpectJSONBranch("task_states", "RUNNING", "0"),
-			iffy.ExpectJSONBranch("task_states", "TODO", "0"),
-			iffy.ExpectJSONBranch("task_states", "WONTFIX", "0"),
-		)
+		Checkers(iffy.ExpectStatus(200))
 
 	tester.Run()
 }
