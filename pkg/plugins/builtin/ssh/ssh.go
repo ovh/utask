@@ -184,18 +184,16 @@ trap printResultJSON EXIT
 		"exit_msg":    exitMessage,
 	}
 
-	lastNL := strings.LastIndexByte(outStr, '{')
-	if lastNL == -1 {
-		return nil, metadata, nil
-	}
-
-	// Unmarshal printResultJSON's output
-	lastLine := outStr[lastNL:]
 	payload := make(map[string]interface{})
 
-	err = json.Unmarshal([]byte(lastLine), &payload)
-	if err != nil {
-		return nil, metadata, err
+	lastNL := strings.LastIndexByte(outStr, '{')
+	if lastNL != -1 {
+		lastLine := outStr[lastNL:]
+
+		err = json.Unmarshal([]byte(lastLine), &payload)
+		if err != nil {
+			return nil, metadata, err
+		}
 	}
 
 	if exitStatus != 0 && !cfg.AllowExitNonZero {

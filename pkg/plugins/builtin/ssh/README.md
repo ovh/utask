@@ -44,7 +44,7 @@ action:
 
 ## Requirements
 
-None by default. Ssh credentials should be retrieved from `{{.config.[sshkey]}}` rather than hardcoded on the template.
+None by default. Ssh credentials should be retrieved from `{{.config.mySSHKey}}` rather than hardcoded on the template.
 
 ## Note
 
