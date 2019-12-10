@@ -24,7 +24,7 @@ require PG_USER PG_PASSWORD PG_HOST PG_PORT PG_DATABASENAME PSQL_BIN
 
 export CFG_DATABASE="postgres://$PG_USER:$PG_PASSWORD@$PG_HOST:$PG_PORT/$PG_DATABASENAME?connect_timeout=5&sslmode=disable"
 
-export SCRIPTS="$GOPATH/src/github.com/ovh/utask/scripts"
+export SCRIPTS="./../scripts"
 
 mkdir -p $PWD/config
 export CONFIGURATION_FROM=filetree:$PWD/config,env:CFG

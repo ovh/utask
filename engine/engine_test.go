@@ -625,8 +625,7 @@ func TestBaseOutput(t *testing.T) {
 }
 
 func TestScriptPlugin(t *testing.T) {
-	file := os.Getenv("SCRIPTS") + "/hello-world.py"
-	res, err := createResolution("execScript.yaml", map[string]interface{}{"file": file}, nil)
+	res, err := createResolution("execScript.yaml", nil, nil)
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 

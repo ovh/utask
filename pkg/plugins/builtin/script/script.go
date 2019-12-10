@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	gexec "os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -27,6 +29,7 @@ type Metadata struct {
 	ExitCode     string `json:"exit_code"`
 	ProcessState string `json:"process_state"`
 	Output       string `json:"output"`
+	Error        string `json:"error"`
 }
 
 // Config is the configuration needed to execute a script
@@ -41,6 +44,15 @@ func validConfig(config interface{}) error {
 
 	if cfg.File == "" {
 		return errors.New("file is missing")
+
+		f, err := os.Stat(filepath.Join(utask.FScriptsFolder, cfg.File))
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%s not found in FS: %s", cfg.File, err.Error())
+		}
+
+		if f.Mode()&0010 == 0 {
+			return fmt.Errorf("%s haven't exec permissions", cfg.File)
+		}
 	}
 
 	if cfg.Timeout != "" {
@@ -70,9 +82,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := gexec.CommandContext(ctxe, utask.FScriptsFolder+cfg.File, cfg.Argv...)
+	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
 
 	exitCode := 0
+
+	metaError := ""
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -80,10 +94,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			exitCode = exitError.Sys().(syscall.WaitStatus).ExitStatus()
 		} else {
 			exitCode = 1
-			if string(out) == "" {
-				out = []byte(err.Error())
-			}
 		}
+		metaError = err.Error()
 	} else {
 		exitCode = cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
 	}
@@ -96,6 +108,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		ExitCode:     fmt.Sprint(exitCode),
 		ProcessState: pState,
 		Output:       outStr,
+		Error:        metaError,
 	}
 
 	lastIndexOutStr := strings.LastIndex(outStr, "\n")

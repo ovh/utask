@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -133,19 +132,6 @@ var rootCmd = &cobra.Command{
 		} {
 			if err != nil {
 				return err
-			}
-		}
-
-		sFiles, err := ioutil.ReadDir(utask.FScriptsFolder)
-		if err != nil {
-			log.Warnf("Ignoring scripts directory %s: %s", utask.FScriptsFolder, err)
-		}
-
-		if len(sFiles) > 0 {
-			for _, f := range sFiles {
-				if f.Mode()&0010 == 0 && f.Name()[0] != '.' {
-					return errors.New("Scripts in the folder are not all executable")
-				}
 			}
 		}
 

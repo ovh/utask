@@ -38,7 +38,7 @@ config/*
 
 # Related to scripts
 scripts/*
-!scripts/hello-world.py
+!scripts/hello-world.sh
 
 # Related to Goreleaser
 dist/

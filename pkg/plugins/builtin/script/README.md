@@ -25,7 +25,7 @@ action:
   type: script
   configuration:
     # mandatory, string
-    file: hello-world.py
+    file: hello-world.sh
     # optional, a collection of string
     argv:
         - world
@@ -52,6 +52,7 @@ The `Metadata` to fetch informations about plugin execution:
   "exit_code":"0",
   "process_state":"exit status 0",
   // Output is combinated /w Stdout and Stderr
-  "output":"Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n"
+  "output":"Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+  "error":""
 }
 ```
