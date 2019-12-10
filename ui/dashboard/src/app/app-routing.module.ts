@@ -10,6 +10,8 @@ import { NewComponent } from './@routes/new/new.component';
 import { TemplatesResolve } from './@resolves/templates.resolve';
 import { TemplatesComponent } from './@routes/templates/templates.component';
 import { TemplateComponent } from './@routes/templates/template.component';
+import { StatsComponent } from './@routes/stats/stats.component';
+import { StatsResolve } from './@routes/stats/stats.resolve';
 
 
 // const routes: Routes = [
@@ -51,7 +53,14 @@ const routes: Routes = [
       {
         path: 'new',
         component: NewComponent,
-      }
+      },
+      {
+        path: 'stats',
+        component: StatsComponent,
+        resolve: {
+          stats: StatsResolve
+        }
+      },
     ]
   }
 ];
@@ -66,6 +75,6 @@ const routes: Routes = [
     )
   ],
   exports: [RouterModule],
-  providers: [MetaResolve, TemplatesResolve]
+  providers: [MetaResolve, TemplatesResolve, StatsResolve]
 })
 export class AppRoutingModule { }

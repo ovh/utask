@@ -81,6 +81,8 @@ import { TemplatesComponent } from './@routes/templates/templates.component';
 import { TemplateComponent } from './@routes/templates/template.component';
 import { MyErrorHandler } from './handlers/error.handler';
 import { GraphService } from './@services/graph.service';
+import { StatsComponent } from './@routes/stats/stats.component';
+import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
 
 const pages = [
   AppComponent,
@@ -93,6 +95,7 @@ const pages = [
   TemplateComponent,
   TaskComponent,
   NewComponent,
+  StatsComponent,
 
   LoaderComponent,
   ErrorMessageComponent,
@@ -100,6 +103,7 @@ const pages = [
   StepsViewerComponent,
   StepsListComponent,
   TemplateDetailsComponent,
+  ChartTaskStatesComponent,
 
   ModalYamlPreviewComponent,
   ModalEditRequestComponent,

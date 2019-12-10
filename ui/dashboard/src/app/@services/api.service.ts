@@ -12,6 +12,10 @@ export class ApiService {
         return this.http.get(`${this.base}meta`);
     }
 
+    getStats() {
+        return this.http.get(`${this.base}unsecured/stats`);
+    }
+
     getTemplates(params: any) {
         return this.http.get(
             `${this.base}template`,
