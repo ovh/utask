@@ -43,7 +43,7 @@ The plugin returns two objects, the `Payload` who is the last returned line of y
 {"msg":"Hello world!","error":{"message":"nil"}}
 ```
 
-*Your JSON must be printed on last line and followed by a return line*
+*Your JSON must be printed on last line*
 
 The `Metadata` to fetch informations about plugin execution:
 

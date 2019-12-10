@@ -118,20 +118,17 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Error:         metaError,
 	}
 
-	lastIndexOutStr := strings.LastIndex(outStr, "\n")
-	if lastIndexOutStr == -1 {
-		return nil, metadata, nil
-	}
-	// In case the script only returns the one-lined JSON
-	trimedOutStr := "\n" + outStr[:lastIndexOutStr]
+	outputArray := strings.Split(outStr, "\n")
+	lastLine := ""
 
-	lastLineIndex := strings.LastIndex(trimedOutStr, "\n")
-	if lastLineIndex == -1 {
-		return nil, metadata, nil
+	for i := len(outputArray) - 1; i >= 0; i-- {
+		cs := outputArray[i]
+		if len(cs) > 0 && strings.Contains(cs, "{") {
+			lastLine = cs
+		}
 	}
 
-	lastLine := trimedOutStr[lastLineIndex:]
-	if !strings.Contains(lastLine, "{") {
+	if lastLine == "" {
 		return nil, metadata, nil
 	}
 
