@@ -84,6 +84,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	defer cancel()
 
 	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
+	cmd.Dir = utask.FScriptsFolder
 
 	exitCode := 0
 	metaError := ""
