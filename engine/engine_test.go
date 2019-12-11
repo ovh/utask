@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -625,7 +626,8 @@ func TestBaseOutput(t *testing.T) {
 }
 
 func TestScriptPlugin(t *testing.T) {
-	res, err := createResolution("execScript.yaml", nil, nil)
+	argv := "world"
+	res, err := createResolution("execScript.yaml", map[string]interface{}{"argv": argv}, nil)
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 
@@ -634,7 +636,7 @@ func TestScriptPlugin(t *testing.T) {
 	assert.Nil(t, err)
 
 	payload := make(map[string]interface{})
-	payload["msg"] = "Hello world!"
+	payload["msg"] = fmt.Sprintf("Hello %s!", argv)
 	payload["error"] = map[string]interface{}{"message": "nil"}
 
 	metadata := script.Metadata{

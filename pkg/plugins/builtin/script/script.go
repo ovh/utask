@@ -45,15 +45,15 @@ func validConfig(config interface{}) error {
 
 	if cfg.File == "" {
 		return errors.New("file is missing")
+	}
 
-		f, err := os.Stat(filepath.Join(utask.FScriptsFolder, cfg.File))
-		if os.IsNotExist(err) {
-			return fmt.Errorf("%s not found in FS: %s", cfg.File, err.Error())
-		}
+	f, err := os.Stat(filepath.Join(utask.FScriptsFolder, cfg.File))
+	if os.IsNotExist(err) {
+		return fmt.Errorf("%s not found in FS: %s", cfg.File, err.Error())
+	}
 
-		if f.Mode()&0010 == 0 {
-			return fmt.Errorf("%s haven't exec permissions", cfg.File)
-		}
+	if f.Mode()&0010 == 0 {
+		return fmt.Errorf("%s haven't exec permissions", cfg.File)
 	}
 
 	if cfg.Timeout != "" {
@@ -122,9 +122,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	lastLine := ""
 
 	for i := len(outputArray) - 1; i >= 0; i-- {
-		cs := outputArray[i]
-		if len(cs) > 0 && strings.Contains(cs, "{") {
-			lastLine = cs
+		if len(outputArray[i]) > 0 {
+			lastLine = outputArray[i]
+			break
 		}
 	}
 

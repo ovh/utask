@@ -2,14 +2,17 @@ name: exec-script
 description: Executing a python script
 title_format: "[test] a simple task"
 
+inputs:
+  - name: argv
+    description: ARGV script input
+
 steps:
     stepOne:
         description: first step
         action:
             type: script
             configuration:
-                # Only for testing purpose
-                file: ./../scripts/hello-world.sh
+                file: "./../scripts/hello-world.sh"
                 argv:
-                  - world
+                  - "{{.input.argv}}"
                 timeout_seconds: "25"
