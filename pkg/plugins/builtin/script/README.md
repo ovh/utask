@@ -15,6 +15,7 @@ This plugin execute a script.
 | `file` | file name under scripts folder
 | `argv` | a collection of script argv
 | `timeout` | timeout of the script execution
+| `stdin` | inject stdin in your script
 
 ## Example
 

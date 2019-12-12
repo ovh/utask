@@ -38,6 +38,7 @@ type Config struct {
 	File    string   `json:"file,required"`
 	Argv    []string `json:"argv,omitempty"`
 	Timeout string   `json:"timeout,omitempty"`
+	STDIN   string   `json:"stdin"`
 }
 
 func validConfig(config interface{}) error {
@@ -85,6 +86,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
 	cmd.Dir = utask.FScriptsFolder
+
+	if len(cfg.STDIN) > 0 {
+		cmd.Stdin = strings.NewReader(cfg.STDIN)
+	}
 
 	exitCode := 0
 	metaError := ""
