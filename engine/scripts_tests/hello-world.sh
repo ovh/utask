@@ -1,4 +1,6 @@
 #!/bin/sh
 
-echo 'Hello world script'
-echo '{"msg":"Hello '$1'!","error":{"message":"nil"}}'
+cat <<EOF
+Hello world script
+{"dumb_string":"Hello $1!","random_object":{"foo":"bar"}}
+EOF

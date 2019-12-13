@@ -43,7 +43,7 @@ action:
 The plugin returns two objects, the `Payload` who is the last returned line of your script as json:
 
 ```json
-{"msg":"Hello world!","error":{"message":"nil"}}
+{"dumb_string":"Hello world!","random_object":{"foo":"bar"}}
 ```
 
 *Your JSON must be printed on last line*
@@ -55,7 +55,7 @@ The `Metadata` to fetch informations about plugin execution:
   "exit_code":"0",
   "process_state":"exit status 0",
   // Output is combinated /w Stdout and Stderr
-  "output":"Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+  "output":"Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
   "execution_time":"846.889µs",
   "error":""
 }

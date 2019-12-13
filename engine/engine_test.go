@@ -636,13 +636,13 @@ func TestScriptPlugin(t *testing.T) {
 	assert.Nil(t, err)
 
 	payload := make(map[string]interface{})
-	payload["msg"] = fmt.Sprintf("Hello %s!", argv)
-	payload["error"] = map[string]interface{}{"message": "nil"}
+	payload["dumb_string"] = fmt.Sprintf("Hello %s!", argv)
+	payload["random_object"] = map[string]interface{}{"foo": "bar"}
 
 	metadata := script.Metadata{
 		ExitCode:      "0",
 		ProcessState:  "exit status 0",
-		Output:        "Hello world script\n{\"msg\":\"Hello world!\",\"error\":{\"message\":\"nil\"}}\n",
+		Output:        "Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
 		ExecutionTime: "",
 		Error:         "",
 	}
