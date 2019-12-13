@@ -26,6 +26,8 @@ action:
   type: script
   configuration:
     # mandatory, string
+    # file field must be related to you scripts path (./scripts)
+    # and could modified /w `scripts-path` flag when you run binary
     file: hello-world.sh
     # optional, a collection of string
     argv:

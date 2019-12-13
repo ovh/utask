@@ -38,7 +38,7 @@ config/*
 
 # Related to scripts
 scripts/*
-!scripts/hello-world.sh
+!scripts/.gitkeep
 
 # Related to Goreleaser
 dist/
