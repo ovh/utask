@@ -61,31 +61,7 @@ The `Metadata` to fetch informations about plugin execution:
 
 ```json
 {
-  "output": "Connecting...
-    Pseudo-terminal will not be allocated because stdin is not a terminal.
-    Welcome to Ubuntu 19.04 (GNU/Linux 5.0.0-31-generic x86_64)
-
-     * Documentation:  https://help.ubuntu.com
-     * Management:     https://landscape.canonical.com
-     * Support:        https://ubuntu.com/advantage
-
-      System information as of Mon Dec  9 11:03:03 UTC 2019
-
-      System load:  0.0               Processes:           111
-      Usage of /:   23.7% of 9.52GB   Users logged in:     0
-      Memory usage: 18%               IP address for ens3: 10.00.00.01
-      Swap usage:   0%
-
-     * Overheard at KubeCon: \"microk8s.status just blew my mind\".
-
-         https://microk8s.io/docs/commands#microk8s.status
-
-    26 updates can be installed immediately.
-    0 of these updates are security updates.
-
-
-    *** System restart required ***
-    {\"pid\":\"3931\",\"service_name\":\"nginx\",\"service_uptime\":\"1715606\"}",
+  "output": "Connecting...\nWelcome to Ubuntu 19.04 (GNU/Linux ... x86_64)\n[...]\n{\"pid\":\"3931\",\"service_name\":\"nginx\",\"service_uptime\":\"1715606\"}",
   "exit_status": "0",
   "exit_signal": "0",
   "exit_msg": "exited 0"
