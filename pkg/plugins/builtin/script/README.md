@@ -54,7 +54,7 @@ The `Metadata` to fetch informations about plugin execution:
 {
   "exit_code":"0",
   "process_state":"exit status 0",
-  // Output is combinated /w Stdout and Stderr
+  // Output is combinated /w Stdout and Stderr without any distinction
   "output":"Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
   "execution_time":"846.889µs",
   "error":""
