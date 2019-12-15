@@ -35,10 +35,10 @@ type Metadata struct {
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File    string   `json:"file,required"`
+	File    string   `json:"file"`
 	Argv    []string `json:"argv,omitempty"`
 	Timeout string   `json:"timeout,omitempty"`
-	STDIN   string   `json:"stdin"`
+	Stdin   string   `json:"stdin,omitempty"`
 }
 
 func validConfig(config interface{}) error {
@@ -86,10 +86,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
 	cmd.Dir = utask.FScriptsFolder
-
-	if len(cfg.STDIN) > 0 {
-		cmd.Stdin = strings.NewReader(cfg.STDIN)
-	}
+	cmd.Stdin = strings.NewReader(cfg.Stdin)
 
 	exitCode := 0
 	metaError := ""
