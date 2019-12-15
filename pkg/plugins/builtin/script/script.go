@@ -131,9 +131,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		}
 	}
 
-	if lastLine == "" &&
-		!strings.Contains(lastLine, "{") &&
-		!strings.Contains(lastLine, "}") {
+	if !(strings.Contains(lastLine, "{") && strings.Contains(lastLine, "}")) {
 		return nil, metadata, nil
 	}
 
