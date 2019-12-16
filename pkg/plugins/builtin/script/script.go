@@ -48,13 +48,17 @@ func validConfig(config interface{}) error {
 		return errors.New("file is missing")
 	}
 
-	f, err := os.Stat(filepath.Join(utask.FScriptsFolder, cfg.File))
+	scriptPath := filepath.Join(utask.FScriptsFolder, cfg.File)
+
+	f, err := os.Stat(scriptPath)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("%s not found in FS: %s", cfg.File, err.Error())
 	}
 
-	if f.Mode()&0010 == 0 {
-		return fmt.Errorf("%s haven't exec permissions", cfg.File)
+	if f.Mode()&0111 == 0 {
+		if err := os.Chmod(scriptPath, f.Mode()|0111); err != nil {
+			return fmt.Errorf("can't set exec permissions on %s: %s", cfg.File, err.Error())
+		}
 	}
 
 	if cfg.Timeout != "" {
