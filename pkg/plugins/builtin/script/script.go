@@ -8,7 +8,6 @@ import (
 	"os"
 	gexec "os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -36,12 +35,12 @@ type Metadata struct {
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File                   string   `json:"file"`
-	Argv                   []string `json:"argv,omitempty"`
-	Timeout                string   `json:"timeout,omitempty"`
-	Stdin                  string   `json:"stdin,omitempty"`
-	LastLineNotJSONOutput  string   `json:"last_line_not_json,omitempty"`
-	AllowNonZeroStatusCode string   `json:"allow_non_zero_status_code,omitempty"`
+	File                  string   `json:"file"`
+	Argv                  []string `json:"argv,omitempty"`
+	Timeout               string   `json:"timeout,omitempty"`
+	Stdin                 string   `json:"stdin,omitempty"`
+	LastLineNotJSONOutput bool     `json:"last_line_not_json,omitempty"`
+	AllowExitNonZero      bool     `json:"allow_exit_non_zero,omitempty"`
 }
 
 func validConfig(config interface{}) error {
@@ -70,18 +69,6 @@ func validConfig(config interface{}) error {
 		}
 		if _, err := time.ParseDuration(cfg.Timeout); err != nil {
 			return fmt.Errorf("timeout is wrong %s", err.Error())
-		}
-	}
-
-	if cfg.LastLineNotJSONOutput != "" {
-		if _, err := strconv.ParseBool(cfg.LastLineNotJSONOutput); err != nil {
-			return fmt.Errorf("last_line_not_json is wrong %s", err)
-		}
-	}
-
-	if cfg.AllowNonZeroStatusCode != "" {
-		if _, err := strconv.ParseBool(cfg.AllowNonZeroStatusCode); err != nil {
-			return fmt.Errorf("allow_none_zero_status_code is wrong %s", err)
 		}
 	}
 
@@ -140,8 +127,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Error:         metaError,
 	}
 
-	NonZeroStatusCode, _ := strconv.ParseBool(cfg.AllowNonZeroStatusCode)
-	if NonZeroStatusCode && exitCode != 0 {
+	if cfg.AllowExitNonZero && exitCode != 0 {
 		return nil, metadata, fmt.Errorf("Non zero exit status code: %d", exitCode)
 	}
 
@@ -155,8 +141,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		}
 	}
 
-	LastLineNotJSON, _ := strconv.ParseBool(cfg.LastLineNotJSONOutput)
-	if LastLineNotJSON {
+	if cfg.LastLineNotJSONOutput {
 		return nil, metadata, nil
 	}
 
