@@ -54,11 +54,11 @@ func validConfig(config interface{}) error {
 
 	f, err := os.Stat(scriptPath)
 	if err != nil {
-		return fmt.Errorf("can't stat %s: %s", cfg.File, err.Error())
+		return fmt.Errorf("can't stat %q: %s", scriptPath, err.Error())
 	}
 
 	if f.Mode()&0111 == 0 {
-		return fmt.Errorf("%s haven't exec permissions", cfg.File)
+		return fmt.Errorf("%q is not executable", scriptPath)
 	}
 
 	if cfg.Timeout != "" {
@@ -66,7 +66,7 @@ func validConfig(config interface{}) error {
 			return errors.New("timeout must be positive")
 		}
 		if _, err := time.ParseDuration(cfg.Timeout); err != nil {
-			return fmt.Errorf("timeout is wrong %s", err.Error())
+			return fmt.Errorf("unable to parse duration %q: %s", cfg.Timeout, err.Error())
 		}
 	}
 
@@ -82,7 +82,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		timeout, _ = time.ParseDuration(cfg.Timeout)
 	} else {
 		// default is 2 * 1 minute = 2 minutes
-		timeout = time.Duration(2) * time.Minute
+		timeout = 2 * time.Minute
 	}
 
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
@@ -126,7 +126,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	if !cfg.AllowExitNonZero && exitCode != 0 {
-		return nil, metadata, fmt.Errorf("Non zero exit status code: %d", exitCode)
+		return nil, metadata, fmt.Errorf("non zero exit status code: %d", exitCode)
+	}
+
+	if cfg.LastLineNotJSONOutput {
+		return nil, metadata, nil
 	}
 
 	outputArray := strings.Split(outStr, "\n")
@@ -137,10 +141,6 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			lastLine = outputArray[i]
 			break
 		}
-	}
-
-	if cfg.LastLineNotJSONOutput {
-		return nil, metadata, nil
 	}
 
 	if !(strings.Contains(lastLine, "{") && strings.Contains(lastLine, "}")) {
