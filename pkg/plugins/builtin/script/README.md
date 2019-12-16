@@ -16,6 +16,8 @@ Files must be located under scripts folder, you should set exec permissions (+x)
 | `argv` | a collection of script argv
 | `timeout` | timeout of the script execution
 | `stdin` | inject stdin in your script
+| `last_line_not_json` | skip or not unmarshaling of last JSON line
+| `allow_non_zero_status_code` | allow or not non zero exit status code
 
 ## Example
 
@@ -36,6 +38,12 @@ action:
     # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
     # default is 2m
     timeout: "25s"
+    # optional, string as bool
+    # default is false
+    last_line_not_json: false
+    # optional, string as bool
+    # default is false
+    allow_non_zero_status_code: false
 ```
 
 ## Note
