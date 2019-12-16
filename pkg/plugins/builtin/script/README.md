@@ -6,7 +6,7 @@ This plugin execute a script.
 
 *Runtime(s) must be accessible on the host you deploy µTask if you want to execute interpreted scripts: [verify shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) and available packages*
 
-*Files must be located under scripts folder with exec (+x) permissions*
+Files must be located under scripts folder, you should set exec permissions (+x). Otherwise the script plugin will try to set the exec permissions.
 
 ## Configuration
 
@@ -54,7 +54,7 @@ The `Metadata` to fetch informations about plugin execution:
 {
   "exit_code":"0",
   "process_state":"exit status 0",
-  // Output is combinated /w Stdout and Stderr without any distinction
+  // Output combine Stdout and Stderr streams without any distinction
   "output":"Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
   "execution_time":"846.889µs",
   "error":""
