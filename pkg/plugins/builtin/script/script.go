@@ -53,14 +53,12 @@ func validConfig(config interface{}) error {
 	scriptPath := filepath.Join(utask.FScriptsFolder, cfg.File)
 
 	f, err := os.Stat(scriptPath)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("%s not found in FS: %s", cfg.File, err.Error())
+	if err != nil {
+		return fmt.Errorf("can't stat %s: %s", cfg.File, err.Error())
 	}
 
 	if f.Mode()&0111 == 0 {
-		if err := os.Chmod(scriptPath, f.Mode()|0111); err != nil {
-			return fmt.Errorf("can't set exec permissions on %s: %s", cfg.File, err.Error())
-		}
+		return fmt.Errorf("%s haven't exec permissions", cfg.File)
 	}
 
 	if cfg.Timeout != "" {
@@ -127,7 +125,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Error:         metaError,
 	}
 
-	if cfg.AllowExitNonZero && exitCode != 0 {
+	if !cfg.AllowExitNonZero && exitCode != 0 {
 		return nil, metadata, fmt.Errorf("Non zero exit status code: %d", exitCode)
 	}
 
