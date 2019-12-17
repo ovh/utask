@@ -391,7 +391,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |**`ssh`**     | Connect to a remote system and run commands on it | [Access plugin doc](./pkg/plugins/builtin/ssh/README.md)
 |**`email`**   | Send an email | [Access plugin doc](./pkg/plugins/builtin/email/README.md)
 |**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)
-
+|**`script`**    | Execute a script under `scripts` folder | [Access plugin doc](./pkg/plugins/builtin/script/README.md)
  
 #### Loops
 

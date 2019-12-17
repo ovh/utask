@@ -1,0 +1,38 @@
+name: exec-script
+description: Executing a shell script
+title_format: "[test] a simple task for script-plugin"
+
+inputs:
+  - name: argv
+    description: ARGV script input
+
+steps:
+    stepOne:
+        description: first step
+        action:
+            type: script
+            configuration:
+                #   ____________________
+                #  /                    \
+                # |  This is only for    |
+                # |   testing purpose    |
+                #  \____________________/
+                #          !  !
+                #          !  !
+                #          L_ !
+                #         / _)!
+                #        / /__L
+                #  _____/ (____)
+                #         (____)
+                #  _____  (____)
+                #       \_(____)
+                #          !  !
+                #          !  !
+                #          \__/
+                # This file param is valid only in a testing context
+                # In production, `file` will be prefixed by the utask.FScriptsFolder variable ("./scripts" by default)
+                # You can specify your file's path relative to that location
+                file: "./scripts_tests/hello-world.sh"
+                argv:
+                  - "{{.input.argv}}"
+                timeout_seconds: "25"

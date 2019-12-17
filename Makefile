@@ -3,7 +3,7 @@ BINARY			= utask
 MAIN_LOCATION	= ./cmd
 
 TEST_LOCATION	= ./...
-TEST_CMD		= go test -v -mod=vendor -cover ${TEST_LOCATION}
+TEST_CMD		= go test -count=1 -v -mod=vendor -cover ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
 VERSION 		:= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)

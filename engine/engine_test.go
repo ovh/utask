@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
+	"github.com/ovh/utask/pkg/plugins/builtin/script"
 )
 
 const (
@@ -50,6 +52,7 @@ func TestMain(m *testing.M) {
 	}
 
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
+	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 
 	os.Exit(m.Run())
 }
@@ -620,6 +623,36 @@ func TestBaseOutput(t *testing.T) {
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, id, output["id"])
 	assert.Equal(t, "bar", output["foo"])
+}
+
+func TestScriptPlugin(t *testing.T) {
+	argv := "world"
+	res, err := createResolution("execScript.yaml", map[string]interface{}{"argv": argv}, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	payload := make(map[string]interface{})
+	payload["dumb_string"] = fmt.Sprintf("Hello %s!", argv)
+	payload["random_object"] = map[string]interface{}{"foo": "bar"}
+
+	metadata := script.Metadata{
+		ExitCode:      "0",
+		ProcessState:  "exit status 0",
+		Output:        "Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
+		ExecutionTime: "",
+		Error:         "",
+	}
+
+	// because time can't be consistant through tests
+	metadataOutput := res.Steps["stepOne"].Metadata.(script.Metadata)
+	metadataOutput.ExecutionTime = ""
+
+	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
+	assert.Equal(t, metadata, metadataOutput)
 }
 
 func TestBaseBaseConfiguration(t *testing.T) {

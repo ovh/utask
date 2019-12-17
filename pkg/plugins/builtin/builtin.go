@@ -8,6 +8,7 @@ import (
 	pluginhttp "github.com/ovh/utask/pkg/plugins/builtin/http"
 	pluginnotify "github.com/ovh/utask/pkg/plugins/builtin/notify"
 	pluginping "github.com/ovh/utask/pkg/plugins/builtin/ping"
+	pluginscript "github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginssh "github.com/ovh/utask/pkg/plugins/builtin/ssh"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
@@ -24,6 +25,7 @@ func Register() error {
 		pluginecho.Plugin,
 		pluginemail.Plugin,
 		pluginping.Plugin,
+		pluginscript.Plugin,
 	} {
 		if err := step.RegisterRunner(p.PluginName(), p); err != nil {
 			return err

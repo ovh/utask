@@ -36,5 +36,9 @@ ui/editor/node_modules
 config/*
 !config/README.md
 
+# Related to scripts
+scripts/*
+!scripts/.gitkeep
+
 # Related to Goreleaser
 dist/
