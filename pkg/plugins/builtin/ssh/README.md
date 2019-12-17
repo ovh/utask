@@ -42,15 +42,28 @@ action:
     ssh_key: '{{.config.mySSHKey}}'
 ```
 
-The output resulting from this configuration will be:
+## Requirements
 
-```js
+None by default. Ssh credentials should be retrieved from `{{.config.mySSHKey}}` rather than hardcoded on the template.
+
+## Note
+
+The plugin returns two objects, the `Payload` of the execution as defined in the result field of configuration:
+
+```json
 {
-  "pid": "1234",
-  "uptime": "876123"
+  "pid": "3931",
+  "uptime": "1715606"
 }
 ```
 
-## Requirements
+The `Metadata` to fetch informations about plugin execution:
 
-None by default. Ssh credentials should be retrieved from `{{.config.[sshkey]}}` rather than hardcoded on the template.
+```json
+{
+  "output": "Connecting...\nWelcome to Ubuntu 19.04 (GNU/Linux ... x86_64)\n[...]\n{\"pid\":\"3931\",\"service_name\":\"nginx\",\"service_uptime\":\"1715606\"}",
+  "exit_status": "0",
+  "exit_signal": "0",
+  "exit_msg": "exited 0"
+}
+```
