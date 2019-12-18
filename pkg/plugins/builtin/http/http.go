@@ -90,7 +90,7 @@ func validConfig(config interface{}) error {
 	switch cfg.Method {
 	case "GET", "POST", "PUT", "DELETE":
 	default:
-		return fmt.Errorf("Unknown method for HTTP runner: %s", cfg.Method)
+		return fmt.Errorf("unknown method for HTTP runner: %s", cfg.Method)
 	}
 
 	if cfg.TimeoutSeconds != "" {
@@ -98,7 +98,7 @@ func validConfig(config interface{}) error {
 	}
 
 	if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
-		return fmt.Errorf("timeout_seconds is wrong: %q, err: %s", cfg.TimeoutSeconds, err.Error())
+		return fmt.Errorf("can't parse timeout_seconds field %q: %s", cfg.TimeoutSeconds, err.Error())
 	}
 
 	if cfg.DenyRedirects != "" {
@@ -106,7 +106,7 @@ func validConfig(config interface{}) error {
 	}
 
 	if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
-		return fmt.Errorf("deny_redirects is wrong: %q, err: %s", cfg.DenyRedirects, err.Error())
+		return fmt.Errorf("can't parse deny_redirects field %q: %s", cfg.DenyRedirects, err.Error())
 	}
 
 	return nil

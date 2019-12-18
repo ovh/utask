@@ -47,13 +47,13 @@ func validConfig(config interface{}) error {
 
 	if cfg.Count != "" {
 		if _, err := strconv.ParseUint(cfg.Count, 10, 64); err != nil {
-			return fmt.Errorf("count is wrong: %q, err: %s", cfg.Count, err.Error())
+			return fmt.Errorf("can't parse count field %q: %s", cfg.Count, err.Error())
 		}
 	}
 
 	if cfg.Interval != "" {
 		if _, err := strconv.ParseUint(cfg.Interval, 10, 64); err != nil {
-			return fmt.Errorf("interval_second is wrong: %q, err: %s", cfg.Interval, err.Error())
+			return fmt.Errorf("can't parse interval_second field %q: %s", cfg.Interval, err.Error())
 		}
 	}
 
@@ -65,7 +65,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	pinger, err := ping.NewPinger(cfg.Hostname)
 	if err != nil {
-		return nil, nil, fmt.Errorf("initiate ping failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("can't initiate ping: %s", err.Error())
 	}
 
 	pinger.Count = pingDefault(cfg.Count)

@@ -53,7 +53,7 @@ func validConfig(config interface{}) error {
 	}
 
 	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 64); err != nil {
-		return fmt.Errorf("smtp_port is wrong: %q, err: %s", cfg.SMTPPort, err.Error())
+		return fmt.Errorf("can't parse smtp_port field %q: %s", cfg.SMTPPort, err.Error())
 	}
 
 	if cfg.SMTPHostname == "" {
@@ -62,7 +62,7 @@ func validConfig(config interface{}) error {
 
 	if cfg.SMTPSkipTLSVerify != "" {
 		if _, err := strconv.ParseBool(cfg.SMTPSkipTLSVerify); err != nil {
-			return fmt.Errorf("smtp_skip_tls_verify is wrong: %q, err: %s", cfg.SMTPSkipTLSVerify, err)
+			return fmt.Errorf("can't parse smtp_skip_tls_verify field %q: %s", cfg.SMTPSkipTLSVerify, err)
 		}
 	}
 

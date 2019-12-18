@@ -66,7 +66,7 @@ func validConfig(config interface{}) error {
 			return errors.New("timeout must be positive")
 		}
 		if _, err := time.ParseDuration(cfg.Timeout); err != nil {
-			return fmt.Errorf("unable to parse duration %q: %s", cfg.Timeout, err.Error())
+			return fmt.Errorf("can't parse timeout field %q: %s", cfg.Timeout, err.Error())
 		}
 	}
 
