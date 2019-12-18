@@ -3,6 +3,7 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -93,15 +94,19 @@ func validConfig(config interface{}) error {
 	}
 
 	if cfg.TimeoutSeconds != "" {
-		if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
-			return fmt.Errorf("timeout_seconds is wrong %s", err.Error())
-		}
+		return errors.New("timeout_seconds is missing")
+	}
+
+	if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
+		return fmt.Errorf("timeout_seconds is wrong: %q, err: %s", cfg.TimeoutSeconds, err.Error())
 	}
 
 	if cfg.DenyRedirects != "" {
-		if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
-			return fmt.Errorf("deny_redirects is wrong %s", err.Error())
-		}
+		return errors.New("deny_redirects is missing")
+	}
+
+	if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
+		return fmt.Errorf("deny_redirects is wrong: %q, err: %s", cfg.DenyRedirects, err.Error())
 	}
 
 	return nil
@@ -119,7 +124,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	req, err := http.NewRequest(cfg.Method, cfg.URL, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to create http request: %s", err.Error())
+		return nil, nil, fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
 
 	q := req.URL.Query()
@@ -154,7 +159,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HTTP request failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("can't do HTTP request: %s", err.Error())
 	}
 
 	// remove response magic prefix
