@@ -1,8 +1,10 @@
 package notify
 
 import (
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/notify"
@@ -31,8 +33,9 @@ func (nc *Config) Message() *notify.Message {
 
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)
+
 	if len(cfg.Backends) == 0 {
-		return nil
+		return errors.New("backends field can't be empty")
 	}
 
 	snames := notify.ListSendersNames()
@@ -43,7 +46,10 @@ func validConfig(config interface{}) error {
 	for _, backend := range cfg.Backends {
 		i := sort.SearchStrings(snames, backend)
 		if i >= len(snames) && snames[i] != backend {
-			return fmt.Errorf("Can't find backend name: %s", backend)
+			return fmt.Errorf(
+				"can't find backend name: %s. Available backends: %s",
+				backend,
+				strings.Join(snames, ", "))
 		}
 	}
 
