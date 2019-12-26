@@ -14,6 +14,7 @@ This plugin permorms an http request.
 | `basic_auth` | a single object composed of `user` and `password` to enable HTTP basic auth
 | `deny_redirects` | a boolean representing the policy of redirects
 | `parameters` | a list of HTTP query parameters, represented as objects composed of `key` and `value`
+| `magic_prefix`| prefix in the response that must be removed before unmarshalling (optionnal)
 
 ## Example
 

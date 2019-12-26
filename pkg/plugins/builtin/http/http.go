@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -31,6 +32,7 @@ type HTTPConfig struct {
 	HTTPBasicAuth  BasicAuth   `json:"basic_auth,omitempty"`
 	DenyRedirects  string      `json:"deny_redirects,omitempty"`
 	Parameters     []Parameter `json:"parameters,omitempty"`
+	MagicPrefix    string      `json:"magic_prefix,omitempty"`
 }
 
 // Header represents an HTTP header
@@ -130,6 +132,19 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("HTTP request failed: %s", err.Error())
+	}
+
+	// remove response magic prefix
+	if cfg.MagicPrefix != "" {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, fmt.Errorf("HTTP cannot read response: %s", err.Error())
+		}
+		resp.Body.Close()
+		if bytes.HasPrefix(respBody, []byte(cfg.MagicPrefix)) {
+			respBody = bytes.Replace(respBody, []byte(cfg.MagicPrefix), nil, 1)
+		}
+		resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
 	}
 
 	return httputil.UnmarshalResponse(resp)
