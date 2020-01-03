@@ -1,5 +1,3 @@
-import * as brace from 'brace';
-
 export default class StepState {
     key: string;
     color: string;

@@ -1,16 +1,13 @@
-import { Observable, of } from 'rxjs';
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { of } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../@services/api.service';
 import * as _ from 'lodash';
 import MetaUtask from 'src/app/@models/meta-utask.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ModalConfirmationApiComponent } from 'src/app/@modals/modal-confirmation-api/modal-confirmation-api.component';
-import { ModalYamlPreviewComponent } from 'src/app/@modals/modal-yaml-preview/modal-yaml-preview.component';
 import { ResolutionService } from 'src/app/@services/resolution.service';
 import { TaskService } from 'src/app/@services/task.service';
 import { delay, repeat } from 'rxjs/operators';
-// import PaginationTasks from 'src/app/@models/pagination-tasks.model';
 
 export class SearchTask {
   page_size?: number;
@@ -23,12 +20,6 @@ export class SearchTask {
   templateUrl: './home.html',
 })
 export class HomeComponent implements OnInit {
-  // loaders: { [key: string]: boolean } = {};
-  // errors: { [key: string]: any } = {};
-  // tasks: any = [];
-  // pagination: SearchTask = {};
-  // nextPage = '';
-  // percentages: { [key: string]: number } = {};
   loaders: { [key: string]: boolean } = {};
   errors: { [key: string]: any } = {};
   meta: MetaUtask = null;
