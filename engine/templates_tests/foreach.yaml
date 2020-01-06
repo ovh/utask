@@ -43,7 +43,7 @@ steps:
         conditions:
             - type: check
               if:
-                - value: '{{.step.this.output.concat}}'
+                - value: '{{ index .step "this" "output" "concat"}}'
                   operator: EQ
                   expected: foo-c-bar-c
               then:

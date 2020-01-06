@@ -40,7 +40,7 @@ type SubtaskContext struct {
 
 func ctx(stepName string) interface{} {
 	return &SubtaskContext{
-		TaskID:            fmt.Sprintf("{{if .step.%s.output}}{{.step.%s.output.id}}{{end}}", stepName, stepName),
+		TaskID:            fmt.Sprintf(`{{ if (index .step "%s" "output") }}{{ index .step "%s" "output" "id" }}{{ end }}`, stepName, stepName),
 		RequesterUsername: "{{.task.requester_username}}",
 	}
 }
