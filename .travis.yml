@@ -32,7 +32,6 @@ script:
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
-  - curl -sL https://git.io/goreleaser | head -n -2 | bash
-  - tar -xf /tmp/goreleaser.tar.gz -C $GOPATH/bin
+  - curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
   - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis, is this an OK move?
   - make run-goreleaser
