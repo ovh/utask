@@ -32,7 +32,7 @@ type HTTPConfig struct {
 	HTTPBasicAuth  BasicAuth   `json:"basic_auth,omitempty"`
 	DenyRedirects  string      `json:"deny_redirects,omitempty"`
 	Parameters     []Parameter `json:"parameters,omitempty"`
-	MagicPrefix    string      `json:"magic_prefix,omitempty"`
+	TrimPrefix     string      `json:"trim_prefix,omitempty"`
 }
 
 // Header represents an HTTP header
@@ -135,14 +135,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	// remove response magic prefix
-	if cfg.MagicPrefix != "" {
+	if cfg.TrimPrefix != "" {
+		trimPrefixBytes := []byte(cfg.TrimPrefix)
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, nil, fmt.Errorf("HTTP cannot read response: %s", err.Error())
 		}
 		resp.Body.Close()
-		if bytes.HasPrefix(respBody, []byte(cfg.MagicPrefix)) {
-			respBody = bytes.Replace(respBody, []byte(cfg.MagicPrefix), nil, 1)
+		if bytes.HasPrefix(respBody, trimPrefixBytes) {
+			respBody = respBody[len(trimPrefixBytes):]
 		}
 		resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
 	}
