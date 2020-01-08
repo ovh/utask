@@ -33,7 +33,7 @@
     "js-yaml": "^3.13.1",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
-    "ngx-chips": "^2.1.0",
+    "ngx-chips": "2.0.2",
     "ngx-infinite-scroll": "^8.0.1",
     "rxjs": "~6.5.3",
     "tippy.js": "^5.1.2",
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.802.0",
-    "@angular/cli": "~8.3.2",
+    "@angular/cli": "^8.3.21",
     "@angular/compiler-cli": "^8.2.14",
     "@angular/language-service": "^8.2.14",
     "@types/jasmine": "~3.3.8",
