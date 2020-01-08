@@ -68,12 +68,13 @@ run-test-stack-docker:
 	bash hack/test-docker.sh bash hack/interactive.sh
 
 run-goreleaser:
+	export BINDIR=${GOPATH}/bin; curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
 ifneq (,$(findstring -dev,$(VERSION)))
 	@echo Run Goreleaser in snapshot mod
-	$(call ./bin/goreleaser,--snapshot)
+	$(call goreleaser,--snapshot)
 else
 	@echo Run Goreleaser in release mod
-	$(call ./bin/goreleaser)
+	$(call goreleaser)
 endif
 
 package:
