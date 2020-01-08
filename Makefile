@@ -70,10 +70,10 @@ run-test-stack-docker:
 run-goreleaser:
 ifneq (,$(findstring -dev,$(VERSION)))
 	@echo Run Goreleaser in snapshot mod
-	$(call goreleaser,--snapshot)
+	$(call ./bin/goreleaser,--snapshot)
 else
 	@echo Run Goreleaser in release mod
-	$(call goreleaser)
+	$(call ./bin/goreleaser)
 endif
 
 package:
