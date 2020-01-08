@@ -31,7 +31,6 @@ script:
   - make release # still don't know where to upload install-utask.sh ...
 
 after_success:
-  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
-  - curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
-  - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis, is this an OK move?
-  - make run-goreleaser
+  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform
+  - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis
+  - make run-goreleaser # run goreleaser process
