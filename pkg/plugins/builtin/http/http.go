@@ -142,9 +142,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, fmt.Errorf("HTTP cannot read response: %s", err.Error())
 		}
 		resp.Body.Close()
-		if bytes.HasPrefix(respBody, trimPrefixBytes) {
-			respBody = respBody[len(trimPrefixBytes):]
-		}
+		respBody = bytes.TrimPrefix(respBody, trimPrefixBytes)
 		resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
 	}
 
