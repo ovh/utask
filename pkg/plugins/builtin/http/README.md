@@ -11,7 +11,7 @@ This plugin permorms an http request.
 | `body` | a string representing the payload to be sent with the request
 | `headers` | a list of headers, represented as objects composed of `name` and `value`
 | `timeout_seconds` | an unsigned int representing a custom HTTP client timeout in seconds
-| `basic_auth` | a single object composed of `user` and `password` to enable HTTP basic auth
+| `auth` | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization 
 | `deny_redirects` | a boolean representing the policy of redirects
 | `parameters` | a list of HTTP query parameters, represented as objects composed of `key` and `value`
 | `trim_prefix`| prefix in the response that must be removed before unmarshalling (optional)
@@ -30,10 +30,12 @@ action:
     method: POST
     # optional, string as uint16
     timeout_seconds: "5"
-    # optional, object of user and password fields
-    basic_auth:
-      user: {{.config.basicAuth.user}}
-      password: {{.config.basicAuth.password}}
+    # optional, authentication you can user aither basic or bearer auth
+    auth:
+      basic: 
+        user: {{.config.basicAuth.user}}
+        password: {{.config.basicAuth.password}}
+      bearer: {{.config.auth.token}}
     # optional, string as boolean
     deny_redirects: "false"
     # optional, array of key and value fields

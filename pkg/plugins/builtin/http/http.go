@@ -29,7 +29,7 @@ type HTTPConfig struct {
 	Body           string      `json:"body,omitempty"`
 	Headers        []Header    `json:"headers,omitempty"`
 	TimeoutSeconds string      `json:"timeout_seconds,omitempty"`
-	Auth           Auth        `json:"auth,omitempty"` // FIXME how to manage deprecation of the basic auth attribute ?
+	Auth           Auth        `json:"auth,omitempty"`
 	DenyRedirects  string      `json:"deny_redirects,omitempty"`
 	Parameters     []Parameter `json:"parameters,omitempty"`
 	TrimPrefix     string      `json:"trim_prefix,omitempty"`
