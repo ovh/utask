@@ -71,10 +71,9 @@ func defaultHTTPClientFactory(cfg HTTPClientConfig) HTTPClient {
 	c := new(http.Client)
 	c.Timeout = cfg.Timeout
 	if cfg.DenyRedirects {
-
-	}
-	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+		c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 	return c
 }
