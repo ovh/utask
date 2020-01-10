@@ -30,7 +30,7 @@ action:
     method: POST
     # optional, string as uint16
     timeout_seconds: "5"
-    # optional, authentication you can user aither basic or bearer auth
+    # optional, authentication you can user either basic or bearer auth
     auth:
       basic: 
         user: {{.config.basicAuth.user}}
