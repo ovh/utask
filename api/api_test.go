@@ -8,9 +8,11 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/loopfz/gadgeto/zesty"
@@ -65,6 +67,9 @@ func TestMain(m *testing.M) {
 
 	srv := api.NewServer()
 	srv.WithAuth(dumbIdentityProvider)
+	srv.SetDashboardPathPrefix("")
+	srv.SetDashboardAPIPathPrefix("")
+	srv.SetEditorPathPrefix("")
 
 	go srv.ListenAndServe()
 	srvx := &http.Server{Addr: fmt.Sprintf(":%d", utask.FPort)}
@@ -527,6 +532,49 @@ func blockedHidden(name string, blocked, hidden bool) tasktemplate.TaskTemplate 
 		TitleFormat: "this task does nothing at all",
 		Blocked:     blocked,
 		Hidden:      hidden,
+	}
+}
+
+func Test_staticMiddleware(t *testing.T) {
+	ginEngine := gin.Default()
+	ginEngine.
+		Group("/", api.StaticFilePatternReplaceMiddleware("static.go", "___test_suite___")).
+		StaticFS("/", http.Dir("./"))
+
+	tester := iffy.NewTester(t, ginEngine)
+
+	tester.AddCall("retrieve test folder index and validate replacement OK", http.MethodGet, "/", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+			expectStringNotPresent("static.go"),
+			expectStringPresent("___test_suite___"),
+		)
+
+	tester.AddCall("unknown static page", http.MethodGet, "/dsqdzdzodkzdzdz", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(404),
+		)
+
+	tester.Run()
+}
+
+func expectStringNotPresent(value string) iffy.Checker {
+	return func(r *http.Response, body string, respObject interface{}) error {
+		if strings.Contains(body, value) {
+			return fmt.Errorf("Response body invalid: should not contains %q, but it does", value)
+		}
+		return nil
+	}
+}
+
+func expectStringPresent(value string) iffy.Checker {
+	return func(r *http.Response, body string, respObject interface{}) error {
+		if !strings.Contains(body, value) {
+			return fmt.Errorf("Response body invalid: should contains %q, but it doesn't", value)
+		}
+		return nil
 	}
 }
 

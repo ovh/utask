@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"strings"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -27,8 +29,11 @@ import (
 // Server wraps the http handler that exposes a REST API to control
 // the task orchestration engine
 type Server struct {
-	httpHandler    *fizz.Fizz
-	authMiddleware func(*gin.Context)
+	httpHandler            *fizz.Fizz
+	authMiddleware         func(*gin.Context)
+	dashboardPathPrefix    string
+	dashboardAPIPathPrefix string
+	editorPathPrefix       string
 }
 
 // NewServer returns a new Server
@@ -45,6 +50,35 @@ func (s *Server) WithAuth(authProvider func(*http.Request) (string, error)) {
 	if authProvider != nil {
 		s.authMiddleware = authMiddleware(authProvider)
 	}
+}
+
+// SetDashboardPathPrefix configures the custom path prefix for dashboard static files hosting.
+// It doesn't change the path used by utask API to serve the files, it's only used inside UI files
+// in order that dashboard can be aware of a ProxyPass configuration.
+func (s *Server) SetDashboardPathPrefix(dashboardPathPrefix string) {
+	if dashboardPathPrefix == "" {
+		return
+	}
+	s.dashboardPathPrefix = dashboardPathPrefix
+}
+
+// SetDashboardAPIPathPrefix configures a custom path prefix that UI should use when calling utask API.
+// Required when utask API is exposed behind a ProxyPass and UI need to know the absolute URI to call.
+func (s *Server) SetDashboardAPIPathPrefix(dashboardAPIPathPrefix string) {
+	if dashboardAPIPathPrefix == "" {
+		return
+	}
+	s.dashboardAPIPathPrefix = dashboardAPIPathPrefix
+}
+
+// SetEditorPathPrefix configures a custom path prefix for editor static files hosting.
+// It doesn't change the path used by utask API to serve the files, it's only used inside UI files
+// in order that editor can be aware of a ProxyPass configuration.
+func (s *Server) SetEditorPathPrefix(editorPathPrefix string) {
+	if editorPathPrefix == "" {
+		return
+	}
+	s.editorPathPrefix = editorPathPrefix
 }
 
 // ListenAndServe launches an http server and stays blocked until
@@ -79,14 +113,39 @@ func (s *Server) Handler(ctx context.Context) http.Handler {
 	return s.httpHandler
 }
 
+func generateBaseHref(pathPrefix, uri string) string {
+	// UI requires to have a trailing slash at the end
+	return path.Join(pathPrefix, uri) + "/"
+}
+
+func generatePathPrefixAPI(pathPrefix string) string {
+	p := path.Join(pathPrefix, "/")
+	if p == "." {
+		p = "/"
+	} else if !strings.HasSuffix(p, "/") {
+		p += "/"
+	}
+	return p
+}
+
 // build registers all routes and their corresponding handlers for the Server's API
 func (s *Server) build(ctx context.Context) {
 	if s.httpHandler == nil {
 		ginEngine := gin.Default()
+
 		ginEngine.
-			Group("/ui", s.authMiddleware).
-			StaticFS("/dashboard", http.Dir("./static/dashboard"))
-		ginEngine.
+			Group("/", s.authMiddleware,
+				StaticFilePatternReplaceMiddleware(
+					"___UTASK_DASHBOARD_BASEHREF___",
+					generateBaseHref(s.dashboardPathPrefix, "/ui/dashboard"),
+					"___UTASK_DASHBOARD_PREFIXAPIBASEURL___",
+					generatePathPrefixAPI(s.dashboardAPIPathPrefix))).
+			StaticFS("/ui/dashboard", http.Dir("./static/dashboard"))
+
+		ginEngine.Group("/",
+			StaticFilePatternReplaceMiddleware(
+				"___UTASK_EDITOR_BASEHREF___",
+				generateBaseHref(s.editorPathPrefix, "/ui/editor"))).
 			StaticFS("/ui/editor", http.Dir("./static/editor"))
 
 		collectMetrics(ctx)

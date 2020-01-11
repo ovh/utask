@@ -69,10 +69,10 @@ const (
 
 	// This is the key used in Values for a step to refer to itself
 	This = "this"
-)
 
-// UtaskCfgSecretAlias is the key for the config item containing global configuration data
-const UtaskCfgSecretAlias = "utask-cfg"
+	// UtaskCfgSecretAlias is the key for the config item containing global configuration data
+	UtaskCfgSecretAlias = "utask-cfg"
+)
 
 // Cfg holds global configuration data
 type Cfg struct {
@@ -86,6 +86,9 @@ type Cfg struct {
 	ConcealedSecrets        []string                 `json:"concealed_secrets"`
 	ResourceLimits          map[string]uint          `json:"resource_limits"`
 	MaxConcurrentExecutions uint                     `json:"max_concurrent_executions"`
+	DashboardPathPrefix     string                   `json:"dashboard_path_prefix"`
+	DashboardAPIPathPrefix  string                   `json:"dashboard_api_path_prefix"`
+	EditorPathPrefix        string                   `json:"editor_path_prefix"`
 
 	resourceSemaphores map[string]*semaphore.Weighted
 	executionSemaphore *semaphore.Weighted
