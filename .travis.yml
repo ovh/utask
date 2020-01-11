@@ -1,14 +1,18 @@
 os:
   - linux
+dist: bionic
 
 language: go
 go:
-  - 1.12
   - 1.13
+  - 1.12
+  - master
 go_import_path: github.com/ovh/utask
 
 cache: apt
 
+services:
+  - postgresql
 addons:
   postgresql: "9.5"
 
@@ -26,6 +30,7 @@ env:
 before_script:
   - psql -c 'create database travisdb;' -U postgres
 
+# we could also use YAML aliases for Golang steps https://docs.travis-ci.com/user/build-stages/using-yaml-aliases/
 script:
   - make test-travis
   - make release # still don't know where to upload install-utask.sh ...
@@ -34,3 +39,14 @@ after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform
   - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis
   - make run-goreleaser # run goreleaser process
+
+jobs:
+  include:
+    - name: test docker build
+      script: docker build -t utask-dev ./
+      language: shell
+      addons: {}
+      before_script: echo "override before_script"
+      after_success: echo "override after_success"
+  allow_failures:
+    - go: master

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 
 require() {
     for s in $*
@@ -51,8 +52,10 @@ EOF
 
 echo "Running commands..."
 
+set +e
 ($*)
 result=$?
+set -e
 
 echo "Done, cleaning up..."
 
