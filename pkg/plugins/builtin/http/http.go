@@ -17,7 +17,7 @@ import (
 
 // the HTTP plugin performs an HTTP call
 var (
-	Plugin = taskplugin.New("http", "0.6", exec,
+	Plugin = taskplugin.New("http", "0.7", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
 	)
 )
@@ -29,7 +29,7 @@ type HTTPConfig struct {
 	Body           string      `json:"body,omitempty"`
 	Headers        []Header    `json:"headers,omitempty"`
 	TimeoutSeconds string      `json:"timeout_seconds,omitempty"`
-	HTTPBasicAuth  BasicAuth   `json:"basic_auth,omitempty"`
+	Auth           Auth        `json:"auth,omitempty"`
 	DenyRedirects  string      `json:"deny_redirects,omitempty"`
 	Parameters     []Parameter `json:"parameters,omitempty"`
 	TrimPrefix     string      `json:"trim_prefix,omitempty"`
@@ -47,11 +47,42 @@ type Parameter struct {
 	Value string `json:"value"`
 }
 
-// BasicAuth represents a HTTP basic auth
-type BasicAuth struct {
+// Auth represents HTTP authentication
+type Auth struct {
+	Basic  AuthBasic `json:"basic"`
+	Bearer string    `json:"bearer"`
+}
+
+// AuthBasic represents the embedded basic auth inside Auth struct
+type AuthBasic struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
+
+// HTTPClient is an interface for decoupling http.Client
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// HTTPClientConfig is a set of options used to initialize a HTTPClient
+type HTTPClientConfig struct {
+	Timeout       time.Duration
+	DenyRedirects bool
+}
+
+func defaultHTTPClientFactory(cfg HTTPClientConfig) HTTPClient {
+	c := new(http.Client)
+	c.Timeout = cfg.Timeout
+	if cfg.DenyRedirects {
+		c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+	return c
+}
+
+// NewHTTPClient is a factory of HTTPClient
+var NewHTTPClient = defaultHTTPClientFactory
 
 func validConfig(config interface{}) error {
 	cfg := config.(*HTTPConfig)
@@ -97,8 +128,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 	req.URL.RawQuery = q.Encode()
 
-	if cfg.HTTPBasicAuth.User != "" && cfg.HTTPBasicAuth.Password != "" {
-		req.SetBasicAuth(cfg.HTTPBasicAuth.User, cfg.HTTPBasicAuth.Password)
+	if cfg.Auth.Bearer != "" {
+		var bearer = "Bearer " + cfg.Auth.Bearer
+		req.Header.Add("Authorization", bearer)
+	} else if cfg.Auth.Basic.User != "" && cfg.Auth.Basic.Password != "" {
+		req.SetBasicAuth(cfg.Auth.Basic.User, cfg.Auth.Basic.Password)
 	}
 
 	// best-effort match the body's content-type
@@ -115,19 +149,8 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	ts, _ := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16)
-
-	httpClient := &http.Client{
-		// 0 by default
-		Timeout: time.Duration(ts) * time.Second,
-	}
-
 	dr, _ := strconv.ParseBool(cfg.DenyRedirects)
-
-	if dr {
-		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	}
+	httpClient := NewHTTPClient(HTTPClientConfig{Timeout: time.Duration(ts) * time.Second, DenyRedirects: dr})
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

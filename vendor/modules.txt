@@ -168,6 +168,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/ugorji/go/codec v1.1.7
 github.com/ugorji/go/codec
 # github.com/wI2L/fizz v0.0.0-20190425144348-6274bc96d962

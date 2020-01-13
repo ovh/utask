@@ -9,6 +9,7 @@ import (
 const (
 	HTTPStatus  = "HTTPStatus"
 	HTTPHeaders = "HTTPHeaders"
+	HTTPCookies = "HTTPCookies"
 )
 
 // MetadataSchemaBuilder is a helper to generate jsonschema for a metadata payload

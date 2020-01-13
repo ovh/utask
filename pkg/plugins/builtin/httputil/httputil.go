@@ -48,6 +48,14 @@ func UnmarshalResponse(resp *http.Response) (interface{}, interface{}, error) {
 	}
 	metadata[taskplugin.HTTPHeaders] = headers
 
+	cookies := map[string]string{}
+	for _, c := range resp.Cookies() {
+		if c != nil {
+			cookies[c.Name] = c.Value
+		}
+	}
+	metadata[taskplugin.HTTPCookies] = cookies
+
 	var output interface{}
 	contentType := strings.SplitN(resp.Header.Get("Content-Type"), ";", 2)
 	unmarshaler, ok := unmarshalers[contentType[0]]
