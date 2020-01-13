@@ -81,19 +81,26 @@ func Test_exec(t *testing.T) {
 		}
 	}
 
-	var cfg = `
-	{
-		"url": "http://lolcat.host/stuff",
-		"method": "GET",
-		"parameters": [{"key": "foo", "value": "bar"}],
-		"timeout_seconds": "10",
-		"deny_redirects": "true",
-		"auth": {
-			"bearer": "my_token"
-		}
-	}`
+	cfg := HTTPConfig{
+		URL:    "http://lolcat.host/stuff",
+		Method: "GET",
+		Parameters: []Parameter{
+			Parameter{
+				Key:   "foo",
+				Value: "bar",
+			},
+		},
+		TimeoutSeconds: "10",
+		DenyRedirects:  "true",
+		Auth: Auth{
+			Bearer: "my_token",
+		},
+	}
 
-	output, metadata, err := Plugin.Exec("test", json.RawMessage(""), json.RawMessage(cfg), nil)
+	cfgJSON, err := json.Marshal(cfg)
+	assert.NoError(t, err)
+
+	output, metadata, err := Plugin.Exec("test", json.RawMessage(""), json.RawMessage(cfgJSON), nil)
 	require.NoError(t, err)
 
 	assert.NoError(t, err)
