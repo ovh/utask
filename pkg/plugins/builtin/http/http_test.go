@@ -14,23 +14,42 @@ import (
 )
 
 func Test_validConfig(t *testing.T) {
+	cfg := HTTPConfig{
+		URL:            "http://lolcat.host/stuff",
+		Method:         "GET",
+		TimeoutSeconds: "10",
+		DenyRedirects:  "true",
+		Auth: Auth{
+			Bearer: "my_token",
+			Basic: AuthBasic{
+				User:     "foo",
+				Password: "bar",
+			},
+		},
+	}
 
-	var cfg = `
-	{
-		"url": "http://lolcat.host/stuff",
-		"method": "GET",
-		"timeout_seconds": "10",
-		"deny_redirects": "true",
-		"auth": {
-			"bearer": "my_token",
-			"basic": {
-				"user": "foo",
-				"password": "bar"
-			}
-		}
-	}`
+	cfgJSON, err := json.Marshal(cfg)
+	assert.NoError(t, err)
 
-	assert.NoError(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfg)))
+	assert.NoError(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)))
+
+	// Wrong method
+	cfg.Method = "RANDOM"
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "Unknown method for HTTP runner: RANDOM")
+
+	// Wrong timeout_seconds
+	cfg.TimeoutSeconds = "-2"
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "timeout_seconds is wrong -2")
+
+	// Wrong deny_redirects
+	cfg.DenyRedirects = "foo"
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "deny_redirects is wrong foo")
 }
 
 type MockHTTPClient struct {

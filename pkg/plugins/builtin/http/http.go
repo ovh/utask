@@ -17,7 +17,7 @@ import (
 
 // the HTTP plugin performs an HTTP call
 var (
-	Plugin = taskplugin.New("http", "0.6", exec,
+	Plugin = taskplugin.New("http", "0.7", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
 	)
 )
@@ -49,11 +49,14 @@ type Parameter struct {
 
 // Auth represents HTTP authentication
 type Auth struct {
-	Basic struct {
-		User     string `json:"user"`
-		Password string `json:"password"`
-	} `json:"basic"`
-	Bearer string `json:"bearer"`
+	Basic  AuthBasic `json:"basic"`
+	Bearer string    `json:"bearer"`
+}
+
+// AuthBasic represents the embedded basic auth inside Auth struct
+type AuthBasic struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
 }
 
 // HTTPClient is an interface for decoupling http.Client
