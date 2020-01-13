@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	nethttputil "net/http/httputil"
 	"strconv"
 	"time"
 
@@ -109,7 +110,6 @@ func validConfig(config interface{}) error {
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*HTTPConfig)
-
 	// do it once and avoid re-copies
 	body := []byte(cfg.Body)
 
@@ -135,6 +135,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		req.SetBasicAuth(cfg.Auth.Basic.User, cfg.Auth.Basic.Password)
 	}
 
+	if utask.FDebug {
+		fmt.Println("*************************************************")
+		content, _ := nethttputil.DumpRequest(req, true)
+		fmt.Println(string(content))
+	}
+
 	// best-effort match the body's content-type
 	var i interface{}
 	reader := bytes.NewReader(body)
@@ -157,7 +163,13 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("HTTP request failed: %s", err.Error())
 	}
 
-	// remove response magic prefix
+	if utask.FDebug {
+		fmt.Println("*************************************************")
+		content, _ := nethttputil.DumpResponse(resp, true)
+		fmt.Println(string(content))
+	}
+
+	// Remove response magic prefix
 	if cfg.TrimPrefix != "" {
 		trimPrefixBytes := []byte(cfg.TrimPrefix)
 		respBody, err := ioutil.ReadAll(resp.Body)

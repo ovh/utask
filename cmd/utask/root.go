@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/engine"
+	"github.com/ovh/utask/models/hook"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	notify "github.com/ovh/utask/pkg/notify/init"
@@ -31,6 +32,7 @@ const (
 	defaultInitializersFolder = "./init"
 	defaultPluginFolder       = "./plugins"
 	defaultTemplatesFolder    = "./templates"
+	defaultHooksFolder        = "./hooks"
 	defaultScriptsFolder      = "./scripts"
 	defaultRegion             = "default"
 	defaultPort               = 8081
@@ -38,6 +40,7 @@ const (
 	envInit        = "INIT"
 	envPlugins     = "PLUGINS"
 	envTemplates   = "TEMPLATES"
+	envHooks       = "HOOKS"
 	envScripts     = "SCRIPTS"
 	envRegion      = "REGION"
 	envHTTPPort    = "SERVER_PORT"
@@ -56,6 +59,7 @@ func init() {
 	viper.BindEnv(envInit)
 	viper.BindEnv(envPlugins)
 	viper.BindEnv(envTemplates)
+	viper.BindEnv(envHooks)
 	viper.BindEnv(envScripts)
 	viper.BindEnv(envRegion)
 	viper.BindEnv(envHTTPPort)
@@ -74,6 +78,7 @@ func init() {
 	flags.StringVar(&utask.FInitializersFolder, "init-path", defaultInitializersFolder, "Initializer folder absolute path")
 	flags.StringVar(&utask.FPluginFolder, "plugins-path", defaultPluginFolder, "Plugins folder absolute path")
 	flags.StringVar(&utask.FTemplatesFolder, "templates-path", defaultTemplatesFolder, "Templates folder absolute path")
+	flags.StringVar(&utask.FHooksFolder, "hooks-path", defaultHooksFolder, "Hooks folder absolute path")
 	flags.StringVar(&utask.FScriptsFolder, "scripts-path", defaultScriptsFolder, "Scripts folder absolute path")
 	flags.StringVar(&utask.FRegion, "region", defaultRegion, "Region in which instance is located")
 	flags.UintVar(&utask.FPort, "http-port", defaultPort, "HTTP port to expose")
@@ -83,6 +88,7 @@ func init() {
 	viper.BindPFlag(envInit, rootCmd.Flags().Lookup("init-path"))
 	viper.BindPFlag(envPlugins, rootCmd.Flags().Lookup("plugins-path"))
 	viper.BindPFlag(envTemplates, rootCmd.Flags().Lookup("templates-path"))
+	viper.BindPFlag(envHooks, rootCmd.Flags().Lookup("hooks-path"))
 	viper.BindPFlag(envScripts, rootCmd.Flags().Lookup("scripts-path"))
 	viper.BindPFlag(envRegion, rootCmd.Flags().Lookup("region"))
 	viper.BindPFlag(envHTTPPort, rootCmd.Flags().Lookup("http-port"))
@@ -101,6 +107,7 @@ var rootCmd = &cobra.Command{
 		utask.FInitializersFolder = viper.GetString(envInit)
 		utask.FPluginFolder = viper.GetString(envPlugins)
 		utask.FTemplatesFolder = viper.GetString(envTemplates)
+		utask.FHooksFolder = viper.GetString(envHooks)
 		utask.FScriptsFolder = viper.GetString(envScripts)
 		utask.FRegion = viper.GetString(envRegion)
 		utask.FPort = viper.GetUint(envHTTPPort)
@@ -152,6 +159,10 @@ var rootCmd = &cobra.Command{
 		}
 
 		if err := tasktemplate.LoadFromDir(dbp, utask.FTemplatesFolder); err != nil {
+			return err
+		}
+
+		if err := hook.LoadFromDir(dbp, utask.FHooksFolder); err != nil {
 			return err
 		}
 

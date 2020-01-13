@@ -95,6 +95,26 @@ func (v *Values) UnsetOutput(stepName string) {
 	v.unsetStepData(stepName, OutputKey)
 }
 
+// GetHookOutput returns the output of a step hook
+func (v *Values) GetHookOutput(stepName, hookName string) interface{} {
+	return v.getStepHookData(stepName, hookName, OutputKey)
+}
+
+// SetHookOutput stores a step hook's output in Values
+func (v *Values) SetHookOutput(stepName, hookName string, value interface{}) {
+	v.setStepHookData(stepName, hookName, OutputKey, value)
+}
+
+// GetHookMetadata returns the metadata of a step hook
+func (v *Values) GetHookMetadata(stepName, hookName string) interface{} {
+	return v.getStepHookData(stepName, hookName, MetadataKey)
+}
+
+// SetHookMetadata stores a step hook's metadata in Values
+func (v *Values) SetHookMetadata(stepName, hookName string, value interface{}) {
+	v.setStepHookData(stepName, hookName, MetadataKey, value)
+}
+
 // GetMetadata returns the metadata of a named step
 func (v *Values) GetMetadata(stepName string) interface{} {
 	return v.getStepData(stepName, MetadataKey)
@@ -169,6 +189,60 @@ func (v *Values) unsetStepData(stepName, field string) {
 	}
 }
 
+func (v *Values) getStepHooks(stepName string) interface{} {
+	return v.getStepData(stepName, "hooks")
+}
+
+func (v *Values) setStepHooks(stepName string, hooks interface{}) {
+	v.setStepData(stepName, "hooks", hooks)
+}
+
+func (v *Values) unsetStepHooks(stepName string) {
+	v.unsetStepData(stepName, "hooks")
+}
+
+func (v *Values) getStepHookData(stepName, hookName, field string) interface{} {
+	stepHooksData := v.getStepData(stepName, "hooks")
+	if stepHooksData == nil {
+		return nil
+	}
+
+	stepHooksDataMap := stepHooksData.(map[string]interface{})
+	stepHooksDataMapByName := stepHooksDataMap[hookName]
+	if stepHooksDataMapByName == nil {
+		return nil
+	}
+
+	stepHooksDataMapByNameMap := stepHooksDataMapByName.(map[string]interface{})
+
+	return stepHooksDataMapByNameMap[field]
+}
+
+func (v *Values) setStepHookData(stepName, hookName, field string, value interface{}) {
+	stepHooksData := v.getStepData(stepName, "hooks")
+	if stepHooksData == nil {
+		v.setStepData(stepName, "hooks", make(map[string]interface{}))
+		stepHooksData = v.getStepData(stepName, "hooks")
+	}
+
+	stepHooksDataMap := stepHooksData.(map[string]interface{})
+	stepHooksDataMapByName := stepHooksDataMap[hookName]
+	if stepHooksDataMapByName == nil {
+		stepHooksDataMap[hookName] = make(map[string]interface{})
+		stepHooksDataMapByName = stepHooksDataMap[hookName]
+	}
+
+	stepHooksDataMapByName.(map[string]interface{})[field] = value
+}
+
+func (v *Values) unsetStepHookData(stepName, field string) {
+	stepmap := v.m[StepKey].(map[string]interface{})
+	if stepmap[stepName] != nil {
+		stepdata := stepmap[stepName].(map[string]interface{})
+		stepdata[field] = nil
+	}
+}
+
 // SetTaskInfos stores task-related data in Values
 func (v *Values) SetTaskInfos(t map[string]interface{}) {
 	v.m[TaskKey] = t
@@ -232,6 +306,9 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 		v.SetError(utask.This, v.GetError(stepName))
 		defer v.UnsetError(utask.This)
+
+		v.setStepHooks(utask.This, v.getStepHooks(stepName))
+		defer v.unsetStepHooks(utask.This)
 	}
 
 	err = tmpl.Execute(b, v.m)
@@ -243,7 +320,6 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 }
 
 // templating funcs
-
 func (v *Values) fieldTmpl(key ...string) (interface{}, error) {
 	var i interface{}
 

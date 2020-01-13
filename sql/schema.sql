@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS "task" CASCADE;
 DROP TABLE IF EXISTS "task_comment" CASCADE;
 DROP TABLE IF EXISTS "resolution" CASCADE;
 DROP TABLE IF EXISTS "runner_instance" CASCADE;
+DROP TABLE IF EXISTS "hook" CASCADE;
 
 CREATE TABLE "task_template" (
     id BIGSERIAL PRIMARY KEY,
@@ -94,6 +95,16 @@ CREATE INDEX ON "resolution"(next_retry);
 CREATE TABLE "runner_instance" (
     id BIGSERIAL PRIMARY KEY,
     heartbeat TIMESTAMP with time zone DEFAULT now() NOT NULL
+);
+
+
+CREATE TABLE "hook" (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    long_description TEXT,
+    doc_link TEXT,
+    actions JSONB NOT NULL
 );
 
 END;

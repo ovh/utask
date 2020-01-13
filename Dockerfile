@@ -17,7 +17,7 @@ COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
 RUN make re && \
     mv hack/Makefile-child Makefile && \
-    mkdir -p /app/plugins /app/templates /app/config /app/init /app/static/dashboard /app/static/editor && \
+    mkdir -p /app/plugins /app/templates /app/hooks /app/config /app/init /app/static/dashboard /app/static/editor && \
     mv hack/wait-for-it/wait-for-it.sh /wait-for-it.sh && \
     chmod +x /wait-for-it.sh
 WORKDIR /app
@@ -29,5 +29,4 @@ RUN cp /go/src/github.com/ovh/utask/utask /app/utask && \
     chmod +x /app/utask
 
 EXPOSE 8081
-
 CMD ["/app/utask"]

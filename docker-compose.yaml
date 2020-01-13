@@ -15,6 +15,7 @@ services:
       - 8081:8081
     volumes:
       - "./templates:/app/templates:ro"
+      - "./hooks:/app/hooks:ro"
       - "./scripts:/app/scripts:ro"
     depends_on:
       - db

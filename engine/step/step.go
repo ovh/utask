@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/values"
+	"github.com/ovh/utask/models/hook"
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -92,6 +93,7 @@ type Step struct {
 	LastRun      time.Time `json:"last_run,omitempty"`
 
 	// flow control
+	PreHooks     []string     `json:"pre_hooks,omitempty"`
 	Dependencies []string     `json:"dependencies,omitempty"`
 	CustomStates []string     `json:"custom_states,omitempty"`
 	Conditions   []*Condition `json:"conditions,omitempty"`
@@ -192,14 +194,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		}
 	}
 
-	config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = errors.Annotate(err, "failed to template configuration").Error()
-		go noopStep(st, stepChan)
-		return
-	}
-
 	var baseCfgRaw json.RawMessage
 
 	if st.Action.BaseConfiguration != "" {
@@ -218,6 +212,32 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 		baseCfgRaw = resolvedBase
+	}
+
+	for _, hookName := range st.PreHooks {
+		h, err := hook.GetHook(hookName)
+		if err != nil {
+			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
+			st.State = StateFatalError
+			go noopStep(st, stepChan)
+			return
+		}
+
+		if err := HookRun(st, h, baseCfgRaw, values); err != nil {
+			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
+			st.State = StateFatalError
+			go noopStep(st, stepChan)
+			return
+		}
+	}
+
+	fmt.Println(values.GetHookOutput(st.Name, "cds_login"))
+	config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
+	if err != nil {
+		st.State = StateFatalError
+		st.Error = errors.Annotate(err, "failed to template configuration").Error()
+		go noopStep(st, stepChan)
+		return
 	}
 
 	runner, err := getRunner(st.Action.Type)
@@ -303,6 +323,45 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 
 		stepChan <- st
 	}()
+}
+
+func HookRun(s *Step, h *hook.Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
+	for i := range h.Actions {
+		a := h.Actions[i]
+		var action Executor
+		if err := json.Unmarshal(a, &action); err != nil {
+			return err
+		}
+		runner, err := getRunner(action.Type)
+		if err != nil {
+			return err
+		}
+
+		ctx := runner.Context(h.Name)
+		if ctx != nil {
+			ctxMarshal, err := json.Marshal(ctx)
+			if err != nil {
+				return err
+			}
+			ctxTmpl, err := values.Apply(string(ctxMarshal), a, h.Name)
+			if err != nil {
+				return err
+			}
+			err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		output, metadata, err := runner.Exec(h.Name, baseCfgRaw, action.Configuration, ctx)
+		values.SetHookOutput(s.Name, h.Name, output)
+		values.SetHookMetadata(s.Name, h.Name, metadata)
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 // StateSetter is a handle to apply the effects of a condition evaluation
