@@ -75,7 +75,7 @@ github.com/leodido/go-urn
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/loopfz/gadgeto v0.9.0
+# github.com/loopfz/gadgeto v0.9.1
 github.com/loopfz/gadgeto/iffy
 github.com/loopfz/gadgeto/tonic
 github.com/loopfz/gadgeto/tonic/utils/jujerr

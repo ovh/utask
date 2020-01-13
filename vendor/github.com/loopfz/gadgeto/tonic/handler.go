@@ -129,7 +129,9 @@ func Handler(h interface{}, status int, options ...func(*Route)) gin.HandlerFunc
 	for _, opt := range options {
 		opt(route)
 	}
+	routesMu.Lock()
 	routes[fname] = route
+	routesMu.Unlock()
 
 	ret := func(c *gin.Context) { execHook(c, f, fname) }
 

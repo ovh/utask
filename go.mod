@@ -27,7 +27,7 @@ require (
 	github.com/juju/testing v0.0.0-20190723135506-ce30eb24acd2 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/lib/pq v1.2.0
-	github.com/loopfz/gadgeto v0.9.0
+	github.com/loopfz/gadgeto v0.9.1
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0 // indirect
 	github.com/miscreant/miscreant-go v0.0.0-20190615163012-4f5dc8c406f6 // indirect

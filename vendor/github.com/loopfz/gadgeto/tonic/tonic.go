@@ -46,9 +46,10 @@ var (
 
 	mediaType = defaultMediaType
 
-	routes  = make(map[string]*Route)
-	funcs   = make(map[string]struct{})
-	funcsMu = sync.Mutex{}
+	routes   = make(map[string]*Route)
+	routesMu = sync.Mutex{}
+	funcs    = make(map[string]struct{})
+	funcsMu  = sync.Mutex{}
 )
 
 // BindHook is the hook called by the wrapping gin-handler when
