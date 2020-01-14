@@ -32,7 +32,7 @@ steps:
                 # This file param is valid only in a testing context
                 # In production, `file` will be prefixed by the utask.FScriptsFolder variable ("./scripts" by default)
                 # You can specify your file's path relative to that location
-                file: "./scripts_tests/hello-world.sh"
+                file_path: "./scripts_tests/hello-world.sh"
                 argv:
                   - "{{.input.argv}}"
                 timeout_seconds: "25"

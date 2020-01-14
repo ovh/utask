@@ -12,7 +12,7 @@ Files must be located under scripts folder, you should set exec permissions (+x)
 
 |Fields|Description
 |---|---
-| `file` | file name under scripts folder
+| `file_path` | file name under scripts folder
 | `argv` | a collection of script argv
 | `timeout` | timeout of the script execution
 | `stdin` | inject stdin in your script
@@ -28,9 +28,9 @@ action:
   type: script
   configuration:
     # mandatory, string
-    # file field must be related to you scripts path (./scripts)
+    # file_path field must be related to you scripts path (./scripts)
     # and could modified /w `scripts-path` flag when you run binary
-    file: hello-world.sh
+    file_path: hello-world.sh
     # optional, a collection of string
     argv:
         - world
