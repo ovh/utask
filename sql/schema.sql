@@ -96,5 +96,4 @@ CREATE TABLE "runner_instance" (
     heartbeat TIMESTAMP with time zone DEFAULT now() NOT NULL
 );
 
-
 END;

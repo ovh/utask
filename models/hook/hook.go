@@ -1,7 +1,6 @@
 package hook
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,12 +14,11 @@ import (
 var mapAllHooks map[string]Hook = make(map[string]Hook)
 
 type Hook struct {
-	ID              int64       `json:"-"`
 	Name            string      `json:"name"`
-	Description     string      `json:"description" db:"description"`
-	LongDescription *string     `json:"long_description,omitempty" db:"long_description"`
-	DocLink         *string     `json:"doc_link,omitempty" db:"doc_link"`
-	Actions         HookActions `json:"actions" db:"actions"`
+	Description     string      `json:"description""`
+	LongDescription *string     `json:"long_description,omitempty"`
+	DocLink         *string     `json:"doc_link,omitempty"`
+	Actions         HookActions `json:"actions"`
 }
 
 type HookActions []json.RawMessage
@@ -47,12 +45,6 @@ func LoadFromDir(dir string) error {
 		mapAllHooks[h.Name] = h
 	}
 	return nil
-}
-
-// Value returns driver.Value from HookActions.
-func (a HookActions) Value() (driver.Value, error) {
-	j, err := json.Marshal(a)
-	return j, err
 }
 
 func GetHook(name string) (*Hook, error) {
