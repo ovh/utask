@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/values"
-	"github.com/ovh/utask/models/hook"
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -215,7 +214,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	}
 
 	for _, hookName := range st.PreHooks {
-		h, err := hook.GetHook(hookName)
+		h, err := getHook(hookName)
 		if err != nil {
 			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
 			st.State = StateFatalError
@@ -324,7 +323,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	}()
 }
 
-func HookRun(s *Step, h *hook.Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
+func HookRun(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
 	for i := range h.Actions {
 		a := h.Actions[i]
 		var action Executor
