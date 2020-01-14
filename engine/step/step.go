@@ -231,7 +231,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		}
 	}
 
-	fmt.Println(values.GetHookOutput(st.Name, "cds_login"))
 	config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
 	if err != nil {
 		st.State = StateFatalError

@@ -136,7 +136,6 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	if utask.FDebug {
-		fmt.Println("*************************************************")
 		content, _ := nethttputil.DumpRequest(req, true)
 		fmt.Println(string(content))
 	}
@@ -164,7 +163,6 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	if utask.FDebug {
-		fmt.Println("*************************************************")
 		content, _ := nethttputil.DumpResponse(resp, true)
 		fmt.Println(string(content))
 	}

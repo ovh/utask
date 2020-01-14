@@ -162,7 +162,7 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
-		if err := hook.LoadFromDir(dbp, utask.FHooksFolder); err != nil {
+		if err := hook.LoadFromDir(utask.FHooksFolder); err != nil {
 			return err
 		}
 
