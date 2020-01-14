@@ -5,11 +5,11 @@ COPY ./ui /home/node/ui
 
 # dashboard
 WORKDIR /home/node/ui/dashboard
-RUN BASEHREF=/ui/dashboard/ PREFIX_API_BASE_URL=/ make build-prod
+RUN BASEHREF=___UTASK_DASHBOARD_BASEHREF___ PREFIX_API_BASE_URL=___UTASK_DASHBOARD_PREFIXAPIBASEURL___ make build-prod
 
 # editor
 WORKDIR /home/node/ui/editor
-RUN BASEHREF=/ui/editor/ make build-prod
+RUN BASEHREF=___UTASK_EDITOR_BASEHREF___ make build-prod
 
 FROM golang:1.13-buster
 

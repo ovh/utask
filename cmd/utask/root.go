@@ -118,6 +118,14 @@ var rootCmd = &cobra.Command{
 		server = api.NewServer()
 		server.WithAuth(defaultAuthHandler)
 
+		cfg, err := utask.Config(store)
+		if err != nil {
+			return err
+		}
+		server.SetDashboardPathPrefix(cfg.DashboardPathPrefix)
+		server.SetDashboardAPIPathPrefix(cfg.DashboardAPIPathPrefix)
+		server.SetEditorPathPrefix(cfg.EditorPathPrefix)
+
 		for _, err := range []error{
 			// register builtin executors
 			builtin.Register(),
