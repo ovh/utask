@@ -19,7 +19,7 @@ import (
 
 // the script plugin execute scripts
 var (
-	Plugin = taskplugin.New("script", "0.1", exec,
+	Plugin = taskplugin.New("script", "0.2", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
 	)
 )
@@ -35,7 +35,7 @@ type Metadata struct {
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File                  string   `json:"file"`
+	File                  string   `json:"file_path"`
 	Argv                  []string `json:"argv,omitempty"`
 	Timeout               string   `json:"timeout,omitempty"`
 	Stdin                 string   `json:"stdin,omitempty"`
@@ -88,7 +88,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	cmd := gexec.CommandContext(ctxe, filepath.Join(utask.FScriptsFolder, cfg.File), cfg.Argv...)
+	cmd := gexec.CommandContext(ctxe, fmt.Sprintf("./%s", cfg.File), cfg.Argv...)
 	cmd.Dir = utask.FScriptsFolder
 	cmd.Stdin = strings.NewReader(cfg.Stdin)
 
