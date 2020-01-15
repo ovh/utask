@@ -222,7 +222,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 
-		if err := HookRun(st, h, baseCfgRaw, values); err != nil {
+		if err := runHook(st, h, baseCfgRaw, values); err != nil {
 			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
 			st.State = StateFatalError
 			go noopStep(st, stepChan)
@@ -323,13 +323,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	}()
 }
 
-func HookRun(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
-	for i := range h.Actions {
-		a := h.Actions[i]
-		var action Executor
-		if err := json.Unmarshal(a, &action); err != nil {
-			return err
-		}
+func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
+	for _, action := range h.Actions {
 		runner, err := getRunner(action.Type)
 		if err != nil {
 			return err
@@ -341,7 +336,7 @@ func HookRun(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values
 			if err != nil {
 				return err
 			}
-			ctxTmpl, err := values.Apply(string(ctxMarshal), a, h.Name)
+			ctxTmpl, err := values.Apply(string(ctxMarshal), action, h.Name)
 			if err != nil {
 				return err
 			}
