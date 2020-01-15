@@ -32,6 +32,7 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 			return fmt.Errorf("failed to unmarshal '%s': '%s'", file.Name(), err)
 		}
 		verb := "Created"
+		tt.Normalize()
 		existing, err := LoadFromName(dbp, tt.Name)
 		if err != nil {
 			if !errors.IsNotFound(err) {
