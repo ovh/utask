@@ -324,7 +324,10 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 }
 
 func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
-	for _, action := range h.Actions {
+	output := make(map[int]interface{})
+	metadata := make(map[int]interface{})
+
+	for i, action := range h.Actions {
 		runner, err := getRunner(action.Type)
 		if err != nil {
 			return err
@@ -346,14 +349,17 @@ func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values
 			}
 		}
 
-		output, metadata, err := runner.Exec(h.Name, baseCfgRaw, action.Configuration, ctx)
-		values.SetHookOutput(s.Name, h.Name, output)
-		values.SetHookMetadata(s.Name, h.Name, metadata)
+		o, m, err := runner.Exec(h.Name, baseCfgRaw, action.Configuration, ctx)
+		output[i] = o
+		metadata[i] = m
 		if err != nil {
 			return err
 		}
-
 	}
+
+	values.SetHookOutput(s.Name, h.Name, output)
+	values.SetHookMetadata(s.Name, h.Name, metadata)
+
 	return nil
 }
 
