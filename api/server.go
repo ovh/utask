@@ -134,7 +134,7 @@ func (s *Server) build(ctx context.Context) {
 		ginEngine := gin.Default()
 
 		ginEngine.
-			Group("/", s.authMiddleware,
+			Group("/",
 				StaticFilePatternReplaceMiddleware(
 					"___UTASK_DASHBOARD_BASEHREF___",
 					generateBaseHref(s.dashboardPathPrefix, "/ui/dashboard"),
