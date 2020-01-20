@@ -6,6 +6,8 @@ TEST_LOCATION	= ./...
 TEST_CMD		= go test -count=1 -v -mod=vendor -cover ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
+SOURCE_FILES 	= $(shell find ./ -type f -name "*.go" | grep -v _test.go)
+
 VERSION 		:= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)
 ifndef VERSION
 	VERSION = $(shell git describe --abbrev=3 --tags $(git rev-list --tags --max-count=1))-dev
@@ -31,9 +33,9 @@ define docker_build
 	docker build ${DOCKER_OPT} -f ${MAIN_LOCATION}/$(1)/Dockerfile .
 endef
 
-all: ${BINARY} 
+all: ${BINARY}
 
-${BINARY}: 
+${BINARY}: $(SOURCE_FILES) go.mod
 	$(call build_binary,${BINARY})
 
 docker:
@@ -58,7 +60,7 @@ test-travis:
 	go get github.com/mattn/goveralls
 	hack/test.sh ${TEST_CMD_COV}
 
-test-docker: 
+test-docker:
 	DEV=true bash hack/test-docker.sh ${TEST_CMD}
 
 run-test-stack:
