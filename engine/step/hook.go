@@ -6,11 +6,11 @@ import (
 
 // Hook represents the hook data structure
 type Hook struct {
-	Name            string     `json:"name"`
-	Description     string     `json:"description""`
-	LongDescription *string    `json:"long_description,omitempty"`
-	DocLink         *string    `json:"doc_link,omitempty"`
-	Actions         []Executor `json:"actions"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description""`
+	LongDescription *string  `json:"long_description,omitempty"`
+	DocLink         *string  `json:"doc_link,omitempty"`
+	Action          Executor `json:"action"`
 }
 
 // MapAllHooks represents a static map of all hooks

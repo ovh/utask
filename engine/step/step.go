@@ -324,41 +324,33 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 }
 
 func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
-	output := make(map[int]interface{})
-	metadata := make(map[int]interface{})
+	runner, err := getRunner(h.Action.Type)
+	if err != nil {
+		return err
+	}
 
-	for i, action := range h.Actions {
-		runner, err := getRunner(action.Type)
+	ctx := runner.Context(h.Name)
+	if ctx != nil {
+		ctxMarshal, err := json.Marshal(ctx)
 		if err != nil {
 			return err
 		}
-
-		ctx := runner.Context(h.Name)
-		if ctx != nil {
-			ctxMarshal, err := json.Marshal(ctx)
-			if err != nil {
-				return err
-			}
-			ctxTmpl, err := values.Apply(string(ctxMarshal), action, h.Name)
-			if err != nil {
-				return err
-			}
-			err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
-			if err != nil {
-				return err
-			}
+		ctxTmpl, err := values.Apply(string(ctxMarshal), h.Action, h.Name)
+		if err != nil {
+			return err
 		}
-
-		o, m, err := runner.Exec(h.Name, baseCfgRaw, action.Configuration, ctx)
-		output[i] = o
-		metadata[i] = m
+		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	values.SetHookOutput(s.Name, h.Name, output)
-	values.SetHookMetadata(s.Name, h.Name, metadata)
+	o, m, err := runner.Exec(h.Name, baseCfgRaw, h.Action.Configuration, ctx)
+	values.SetHookOutput(s.Name, h.Name, o)
+	values.SetHookMetadata(s.Name, h.Name, m)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
