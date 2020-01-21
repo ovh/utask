@@ -9,7 +9,12 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+	"github.com/ovh/utask/pkg/templateimport"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	discoveredTemplates []TaskTemplate = []TaskTemplate{}
 )
 
 // LoadFromDir reads yaml-formatted task templates
@@ -31,8 +36,15 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 		if err := yaml.Unmarshal(tmpl, &tt); err != nil {
 			return fmt.Errorf("failed to unmarshal '%s': '%s'", file.Name(), err)
 		}
-		verb := "Created"
+
 		tt.Normalize()
+
+		discoveredTemplates = append(discoveredTemplates, tt)
+		templateimport.AddTemplate(tt.Name)
+	}
+
+	for _, tt := range discoveredTemplates {
+		verb := "Created"
 		existing, err := LoadFromName(dbp, tt.Name)
 		if err != nil {
 			if !errors.IsNotFound(err) {
@@ -50,5 +62,6 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 		}
 		logrus.Infof("%s task template '%s'", verb, tt.Name)
 	}
+	templateimport.CleanTemplates()
 	return nil
 }
