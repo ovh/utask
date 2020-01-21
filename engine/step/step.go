@@ -361,7 +361,7 @@ func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values
 		hookResults[key] = string(valueResult)
 	}
 
-	values.SetHookResult(s.Name, h.Name, hookResults)
+	values.SetHookResults(s.Name, h.Name, hookResults)
 
 	return nil
 }
