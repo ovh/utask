@@ -1,8 +1,9 @@
 package values
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHookOutput(t *testing.T) {
@@ -23,6 +24,16 @@ func TestHookMetadata(t *testing.T) {
 	actual := v.GetHookMetadata("myStep", "myHook")
 
 	assert.EqualValues(t, myOutputValue, actual)
+}
+
+func TestHookResults(t *testing.T) {
+	var v = NewValues()
+	var myResultsValue = map[string]string{"foo": "bar"}
+
+	v.SetHookResults("myStep", "myHook", myResultsValue)
+	actual := v.GetHookResults("myStep", "myHook")
+
+	assert.EqualValues(t, myResultsValue, actual)
 }
 
 func TestStepHooks(t *testing.T) {
