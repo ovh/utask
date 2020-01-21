@@ -352,6 +352,17 @@ func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values
 		return err
 	}
 
+	hookResults := make(map[string]interface{})
+	for key, value := range h.Results {
+		valueResult, err := values.Apply(value, h.Action, s.Name)
+		if err != nil {
+			return err
+		}
+		hookResults[key] = string(valueResult)
+	}
+
+	values.SetHookResult(s.Name, h.Name, hookResults)
+
 	return nil
 }
 

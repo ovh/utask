@@ -24,6 +24,7 @@ const (
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
 
 	OutputKey   = "output"
+	ResultsKey  = "results"
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
 	ErrorKey    = "error"
@@ -103,6 +104,16 @@ func (v *Values) GetHookOutput(stepName, hookName string) interface{} {
 // SetHookOutput stores a step hook's output in Values
 func (v *Values) SetHookOutput(stepName, hookName string, value interface{}) {
 	v.setStepHookData(stepName, hookName, OutputKey, value)
+}
+
+// GetHookResults returns the results of a step hook
+func (v *Values) GetHookResults(stepName, hookName string) interface{} {
+	return v.getStepHookData(stepName, hookName, ResultsKey)
+}
+
+// SetHookResults stores a step hook's results in Values
+func (v *Values) SetHookResults(stepName, hookName string, value interface{}) {
+	v.setStepHookData(stepName, hookName, ResultsKey, value)
 }
 
 // GetHookMetadata returns the metadata of a step hook
