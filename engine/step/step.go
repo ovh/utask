@@ -222,20 +222,38 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 
-		if err := runHook(st, h, baseCfgRaw, values); err != nil {
-			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
+		runner, err := getRunner(h.Action.Type)
+		if err != nil {
 			st.State = StateFatalError
+			st.Error = err.Error()
 			go noopStep(st, stepChan)
 			return
 		}
-	}
 
-	config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = errors.Annotate(err, "failed to template configuration").Error()
-		go noopStep(st, stepChan)
-		return
+		ctx := runner.Context(h.Name)
+		if ctx != nil {
+			ctxMarshal, err := json.Marshal(ctx)
+			if err != nil {
+				st.State = StateFatalError
+				st.Error = fmt.Sprintf("hook failed: failed to marshal context: %s", err.Error())
+				go noopStep(st, stepChan)
+				return
+			}
+			ctxTmpl, err := values.Apply(string(ctxMarshal), h.Action, h.Name)
+			if err != nil {
+				st.State = StateFatalError
+				st.Error = fmt.Sprintf("hook failed: failed to template context: %s", err.Error())
+				go noopStep(st, stepChan)
+				return
+			}
+			err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
+			if err != nil {
+				st.State = StateFatalError
+				st.Error = fmt.Sprintf("hook failed: failed to re-marshal context: %s", err.Error())
+				go noopStep(st, stepChan)
+				return
+			}
+		}
 	}
 
 	runner, err := getRunner(st.Action.Type)
@@ -282,6 +300,59 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		case <-stopRunningSteps:
 			st.State = StateToRetry
 		default:
+			for _, hookName := range st.PreHooks {
+				h, err := getHook(hookName)
+				if err != nil {
+					st.Error = fmt.Sprintf("get hook %s failed: %v", h.Name, err)
+					st.State = StateFatalError
+					go noopStep(st, stepChan)
+					return
+				}
+
+				o, m, err := runner.Exec(h.Name, baseCfgRaw, h.Action.Configuration, ctx)
+				values.SetHookOutput(st.Name, h.Name, o)
+				values.SetHookMetadata(st.Name, h.Name, m)
+				if err != nil {
+					if errors.IsBadRequest(err) {
+						st.State = StateClientError
+					} else {
+						st.State = StateServerError
+					}
+					st.Error = err.Error()
+					go noopStep(st, stepChan)
+					return
+				} else if st.ResultValidate != nil {
+					if err := st.ResultValidate(st.Output); err != nil {
+						st.Error = err.Error()
+						st.State = StateFatalError
+						go noopStep(st, stepChan)
+						return
+					}
+				}
+
+				hookResults := make(map[string]interface{})
+				for key, value := range h.Results {
+					valueResult, err := values.Apply(value, st.Item, st.Name)
+					if err != nil {
+						st.State = StateFatalError
+						st.Error = fmt.Sprintf("hook failed: failed to template results context: %s", err.Error())
+						go noopStep(st, stepChan)
+						return
+					}
+					hookResults[key] = string(valueResult)
+				}
+
+				values.SetHookResults(st.Name, h.Name, hookResults)
+			}
+
+			config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
+			if err != nil {
+				st.State = StateFatalError
+				st.Error = errors.Annotate(err, "failed to template configuration").Error()
+				go noopStep(st, stepChan)
+				return
+			}
+
 			st.Output, st.Metadata, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
 			if baseOutput != nil {
 				marshaled, err := json.Marshal(st.Output)
@@ -321,49 +392,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 
 		stepChan <- st
 	}()
-}
-
-func runHook(s *Step, h *Hook, baseCfgRaw json.RawMessage, values *values.Values) error {
-	runner, err := getRunner(h.Action.Type)
-	if err != nil {
-		return err
-	}
-
-	ctx := runner.Context(h.Name)
-	if ctx != nil {
-		ctxMarshal, err := json.Marshal(ctx)
-		if err != nil {
-			return err
-		}
-		ctxTmpl, err := values.Apply(string(ctxMarshal), h.Action, h.Name)
-		if err != nil {
-			return err
-		}
-		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
-		if err != nil {
-			return err
-		}
-	}
-
-	o, m, err := runner.Exec(h.Name, baseCfgRaw, h.Action.Configuration, ctx)
-	values.SetHookOutput(s.Name, h.Name, o)
-	values.SetHookMetadata(s.Name, h.Name, m)
-	if err != nil {
-		return err
-	}
-
-	hookResults := make(map[string]interface{})
-	for key, value := range h.Results {
-		valueResult, err := values.Apply(value, h.Action, s.Name)
-		if err != nil {
-			return err
-		}
-		hookResults[key] = string(valueResult)
-	}
-
-	values.SetHookResults(s.Name, h.Name, hookResults)
-
-	return nil
 }
 
 // StateSetter is a handle to apply the effects of a condition evaluation
