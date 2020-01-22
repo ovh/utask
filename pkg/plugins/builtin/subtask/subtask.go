@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
+	"github.com/ovh/utask/pkg/templateimport"
 	"github.com/ovh/utask/pkg/utils"
 )
 
@@ -54,11 +55,18 @@ func validConfig(config interface{}) error {
 	}
 
 	_, err = tasktemplate.LoadFromName(dbp, cfg.Template)
-	if err != nil {
+	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	return nil
+	templates := templateimport.GetTemplates()
+	for _, template := range templates {
+		if template == cfg.Template {
+			return nil
+		}
+	}
+
+	return errors.NotFoundf("sub-task template %q", cfg.Template)
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
