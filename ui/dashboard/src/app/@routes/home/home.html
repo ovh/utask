@@ -10,8 +10,8 @@
           <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type"
             (change)="pagination.state = pagination.type === 'resolvable' ? '' : pagination.state;search();">
             <option value="all" *ngIf="meta.user_is_admin">All</option>
-            <option value="own">Own</option>
-            <option value="resolvable">Resolvable</option>
+            <option value="own">My own</option>
+            <option value="resolvable">I can resolvable</option>
           </select>
           &nbsp;
           <select class="form-control" id="filter_state" name="filter_state" [(ngModel)]="pagination.state"
@@ -78,7 +78,7 @@
                     <div class="btn-group" ngbDropdown placement="bottom-right" role="group">
                       <button class="btn btn-sm btn-secondary btn-outline-primary" ngbDropdownToggle>Actions</button>
                       <div class="dropdown-menu" ngbDropdownMenu>
-                        <strong *ngIf="item.resolution" class="px-3 py-3" style="font-size:18px;">Resolution</strong>
+                        <strong *ngIf="item.resolution" class="px-3 py-3" style="font-size:18px;">Execution</strong>
                         <button *ngIf="item.resolution" ngbDropdownItem
                           (click)="runResolution(item.resolution, item.id); $event.stopPropagation();">
                           Run

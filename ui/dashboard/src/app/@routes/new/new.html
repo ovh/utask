@@ -10,14 +10,13 @@
               <li *ngFor="let inputName of Object.keys(myForm.form.controls)">{{inputName}} : {{myForm.form.controls[inputName]?.invalid}} {{myForm.form.controls[inputName]?.touched}}
               </li>
             </ul> -->
-
         <div class="form-group">
           <label for="input_templates">Templates</label>
           <select class="form-control" id="input_templates" name="input_templates" required
             [(ngModel)]="selectedTemplate" (change)="newTask(selectedTemplate)">
             <option *ngIf="!selectedTemplate">-- Template --</option>
             <ng-template ngFor let-template [ngForOf]="templates">
-              <option *ngIf="!template.blocked" [ngValue]="template">{{template.name}}</option>
+              <option *ngIf="!template.blocked" [ngValue]="template">{{template.description}}</option>
             </ng-template>
 
           </select>

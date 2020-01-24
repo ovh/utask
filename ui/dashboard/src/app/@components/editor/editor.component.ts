@@ -19,7 +19,7 @@ import EditorConfig from 'src/app/@models/editorconfig.model';
     `,
 })
 export class EditorComponent implements AfterViewInit, OnChanges {
-    @ViewChild('editor', { static: false }) editor: ElementRef;
+    @ViewChild('editor', null) editor: ElementRef;
     @Input() value: string;
     @Input() errors: any[];
     @Input() config: EditorConfig;

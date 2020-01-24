@@ -1,19 +1,14 @@
-import { Component, OnInit, Input, Output, OnChanges, SimpleChanges, EventEmitter, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, Input, Output, OnChanges, SimpleChanges, EventEmitter, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import * as _ from 'lodash';
-import $ from 'jquery';
 
-
-
-const d3 = require('d3');
-import dagreD3 from 'dagre-d3';
 import { GraphService } from 'src/app/@services/graph.service';
 
 @Component({
     selector: 'steps-viewer',
     templateUrl: 'stepsviewer.html',
 })
-export class StepsViewerComponent implements OnChanges, AfterViewInit/*, OnInit*/ {
-    @ViewChild('svg', { static: false }) svg: ElementRef;
+export class StepsViewerComponent implements OnChanges, AfterViewInit{
+    @ViewChild('svg', null) svg: ElementRef;
     @Input() item: any;
     // TODO: RENAME DONE OU DELETE IT
     @Input() done: boolean;
@@ -22,7 +17,6 @@ export class StepsViewerComponent implements OnChanges, AfterViewInit/*, OnInit*
     error: any = null;
     selectedNode: any;
     loaded = false;
-    // steps: any[];
 
     constructor(private graphService: GraphService) {
     }

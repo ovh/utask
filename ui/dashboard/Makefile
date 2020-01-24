@@ -30,16 +30,16 @@ install:
 
 dev:
 	$(NODE) scripts/prebuild-env-dev.js
-	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF)
+	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF) --verbose=true
 
 build: install
 	$(NODE) scripts/prebuild-env-dev.js
-	$(NG) build --base-href $(BASEHREF)
+	$(NG) build --base-href $(BASEHREF) --verbose=true
 	# $(TAR) $(DIST_TAR) $(DIST_DIR)
 
 build-prod: install
 	$(NODE) scripts/prebuild-env-prod.js
-	$(NG) build --prod --base-href $(BASEHREF)
+	$(NG) build --prod --base-href $(BASEHREF) --verbose=true
 	# $(TAR) $(DIST_TAR) $(DIST_DIR)
 
 prod:
@@ -50,4 +50,4 @@ package:
 	$(UNTAR) $(DIST_TAR)
 
 test:
-	$(ECHO) "No Test for the moment"
+	$(NG) test

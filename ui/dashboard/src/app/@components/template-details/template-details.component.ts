@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import Template from 'src/app/@models/template.model';
 import { ApiService } from '../../@services/api.service';
 import EditorConfig from 'src/app/@models/editorconfig.model';
-import JSON2YAML from '../../@services/json2yaml.service';
+import JSToYaml from 'convert-yaml';
 
 @Component({
     selector: 'template-details',
@@ -46,8 +46,9 @@ export class TemplateDetailsComponent implements OnInit {
         this.loading = true;
         this.api.getTemplate(this.templateName).toPromise().then((data) => {
             this.template = data as Template;
-            JSON2YAML.setSpacing(0, 4);
-            this.text = JSON2YAML.stringify(this.template);
+            JSToYaml.spacingStart = ' '.repeat(0);
+            JSToYaml.spacing = ' '.repeat(4);
+            this.text = JSToYaml.stringify(this.template).value;
             // this.steps = this.generateSteps(this.template);
         }).catch((err: any) => {
             this.error = err;

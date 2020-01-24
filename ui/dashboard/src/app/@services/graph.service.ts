@@ -12,9 +12,9 @@ export class GraphService {
     constructor() {
     }
 
-    initZoom(dagreGraphWidth: number, svgWidth: number, dagreGraphHeight: number, svgHeight: number, d3Zoom: any, d3Svg: any) {
-        const scaleWidth = svgWidth / dagreGraphWidth * 0.9;
-        const scaleHeight = svgHeight / dagreGraphHeight * 0.9;
+    initZoom(dagreGraphWidth: number, svgWidth: number, dagreGraphHeight: number, svgHeight: number, d3Zoom: any, d3Svg: any, ratioZoom: number) {
+        const scaleWidth = svgWidth / dagreGraphWidth * ratioZoom;
+        const scaleHeight = svgHeight / dagreGraphHeight * ratioZoom;
         const scale = _.min([scaleWidth, scaleHeight]);
         const w = scale * dagreGraphWidth;
         const h = scale * dagreGraphHeight;
@@ -39,13 +39,20 @@ export class GraphService {
             innerSVG.attr('transform', d3.event.transform);
         });
         d3Svg.call(d3Zoom);
+        let radioZoom = 0.9;
+        if (steps.length < 5) {
+            radioZoom = 0.3;
+        } else if (steps.length < 10) {
+            radioZoom = 0.6;
+        }
         this.initZoom(
             dagreGraph.graph().width,
             svgNativeElement.width.animVal.value,
             dagreGraph.graph().height,
             svgNativeElement.height.animVal.value,
             d3Zoom,
-            d3Svg
+            d3Svg,
+            radioZoom
         );
         innerSVG.selectAll('g.node')
             .attr('title', (stepName: string) => dagreGraph.node(stepName).tooltip)

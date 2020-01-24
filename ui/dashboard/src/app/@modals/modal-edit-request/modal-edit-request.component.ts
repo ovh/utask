@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import jsYaml from 'js-yaml';
 import EditorConfig from 'src/app/@models/editorconfig.model';
 import { ApiService } from '../../@services/api.service';
-import JSON2YAML from '../../@services/json2yaml.service';
+import JSToYaml from 'convert-yaml';
 
 @Component({
   selector: 'app-modal-edit-request',
@@ -26,8 +26,9 @@ export class ModalEditRequestComponent implements OnInit {
   }
 
   ngOnInit() {
-    JSON2YAML.setSpacing(0, 4);
-    this.text = JSON2YAML.stringify(this.value);
+    JSToYaml.spacingStart = ' '.repeat(0);
+    JSToYaml.spacing = ' '.repeat(4);
+    this.text = JSToYaml.stringify(this.value).value;
   }
 
   textUpdate(text: string) {
