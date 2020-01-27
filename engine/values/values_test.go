@@ -30,8 +30,8 @@ func TestHookResults(t *testing.T) {
 	var v = NewValues()
 	var myResultsValue = map[string]string{"foo": "bar"}
 
-	v.SetHookResults("myStep", "myHook", myResultsValue)
-	actual := v.GetHookResults("myStep", "myHook")
+	v.SetHookResult("myStep", "myHook", myResultsValue)
+	actual := v.GetHookResult("myStep", "myHook")
 
 	assert.EqualValues(t, myResultsValue, actual)
 }
