@@ -213,10 +213,10 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		baseCfgRaw = resolvedBase
 	}
 
-	hookRunner := make(map[int]Runner)
-	hookContext := make(map[int]interface{})
+	hookRunner := make(map[string]Runner)
+	hookContext := make(map[string]interface{})
 
-	for index, hookName := range st.PreHooks {
+	for _, hookName := range st.PreHooks {
 		h, err := getHook(hookName)
 		if err != nil {
 			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
@@ -233,7 +233,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 
-		hookRunner[index] = runner
+		hookRunner[hookName] = runner
 
 		ctx := runner.Context(h.Name)
 		if ctx != nil {
@@ -260,7 +260,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			}
 		}
 
-		hookContext[index] = ctx
+		hookContext[hookName] = ctx
 	}
 
 	stepRunner, err := getRunner(st.Action.Type)
@@ -307,7 +307,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		case <-stopRunningSteps:
 			st.State = StateToRetry
 		default:
-			for index, hookName := range st.PreHooks {
+			for _, hookName := range st.PreHooks {
 				h, err := getHook(hookName)
 				if err != nil {
 					st.Error = fmt.Sprintf("get hook %s failed: %v", h.Name, err)
@@ -316,7 +316,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 					return
 				}
 
-				o, m, err := hookRunner[index].Exec(h.Name, baseCfgRaw, h.Action.Configuration, hookContext[index])
+				o, m, err := hookRunner[hookName].Exec(h.Name, baseCfgRaw, h.Action.Configuration, hookContext[hookName])
 				values.SetHookOutput(st.Name, h.Name, o)
 				values.SetHookMetadata(st.Name, h.Name, m)
 				if err != nil {
@@ -343,10 +343,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 				}
 
 				values.SetHookResult(st.Name, h.Name, hookResults)
-
-				fmt.Println("output", values.GetHookOutput(st.Name, h.Name))
-				fmt.Println("gethookresults", values.GetHookResult(st.Name, h.Name))
-				fmt.Println("hook results", hookResults)
 			}
 
 			config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
