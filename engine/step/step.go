@@ -213,7 +213,10 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		baseCfgRaw = resolvedBase
 	}
 
-	for _, hookName := range st.PreHooks {
+	hookRunner := make(map[int]Runner)
+	hookContext := make(map[int]interface{})
+
+	for index, hookName := range st.PreHooks {
 		h, err := getHook(hookName)
 		if err != nil {
 			st.Error = fmt.Sprintf("hook %s failed: %v", h.Name, err)
@@ -230,33 +233,37 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 
+		hookRunner[index] = runner
+
 		ctx := runner.Context(h.Name)
 		if ctx != nil {
 			ctxMarshal, err := json.Marshal(ctx)
 			if err != nil {
 				st.State = StateFatalError
-				st.Error = fmt.Sprintf("hook failed: failed to marshal context: %s", err.Error())
+				st.Error = fmt.Sprintf("hook %s failed: failed to marshal context: %s", hookName, err.Error())
 				go noopStep(st, stepChan)
 				return
 			}
 			ctxTmpl, err := values.Apply(string(ctxMarshal), h.Action, h.Name)
 			if err != nil {
 				st.State = StateFatalError
-				st.Error = fmt.Sprintf("hook failed: failed to template context: %s", err.Error())
+				st.Error = fmt.Sprintf("hook %s failed: failed to template context: %s", hookName, err.Error())
 				go noopStep(st, stepChan)
 				return
 			}
 			err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
 			if err != nil {
 				st.State = StateFatalError
-				st.Error = fmt.Sprintf("hook failed: failed to re-marshal context: %s", err.Error())
+				st.Error = fmt.Sprintf("hook %s failed: failed to re-marshal context: %s", hookName, err.Error())
 				go noopStep(st, stepChan)
 				return
 			}
 		}
+
+		hookContext[index] = ctx
 	}
 
-	runner, err := getRunner(st.Action.Type)
+	stepRunner, err := getRunner(st.Action.Type)
 	if err != nil {
 		st.State = StateFatalError
 		st.Error = err.Error()
@@ -264,9 +271,9 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		return
 	}
 
-	ctx := runner.Context(st.Name)
-	if ctx != nil {
-		ctxMarshal, err := json.Marshal(ctx)
+	stepCtx := stepRunner.Context(st.Name)
+	if stepCtx != nil {
+		ctxMarshal, err := json.Marshal(stepCtx)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = fmt.Sprintf("failed to marshal context: %s", err.Error())
@@ -280,7 +287,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			go noopStep(st, stepChan)
 			return
 		}
-		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
+		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &stepCtx)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = fmt.Sprintf("failed to re-marshal context: %s", err.Error())
@@ -300,7 +307,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		case <-stopRunningSteps:
 			st.State = StateToRetry
 		default:
-			for _, hookName := range st.PreHooks {
+			for index, hookName := range st.PreHooks {
 				h, err := getHook(hookName)
 				if err != nil {
 					st.Error = fmt.Sprintf("get hook %s failed: %v", h.Name, err)
@@ -309,7 +316,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 					return
 				}
 
-				o, m, err := runner.Exec(h.Name, baseCfgRaw, h.Action.Configuration, ctx)
+				o, m, err := hookRunner[index].Exec(h.Name, baseCfgRaw, h.Action.Configuration, hookContext[index])
 				values.SetHookOutput(st.Name, h.Name, o)
 				values.SetHookMetadata(st.Name, h.Name, m)
 				if err != nil {
@@ -321,18 +328,11 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 					st.Error = err.Error()
 					go noopStep(st, stepChan)
 					return
-				} else if st.ResultValidate != nil {
-					if err := st.ResultValidate(st.Output); err != nil {
-						st.Error = err.Error()
-						st.State = StateFatalError
-						go noopStep(st, stepChan)
-						return
-					}
 				}
 
 				hookResults := make(map[string]interface{})
-				for key, value := range h.Results {
-					valueResult, err := values.Apply(value, st.Item, st.Name)
+				for key, value := range h.Result {
+					valueResult, err := values.Apply(value.(string), st.Item, st.Name)
 					if err != nil {
 						st.State = StateFatalError
 						st.Error = fmt.Sprintf("hook failed: failed to template results context: %s", err.Error())
@@ -342,7 +342,11 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 					hookResults[key] = string(valueResult)
 				}
 
-				values.SetHookResults(st.Name, h.Name, hookResults)
+				values.SetHookResult(st.Name, h.Name, hookResults)
+
+				fmt.Println("output", values.GetHookOutput(st.Name, h.Name))
+				fmt.Println("gethookresults", values.GetHookResult(st.Name, h.Name))
+				fmt.Println("hook results", hookResults)
 			}
 
 			config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
@@ -353,7 +357,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 				return
 			}
 
-			st.Output, st.Metadata, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
+			st.Output, st.Metadata, err = stepRunner.Exec(st.Name, baseCfgRaw, config, stepCtx)
 			if baseOutput != nil {
 				marshaled, err := json.Marshal(st.Output)
 				if err == nil {
