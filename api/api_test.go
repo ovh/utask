@@ -45,7 +45,7 @@ const (
 var hdl http.Handler
 
 func TestMain(m *testing.M) {
-	store := configstore.NewStore()
+	store := configstore.DefaultStore
 	store.InitFromEnvironment()
 
 	logrus.SetOutput(os.Stdout)
