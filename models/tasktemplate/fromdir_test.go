@@ -46,6 +46,15 @@ func TestLoadFromDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	_, err = dbp.DB().Query("DELETE FROM resolution;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task_comment;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task_template;")
+	assert.Nil(t, err, "Emptying database failed")
+
 	err = tasktemplate.LoadFromDir(dbp, "templates_tests")
 	assert.Nil(t, err, "LoadFromDir failed")
 
