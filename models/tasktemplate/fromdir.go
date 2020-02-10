@@ -62,6 +62,51 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 		}
 		logrus.Infof("%s task template '%s'", verb, tt.Name)
 	}
+
+	// removing or archiving old task_templates
+	var last *string
+	currentTemplates := []*TaskTemplate{}
+	for {
+		taskTemplatesFromDatabase, err := ListTemplates(dbp, true, 100, last)
+		if err != nil {
+			logrus.Fatalf("unable to remove old templates: %s", err)
+		}
+		if len(taskTemplatesFromDatabase) == 0 {
+			break
+		}
+		currentTemplates = append(currentTemplates, taskTemplatesFromDatabase...)
+		lastI := taskTemplatesFromDatabase[len(taskTemplatesFromDatabase)-1].Name
+		last = &lastI
+	}
+
+	importedTemplates := templateimport.GetTemplates()
+	for _, tt := range currentTemplates {
+		found := false
+		for _, importedTT := range importedTemplates {
+			if tt.Name == importedTT {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if err = tt.Delete(dbp); err == nil {
+				logrus.Infof("Deleted task template %q", tt.Name)
+				continue
+			}
+			// unable to delete TaskTemplate, probably some old Tasks still in database, archiving it
+			tt, err = LoadFromID(dbp, tt.ID)
+			if err != nil {
+				return fmt.Errorf("unable to load template %q for archiving: %s", tt.Name, err)
+			}
+			tt.Hidden = true
+			tt.Blocked = true
+			if err := update(dbp, tt); err != nil {
+				return fmt.Errorf("unable to archive template %q: %s", tt.Name, err)
+			}
+			logrus.Infof("Archived task template %q", tt.Name)
+		}
+	}
+
 	templateimport.CleanTemplates()
 	return nil
 }

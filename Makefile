@@ -3,7 +3,7 @@ BINARY			= utask
 MAIN_LOCATION	= ./cmd
 
 TEST_LOCATION	= ./...
-TEST_CMD		= go test -count=1 -v -mod=vendor -cover ${TEST_LOCATION}
+TEST_CMD		= go test -count=1 -v -mod=vendor -cover -p 1 ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
 SOURCE_FILES 	= $(shell find ./ -type f -name "*.go" | grep -v _test.go)
