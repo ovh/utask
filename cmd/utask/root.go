@@ -107,7 +107,7 @@ var rootCmd = &cobra.Command{
 		utask.FDebug = viper.GetBool(envDebug)
 		utask.FMaintenanceMode = viper.GetBool(envMaintenance)
 
-		store = configstore.NewStore()
+		store = configstore.DefaultStore
 		store.InitFromEnvironment()
 
 		defaultAuthHandler, err := basicAuthHandler(store)

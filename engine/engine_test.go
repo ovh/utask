@@ -40,7 +40,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	store := configstore.NewStore()
+	store := configstore.DefaultStore
 	store.InitFromEnvironment()
 
 	db.Init(store)
