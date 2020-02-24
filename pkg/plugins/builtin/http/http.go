@@ -3,7 +3,6 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -94,19 +93,15 @@ func validConfig(config interface{}) error {
 	}
 
 	if cfg.TimeoutSeconds != "" {
-		return errors.New("timeout_seconds is missing")
-	}
-
-	if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
-		return fmt.Errorf("can't parse timeout_seconds field %q: %s", cfg.TimeoutSeconds, err.Error())
+		if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
+			return fmt.Errorf("can't parse timeout_seconds field %q: %s", cfg.TimeoutSeconds, err.Error())
+		}
 	}
 
 	if cfg.DenyRedirects != "" {
-		return errors.New("deny_redirects is missing")
-	}
-
-	if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
-		return fmt.Errorf("can't parse deny_redirects field %q: %s", cfg.DenyRedirects, err.Error())
+		if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
+			return fmt.Errorf("can't parse deny_redirects field %q: %s", cfg.DenyRedirects, err.Error())
+		}
 	}
 
 	return nil
