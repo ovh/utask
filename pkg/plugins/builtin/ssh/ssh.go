@@ -41,21 +41,27 @@ type ConfigSSH struct {
 
 func configssh(i interface{}) error {
 	cfg := i.(*ConfigSSH)
+
 	if cfg.User == "" {
 		return errors.New("missing ssh username")
 	}
+
 	if cfg.Target == "" {
 		return errors.New("missing ssh target")
 	}
+
 	if cfg.Script == "" {
 		return errors.New("missing ssh script")
 	}
+
 	if cfg.Key == "" {
 		return errors.New("missing ssh key")
 	}
+
 	if len(cfg.Hops) > MaxHops {
 		return fmt.Errorf("ssh too many hops (max %d)", MaxHops)
 	}
+
 	return nil
 }
 
@@ -197,7 +203,7 @@ trap printResultJSON EXIT
 	}
 
 	if exitStatus != 0 && !cfg.AllowExitNonZero {
-		return payload, metadata, fmt.Errorf("Exit code %d", exitStatus)
+		return payload, metadata, fmt.Errorf("exit status code: %d", exitStatus)
 	}
 
 	return payload, metadata, nil

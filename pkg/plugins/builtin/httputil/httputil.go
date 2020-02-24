@@ -34,7 +34,7 @@ func UnmarshalResponse(resp *http.Response) (interface{}, interface{}, error) {
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read body: %s", err.Error())
+		return nil, nil, fmt.Errorf("can't read body: %s", err.Error())
 	}
 
 	metadata := map[string]interface{}{
@@ -63,7 +63,7 @@ func UnmarshalResponse(resp *http.Response) (interface{}, interface{}, error) {
 		var payload interface{}
 		err = unmarshaler(bodyBytes, &payload)
 		if err != nil {
-			return nil, metadata, fmt.Errorf("failed to unmarshal body: %s", err.Error())
+			return nil, metadata, fmt.Errorf("can't unmarshal body: %s", err.Error())
 		}
 		output = payload
 	} else {

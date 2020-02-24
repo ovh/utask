@@ -89,18 +89,18 @@ func validConfig(config interface{}) error {
 	switch cfg.Method {
 	case "GET", "POST", "PUT", "DELETE":
 	default:
-		return fmt.Errorf("Unknown method for HTTP runner: %s", cfg.Method)
+		return fmt.Errorf("unknown method for HTTP runner: %s", cfg.Method)
 	}
 
 	if cfg.TimeoutSeconds != "" {
 		if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
-			return fmt.Errorf("timeout_seconds is wrong %s", err.Error())
+			return fmt.Errorf("can't parse timeout_seconds field %q: %s", cfg.TimeoutSeconds, err.Error())
 		}
 	}
 
 	if cfg.DenyRedirects != "" {
 		if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
-			return fmt.Errorf("deny_redirects is wrong %s", err.Error())
+			return fmt.Errorf("can't parse deny_redirects field %q: %s", cfg.DenyRedirects, err.Error())
 		}
 	}
 
@@ -119,7 +119,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	req, err := http.NewRequest(cfg.Method, cfg.URL, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to create http request: %s", err.Error())
+		return nil, nil, fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
 
 	q := req.URL.Query()
@@ -154,7 +154,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HTTP request failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("can't do HTTP request: %s", err.Error())
 	}
 
 	// remove response magic prefix
