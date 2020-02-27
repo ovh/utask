@@ -49,7 +49,7 @@ func validConfig(config interface{}) error {
 	}
 
 	if cfg.SMTPPort == "" {
-		return errors.New("smtp_password is missing")
+		return errors.New("smtp_port is missing")
 	}
 
 	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 64); err != nil {
