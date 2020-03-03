@@ -1,7 +1,6 @@
 package notify
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -35,7 +34,8 @@ func validConfig(config interface{}) error {
 	cfg := config.(*Config)
 
 	if len(cfg.Backends) == 0 {
-		return errors.New("backends field can't be empty")
+		// if no backends defined, implies that all backends will be contacted
+		return nil
 	}
 
 	snames := notify.ListSendersNames()
