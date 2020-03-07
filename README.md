@@ -65,7 +65,7 @@ The payments API keeps a reference to the running workflow via its task ID. Oper
 
 ### Running with docker-compose
 
-Download our latest install script, setup your environment and launch your own local instance of µTask. 
+Download our latest install script, setup your environment and launch your own local instance of µTask.
 
 ```bash
 mkdir utask && cd utask
@@ -106,7 +106,7 @@ You'll deploy your version of µTask by building a docker image based on the off
 
 ### Architecture
 
-µTask is designed to run a task scheduler and perform the task workloads within a single runtime: work is not delegated to external agents. Multiple instances of the application will coordinate around a single postgres database: each will be able to determine independently which tasks are available. When an instance of µTask decides to execute a task, it will take hold of that task to avoid collisions, then release it at the end of an execution cycle. 
+µTask is designed to run a task scheduler and perform the task workloads within a single runtime: work is not delegated to external agents. Multiple instances of the application will coordinate around a single postgres database: each will be able to determine independently which tasks are available. When an instance of µTask decides to execute a task, it will take hold of that task to avoid collisions, then release it at the end of an execution cycle.
 
 A task will keep running as long as its steps are successfully executed. If a task's execution is interrupted before completion, it will become available to be re-collected by one of the active instances of µTask. That means that execution might start in one instance and resume on a different one.
 
@@ -125,7 +125,7 @@ A task will keep running as long as its steps are successfully executed. If a ta
 
 ## Configuration 🔨 <a name="configuration"></a>
 
-### Command line args 
+### Command line args
 
 The µTask binary accepts the following arguments as binary args or env var.
 All are optional and have a default value:
@@ -190,7 +190,7 @@ A user can be allowed to resolve a task in three ways:
 - `auto_runnable`; boolean (default: false): when true, the task will be executed directly after being created, IF the requester is an accepted resolver or `allow_all_resolver_usernames` is true
 - `blocked`: boolean (default: false): no tasks can be created from this template
 - `hidden`: boolean (default: false): the template is not listed on the API, it is concealed to regular users
-- `retry_max`: int (default: 100): maximum amount of consecutive executions of a task based on this template, before being blocked for manual review 
+- `retry_max`: int (default: 100): maximum amount of consecutive executions of a task based on this template, before being blocked for manual review
 
 ### Inputs
 
@@ -213,7 +213,7 @@ An input's definition allows to define validation constraints on the values prov
 
 A template variable is a named holder of either:
 -  a fixed value
--  a JS expression evaluated on the fly. 
+-  a JS expression evaluated on the fly.
 
 See the example template above to see variables in action. The expression in a variable can contain template handles to introduce values dynamically (from executed steps, for instance), like a step's configuration.
 
@@ -231,8 +231,8 @@ The flow of this sequence can further be controlled with **conditions** on the s
 - to analyze its outcome and override the engine's default behaviour
 
 Several conditions can be specified, the first one to evaluate as `true` is applied. A condition is composed of:
-- a `type` (skip or check) 
-- a list of `if` assertions (`value`, `operator`, `expected`) which all have to be true (AND on the collection), 
+- a `type` (skip or check)
+- a list of `if` assertions (`value`, `operator`, `expected`) which all have to be true (AND on the collection),
 - a `then` object to impact the state of steps (`this` refers to the current step)
 - an optional `message` to convey the intention of the condition, making it easier to inspect tasks
 
@@ -265,7 +265,7 @@ steps:
   getUser:
     description: Get user
     custom_states: [NOT_FOUND]
-    action: 
+    action:
       type: http
       configuration:
         url: http://example.org/user/{{.input.id}}
@@ -281,12 +281,12 @@ steps:
       message: User {{.input.id}} not found
 ```
 
-#### Basic Step Properties 
+#### Basic Step Properties
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
 - `dependencies`: a list of step names on which this step waits before running
-- `retry_pattern`: (seconds|minutes|hours) define on what temporal order of magnitude the re-runs of this step should be spread 
+- `retry_pattern`: (seconds|minutes|hours) define on what temporal order of magnitude the re-runs of this step should be spread
 
 #### Action
 
@@ -299,7 +299,7 @@ base_configurations:
   postMessage:
     method: POST
     url: http://message.board/new
-``` 
+```
 
 This base configuration can then be leveraged by any step wanting to post a message, with different bodies:
 
@@ -322,7 +322,7 @@ steps:
         body: Goodbye
 ```
 
-These two step definitions are the equivalent of: 
+These two step definitions are the equivalent of:
 
 ```yaml
 steps:
@@ -381,7 +381,7 @@ Will render the following output, a combination of the action's raw output and t
 
 Browse [builtin actions](./pkg/plugins/builtin)
 
-|Plugin name|Description|Documentation  
+|Plugin name|Description|Documentation
 |---|---|---
 |**`echo`** | Print out a pre-determined result | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)
 |**`http`** | Make an http request | [Access plugin doc](./pkg/plugins/builtin/http/README.md)
@@ -392,7 +392,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |**`email`**   | Send an email | [Access plugin doc](./pkg/plugins/builtin/email/README.md)
 |**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)
 |**`script`**    | Execute a script under `scripts` folder | [Access plugin doc](./pkg/plugins/builtin/script/README.md)
- 
+
 #### Loops
 
 A step can be configured to take a json-formatted collection as input, in its `foreach` property. It will be executed once for each element in the collection, and its result will be a collection of each iteration. This scheme makes it possible to chain several steps with the `foreach` property.
@@ -402,7 +402,7 @@ For the following step definition (note json-format of `foreach`):
 steps:
   prefixStrings:
     description: Process a collection of strings, adding a prefix
-    foreach: '[{"id":"a"},{"id":"b"},{"id":"c"}]'  
+    foreach: '[{"id":"a"},{"id":"b"},{"id":"c"}]'
     action:
       type: echo
       configuration:
@@ -426,6 +426,42 @@ This output can be then passed to another step in json format:
 foreach: '{{.step.prefixStrings.children | jsonmarshal}}'
 ```
 
+### Task templates validation
+
+A JSON-schema file is available to validate the syntax of task templates, it's available in `hack/template-schema.json`.
+
+Validation can be performed at writing time if you are using a modern IDE or editor.
+
+#### Validation with Visual Studio Code
+
+- Install YAML extension from RedHat.
+  - Ctrl+P, then type `ext install redhat.vscode-yaml`
+- Edit your workspace configuration (`settings.json` file) to add:
+```json
+{
+    "yaml.schemas": {
+        "./hack/template-schema.json": ["/*.yaml"]
+    }
+}
+```
+- Every templates will get real-time validation while writing.
+
+![](./assets/img/vscode_template_validation.png)
+
+#### Task templates snippets with Visual Studio Code
+
+Code snippets are available in this repository to be used for task template writing: `hack/templates.code-snippets`
+
+To use them inside your repository, copy the `templates.code-snippets` file into your `.vscode` workspace folder.
+
+Available snippets:
+- template
+- variable
+- input
+- step
+
+![](./assets/img/vscode_code_snippets_templates.gif)
+
 ## Extending µTask with plugins <a name="plugins"></a>
 
 µTask is extensible with [golang plugins](https://golang.org/pkg/plugin/) compiled in *.so format. Two kinds of plugins exist:
@@ -438,7 +474,7 @@ The installation script for utask creates a folder structure that will automatic
 
 Action plugins allow you to extend the kind of work that can be performed during a task. An action plugin has a name, that will be referred to as the action `type` in a template. It declares a configuration structure, a validation function for the data received from the template as configuration, and an execution function which performs an action based on valid configuration.
 
-Create a new folder within the `plugins` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `TaskPlugin` defined in the `plugins` package: 
+Create a new folder within the `plugins` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `TaskPlugin` defined in the `plugins` package:
 
 ```golang
 type TaskPlugin interface {
@@ -451,7 +487,7 @@ type TaskPlugin interface {
 }
 ```
 
-The `taskplugin` [package](./pkg/plugins/taskplugin/taskplugin.go) provides helper functions to build a Plugin: 
+The `taskplugin` [package](./pkg/plugins/taskplugin/taskplugin.go) provides helper functions to build a Plugin:
 
 ```golang
 package main
@@ -482,9 +518,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (output interfac
 
 ### Init Plugins
 
-Init plugins allow you to customize your instance of µtask by giving you access to its underlying configuration store and its API server. 
+Init plugins allow you to customize your instance of µtask by giving you access to its underlying configuration store and its API server.
 
-Create a new folder within the `init` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `InitializerPlugin` defined in the `plugins` package: 
+Create a new folder within the `init` folder of your utask repo. There, develop a `main` package that exposes a `Plugin` variable that implements the `InitializerPlugin` defined in the `plugins` package:
 
 ```golang
 type Service struct {
@@ -505,7 +541,7 @@ As of version `v1.0.0`, this is meant to give you access to two features:
 If you develop more than one initialization plugin, they will all be loaded in alphabetical order. You might want to provide a default initialization, plus more specific behaviour under certain scenarios.
 
 ## Contributing <a name="contributing"></a>
- 
+
 ### Backend
 
 In order to iterate on feature development, run the utask server plus a backing postgres DB by invoking `make run-test-stack-docker` in a terminal. Use SIGINT (`Ctrl+C`) to reboot the server, and SIGQUIT (`Ctrl+4`) to teardown the server and its DB.
@@ -514,7 +550,7 @@ In a separate terminal, rebuild (`make re`) each time you want to iterate on a c
 
 ### Frontend
 
-µTask serves two graphical interfaces: one for general use of the tool (`dashboard`), the other one for task template authoring (`editor`). They're found in the `ui` folder and each have their own Makefile for development purposes. 
+µTask serves two graphical interfaces: one for general use of the tool (`dashboard`), the other one for task template authoring (`editor`). They're found in the `ui` folder and each have their own Makefile for development purposes.
 
 Run `make dev` to launch a live-reloading on your machine. The editor is a standalone GUI, while the dashboard needs a backing µTask api (see above to run a server).
 
@@ -525,15 +561,15 @@ Run all test suites against an ephemeral postgres DB:
 ```bash
 $ make test-docker
 ```
-	
+
 ### Get in touch
 
 You've developed a new cool feature ? Fixed an annoying bug ? We'll be happy
 to hear from you! Take a look at [CONTRIBUTING.md](https://github.com/ovh/utask/blob/master/CONTRIBUTING.md)
 
- 
+
 ## Related links
- 
+
  * Contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
  * Report bugs: [https://github.com/ovh/utask/issues](https://github.com/ovh/utask/issues)
  * Get latest version: [https://github.com/ovh/utask/releases](https://github.com/ovh/utask/releases)

@@ -1,0 +1,905 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "µTask template schema",
+    "description": "This validates a µTask template",
+    "additionalProperties": false,
+    "definitions": {
+        "Step": {
+            "type": "object",
+            "title": "A µTask template step",
+            "default": {},
+            "additionalProperties": false,
+            "examples": [
+                {
+                    "description": "Get UTC time",
+                    "action": {
+                        "type": "http",
+                        "configuration": {
+                            "method": "GET",
+                            "url": "http://worldclockapi.com/api/json/utc/now"
+                        }
+                    }
+                }
+            ],
+            "required": [
+                "description",
+                "action"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "title": "Step description",
+                    "description": "Will be displayed to customers in UI.",
+                    "default": "",
+                    "examples": [
+                        "Get UTC time"
+                    ]
+                },
+                "retry_pattern": {
+                    "type": "string",
+                    "enum": [
+                        "seconds",
+                        "minutes",
+                        "hours"
+                    ],
+                    "title": "Retry pattern of the step",
+                    "description": "Define on what temporal order of magnitude the re-runs of this step should be spread."
+                },
+                "dependencies": {
+                    "type": "array",
+                    "description": "List of step names on which this step waits before running",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "action": {
+                    "$ref": "#/definitions/Action"
+                },
+                "conditions": {
+                    "type": "array",
+                    "description": "Conditions before/after step executed",
+                    "items": {
+                        "$ref": "#/definitions/Condition"
+                    }
+                },
+                "custom_states": {
+                    "type": "array",
+                    "description": "Declares some custom state to be used within the step",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "foreach": {
+                    "type": "string",
+                    "description": "Elements on which the step will loop"
+                }
+            }
+        },
+        "Action": {
+            "oneOf": [
+                {
+                    "$ref": "#/definitions/ActionHTTP"
+                },
+                {
+                    "$ref": "#/definitions/ActionEcho"
+                },
+                {
+                    "$ref": "#/definitions/ActionScript"
+                },
+                {
+                    "$ref": "#/definitions/ActionSSH"
+                },
+                {
+                    "$ref": "#/definitions/ActionSubtask"
+                },
+                {
+                    "$ref": "#/definitions/ActionPing"
+                },
+                {
+                    "$ref": "#/definitions/ActionNotify"
+                },
+                {
+                    "$ref": "#/definitions/ActionEmail"
+                },
+                {
+                    "$ref": "#/definitions/ActionAPIOVH"
+                },
+                {
+                    "type": "object",
+                    "title": "Generic action",
+                    "additionalProperties": false,
+                    "properties": {
+                        "type": {
+                            "not": {
+                                "type": "string",
+                                "enum": [
+                                    "http",
+                                    "echo",
+                                    "script",
+                                    "ssh",
+                                    "subtask",
+                                    "ping",
+                                    "notify",
+                                    "email",
+                                    "apiovh"
+                                ]
+                            }
+                        },
+                        "configuration": {
+                            "type": "object",
+                            "description": "Action configuration"
+                        },
+                        "base_configuration": {
+                            "type": "object"
+                        },
+                        "base_output": {
+                            "type": "object"
+                        }
+                    }
+                }
+            ]
+        },
+        "ActionHTTP": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "http"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "url",
+                        "method"
+                    ],
+                    "properties": {
+                        "url": {
+                            "type": "string"
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE"
+                            ]
+                        },
+                        "body": {
+                            "type": "string"
+                        },
+                        "headers": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "timeout_seconds": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                        },
+                        "auth": {
+                            "type": "object",
+                            "properties": {
+                                "basic": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user": {
+                                            "type": "string"
+                                        },
+                                        "password": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "bearer": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "deny_redirects": {
+                            "type": "string",
+                            "pattern": "^(true|false)$"
+                        },
+                        "parameters": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "key": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "trim_prefix": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "HTTP Action",
+            "description": "HTTP action performs a HTTP call to a remote server",
+            "additionalProperties": false
+        },
+        "ActionEcho": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "echo"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "error_type": {
+                            "type": "string",
+                            "enum": [
+                                "server",
+                                "client"
+                            ]
+                        },
+                        "error_message": {
+                            "type": "string"
+                        },
+                        "output": {
+                            "type": "object"
+                        },
+                        "metadata": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Echo Action",
+            "additionalProperties": false,
+            "description": "Echo action just prints some result as output"
+        },
+        "ActionScript": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "script"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "file_path": {
+                            "type": "string"
+                        },
+                        "argv": {
+                            "type": "array"
+                        },
+                        "stdin": {
+                            "type": "string"
+                        },
+                        "timeout": {
+                            "type": "string"
+                        },
+                        "last_line_not_json": {
+                            "type": "boolean"
+                        },
+                        "allow_exit_non_zero": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Script Action",
+            "additionalProperties": false,
+            "description": "Script action executes a script locally in the µTask instance"
+        },
+        "ActionSSH": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "ssh"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "user": {
+                            "type": "string"
+                        },
+                        "hops": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "target": {
+                            "type": "string"
+                        },
+                        "script": {
+                            "type": "string"
+                        },
+                        "result": {
+                            "type": "object"
+                        },
+                        "ssh_key": {
+                            "type": "string"
+                        },
+                        "ssh_key_passphrase": {
+                            "type": "string"
+                        },
+                        "allow_exit_non_zero": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "SSH Action",
+            "additionalProperties": false,
+            "description": "SSH action will performs a SSH connection to a remote host, and executes a command"
+        },
+        "ActionSubtask": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "subtask"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "template": {
+                            "type": "string"
+                        },
+                        "input": {
+                            "type": "object"
+                        },
+                        "resolver_usernames": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Subtask Action",
+            "additionalProperties": false,
+            "description": "Subtask action will spawn a subtask of the specified template, and wait for resolution"
+        },
+        "ActionPing": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "ping"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "hostname": {
+                            "type": "string"
+                        },
+                        "count": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                        },
+                        "interval_second": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Ping Action",
+            "additionalProperties": false,
+            "description": "Ping action will perform a ping to a remote server to verify connectivity"
+        },
+        "ActionNotify": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "notify"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "message": {
+                            "type": "string"
+                        },
+                        "backends": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "fields": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Notify Action",
+            "additionalProperties": false,
+            "description": "Notify action will send a notification when executed"
+        },
+        "ActionEmail": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "email"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "smtp_username",
+                        "smtp_password",
+                        "smtp_port",
+                        "smtp_hostname",
+                        "from_address",
+                        "to",
+                        "subject",
+                        "body"
+                    ],
+                    "properties": {
+                        "smtp_username": {
+                            "type": "string"
+                        },
+                        "smtp_password": {
+                            "type": "string"
+                        },
+                        "smtp_port": {
+                            "type": "string",
+                            "pattern": "^\\d+$"
+                        },
+                        "smtp_skip_tls_verify": {
+                            "type": "string",
+                            "pattern": "^(true|false)$"
+                        },
+                        "from_address": {
+                            "type": "string"
+                        },
+                        "from_name": {
+                            "type": "string"
+                        },
+                        "subject": {
+                            "type": "string"
+                        },
+                        "to": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "body": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Email Action",
+            "additionalProperties": false,
+            "description": "Email action will send an email when executed"
+        },
+        "ActionAPIOVH": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "apiovh"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "method",
+                        "path"
+                    ],
+                    "properties": {
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE"
+                            ]
+                        },
+                        "path": {
+                            "type": "string"
+                        },
+                        "credentials": {
+                            "type": "string"
+                        },
+                        "body": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "object"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "APIOVH Action",
+            "additionalProperties": false,
+            "description": "APIOVH action will perform an API call to OVH systems"
+        },
+        "Condition": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Indicates if condition applies before (skip) or after (check) step is running",
+                    "enum": [
+                        "skip",
+                        "check"
+                    ]
+                },
+                "if": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "description": "Value on which the condition applies"
+                            },
+                            "operator": {
+                                "type": "string",
+                                "description": "Operator used by the condition",
+                                "enum": [
+                                    "EQ",
+                                    "NE",
+                                    "GT",
+                                    "LT",
+                                    "GE",
+                                    "LE",
+                                    "REGEXP"
+                                ]
+                            },
+                            "expected": {
+                                "type": "string",
+                                "description": "Expected value for the condition to be true"
+                            },
+                            "message": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "then": {
+                    "type": "object",
+                    "description": "Describes state changement if all conditions match"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Message to display in the UI if condition match"
+                }
+            },
+            "description": "Conditions to apply on the step"
+        },
+        "Input": {
+            "type": "object",
+            "additionalProperties": false,
+            "examples": [
+                {
+                    "name": "language",
+                    "default": "english",
+                    "optional": true,
+                    "description": "The language in which you wish to greet the world",
+                    "legal_values": [
+                        "english",
+                        "spanish"
+                    ]
+                }
+            ],
+            "required": [
+                "name",
+                "description",
+                "legal_values",
+                "optional",
+                "default"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Input name - to be used inside template as .input.name",
+                    "default": "",
+                    "examples": [
+                        "language"
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description displayed in the UI",
+                    "default": "",
+                    "examples": [
+                        "The language in which you wish to greet the world"
+                    ]
+                },
+                "regex": {
+                    "type": "string",
+                    "description": "Regex to validate the input value",
+                    "default": "",
+                    "examples": [
+                        "^[a-z\\d]+$"
+                    ]
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Input value type",
+                    "enum": [
+                        "string",
+                        "number",
+                        "bool"
+                    ],
+                    "examples": [
+                        "bool"
+                    ]
+                },
+                "legal_values": {
+                    "type": "array",
+                    "description": "Restrict input value to some values",
+                    "default": [],
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "optional": {
+                    "type": "boolean",
+                    "description": "Indicates if input is optional or not",
+                    "default": false
+                },
+                "default": {
+                    "type": "string",
+                    "description": "Default value of the input if not fulfilled",
+                    "examples": [
+                        "english"
+                    ]
+                },
+                "collection": {
+                    "type": "boolean",
+                    "description": "Indicates if multiple values can be specified for this input",
+                    "default": false
+                }
+            }
+        },
+        "Variable": {
+            "type": "object",
+            "additionalProperties": false,
+            "examples": [
+                {
+                    "name": "english-message",
+                    "value": "Hello World!"
+                },
+                {
+                    "expression": "// a short javascript snippet\nvar h = 'Hola';\nvar m = 'mundo';\nh + ' ' + m + '!';",
+                    "name": "spanish-message"
+                }
+            ],
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Variable name",
+                    "default": "",
+                    "examples": [
+                        "english-message"
+                    ]
+                },
+                "value": {
+                    "type": "string",
+                    "description": "Fixed value for the variable (cannot be templated)",
+                    "default": "",
+                    "examples": [
+                        "Hello World!"
+                    ]
+                },
+                "expression": {
+                    "type": "string",
+                    "description": "Javascript expression that will be evaluated (can be templated)"
+                }
+            }
+        }
+    },
+    "required": [
+        "name",
+        "description",
+        "title_format",
+        "steps"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Template name",
+            "default": "",
+            "examples": [
+                "hello-world-now"
+            ]
+        },
+        "description": {
+            "type": "string",
+            "description": "Template short description",
+            "default": "",
+            "examples": [
+                "Say hello to the world, now!"
+            ]
+        },
+        "long_description": {
+            "type": "string",
+            "description": "Template long description (will be displayed to customer when selecting templates)",
+            "default": "",
+            "examples": [
+                "This task prints out a greeting to the entire world, after retrieving the current UTC time from an external API"
+            ]
+        },
+        "doc_link": {
+            "type": "string",
+            "description": "Template documentation URL",
+            "default": "",
+            "examples": [
+                "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+            ]
+        },
+        "title_format": {
+            "type": "string",
+            "description": "Template title (will be used when task are created using this template)",
+            "default": "",
+            "examples": [
+                "Say hello in {{.input.language}}"
+            ]
+        },
+        "result_format": {
+            "type": "object",
+            "description": "Describes the object format that will be saved as task result",
+            "default": {},
+            "examples": [
+                {
+                    "echo_message": "{{.step.sayHello.output.message}}",
+                    "echo_when": "{{.step.sayHello.output.when}}"
+                }
+            ]
+        },
+        "allowed_resolver_usernames": {
+            "type": "array",
+            "description": "Usernames of people allowed to resolve a task based on this template",
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "allow_all_resolver_usernames": {
+            "type": "boolean",
+            "description": "Indicates if any user can resolve a task based on this template",
+            "default": false,
+            "examples": [
+                true
+            ]
+        },
+        "auto_runnable": {
+            "type": "boolean",
+            "description": "Indicates if task will run automatically with validation if requester is a valid resolver",
+            "default": false,
+            "examples": [
+                true
+            ]
+        },
+        "blocked": {
+            "type": "boolean",
+            "description": "Indicates if tasks can be created from this template",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "hidden": {
+            "type": "boolean",
+            "description": "Indicates if template will be listed for regular users",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "retry_max": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Maximum amount of consecutive executions of a task based on this template",
+            "default": 100,
+            "examples": [
+                100
+            ]
+        },
+        "variables": {
+            "type": "array",
+            "description": "Variables that can be used inside this templates",
+            "default": [],
+            "items": {
+                "$ref": "#/definitions/Variable"
+            }
+        },
+        "inputs": {
+            "type": "array",
+            "description": "Inputs that should be provided when creating a task based on this template",
+            "default": [],
+            "items": {
+                "$ref": "#/definitions/Input"
+            }
+        },
+        "steps": {
+            "type": "object",
+            "description": "Steps that will be executed when a task based on this template is created",
+            "default": {},
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/Step"
+                }
+            }
+        },
+        "base_configurations": {
+            "type": "object",
+            "description": "Global configurations that will be used as base for steps inside this template"
+        }
+    }
+}

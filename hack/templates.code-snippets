@@ -1,0 +1,81 @@
+{
+	"utask-template": {
+		"scope": "yaml",
+		"prefix": "template",
+		"body": [
+			"name: ${1:my-new-template}",
+			"description: ${2:New template}",
+			"long_description: ${2:New template to do stuff}",
+			"doc_link: ",
+			"",
+			"title_format: ${3:New task for my-new-template}",
+			"result_format:",
+			"  ${4:foo: bar}",
+			"",
+			"allowed_resolver_usernames: [${5:admin}]",
+			"allow_all_resolver_usernames: ${6|true,false|}",
+			"auto_runnable: ${7|true,false|}",
+			"blocked: ${8|true,false|}",
+			"hidden: ${9|true,false|}",
+			"",
+			"",
+			"inputs:",
+			"",
+			"",
+			"variables:",
+			"",
+			"",
+			"steps:"
+		],
+		"description": "Generate a basic template skeleton"
+	},
+	"utask-input": {
+		"scope": "yaml",
+		"prefix": "input",
+		"body": [
+			"- name: ${1:param1}",
+			"  description: ${2:Choose your first param}",
+			"  type: ${3|string,number,bool|}",
+			"  legal_values: [${4}]",
+			"  regex: \"${5:^\\d+$}\"",
+			"  optional: ${6|false,true|}",
+			"  default: \"${7}\"",
+			"  collection: ${8|false,true|}"
+		],
+		"description": "Generate an task template input"
+	},
+	"utask-variable": {
+		"scope": "yaml",
+		"prefix": "variable",
+		"body": [
+			"- name: ${1:var1}",
+			"  value: ${2:foobar}",
+			"  expression: >-",
+			"    ${3:var s = 'stuff';}"
+		],
+		"description": "Generate a variable"
+	},
+	"utask-step": {
+		"scope": "yaml",
+		"prefix": "step",
+		"body": [
+			"  ${1:createStuff}:",
+			"    description: ${2:Create stuff}",
+			"    dependencies: [${3}]",
+			"    action:",
+			"      type: ${4|echo,notify,script,ssh,http,subtask,apiovh,email,ping|}",
+			"      configuration:",
+			"        ${5:foobar: buzz}",
+			"    conditions:",
+			"    - type: ${6|check,skip|}",
+			"      if:",
+			"      - value: '${7}'",
+			"        operator: ${8|EQ,NE,GT,LT,GE,LE,REGEXP|}",
+			"        expected: '${9}'",
+			"      then:",
+			"        ${10:this: NOT_FOUND}",
+			"      message: ${11:User not found}"
+		],
+		"description": "Generate a basic step for task template"
+	}
+}
