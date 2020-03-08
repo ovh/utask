@@ -51,16 +51,17 @@ release:
 	bash hack/generate-install-script.sh
 
 test:
-	go get github.com/jstemmer/go-junit-report
-	go get github.com/stretchr/testify/assert
+	# moving to another location to go get some packages, otherwise it will modify our go.mod and vendor will be out of sync
+	cd ${HOME} && go get github.com/jstemmer/go-junit-report github.com/stretchr/testify/assert
 	GO111MODULE=on DEV=true bash hack/test.sh ${TEST_CMD} 2>&1 | go-junit-report > report.xml
 
 test-travis:
-	go get golang.org/x/tools/cmd/cover
-	go get github.com/mattn/goveralls
+	# moving to another location to go get some packages, otherwise it will modify our go.mod and vendor will be out of sync
+	cd ${HOME} && go get golang.org/x/tools/cmd/cover github.com/mattn/goveralls
 	hack/test.sh ${TEST_CMD_COV}
 
 test-docker:
+	cd ${HOME} && go get golang.org/x/tools/cmd/cover github.com/mattn/goveralls
 	DEV=true bash hack/test-docker.sh ${TEST_CMD}
 
 run-test-stack:
@@ -80,3 +81,5 @@ else
 endif
 
 package:
+
+.PHONY: all clean test re package release test test-travis test-docker run-test-stack run-test-stack-docker run-goreleaser docker
