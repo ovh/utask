@@ -4,9 +4,10 @@ dist: bionic
 
 language: go
 go:
-  - 1.13
-  - 1.12
-  - master
+  - "1.14"
+  - "1.13"
+  - "1.12"
+  - "master"
 go_import_path: github.com/ovh/utask
 
 cache: apt
@@ -18,14 +19,14 @@ addons:
 
 env:
   global:
-  - GO111MODULE=on
-  - DEV=true
-  - PG_USER=travis
-  - PG_PASSWORD=travispwd
-  - PG_HOST=localhost
-  - PG_PORT=5432
-  - PG_DATABASENAME=travisdb
-  - PSQL_BIN="psql travisdb"
+    - GO111MODULE=on
+    - DEV=true
+    - PG_USER=travis
+    - PG_PASSWORD=travispwd
+    - PG_HOST=localhost
+    - PG_PORT=5432
+    - PG_DATABASENAME=travisdb
+    - PSQL_BIN="psql travisdb"
 
 before_script:
   - psql -c 'create database travisdb;' -U postgres
@@ -37,7 +38,7 @@ script:
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform
-  - git reset --hard HEAD  # reset go.mod and go.sum, modified by make test-travis
+  - git reset --hard HEAD # reset go.mod and go.sum, modified by make test-travis
   - test -n "${TRAVIS_TAG}" -a "${TRAVIS_GO_VERSION}" = "1.13" && make run-goreleaser # run goreleaser process
 
 jobs:
