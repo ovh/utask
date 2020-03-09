@@ -639,17 +639,17 @@ func TestScriptPlugin(t *testing.T) {
 	payload["dumb_string"] = fmt.Sprintf("Hello %s!", argv)
 	payload["random_object"] = map[string]interface{}{"foo": "bar"}
 
-	metadata := script.Metadata{
-		ExitCode:      "0",
-		ProcessState:  "exit status 0",
-		Output:        "Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
-		ExecutionTime: "",
-		Error:         "",
+	metadata := map[string]interface{}{
+		"exit_code":      "0",
+		"process_state":  "exit status 0",
+		"output":         "Hello world script\n{\"dumb_string\":\"Hello world!\",\"random_object\":{\"foo\":\"bar\"}}\n",
+		"execution_time": "",
+		"error":          "",
 	}
 
 	// because time can't be consistant through tests
-	metadataOutput := res.Steps["stepOne"].Metadata.(script.Metadata)
-	metadataOutput.ExecutionTime = ""
+	metadataOutput := res.Steps["stepOne"].Metadata.(map[string]interface{})
+	metadataOutput["execution_time"] = ""
 
 	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
 	assert.Equal(t, metadata, metadataOutput)

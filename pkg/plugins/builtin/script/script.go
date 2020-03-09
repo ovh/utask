@@ -24,6 +24,14 @@ var (
 	)
 )
 
+const (
+	exitCodeMetadataKey      string = "exit_code"
+	processStateMetadataKey  string = "process_state"
+	outputMetadataKey        string = "output"
+	executionTimeMetadataKey string = "execution_time"
+	errorMetadataKey         string = "error"
+)
+
 // Metadata represents the metadata of script execution
 type Metadata struct {
 	ExitCode      string `json:"exit_code"`
@@ -117,12 +125,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	outStr := string(out)
 
-	metadata := Metadata{
-		ExitCode:      fmt.Sprint(exitCode),
-		ProcessState:  pState,
-		Output:        outStr,
-		ExecutionTime: execTime.String(),
-		Error:         metaError,
+	metadata := map[string]interface{}{
+		exitCodeMetadataKey:      fmt.Sprint(exitCode),
+		processStateMetadataKey:  pState,
+		outputMetadataKey:        outStr,
+		executionTimeMetadataKey: execTime.String(),
+		errorMetadataKey:         metaError,
 	}
 
 	if !cfg.AllowExitNonZero && exitCode != 0 {
