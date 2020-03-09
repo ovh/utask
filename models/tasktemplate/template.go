@@ -102,7 +102,7 @@ func create(dbp zesty.DBProvider, tt *TaskTemplate) (*TaskTemplate, error) {
 
 // LoadFromName returns a task template, given its unique human-readable identifier
 func LoadFromName(dbp zesty.DBProvider, name string) (tt *TaskTemplate, err error) {
-	defer errors.DeferredAnnotatef(&err, "Failed to load template from name")
+	defer errors.DeferredAnnotatef(&err, "Failed to load template %q from name", name)
 
 	query, params, err := ttSelector.Where(
 		squirrel.Eq{`"task_template".name`: name},
@@ -122,7 +122,7 @@ func LoadFromName(dbp zesty.DBProvider, name string) (tt *TaskTemplate, err erro
 // LoadFromID returns a task template, given its "private" identifier
 // A shortcut only used internally, not exposed through API
 func LoadFromID(dbp zesty.DBProvider, id int64) (tt *TaskTemplate, err error) {
-	defer errors.DeferredAnnotatef(&err, "Failed to load template from name")
+	defer errors.DeferredAnnotatef(&err, "Failed to load template from ID %d", id)
 
 	query, params, err := ttSelector.Where(
 		squirrel.Eq{`"task_template".id`: id},
