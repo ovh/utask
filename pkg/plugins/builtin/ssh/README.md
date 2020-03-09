@@ -10,7 +10,9 @@ This plugin connects to a remote system and performs a block of commands. It can
 | `target` | address of the remote machine
 | `hops` | a list of intermediate addresses (bastions)
 | `script` | multiline text, commands to be run on the machine's shell
-| `result` | an object to extract the values of variables from the machine's shell
+| `output_mode` | indicates how to retrieve output values ; valid values are: `auto-result` (default), `disabled`, `manual-delimiters`, `manual-lastline`
+| `result` | an object to extract the values of variables from the machine's shell (only used when `output_mode` is configured to `auto-result`)
+| `output_manual_delimiters` | array of 2 strings ; look for a JSON formatted string in the script output between specific delimiters (only used when `output_mode` is configured to `manual-delimiters`)
 | `ssh_key` | private ssh key, preferrably retrieved from {{.config}}
 | `ssh_key_passphrase` | passphrase for the key, if any
 | `allow_exit_non_zero` | allow a non-zero exit code to be considered as a successful step (bool default `false`)
@@ -34,12 +36,15 @@ action:
     script: |-
       PID=$(systemctl show --property MainPID {{.input.serviceName}} | cut -d= -f2)
       SERVICE_UPTIME=$(ps -h -p ${PID} -o etimes)
+    output_mode: auto-result
     # value extraction
-    result: 
+    result:
       pid: $PID
       uptime: $SERVICE_UPTIME
     # credentials
     ssh_key: '{{.config.mySSHKey}}'
+    # optional delimiters to look for an output -- requires output_mode set to manual-delimiters
+    #output_manual_delimiters: ["JSON_START", "JSON_END"]
 ```
 
 ## Requirements

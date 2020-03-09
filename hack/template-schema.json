@@ -358,6 +358,22 @@
                         },
                         "allow_exit_non_zero": {
                             "type": "boolean"
+                        },
+                        "output_manual_delimiters": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "output_mode": {
+                            "type": "string",
+                            "enum": [
+                                "disabled",
+                                "auto-result",
+                                "manual-delimiters",
+                                "manual-lastline"
+                            ],
+                            "default": "auto-result"
                         }
                     }
                 },

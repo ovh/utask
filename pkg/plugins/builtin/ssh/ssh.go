@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,8 +17,12 @@ import (
 
 // connection configuration values
 const (
-	MaxHops     = 10
-	ConnTimeout = 10 * time.Second
+	MaxHops                    = 10
+	ConnTimeout                = 10 * time.Second
+	OutputModeAutoResult       = "auto-result"
+	OutputModeDisabled         = "disabled"
+	OutputModeManualDelimiters = "manual-delimiters"
+	OutputModeManualLastLine   = "manual-lastline"
 )
 
 // ssh plugin opens an ssh connection and runs commands on target machine
@@ -29,14 +34,16 @@ var (
 
 // ConfigSSH is the data needed to perform an SSH action
 type ConfigSSH struct {
-	User             string            `json:"user"`
-	Target           string            `json:"target"`
-	Hops             []string          `json:"hops"`
-	Script           string            `json:"script"`
-	Result           map[string]string `json:"result"`
-	Key              string            `json:"ssh_key"`
-	KeyPassphrase    string            `json:"ssh_key_passphrase"`
-	AllowExitNonZero bool              `json:"allow_exit_non_zero"`
+	User                   string            `json:"user"`
+	Target                 string            `json:"target"`
+	Hops                   []string          `json:"hops"`
+	Script                 string            `json:"script"`
+	OutputMode             string            `json:"output_mode"`
+	Result                 map[string]string `json:"result"`
+	OutputManualDelimiters []string          `json:"output_manual_delimiters"`
+	Key                    string            `json:"ssh_key"`
+	KeyPassphrase          string            `json:"ssh_key_passphrase"`
+	AllowExitNonZero       bool              `json:"allow_exit_non_zero"`
 }
 
 func configssh(i interface{}) error {
@@ -58,11 +65,50 @@ func configssh(i interface{}) error {
 		return fmt.Errorf("ssh too many hops (max %d)", MaxHops)
 	}
 
+	switch cfg.OutputMode {
+	case "":
+		// default will have to be reset in execssh as config modification will not be persisted
+		cfg.OutputMode = OutputModeAutoResult
+	case OutputModeAutoResult, OutputModeDisabled, OutputModeManualDelimiters, OutputModeManualLastLine:
+	default:
+		return fmt.Errorf("invalid value %q for output_mode, allowed values are: %s", cfg.OutputMode, strings.Join([]string{OutputModeAutoResult, OutputModeDisabled, OutputModeManualDelimiters, OutputModeManualLastLine}, ", "))
+	}
+
+	if cfg.OutputManualDelimiters != nil && cfg.OutputMode != OutputModeManualDelimiters {
+		return fmt.Errorf("invalid parameter \"output_manual_delimiters\", output_mode is configured to %q", cfg.OutputMode)
+	}
+
+	if len(cfg.Result) > 0 && cfg.OutputMode != OutputModeAutoResult {
+		return fmt.Errorf("invalid parameter \"result\", output_mode is configured to %q", cfg.OutputMode)
+	}
+
+	if cfg.OutputMode == OutputModeManualDelimiters && (cfg.OutputManualDelimiters == nil || len(cfg.OutputManualDelimiters) != 2) {
+		length := 0
+		if cfg.OutputManualDelimiters != nil {
+			length = len(cfg.OutputManualDelimiters)
+		}
+		return fmt.Errorf("wrong number of output_manual_delimiters, 2 expected, found %d", length)
+	}
+
+	if cfg.OutputManualDelimiters != nil {
+		if _, err := generateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
+			return fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
+		}
+	}
+
 	return nil
+}
+
+func generateOutputDelimitersRegexp(start, end string) (*regexp.Regexp, error) {
+	return regexp.Compile("(?s)^.*" + start + "(.*)" + end + ".*$")
 }
 
 func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := i.(*ConfigSSH)
+
+	if cfg.OutputMode == "" {
+		cfg.OutputMode = OutputModeAutoResult
+	}
 
 	var signer ssh.Signer
 	var err error
@@ -139,12 +185,14 @@ func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, inte
 	}
 	injectPL += `'}'`
 
-	execStr = fmt.Sprintf(`
+	if cfg.OutputMode == OutputModeAutoResult {
+		execStr = fmt.Sprintf(`
 function printResultJSON {
 echo %s
 }
 trap printResultJSON EXIT
 `, injectPL) + execStr
+	}
 
 	in := bytes.NewBuffer([]byte(execStr))
 	session.Stdin = in
@@ -188,11 +236,24 @@ trap printResultJSON EXIT
 
 	payload := make(map[string]interface{})
 
-	lastNL := strings.LastIndexByte(outStr, '{')
-	if lastNL != -1 {
-		lastLine := outStr[lastNL:]
+	var resultLine string
+	switch cfg.OutputMode {
+	case OutputModeManualDelimiters:
+		if rexp, err := generateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
+			return nil, nil, fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
+		} else if matches := rexp.FindStringSubmatch(outStr); len(matches) > 0 {
+			resultLine = matches[1]
+		}
 
-		err = json.Unmarshal([]byte(lastLine), &payload)
+	case OutputModeAutoResult, OutputModeManualLastLine:
+		lastNL := strings.LastIndexByte(outStr, '{')
+		if lastNL != -1 {
+			resultLine = outStr[lastNL:]
+		}
+	}
+
+	if resultLine != "" {
+		err = json.Unmarshal([]byte(resultLine), &payload)
 		if err != nil {
 			return nil, metadata, err
 		}

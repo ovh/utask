@@ -516,6 +516,13 @@ func exec(stepName string, config interface{}, ctx interface{}) (output interfac
 }
 ```
 
+`Exec` function returns 3 values:
+- `output`: an object representing the output of the plugin, that will be usable as `{{.step.xxx.output}}` in the templating engine.
+- `metadata`: an object representing the metadata of the plugin, that will be usable as `{{.step.xxx.metadata}}` in the templating engine.
+- `err`: an error if the execution of the plugin failed. uTask is based on `github.com/juju/errors` package to determine if the returned error is a `CLIENT_ERROR` or a `SERVER_ERROR`.
+
+__Warning: `output` and `metadata` should not be named structures but plain map. Otherwise, you might encounter some inconsistencies in templating as keys could be different before and after marshalling in database.__
+
 ### Init Plugins
 
 Init plugins allow you to customize your instance of µtask by giving you access to its underlying configuration store and its API server.
