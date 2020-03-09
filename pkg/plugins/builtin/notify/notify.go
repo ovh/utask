@@ -1,6 +1,7 @@
 package notify
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -42,6 +43,10 @@ func validConfig(config interface{}) error {
 	// The slice must be sorted in ascending order
 	// From https://golang.org/pkg/sort/#SearchStrings
 	sort.Strings(snames)
+
+	if len(snames) == 0 {
+		return errors.New("registered notify senders list is empty")
+	}
 
 	for _, backend := range cfg.Backends {
 		i := sort.SearchStrings(snames, backend)
