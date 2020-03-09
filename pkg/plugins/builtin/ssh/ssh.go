@@ -50,10 +50,6 @@ func configssh(i interface{}) error {
 		return errors.New("missing ssh target")
 	}
 
-	if cfg.Script == "" {
-		return errors.New("missing ssh script")
-	}
-
 	if cfg.Key == "" {
 		return errors.New("missing ssh key")
 	}
