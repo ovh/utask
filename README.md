@@ -444,13 +444,13 @@ Validation can be performed at writing time if you are using a modern IDE or edi
     }
 }
 ```
-- Every templates will get real-time validation while writing.
+- Every template will be validated real-time while editing.
 
 ![](./assets/img/vscode_template_validation.png)
 
-#### Task templates snippets with Visual Studio Code
+#### Task template snippets with Visual Studio Code
 
-Code snippets are available in this repository to be used for task template writing: `hack/templates.code-snippets`
+Code snippets are available in this repository to be used for task template editing: `hack/templates.code-snippets`
 
 To use them inside your repository, copy the `templates.code-snippets` file into your `.vscode` workspace folder.
 
