@@ -356,8 +356,12 @@
                         "ssh_key_passphrase": {
                             "type": "string"
                         },
-                        "allow_exit_non_zero": {
-                            "type": "boolean"
+                        "exit_codes_unrecoverable": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "pattern": "^(\\d+)(?:-(\\d+))?$"
+                            }
                         },
                         "output_manual_delimiters": {
                             "type": "array",

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ var (
 	Plugin = taskplugin.New("ssh", "0.2", execssh,
 		taskplugin.WithConfig(configssh, ConfigSSH{}),
 	)
+	exitCodesUnrecoverableRegex = regexp.MustCompile(`^(\d+)(?:-(\d+))?$`)
 )
 
 // ConfigSSH is the data needed to perform an SSH action
@@ -43,7 +45,7 @@ type ConfigSSH struct {
 	OutputManualDelimiters []string          `json:"output_manual_delimiters"`
 	Key                    string            `json:"ssh_key"`
 	KeyPassphrase          string            `json:"ssh_key_passphrase"`
-	AllowExitNonZero       bool              `json:"allow_exit_non_zero"`
+	ExitCodesUnrecoverable []string          `json:"exit_codes_unrecoverable"`
 }
 
 func configssh(i interface{}) error {
@@ -93,6 +95,34 @@ func configssh(i interface{}) error {
 	if cfg.OutputManualDelimiters != nil {
 		if _, err := generateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
 			return fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
+		}
+	}
+
+	for _, value := range cfg.ExitCodesUnrecoverable {
+		matches := exitCodesUnrecoverableRegex.FindStringSubmatch(value)
+		if len(matches) == 0 {
+			return fmt.Errorf("invalid value %q for exit_codes_unrecoverable, should be an integer, or a range of integer (e.g: 123, or 120-130)", value)
+		}
+		exitCodeStartStr, exitCodeEndStr := matches[1], matches[2]
+		var exitCodeStart, exitCodeEnd int64
+		if exitCodeEndStr != "" {
+			var err error
+			exitCodeStart, err = strconv.ParseInt(exitCodeStartStr, 10, 64)
+			if err != nil {
+				return err
+			}
+			exitCodeEnd, err = strconv.ParseInt(exitCodeEndStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			if exitCodeEnd <= exitCodeStart {
+				return fmt.Errorf("exit_codes_unrecoverable value %q should have end exit_code superior to start exit_code", value)
+			}
+
+			if exitCodeStart == 0 {
+				return fmt.Errorf("exit_codes_unrecoverable cannot map exit code 0 (non-sense)")
+			}
 		}
 	}
 
@@ -205,7 +235,7 @@ trap printResultJSON EXIT
 		extraCmd += hop
 	}
 
-	exitStatus := 0
+	exitCode := 0
 	exitSignal := ""
 	exitMessage := ""
 
@@ -218,7 +248,7 @@ trap printResultJSON EXIT
 	if err != nil {
 		exitErr, ok := err.(*ssh.ExitError)
 		if ok {
-			exitStatus = exitErr.Waitmsg.ExitStatus()
+			exitCode = exitErr.Waitmsg.ExitStatus()
 			exitSignal = exitErr.Waitmsg.Signal()
 			exitMessage = exitErr.Waitmsg.Msg()
 		} else {
@@ -229,7 +259,7 @@ trap printResultJSON EXIT
 	outStr := string(output)
 	metadata := map[string]interface{}{
 		"output":      outStr,
-		"exit_status": fmt.Sprint(exitStatus),
+		"exit_code":   fmt.Sprint(exitCode),
 		"exit_signal": exitSignal,
 		"exit_msg":    exitMessage,
 	}
@@ -261,8 +291,43 @@ trap printResultJSON EXIT
 		}
 	}
 
-	if exitStatus != 0 && !cfg.AllowExitNonZero {
-		return payload, metadata, fmt.Errorf("exit status code: %d", exitStatus)
+	var pluginError error
+	if exitCode != 0 {
+		pluginError = fmt.Errorf("exit code: %d", exitCode)
+
+		for _, value := range cfg.ExitCodesUnrecoverable {
+			matches := exitCodesUnrecoverableRegex.FindStringSubmatch(value)
+			if len(matches) == 0 {
+				return payload, metadata, fmt.Errorf("exit_codes_unrecoverable value doesnt match regex, fatal error")
+			}
+
+			exitCodeStartStr, exitCodeEndStr := matches[1], matches[2]
+			if exitCodeEndStr == "" && exitCodeStartStr != fmt.Sprint(exitCode) {
+				continue
+			}
+
+			if exitCodeStartStr == fmt.Sprint(exitCode) {
+				pluginError = errors.NewBadRequest(err, fmt.Sprintf("Client error: exit code: %d", exitCode))
+				break
+			}
+
+			var exitCodeStart, exitCodeEnd int64
+			exitCodeStart, err = strconv.ParseInt(exitCodeStartStr, 10, 64)
+			if err != nil {
+				return payload, metadata, fmt.Errorf("invalid starting exit_code value %q in exit_codes_unrecoverable: %s", exitCodeStartStr, err)
+			}
+			exitCodeEnd, err = strconv.ParseInt(exitCodeEndStr, 10, 64)
+			if err != nil {
+				return payload, metadata, fmt.Errorf("invalid ending exit_code value %q in exit_codes_unrecoverable: %s", exitCodeEndStr, err)
+			}
+
+			if exitCodeStart <= int64(exitCode) && int64(exitCode) <= exitCodeEnd {
+				pluginError = errors.NewBadRequest(err, fmt.Sprintf("Client error: exit code: %d", exitCode))
+				break
+			}
+		}
+
+		return payload, metadata, pluginError
 	}
 
 	return payload, metadata, nil
