@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/juju/errors"
 
@@ -79,4 +80,33 @@ func UnmarshalResponse(resp *http.Response) (interface{}, interface{}, error) {
 	}
 
 	return output, metadata, nil
+}
+
+// NewHTTPClient is a factory of HTTPClient
+var NewHTTPClient = defaultHTTPClientFactory
+
+// HTTPClient is an interface for decoupling http.Client
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// HTTPClientConfig is a set of options used to initialize a HTTPClient
+type HTTPClientConfig struct {
+	Timeout        time.Duration
+	FollowRedirect bool
+	Transport      http.RoundTripper
+}
+
+func defaultHTTPClientFactory(cfg HTTPClientConfig) HTTPClient {
+	c := new(http.Client)
+	c.Timeout = cfg.Timeout
+	if !cfg.FollowRedirect {
+		c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+	if cfg.Transport != nil {
+		c.Transport = cfg.Transport
+	}
+	return c
 }

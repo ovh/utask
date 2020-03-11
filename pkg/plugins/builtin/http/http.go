@@ -3,9 +3,11 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -17,90 +19,78 @@ import (
 
 // the HTTP plugin performs an HTTP call
 var (
-	Plugin = taskplugin.New("http", "0.7", exec,
+	Plugin = taskplugin.New("http", "1.0", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
 	)
 )
 
+const (
+	// TimeoutDefault represents the default value that will be used for HTTP call, if not defined in configuration
+	TimeoutDefault = "30s"
+)
+
 // HTTPConfig is the configuration needed to perform an HTTP call
 type HTTPConfig struct {
-	URL            string      `json:"url"`
-	Method         string      `json:"method"`
-	Body           string      `json:"body,omitempty"`
-	Headers        []Header    `json:"headers,omitempty"`
-	TimeoutSeconds string      `json:"timeout_seconds,omitempty"`
-	Auth           Auth        `json:"auth,omitempty"`
-	DenyRedirects  string      `json:"deny_redirects,omitempty"`
-	Parameters     []Parameter `json:"parameters,omitempty"`
-	TrimPrefix     string      `json:"trim_prefix,omitempty"`
+	URL             string      `json:"url"`
+	Host            string      `json:"host"`
+	Path            string      `json:"path"`
+	Method          string      `json:"method"`
+	Body            string      `json:"body,omitempty"`
+	Headers         []parameter `json:"headers,omitempty"`
+	Timeout         string      `json:"timeout,omitempty"`
+	Auth            auth        `json:"auth,omitempty"`
+	FollowRedirect  string      `json:"follow_redirect,omitempty"`
+	QueryParameters []parameter `json:"query_parameters,omitempty"`
+	TrimPrefix      string      `json:"trim_prefix,omitempty"`
 }
 
-// Header represents an HTTP header
-type Header struct {
-	Name  string `json:"name"`
+// parameter represents either headers, query parameters, ...
+type parameter struct {
+	Name  string `json:"key"`
 	Value string `json:"value"`
 }
 
-// Parameter represents HTTP parameters
-type Parameter struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-// Auth represents HTTP authentication
-type Auth struct {
-	Basic  AuthBasic `json:"basic"`
+// auth represents HTTP authentication
+type auth struct {
+	Basic  authBasic `json:"basic"`
 	Bearer string    `json:"bearer"`
 }
 
-// AuthBasic represents the embedded basic auth inside Auth struct
-type AuthBasic struct {
+// authBasic represents the embedded basic auth inside Auth struct
+type authBasic struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
 
-// HTTPClient is an interface for decoupling http.Client
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// HTTPClientConfig is a set of options used to initialize a HTTPClient
-type HTTPClientConfig struct {
-	Timeout       time.Duration
-	DenyRedirects bool
-}
-
-func defaultHTTPClientFactory(cfg HTTPClientConfig) HTTPClient {
-	c := new(http.Client)
-	c.Timeout = cfg.Timeout
-	if cfg.DenyRedirects {
-		c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-	}
-	return c
-}
-
-// NewHTTPClient is a factory of HTTPClient
-var NewHTTPClient = defaultHTTPClientFactory
-
 func validConfig(config interface{}) error {
 	cfg := config.(*HTTPConfig)
 	switch cfg.Method {
-	case "GET", "POST", "PUT", "DELETE":
+	case "GET", "POST", "PUT", "DELETE", "PATCH":
 	default:
 		return fmt.Errorf("unknown method for HTTP runner: %s", cfg.Method)
 	}
 
-	if cfg.TimeoutSeconds != "" {
-		if _, err := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16); err != nil {
-			return fmt.Errorf("can't parse timeout_seconds field %q: %s", cfg.TimeoutSeconds, err.Error())
+	if cfg.URL != "" {
+		if cfg.Host != "" || cfg.Path != "" {
+			return errors.New("URL field conflicts with Host+Path")
 		}
 	}
 
-	if cfg.DenyRedirects != "" {
-		if _, err := strconv.ParseBool(cfg.DenyRedirects); err != nil {
-			return fmt.Errorf("can't parse deny_redirects field %q: %s", cfg.DenyRedirects, err.Error())
+	if cfg.Host == "" && cfg.URL == "" {
+		return errors.New("missing either URL or Host")
+	}
+
+	// skip validation of Timeout, FollowRedirect to allow runtime templating
+
+	for _, p := range cfg.Headers {
+		if p.Name == "" {
+			return fmt.Errorf("missing header name (with value '%s')", p.Value)
+		}
+	}
+
+	for _, p := range cfg.QueryParameters {
+		if p.Name == "" {
+			return fmt.Errorf("missing query parameter name (with value '%s')", p.Value)
 		}
 	}
 
@@ -117,14 +107,29 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		fmt.Println(string(body))
 	}
 
-	req, err := http.NewRequest(cfg.Method, cfg.URL, bytes.NewBuffer(body))
+	target := cfg.URL
+	if target == "" {
+		hostURL, err := url.Parse(cfg.Host)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse host: %s", err)
+		}
+		pathURL, err := url.Parse(cfg.Path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse path: %s", err)
+		}
+		pathURL.Host = hostURL.Host
+		pathURL.Scheme = hostURL.Scheme
+		target = pathURL.String()
+	}
+
+	req, err := http.NewRequest(cfg.Method, target, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
 
 	q := req.URL.Query()
-	for _, p := range cfg.Parameters {
-		q.Add(p.Key, p.Value)
+	for _, p := range cfg.QueryParameters {
+		q.Add(p.Name, p.Value)
 	}
 	req.URL.RawQuery = q.Encode()
 
@@ -135,22 +140,34 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		req.SetBasicAuth(cfg.Auth.Basic.User, cfg.Auth.Basic.Password)
 	}
 
-	// best-effort match the body's content-type
-	var i interface{}
-	reader := bytes.NewReader(body)
-	if err := utils.JSONnumberUnmarshal(reader, &i); err == nil {
-		req.Header.Set("content-type", "application/json")
-	} else if err := xml.Unmarshal(body, &i); err == nil {
-		req.Header.Set("content-type", "application/xml")
-	}
-
 	for _, h := range cfg.Headers {
 		req.Header.Set(h.Name, h.Value)
 	}
 
-	ts, _ := strconv.ParseUint(cfg.TimeoutSeconds, 10, 16)
-	dr, _ := strconv.ParseBool(cfg.DenyRedirects)
-	httpClient := NewHTTPClient(HTTPClientConfig{Timeout: time.Duration(ts) * time.Second, DenyRedirects: dr})
+	// best-effort match the body's content-type
+	if len(body) > 0 && req.Header.Get("Content-Type") == "" {
+		var i interface{}
+		reader := bytes.NewReader(body)
+		if err := utils.JSONnumberUnmarshal(reader, &i); err == nil {
+			req.Header.Set("Content-Type", "application/json")
+		} else if err := xml.Unmarshal(body, &i); err == nil {
+			req.Header.Set("Content-Type", "application/xml")
+		}
+	}
+
+	if cfg.Timeout == "" {
+		cfg.Timeout = TimeoutDefault
+	}
+
+	td, err := time.ParseDuration(cfg.Timeout)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse timeout: %s", err)
+	}
+	fr, err := strconv.ParseBool(cfg.FollowRedirect)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
+	}
+	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{Timeout: td, FollowRedirect: fr})
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

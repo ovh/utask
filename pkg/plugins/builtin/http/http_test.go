@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"testing"
-	"time"
 
+	httputilutask "github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,11 +17,11 @@ func Test_validConfig(t *testing.T) {
 	cfg := HTTPConfig{
 		URL:            "http://lolcat.host/stuff",
 		Method:         "GET",
-		TimeoutSeconds: "10",
-		DenyRedirects:  "true",
-		Auth: Auth{
+		Timeout:        "10s",
+		FollowRedirect: "false",
+		Auth: auth{
 			Bearer: "my_token",
-			Basic: AuthBasic{
+			Basic: authBasic{
 				User:     "foo",
 				Password: "bar",
 			},
@@ -38,18 +38,65 @@ func Test_validConfig(t *testing.T) {
 	cfgJSON, err = json.Marshal(cfg)
 	assert.NoError(t, err)
 	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "Unknown method for HTTP runner: RANDOM")
+	cfg.Method = "GET"
 
-	// Wrong timeout_seconds
-	cfg.TimeoutSeconds = "-2"
+	// wrong headers
+	cfg.Headers = []parameter{
+		parameter{
+			Name:  "",
+			Value: "foo",
+		},
+	}
 	cfgJSON, err = json.Marshal(cfg)
 	assert.NoError(t, err)
-	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "timeout_seconds is wrong -2")
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "headers has invalid name value")
+	cfg.Headers = []parameter{
+		parameter{
+			Name:  "x-foo-header",
+			Value: "foo",
+		},
+	}
 
-	// Wrong deny_redirects
-	cfg.DenyRedirects = "foo"
+	// wrong query params
+	cfg.QueryParameters = []parameter{
+		parameter{
+			Name:  "",
+			Value: "foo",
+		},
+	}
 	cfgJSON, err = json.Marshal(cfg)
 	assert.NoError(t, err)
-	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "deny_redirects is wrong foo")
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "query_parameters has invalid name value")
+	cfg.QueryParameters = []parameter{
+		parameter{
+			Name:  "bar",
+			Value: "foo",
+		},
+	}
+
+	// no URL
+	cfg.URL = ""
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "URL should not be empty without host/path")
+
+	cfg.URL = "http://foobar.example"
+	cfg.Path = "/search"
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "incompatible parameters URL + Path")
+
+	cfg.Host = "http://bla.example"
+	cfg.Path = ""
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "incompatible parameters URL + host")
+
+	cfg.URL = ""
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.NoError(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)))
+
 }
 
 type MockHTTPClient struct {
@@ -62,7 +109,7 @@ func (m MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 
 func Test_exec(t *testing.T) {
 
-	NewHTTPClient = func(cfg HTTPClientConfig) HTTPClient {
+	httputilutask.NewHTTPClient = func(cfg httputilutask.HTTPClientConfig) httputilutask.HTTPClient {
 		return MockHTTPClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				reqDump, _ := httputil.DumpRequest(req, false)
@@ -84,15 +131,15 @@ func Test_exec(t *testing.T) {
 	cfg := HTTPConfig{
 		URL:    "http://lolcat.host/stuff",
 		Method: "GET",
-		Parameters: []Parameter{
-			Parameter{
-				Key:   "foo",
+		QueryParameters: []parameter{
+			{
+				Name:  "foo",
 				Value: "bar",
 			},
 		},
-		TimeoutSeconds: "10",
-		DenyRedirects:  "true",
-		Auth: Auth{
+		Timeout:        "10s",
+		FollowRedirect: "false",
+		Auth: auth{
 			Bearer: "my_token",
 		},
 	}
@@ -131,10 +178,4 @@ func Test_exec(t *testing.T) {
 	assert.Equal(t, "application/json", mapHeaders["Content-Type"])
 	assert.Equal(t, "Cookie-1=foo", mapHeaders["Set-Cookie"])
 
-}
-
-func TestNewHTTPClient(t *testing.T) {
-	NewHTTPClient = defaultHTTPClientFactory
-	c := NewHTTPClient(HTTPClientConfig{Timeout: time.Hour, DenyRedirects: true})
-	assert.NotNil(t, c)
 }
