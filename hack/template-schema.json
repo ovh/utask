@@ -131,7 +131,7 @@
                             "description": "Action configuration"
                         },
                         "base_configuration": {
-                            "type": "object"
+                            "type": "string"
                         },
                         "base_output": {
                             "type": "object"
@@ -232,7 +232,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -271,7 +271,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -312,7 +312,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -378,7 +378,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -397,6 +397,9 @@
                 "configuration": {
                     "type": "object",
                     "additionalProperties": false,
+                    "required": [
+                        "template"
+                    ],
                     "properties": {
                         "template": {
                             "type": "string"
@@ -410,7 +413,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -444,7 +447,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -479,7 +482,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -544,7 +547,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -589,7 +592,7 @@
                     }
                 },
                 "base_configuration": {
-                    "type": "object"
+                    "type": "string"
                 },
                 "base_output": {
                     "type": "object"
@@ -602,6 +605,11 @@
         "Condition": {
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "type",
+                "if",
+                "then"
+            ],
             "properties": {
                 "type": {
                     "type": "string",
@@ -615,6 +623,12 @@
                     "type": "array",
                     "items": {
                         "type": "object",
+                        "required": [
+                            "expected",
+                            "operator",
+                            "value"
+                        ],
+                        "additionalProperties": false,
                         "properties": {
                             "value": {
                                 "type": "string",
@@ -671,10 +685,7 @@
             ],
             "required": [
                 "name",
-                "description",
-                "legal_values",
-                "optional",
-                "default"
+                "description"
             ],
             "properties": {
                 "name": {
