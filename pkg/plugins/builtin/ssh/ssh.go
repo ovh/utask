@@ -188,7 +188,7 @@ func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, inte
 	if cfg.OutputMode == OutputModeAutoResult {
 		execStr = fmt.Sprintf(`
 function printResultJSON {
-echo %s
+echo -n %s | sed --posix -z 's/\n/\\n/g'
 }
 trap printResultJSON EXIT
 `, injectPL) + execStr
@@ -246,9 +246,11 @@ trap printResultJSON EXIT
 		}
 
 	case OutputModeAutoResult, OutputModeManualLastLine:
-		lastNL := strings.LastIndexByte(outStr, '{')
-		if lastNL != -1 {
-			resultLine = outStr[lastNL:]
+		var lastIndex int
+		resultLine, lastIndex = retrieveLastLine(outStr)
+		if resultLine == "" && lastIndex != -1 {
+			// a lot of programs are returning a new line at the end of output, we need to strip it if exists
+			resultLine, lastIndex = retrieveLastLine(outStr[0:lastIndex])
 		}
 	}
 
@@ -264,4 +266,12 @@ trap printResultJSON EXIT
 	}
 
 	return payload, metadata, nil
+}
+
+func retrieveLastLine(outStr string) (resultLine string, lastIndex int) {
+	lastIndex = strings.LastIndexByte(outStr, '\n')
+	if lastIndex != -1 {
+		resultLine = strings.TrimSpace(outStr[lastIndex:])
+	}
+	return
 }
