@@ -5,25 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/juju/errors"
 	"golang.org/x/crypto/ssh"
 
+	"github.com/ovh/utask/pkg/plugins/builtin/scriptutil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
 // connection configuration values
 const (
-	MaxHops                    = 10
-	ConnTimeout                = 10 * time.Second
-	OutputModeAutoResult       = "auto-result"
-	OutputModeDisabled         = "disabled"
-	OutputModeManualDelimiters = "manual-delimiters"
-	OutputModeManualLastLine   = "manual-lastline"
+	MaxHops     = 10
+	ConnTimeout = 10 * time.Second
 )
 
 // ssh plugin opens an ssh connection and runs commands on target machine
@@ -31,7 +26,6 @@ var (
 	Plugin = taskplugin.New("ssh", "0.2", execssh,
 		taskplugin.WithConfig(configssh, ConfigSSH{}),
 	)
-	exitCodesUnrecoverableRegex = regexp.MustCompile(`^(\d+)(?:-(\d+))?$`)
 )
 
 // ConfigSSH is the data needed to perform an SSH action
@@ -70,21 +64,21 @@ func configssh(i interface{}) error {
 	switch cfg.OutputMode {
 	case "":
 		// default will have to be reset in execssh as config modification will not be persisted
-		cfg.OutputMode = OutputModeAutoResult
-	case OutputModeAutoResult, OutputModeDisabled, OutputModeManualDelimiters, OutputModeManualLastLine:
+		cfg.OutputMode = scriptutil.OutputModeAutoResult
+	case scriptutil.OutputModeAutoResult, scriptutil.OutputModeDisabled, scriptutil.OutputModeManualDelimiters, scriptutil.OutputModeManualLastLine:
 	default:
-		return fmt.Errorf("invalid value %q for output_mode, allowed values are: %s", cfg.OutputMode, strings.Join([]string{OutputModeAutoResult, OutputModeDisabled, OutputModeManualDelimiters, OutputModeManualLastLine}, ", "))
+		return fmt.Errorf("invalid value %q for output_mode, allowed values are: %s", cfg.OutputMode, strings.Join([]string{scriptutil.OutputModeAutoResult, scriptutil.OutputModeDisabled, scriptutil.OutputModeManualDelimiters, scriptutil.OutputModeManualLastLine}, ", "))
 	}
 
-	if cfg.OutputManualDelimiters != nil && cfg.OutputMode != OutputModeManualDelimiters {
+	if cfg.OutputManualDelimiters != nil && cfg.OutputMode != scriptutil.OutputModeManualDelimiters {
 		return fmt.Errorf("invalid parameter \"output_manual_delimiters\", output_mode is configured to %q", cfg.OutputMode)
 	}
 
-	if len(cfg.Result) > 0 && cfg.OutputMode != OutputModeAutoResult {
+	if len(cfg.Result) > 0 && cfg.OutputMode != scriptutil.OutputModeAutoResult {
 		return fmt.Errorf("invalid parameter \"result\", output_mode is configured to %q", cfg.OutputMode)
 	}
 
-	if cfg.OutputMode == OutputModeManualDelimiters && (cfg.OutputManualDelimiters == nil || len(cfg.OutputManualDelimiters) != 2) {
+	if cfg.OutputMode == scriptutil.OutputModeManualDelimiters && (cfg.OutputManualDelimiters == nil || len(cfg.OutputManualDelimiters) != 2) {
 		length := 0
 		if cfg.OutputManualDelimiters != nil {
 			length = len(cfg.OutputManualDelimiters)
@@ -93,51 +87,23 @@ func configssh(i interface{}) error {
 	}
 
 	if cfg.OutputManualDelimiters != nil {
-		if _, err := generateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
+		if _, err := scriptutil.GenerateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
 			return fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
 		}
 	}
 
-	for _, value := range cfg.ExitCodesUnrecoverable {
-		matches := exitCodesUnrecoverableRegex.FindStringSubmatch(value)
-		if len(matches) == 0 {
-			return fmt.Errorf("invalid value %q for exit_codes_unrecoverable, should be an integer, or a range of integer (e.g: 123, or 120-130)", value)
-		}
-		exitCodeStartStr, exitCodeEndStr := matches[1], matches[2]
-		var exitCodeStart, exitCodeEnd int64
-		if exitCodeEndStr != "" {
-			var err error
-			exitCodeStart, err = strconv.ParseInt(exitCodeStartStr, 10, 64)
-			if err != nil {
-				return err
-			}
-			exitCodeEnd, err = strconv.ParseInt(exitCodeEndStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			if exitCodeEnd <= exitCodeStart {
-				return fmt.Errorf("exit_codes_unrecoverable value %q should have end exit_code superior to start exit_code", value)
-			}
-
-			if exitCodeStart == 0 {
-				return fmt.Errorf("exit_codes_unrecoverable cannot map exit code 0 (non-sense)")
-			}
-		}
+	if err := scriptutil.ValidateExitCodesUnreachable(cfg.ExitCodesUnrecoverable); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func generateOutputDelimitersRegexp(start, end string) (*regexp.Regexp, error) {
-	return regexp.Compile("(?s)^.*" + start + "(.*)" + end + ".*$")
 }
 
 func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := i.(*ConfigSSH)
 
 	if cfg.OutputMode == "" {
-		cfg.OutputMode = OutputModeAutoResult
+		cfg.OutputMode = scriptutil.OutputModeAutoResult
 	}
 
 	var signer ssh.Signer
@@ -215,7 +181,7 @@ func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, inte
 	}
 	injectPL += `'}'`
 
-	if cfg.OutputMode == OutputModeAutoResult {
+	if cfg.OutputMode == scriptutil.OutputModeAutoResult {
 		execStr = fmt.Sprintf(`
 function printResultJSON {
 echo -n %s | sed --posix -z 's/\n/\\n/g'
@@ -266,77 +232,18 @@ trap printResultJSON EXIT
 
 	payload := make(map[string]interface{})
 
-	var resultLine string
-	switch cfg.OutputMode {
-	case OutputModeManualDelimiters:
-		if rexp, err := generateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
-			return nil, nil, fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
-		} else if matches := rexp.FindStringSubmatch(outStr); len(matches) > 0 {
-			resultLine = matches[1]
-		}
-
-	case OutputModeAutoResult, OutputModeManualLastLine:
-		var lastIndex int
-		resultLine, lastIndex = retrieveLastLine(outStr)
-		if resultLine == "" && lastIndex != -1 {
-			// a lot of programs are returning a new line at the end of output, we need to strip it if exists
-			resultLine, lastIndex = retrieveLastLine(outStr[0:lastIndex])
-		}
-	}
-
-	if resultLine != "" {
+	if resultLine, err := scriptutil.ParseOutput(outStr, cfg.OutputMode, cfg.OutputManualDelimiters); err != nil {
+		return nil, metadata, err
+	} else if resultLine != "" {
 		err = json.Unmarshal([]byte(resultLine), &payload)
-		if err != nil {
+		if err != nil && exitCode == 0 {
 			return nil, metadata, err
 		}
 	}
 
-	var pluginError error
 	if exitCode != 0 {
-		pluginError = fmt.Errorf("exit code: %d", exitCode)
-
-		for _, value := range cfg.ExitCodesUnrecoverable {
-			matches := exitCodesUnrecoverableRegex.FindStringSubmatch(value)
-			if len(matches) == 0 {
-				return payload, metadata, fmt.Errorf("exit_codes_unrecoverable value doesnt match regex, fatal error")
-			}
-
-			exitCodeStartStr, exitCodeEndStr := matches[1], matches[2]
-			if exitCodeEndStr == "" && exitCodeStartStr != fmt.Sprint(exitCode) {
-				continue
-			}
-
-			if exitCodeStartStr == fmt.Sprint(exitCode) {
-				pluginError = errors.NewBadRequest(err, fmt.Sprintf("Client error: exit code: %d", exitCode))
-				break
-			}
-
-			var exitCodeStart, exitCodeEnd int64
-			exitCodeStart, err = strconv.ParseInt(exitCodeStartStr, 10, 64)
-			if err != nil {
-				return payload, metadata, fmt.Errorf("invalid starting exit_code value %q in exit_codes_unrecoverable: %s", exitCodeStartStr, err)
-			}
-			exitCodeEnd, err = strconv.ParseInt(exitCodeEndStr, 10, 64)
-			if err != nil {
-				return payload, metadata, fmt.Errorf("invalid ending exit_code value %q in exit_codes_unrecoverable: %s", exitCodeEndStr, err)
-			}
-
-			if exitCodeStart <= int64(exitCode) && int64(exitCode) <= exitCodeEnd {
-				pluginError = errors.NewBadRequest(err, fmt.Sprintf("Client error: exit code: %d", exitCode))
-				break
-			}
-		}
-
-		return payload, metadata, pluginError
+		return payload, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
 	}
 
 	return payload, metadata, nil
-}
-
-func retrieveLastLine(outStr string) (resultLine string, lastIndex int) {
-	lastIndex = strings.LastIndexByte(outStr, '\n')
-	if lastIndex != -1 {
-		resultLine = strings.TrimSpace(outStr[lastIndex:])
-	}
-	return
 }

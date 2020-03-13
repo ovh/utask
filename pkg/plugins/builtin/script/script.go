@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/utask"
 
+	"github.com/ovh/utask/pkg/plugins/builtin/scriptutil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
@@ -43,12 +44,13 @@ type Metadata struct {
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File                  string   `json:"file_path"`
-	Argv                  []string `json:"argv,omitempty"`
-	Timeout               string   `json:"timeout,omitempty"`
-	Stdin                 string   `json:"stdin,omitempty"`
-	LastLineNotJSONOutput bool     `json:"last_line_not_json,omitempty"`
-	AllowExitNonZero      bool     `json:"allow_exit_non_zero,omitempty"`
+	File                   string   `json:"file_path"`
+	Argv                   []string `json:"argv,omitempty"`
+	Timeout                string   `json:"timeout,omitempty"`
+	Stdin                  string   `json:"stdin,omitempty"`
+	OutputMode             string   `json:"output_mode"`
+	OutputManualDelimiters []string `json:"output_manual_delimiters"`
+	ExitCodesUnrecoverable []string `json:"exit_codes_unrecoverable"`
 }
 
 func validConfig(config interface{}) error {
@@ -78,6 +80,37 @@ func validConfig(config interface{}) error {
 		}
 	}
 
+	switch cfg.OutputMode {
+	case "":
+		// default will have to be reset in exec as config modification will not be persisted
+		cfg.OutputMode = scriptutil.OutputModeManualLastLine
+	case scriptutil.OutputModeDisabled, scriptutil.OutputModeManualDelimiters, scriptutil.OutputModeManualLastLine:
+	default:
+		return fmt.Errorf("invalid value %q for output_mode, allowed values are: %s", cfg.OutputMode, strings.Join([]string{scriptutil.OutputModeDisabled, scriptutil.OutputModeManualDelimiters, scriptutil.OutputModeManualLastLine}, ", "))
+	}
+
+	if cfg.OutputManualDelimiters != nil && cfg.OutputMode != scriptutil.OutputModeManualDelimiters {
+		return fmt.Errorf("invalid parameter \"output_manual_delimiters\", output_mode is configured to %q", cfg.OutputMode)
+	}
+
+	if cfg.OutputMode == scriptutil.OutputModeManualDelimiters && (cfg.OutputManualDelimiters == nil || len(cfg.OutputManualDelimiters) != 2) {
+		length := 0
+		if cfg.OutputManualDelimiters != nil {
+			length = len(cfg.OutputManualDelimiters)
+		}
+		return fmt.Errorf("wrong number of output_manual_delimiters, 2 expected, found %d", length)
+	}
+
+	if cfg.OutputManualDelimiters != nil {
+		if _, err := scriptutil.GenerateOutputDelimitersRegexp(cfg.OutputManualDelimiters[0], cfg.OutputManualDelimiters[1]); err != nil {
+			return fmt.Errorf("unable to compile output_manual_delimiters regexp: %s", err)
+		}
+	}
+
+	if err := scriptutil.ValidateExitCodesUnreachable(cfg.ExitCodesUnrecoverable); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -91,6 +124,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	} else {
 		// default is 2 * 1 minute = 2 minutes
 		timeout = 2 * time.Minute
+	}
+
+	if cfg.OutputMode == "" {
+		cfg.OutputMode = scriptutil.OutputModeManualLastLine
 	}
 
 	ctxe, cancel := context.WithTimeout(context.Background(), timeout)
@@ -133,32 +170,19 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		errorMetadataKey:         metaError,
 	}
 
-	if !cfg.AllowExitNonZero && exitCode != 0 {
-		return nil, metadata, fmt.Errorf("non zero exit status code: %d", exitCode)
-	}
+	payload := make(map[string]interface{})
 
-	if cfg.LastLineNotJSONOutput {
-		return nil, metadata, nil
-	}
-
-	outputArray := strings.Split(outStr, "\n")
-	lastLine := ""
-
-	for i := len(outputArray) - 1; i >= 0; i-- {
-		if len(outputArray[i]) > 0 {
-			lastLine = outputArray[i]
-			break
+	if resultLine, err := scriptutil.ParseOutput(outStr, cfg.OutputMode, cfg.OutputManualDelimiters); err != nil {
+		return nil, metadata, err
+	} else if resultLine != "" {
+		err = json.Unmarshal([]byte(resultLine), &payload)
+		if err != nil && exitCode == 0 {
+			return nil, metadata, err
 		}
 	}
 
-	if !(strings.Contains(lastLine, "{") && strings.Contains(lastLine, "}")) {
-		return nil, metadata, nil
-	}
-
-	payload := make(map[string]interface{})
-	err = json.Unmarshal([]byte(lastLine), &payload)
-	if err != nil {
-		return nil, metadata, err
+	if exitCode != 0 {
+		return payload, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
 	}
 
 	return payload, metadata, nil

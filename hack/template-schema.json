@@ -303,11 +303,27 @@
                         "timeout": {
                             "type": "string"
                         },
-                        "last_line_not_json": {
-                            "type": "boolean"
+                        "exit_codes_unrecoverable": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "pattern": "^(\\d+)(?:-(\\d+))?$"
+                            }
                         },
-                        "allow_exit_non_zero": {
-                            "type": "boolean"
+                        "output_manual_delimiters": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "output_mode": {
+                            "type": "string",
+                            "enum": [
+                                "disabled",
+                                "manual-delimiters",
+                                "manual-lastline"
+                            ],
+                            "default": "auto-result"
                         }
                     }
                 },

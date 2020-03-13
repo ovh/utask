@@ -8,6 +8,9 @@ This plugin execute a script.
 
 Files must be located under scripts folder, you should set exec permissions (+x). Otherwise the script plugin will try to set the exec permissions.
 
+The step will be considered successful if the script returns exit code 0, otherwise, it will be considered as a `SERVER_ERROR` (and will be retried). For unrecoverable errors (for instance, invalid parameters), it is possible to configure a list of exit codes (see `exit_codes_unrecoverable`) that should halt the execution (`CLIENT_ERROR`).
+
+
 ## Configuration
 
 |Fields|Description
@@ -16,8 +19,9 @@ Files must be located under scripts folder, you should set exec permissions (+x)
 | `argv` | a collection of script argv
 | `timeout` | timeout of the script execution
 | `stdin` | inject stdin in your script
-| `last_line_not_json` | skip or not unmarshaling of last JSON line
-| `allow_exit_non_zero` | allow or not non zero exit status code
+| `output_mode` | indicates how to retrieve the output values ; valid values are: `manual-lastline` (default), `disabled`, `manual-delimiters`
+| `output_manual_delimiters` | array of 2 strings ; look for a JSON formatted string in the script output between specific delimiters (only used when `output_mode` is configured to `manual-delimiters`)
+| `exit_codes_unrecoverable` | a list of non-zero exit codes (1, 2, 3, ...) or ranges (1-10, ...) which should be considered unrecoverable and halt execution ; these will be returned to the main engine as a `CLIENT_ERROR`
 
 ## Example
 
@@ -38,12 +42,14 @@ action:
     # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
     # default is 2m
     timeout: "25s"
-    # optional, boolean
-    # default is false, can't be templated
-    last_line_not_json: false
-    # optional, boolean
-    # default is false, can't be templated
-    allow_exit_non_zero: false
+    # this is the default mode
+    output_mode: manual-lastline
+    # optional delimiters to look for an output -- requires output_mode set to manual-delimiters
+    #output_manual_delimiters: ["JSON_START", "JSON_END"]
+    exit_codes_unrecoverable:
+      - "1-10"
+      - "100"
+      - "110"
 ```
 
 ## Note
