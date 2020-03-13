@@ -758,7 +758,6 @@
                     "default": false
                 },
                 "default": {
-                    "type": "string",
                     "description": "Default value of the input if not fulfilled",
                     "examples": [
                         "english"
