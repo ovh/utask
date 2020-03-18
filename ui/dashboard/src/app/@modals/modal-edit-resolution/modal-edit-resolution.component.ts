@@ -21,6 +21,7 @@ export class ModalEditResolutionComponent implements OnInit {
   };
   loading = false;
   error = null;
+  yamlInvalid = false;
 
   constructor(public activeModal: NgbActiveModal, private api: ApiService) {
   }
@@ -48,6 +49,7 @@ export class ModalEditResolutionComponent implements OnInit {
 
   submit() {
     try {
+      this.yamlInvalid = false;
       this.loading = true;
       const obj = jsYaml.safeLoad(this.text);
       this.errors = [];
@@ -60,6 +62,7 @@ export class ModalEditResolutionComponent implements OnInit {
         this.loading = false;
       });
     } catch (err) {
+      this.yamlInvalid = true;
       if (err.mark) {
         this.errors = [{
           row: err.mark.line,
@@ -68,7 +71,6 @@ export class ModalEditResolutionComponent implements OnInit {
           type: 'error'
         }];
       } else {
-        console.log('Error', err);
         this.error = err;
       }
       this.loading = false;
