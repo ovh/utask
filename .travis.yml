@@ -34,7 +34,7 @@ before_script:
 # we could also use YAML aliases for Golang steps https://docs.travis-ci.com/user/build-stages/using-yaml-aliases/
 script:
   - make test-travis
-  - make release # still don't know where to upload install-utask.sh ...
+  - make release
 
 after_success:
   - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform

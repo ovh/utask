@@ -1,7 +1,7 @@
 project_name: utask
 
 builds:
-  - 
+  -
     id: utask
 
     main: ./cmd/utask
@@ -35,7 +35,7 @@ changelog:
       - '^clear:'
 
 archives:
-  - 
+  -
     id: utask
     name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     replacements:
@@ -47,3 +47,5 @@ release:
     owner: ovh
     name: utask
   draft: true
+  extra_files:
+    - glob: ./install-utask.sh
