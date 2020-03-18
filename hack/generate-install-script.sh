@@ -11,7 +11,7 @@ fi
 version=`git describe --tags $(git rev-list --tags --max-count=1)`
 
 write_block() {
-    echo "cat <<EOF >$1" >> $dst
+    echo "cat <<'EOF' >$1" >> $dst
     sed "s/DOCKER_TAG/$version/" $2 >> $dst
     echo "EOF" >> $dst
     echo "" >> $dst

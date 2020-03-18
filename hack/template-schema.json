@@ -73,6 +73,10 @@
                 "foreach": {
                     "type": "string",
                     "description": "Elements on which the step will loop"
+                },
+                "json_schema": {
+                    "type": "object",
+                    "description": "Elements on which the step will loop"
                 }
             }
         },

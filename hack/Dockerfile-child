@@ -1,10 +1,11 @@
-FROM ovhcom/utask:DOCKER_TAG AS builder
+ARG UTASK_VERSION=DOCKER_TAG
+FROM ovhcom/utask:${UTASK_VERSION} AS builder
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
 RUN make
 
-FROM ovhcom/utask:DOCKER_TAG
+FROM ovhcom/utask:${UTASK_VERSION}
 
 COPY templates  /app/templates
 COPY --from=builder /go/src/github.com/ovh/utask/plugins /app/plugins
