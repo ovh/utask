@@ -16,6 +16,7 @@ import (
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/db"
@@ -623,6 +624,26 @@ func TestBaseOutput(t *testing.T) {
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, id, output["id"])
 	assert.Equal(t, "bar", output["foo"])
+}
+
+func TestEmptyStringInput(t *testing.T) {
+	input := map[string]interface{}{
+		"quantity": -2.3,
+		"foo":      "",
+	}
+	res, err := createResolution("input.yaml", input, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateDone, res.State)
+	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
+
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "", output["foo"])
 }
 
 func TestScriptPlugin(t *testing.T) {

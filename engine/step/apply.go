@@ -3,9 +3,14 @@ package step
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"reflect"
 
 	"github.com/ovh/utask/engine/values"
+)
+
+var (
+	errNotTemplatable = errors.New("value given is not templatable")
 )
 
 func resolveObject(val *values.Values, objson json.RawMessage, item interface{}, stepName string) ([]byte, error) {
@@ -61,12 +66,14 @@ func applyMap(val *values.Values, v reflect.Value, item interface{}, stepName st
 			applySlice(val, mv, item, stepName)
 		case reflect.String:
 			newValue, err := applyString(val, mv, item, stepName)
-			if err != nil {
-				return err
-			}
-
-			if newValue != "" {
+			switch err {
+			case nil:
 				v.SetMapIndex(iter.Key(), reflect.ValueOf(newValue))
+			case errNotTemplatable:
+				// current value Kind is string, but actual type could not be string (e.g. json.Number)
+				// in that case, we should keep the actual value as it will never be templated
+			default:
+				return err
 			}
 		}
 	}
@@ -90,12 +97,14 @@ func applySlice(val *values.Values, v reflect.Value, item interface{}, stepName 
 			applySlice(val, elem, item, stepName)
 		case reflect.String:
 			newValue, err := applyString(val, elem, item, stepName)
-			if err != nil {
-				return err
-			}
-
-			if newValue != "" {
+			switch err {
+			case nil:
 				mv.Set(reflect.ValueOf(newValue))
+			case errNotTemplatable:
+				// current value Kind is string, but actual type could not be string (e.g. json.Number)
+				// in that case, we should keep the actual value as it will never be templated
+			default:
+				return err
 			}
 		}
 	}
@@ -107,7 +116,7 @@ func applyString(val *values.Values, v reflect.Value, item interface{}, stepName
 	strval := v.Interface()
 	str, ok := strval.(string)
 	if !ok {
-		return "", nil
+		return "", errNotTemplatable
 	}
 	resolved, err := val.Apply(str, item, stepName)
 	if err != nil {

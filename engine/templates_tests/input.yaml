@@ -8,6 +8,11 @@ inputs:
       collection: false
       type: number
       optional: false
+    - name: foo
+      description: A string value
+      type: string
+      optional: true
+      default: ""
 steps:
     stepOne:
         description: first step
@@ -15,4 +20,4 @@ steps:
         retry_pattern: seconds
         action:
             type: echo
-            configuration: {output: {value: "{{.input.quantity}}"}}
+            configuration: {output: {value: "{{.input.quantity}}", foo: "{{.input.foo}}"}}
