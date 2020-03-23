@@ -1,0 +1,13 @@
+name: no-output
+description: A template with step returning no output
+title_format: "[test] no output"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo
+            base_output: {foobar: "buzz"}
+            configuration: {}

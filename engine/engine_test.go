@@ -646,6 +646,23 @@ func TestEmptyStringInput(t *testing.T) {
 	assert.Equal(t, "", output["foo"])
 }
 
+func TestBaseOutputNoOutput(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateDone, res.State)
+	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
+
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "buzz", output["foobar"])
+}
+
 func TestScriptPlugin(t *testing.T) {
 	argv := "world"
 	res, err := createResolution("execScript.yaml", map[string]interface{}{"argv": argv}, nil)

@@ -266,13 +266,13 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		default:
 			st.Output, st.Metadata, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
 			if baseOutput != nil {
-				marshaled, err := json.Marshal(st.Output)
-				if err == nil {
-					err = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
+				if st.Output != nil {
+					marshaled, err := json.Marshal(st.Output)
 					if err == nil {
-						st.Output = baseOutput
+						_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
 					}
 				}
+				st.Output = baseOutput
 			}
 			st.Payload = st.Output // FIXME deprecate
 			if err != nil {
