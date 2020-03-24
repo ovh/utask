@@ -46,7 +46,7 @@ type HTTPConfig struct {
 
 // parameter represents either headers, query parameters, ...
 type parameter struct {
-	Name  string `json:"key"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
@@ -159,13 +159,17 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Timeout = TimeoutDefault
 	}
 
+	var fr bool
+
 	td, err := time.ParseDuration(cfg.Timeout)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse timeout: %s", err)
 	}
-	fr, err := strconv.ParseBool(cfg.FollowRedirect)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
+	if cfg.FollowRedirect != "" {
+		fr, err = strconv.ParseBool(cfg.FollowRedirect)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
+		}
 	}
 	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{Timeout: td, FollowRedirect: fr})
 
