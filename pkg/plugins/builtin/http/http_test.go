@@ -42,7 +42,7 @@ func Test_validConfig(t *testing.T) {
 
 	// wrong headers
 	cfg.Headers = []parameter{
-		parameter{
+		{
 			Name:  "",
 			Value: "foo",
 		},
@@ -51,7 +51,7 @@ func Test_validConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "headers has invalid name value")
 	cfg.Headers = []parameter{
-		parameter{
+		{
 			Name:  "x-foo-header",
 			Value: "foo",
 		},
@@ -59,7 +59,7 @@ func Test_validConfig(t *testing.T) {
 
 	// wrong query params
 	cfg.QueryParameters = []parameter{
-		parameter{
+		{
 			Name:  "",
 			Value: "foo",
 		},
@@ -68,7 +68,7 @@ func Test_validConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "query_parameters has invalid name value")
 	cfg.QueryParameters = []parameter{
-		parameter{
+		{
 			Name:  "bar",
 			Value: "foo",
 		},
