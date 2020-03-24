@@ -24,10 +24,9 @@ export default {
                     configuration: {
                         url: 'http://localhost:8080',
                         method: 'POST',
-                        body: `
-                            {
-                                "foo": "bar"
-                            }`,
+                        body: `{
+    "foo": "bar"
+}`,
                         headers: [
                             {
                                 name: 'content-type',
@@ -46,10 +45,9 @@ export default {
                     configuration: {
                         url: 'http://localhost:8080',
                         method: 'POST',
-                        body: `
-                            {
-                                "foo": "bar"
-                            }`,
+                        body: `{
+    "foo": "bar"
+}`,
                         headers: [
                             {
                                 name: 'content-type',
@@ -74,10 +72,9 @@ export default {
                         serviceName: 'my-service',
                         path: '/foo',
                         method: 'POST',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             },
@@ -91,10 +88,9 @@ export default {
                         serviceName: '${3:my-service}',
                         path: '${4:/foo}',
                         method: '${5:POST}',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             }
@@ -111,10 +107,9 @@ export default {
                         credentials: 'configstore-item-key',
                         path: '/foo',
                         method: 'POST',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             },
@@ -128,10 +123,9 @@ export default {
                         credentials: '${3:configstore-item-key}',
                         path: '${4:/foo}',
                         method: '${5:POST}',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             }
@@ -147,10 +141,9 @@ export default {
                     configuration: {
                         url: 'http://localhost:8080',
                         method: 'POST',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`,
+                        body: `{
+    "foo": "bar"
+}`,
                         headers: [
                             {
                                 name: 'content-type',
@@ -169,10 +162,9 @@ export default {
                     configuration: {
                         url: '${4:http://localhost:8080}',
                         method: '${5:POST}',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`,
+                        body: `{
+    "foo": "bar"
+}`,
                         headers: [
                             {
                                 name: 'content-type',
@@ -195,10 +187,9 @@ export default {
                         credentials: 'locker-user-pass',
                         path: '/foo',
                         method: 'POST',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             },
@@ -212,10 +203,9 @@ export default {
                         credentials: '${3:locker-user-pass}',
                         path: '${4:/foo}',
                         method: '${5:POST}',
-                        body: `
-                        {
-                            "foo": "bar"
-                        }`
+                        body: `{
+    "foo": "bar"
+}`
                     }
                 }
             }
@@ -259,9 +249,8 @@ export default {
                         user: 'ubuntu',
                         target: '1.1.1.1',
                         hops: ['2.2.2.2','3.3.3.3'],
-                        script: `
-                            UPTIME=$(uptime)
-                            # other shell commands...`,
+                        script: `UPTIME=$(uptime)
+# other shell commands...`,
                         result: {"uptime":"\\$UPTIME"},
                         ssh_key: "{{ .secret.mysshkey }}",
                         ssh_key_passphrase: "{{ .secret.mysshkeypassphrase }}"
@@ -278,9 +267,8 @@ export default {
                         user: '${3:ubuntu}',
                         target: '${4:1.1.1.1}',
                         hops: ['2.2.2.2','3.3.3.3'],
-                        script: `
-                            UPTIME=$(uptime)
-                            # other shell commands...`,
+                        script: `UPTIME=$(uptime)
+# other shell commands...`,
                         result: {"uptime":"\\$UPTIME"},
                         ssh_key: "{{ ${9:.secret.mysshkey} }}",
                         ssh_key_passphrase: "{{ ${10:.secret.mysshkeypassphrase} }}"

@@ -15,7 +15,7 @@ export class TaskService {
           });
           modal.componentInstance.question = `Are you sure you want to delete this task #${taskId}`;
           modal.componentInstance.title = `Delete task`;
-          modal.componentInstance.yes = `Yes, i'm sure`;
+          modal.componentInstance.yes = `Yes, I'm sure`;
           modal.componentInstance.apiCall = () => {
             return this.api.deleteTask(taskId);
           };

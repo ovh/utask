@@ -21,7 +21,18 @@ export class NewComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.templates = this.route.parent.snapshot.data.templates;
+    this.templates = _.orderBy(this.route.snapshot.data.templates, (t: any) => t.description.toLowerCase(), ['asc']);
+
+    this.route.queryParams.subscribe((values) => {
+      const tmp = _.find(this.templates, { name: values.template_name });
+      this.selectedTemplate = tmp;
+      this.newTask(tmp);
+      Object.keys(this.item.input).forEach((inputName) => {
+        if (values[inputName]) {
+          this.item.input[inputName] = values[inputName];
+        }
+      });
+    });
   }
 
   submit() {

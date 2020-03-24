@@ -12,7 +12,6 @@ import {StepsViewerComponent} from './components/stepsviewer.component';
 
 import {FullHeightDirective} from './directives/fullheight.directive';
 
-import {JSON2YAML} from './services/json2yaml.service';
 import {TemplateYamlHelper} from './services/templateyamlhelper.service';
 import {WorkflowHelper} from './services/workflowhelper.service';
 
@@ -29,7 +28,6 @@ import {WorkflowHelper} from './services/workflowhelper.service';
     AppRoutingModule,
   ],
   providers: [
-    JSON2YAML,
     TemplateYamlHelper,
     WorkflowHelper,
   ],

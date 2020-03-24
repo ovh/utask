@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import JSON2YAML from '../../@services/json2yaml.service';
 import EditorConfig from 'src/app/@models/editorconfig.model';
+import JSToYaml from 'convert-yaml';
 
 @Component({
   selector: 'app-modal-yaml-preview',
@@ -22,7 +22,8 @@ export class ModalYamlPreviewComponent implements OnInit {
   }
 
   ngOnInit() {
-    JSON2YAML.setSpacing(0, 4);
-    this.text = JSON2YAML.stringify(this.value);
+    JSToYaml.spacingStart = ' '.repeat(0);
+    JSToYaml.spacing = ' '.repeat(4);
+    this.text = JSToYaml.stringify(this.value).value;
   }
 }

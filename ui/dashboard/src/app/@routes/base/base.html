@@ -18,11 +18,9 @@
     </ul>
     <div>
       <ul class="navbar-nav mr-auto">
-        <li>
-          <a class="nav-link" title="{{meta.username}} is admin">
-            <span *ngIf="meta.user_is_admin" class="fas fa-user-shield"></span>
+        <li class="nav-link">
+            <span *ngIf="meta.user_is_admin" class="fas fa-user-shield" title="Is admin"></span>
             {{meta.username}}
-          </a>
         </li>
       </ul>
     </div>

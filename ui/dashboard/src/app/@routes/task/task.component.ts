@@ -11,10 +11,11 @@ import { RequestService } from 'src/app/@services/request.service';
 import MetaUtask from 'src/app/@models/meta-utask.model';
 import Task from '../../@models/task.model';
 import { TaskService } from 'src/app/@services/task.service';
-import { ActiveIntervalService } from 'src/app/@services/active-interval.service';
+import { ActiveInterval } from 'active-interval';
 
 @Component({
-  templateUrl: './task.html'
+  templateUrl: './task.html',
+  styleUrls: ['./task.sass'],
 })
 export class TaskComponent implements OnInit, OnDestroy {
   objectKeys = Object.keys;
@@ -61,7 +62,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.taskId = params.id;
       this.loadTask().then(() => {
         this.display.request = (!this.task.result && !this.resolution) || (!this.resolution && this.taskIsResolvable);
-        this.display.result = !!this.task.result;
+        this.display.result = this.task.state === 'DONE';
         this.display.execution = !!this.resolution;
         this.display.reject = !this.resolution && this.taskIsResolvable;
         this.display.resolution = !this.resolution && this.taskIsResolvable;
@@ -70,20 +71,18 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.refreshes.tasks = new ActiveIntervalService();
+    this.refreshes.tasks = new ActiveInterval();
     this.refreshes.tasks.setInterval(() => {
       if (!this.loaders.tasks && this.autorefresh) {
-        this.loadTask().then(() => {
-          console.log('refresh');
-        });
+        this.loadTask();
       }
-    }, 15000, false);
+    }, 5000, false);
   }
 
   addComment() {
     this.loaders.addComment = true;
     this.api.addComment(this.task.id, this.comment.content).toPromise().then((comment) => {
-      this.task.comments = this.task.comments ? this.task.comments : [];
+      this.task.comments = _.get(this.task, 'comments', []);
       this.task.comments.push(comment);
       this.errors.addComment = null;
       this.comment.content = '';
@@ -105,10 +104,6 @@ export class TaskComponent implements OnInit, OnDestroy {
   editRequest(task: any) {
     this.requestService.edit(task).then((data: any) => {
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
@@ -116,10 +111,6 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.resolutionService.edit(resolution).then((data: any) => {
       console.log(data);
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
@@ -127,10 +118,6 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.resolutionService.run(resolution.id).then((data: any) => {
       console.log(data);
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
@@ -138,10 +125,6 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.resolutionService.pause(resolution.id).then((data: any) => {
       console.log(data);
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
@@ -149,10 +132,6 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.resolutionService.cancel(resolution.id).then((data: any) => {
       console.log(data);
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
@@ -160,30 +139,22 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.resolutionService.extend(resolution.id).then((data: any) => {
       console.log(data);
       this.loadTask();
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
   deleteTask(taskId: string) {
     this.taskService.delete(taskId).then((data: any) => {
       this.router.navigate([`/home`]);
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
     });
   }
 
   rejectTask() {
     this.loaders.rejectTask = true;
     this.api.rejectTask(this.task.id).toPromise().then((res: any) => {
-      console.log('OK', res);
+      this.errors.rejectTask = null;
       this.loadTask();
     }).catch((err) => {
-      console.log('ERROR', err);
+      this.errors.rejectTask = err;
     }).finally(() => {
       this.loaders.rejectTask = false;
     });
@@ -192,10 +163,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   resolveTask() {
     this.loaders.resolveTask = true;
     this.api.postResolution(this.item).toPromise().then((res: any) => {
-      console.log('OK', res);
+      this.errors.resolveTask = null;
       this.loadTask();
     }).catch((err) => {
-      console.log('ERROR', err);
+      this.errors.resolveTask = err;
     }).finally(() => {
       this.loaders.resolveTask = false;
     });
@@ -205,42 +176,37 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.selectedStep = step || '';
   }
 
-  // generateSteps() {
-  //   const steps = [];
-  //   if (
-  //     _.get(this, 'resolution.steps', null) &&
-  //     _.isObjectLike(this.resolution.steps)
-  //   ) {
-  //     _.each(this.resolution.steps, (data: any, key: string) => {
-  //       steps.push({ key, data });
-  //     });
-  //     this.steps = steps;
-  //   } else {
-  //     this.steps = [];
-  //   }
-  // }
-
   loadTask() {
     return new Promise((resolve, reject) => {
       this.loaders.task = true;
       this.api.task(this.taskId).subscribe((data: Task) => {
         this.task = data;
+        this.task.comments = _.orderBy(_.get(this.task, 'comments', []), ['created'], ['asc']);
         this.item.task_id = this.task.id;
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
-        this.taskIsResolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames);
+        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames);
+        if (!this.taskIsResolvable && this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames)) {
+          this.template.resolver_inputs.forEach((field: any) => {
+            if (field.type === 'bool' && field.default === null) {
+              this.item.resolver_inputs[field.name] = false;
+            } else {
+              this.item.resolver_inputs[field.name] = field.default;
+            }
+          })
+        }
+        this.taskIsResolvable = resolvable;
         if (this.task.resolution) {
           this.loadResolution(this.task.resolution).then(() => {
             resolve();
-          }).catch(() => {
-            reject();
+          }).catch((err) => {
+            reject(err);
           });
         } else {
           this.resolution = null;
           resolve();
         }
       }, (err: any) => {
-        console.log(err);
-        reject();
+        reject(err);
       }, () => {
         this.loaders.task = false;
       });

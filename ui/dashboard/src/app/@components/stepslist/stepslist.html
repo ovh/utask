@@ -23,7 +23,7 @@
           'background': states[steps[stepName].state].color,
           'color': states[steps[stepName].state].fontColor
        }" (click)="displayDetails[stepName] = !displayDetails[stepName]" style="cursor:pointer;">
-       
+
       <span *ngIf="!displayDetails[stepName]">
         <i class="fas fa-caret-down"></i>
       </span>
@@ -35,23 +35,26 @@
       {{stepName}}
     </div>
     <div class="utask_step-details" *ngIf="displayDetails[stepName]">
-        <div *ngIf="steps[stepName].output">
-          Output:
-          <editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></editor>
-        </div>
+      <div *ngIf="steps[stepName].output">
+        Output:
+        <editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></editor>
+      </div>
 
-        <div *ngIf="steps[stepName].children">
-          Children:
-          <editor [value]="JSON.stringify(steps[stepName].children, null, 4)" [config]="editorConfigChildren"></editor>
-        </div>
+      <div *ngIf="steps[stepName].children">
+        Children:
+        <editor [value]="JSON.stringify(steps[stepName].children, null, 4)" [config]="editorConfigChildren"></editor>
+      </div>
 
-        <div *ngIf="steps[stepName].error">
-          Error:
-          <editor [value]="JSON.stringify(steps[stepName].error, null, 4)" [config]="editorConfigError"></editor>
-        </div>
+      <div *ngIf="steps[stepName].error">
+        <span *ngIf="steps[stepName].state !== 'DONE'">Error:</span>
+        <span *ngIf="steps[stepName].state === 'DONE'">Message:</span>
+        <editor [value]="JSON.stringify(steps[stepName].error, null, 4)" [config]="editorConfigError"></editor>
+      </div>
 
-        <small>Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong></small>
+      <small *ngIf="steps[stepName].last_run && steps[stepName].last_run != '0001-01-01T00:00:00Z'">
+        Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong>
+      </small>
+      <button type="button" class="btn btn-secondary" (click)="previewStepDetails(steps[stepName])">View</button>
     </div>
-    <!-- <button type="button" class="btn btn-success" (click)="previewStepDetails(steps[stepName])">Preview</button> -->
   </div>
 </div>

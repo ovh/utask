@@ -35,17 +35,25 @@ export class TemplateYamlHelper {
         return !text.trim();
     }
 
-    isSeparation(text: string) {
+    getStepName(path: string): string {
+        const pathArr = path.split('.');
+        if (path.length > 1 && pathArr[0] === 'steps') {
+            return pathArr[1];
+        }
+        return null;
+    }
+
+    isSeparation(text: string): boolean {
         return !!text.match(/^\s*(\.{3}|\-{3})/);
     }
 
-    isComment(text: string) {
-        return !!text.match(/^\s*#/);
+    isComment(line: string): boolean {
+        return !!line.match(/^\s*#/);
     }
 
-    getStepsRow(text: string) {
+    getStepsRow(text: string, minimumSpacing: number): number {
         const arrayStr = text.split('\n');
-        const reg = new RegExp(`^\\s{${this.minimumSpacing}}"{0,1}steps"{0,1}:`);
+        const reg = new RegExp(`^\\s{${minimumSpacing}}"{0,1}steps"{0,1}:`);
         let stepPosition = -1;
         const breakException = {};
         try {
@@ -63,7 +71,7 @@ export class TemplateYamlHelper {
         return stepPosition;
     }
 
-    getEndStep(text: string, row: number) {
+    getEndStep(text: string, row: number): number {
         const arrayStr = text.split('\n');
         const reg = new RegExp(`^\\s{${this.minimumSpacing},${this.minimumSpacing + this.spacing}}"{0,1}[a-zA-Z\\-\\_0-9]+"{0,1}\s*:`);
         let i = row + 1;
@@ -95,7 +103,7 @@ export class TemplateYamlHelper {
         return stepPosition;
     }
 
-    getPath(text: string, row: number) {
+    getPath(text: string, row: number): string[] {
         const textArr = text.split('\n');
         const rep = [];
         let maxStep = Infinity;

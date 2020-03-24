@@ -10,7 +10,7 @@ import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
     template: `<svg width="1000px" height="1000px" #svg><g></g></svg>`,
 })
 class TestComponent implements AfterViewInit {
-    @ViewChild('svg', { static: false }) svg: ElementRef;
+    @ViewChild('svg') svg: ElementRef;
 
     ngAfterViewInit() {
     }

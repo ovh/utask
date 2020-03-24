@@ -1,19 +1,16 @@
-import { Observable } from 'rxjs';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
 import * as _ from 'lodash';
 
 import * as brace from 'brace';
 import 'brace/mode/yaml';
 import 'brace/theme/monokai';
 
-import {JSON2YAML} from '../services/json2yaml.service';
-import {TemplateYamlHelper} from '../services/templateyamlhelper.service';
+import JSToYaml from 'convert-yaml';
+import { TemplateYamlHelper } from '../services/templateyamlhelper.service';
 import jsYaml from 'js-yaml';
 
 import StepsConfig from '../steps.config';
 import Editor from '../models/editor.model';
-import { isNgTemplate } from '@angular/compiler';
 import stepsConfig from '../steps.config';
 
 const Range = brace.acequire('ace/range').Range;
@@ -29,11 +26,12 @@ export class EditorComponent implements OnInit {
   objectKeys = Object.keys;
   types: any = StepsConfig.types;
 
-  constructor(private JSON2YAML: JSON2YAML, private TemplateYamlHelper: TemplateYamlHelper) {
-    this.JSON2YAML.setSpacing(0, 4);
+  constructor(private TemplateYamlHelper: TemplateYamlHelper) {
+    JSToYaml.spacing = ' '.repeat(4);
+    JSToYaml.spacingStart = '';
     this.editor = {
       valid: false,
-      text: this.JSON2YAML.stringify(StepsConfig.initValue),
+      text: JSToYaml.stringify(StepsConfig.initValue).value,
       value: null,
       ace: null,
       type: 'yaml',
@@ -47,11 +45,9 @@ export class EditorComponent implements OnInit {
       snippets: [],
       error: null
     };
-    // this.tryConvertToObject();
   }
 
   ngOnInit() {
-    console.log("INIT editor");
     this.initEditor();
     this.tryConvertToObject();
   }
@@ -84,17 +80,6 @@ export class EditorComponent implements OnInit {
       tabSize: 2
     });
 
-    // this.editor.snippets = [];
-    // JSON2YAML.setSpacing(this.editor.minimumSpacing + this.editor.spacing, this.editor.spacing);
-    // Object.keys(stepsConfig.types).forEach((key: string) => {
-    //   this.editor.snippets.push({
-    //     name: `Add '${key}' step`,
-    //     score: 499,
-    //     meta: 'Snippet',
-    //     snippet: JSON2YAML.stringify({ '${1:step_name}': stepsConfig.types[key].snippet })
-    //   });
-    // });
-    // JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
     langTools.setCompleters([]);
     langTools.addCompleter({
       getCompletions: (editor, session, pos, prefix, callback) => {
@@ -104,120 +89,26 @@ export class EditorComponent implements OnInit {
         const currentText = this.editor.text.split('\n')[pos.row];
         const isEmptyRow = currentText.trim() === '';
         const countSpacing = currentText.match(/^\s*/)[0].length;
-        const isEndOfLine = currentText.length === pos.column;
-        console.log(path, currentText, pos, countSpacing, isEmptyRow, isEndOfLine);
-
-        if (isEndOfLine || isEmptyRow) {
-
+        if (path === 'steps' || countSpacing <= (this.editor.minimumSpacing + this.editor.spacing)) {
           Object.keys(stepsConfig.types).forEach((key: string) => {
-            // this.editor.snippets.push({
-            //   name: `Add '${key}' step`,
-            //   score: 499,
-            //   meta: 'Snippet',
-            //   snippet: JSON2YAML.stringify({ '${1:step_name}': stepsConfig.types[key].snippet })
-            // });
-            // // this.editor.snippets.forEach((s: any) => {
-            let s = {
+            JSToYaml.spacingStart = ' '.repeat(_.max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]));
+            const snippet = {
               name: `Add '${key}' step`,
               score: 499,
               meta: 'Snippet',
-              snippet: ''
+              snippet: `${isEmptyRow ? '' : '\n'}${JSToYaml.stringify({ '${1:step_name}': stepsConfig.types[key].snippet }).value}\n`
             };
-            // Fin de ligne donc passage à la ligne
-            if (!isEmptyRow) {
-              this.JSON2YAML.setSpacing(this.editor.minimumSpacing + this.editor.spacing, this.editor.spacing);
-              s.snippet = `\n${this.JSON2YAML.stringify({ '${1:step_name}': stepsConfig.types[key].snippet })}\n`;
-              this.JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
-            } else {
-              // EMPTY LINE
-              console.log(this.editor.minimumSpacing, this.editor.spacing, countSpacing)
-              const tmpSpacing = _.max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]);
-              console.log(tmpSpacing);
-              this.JSON2YAML.setSpacing(tmpSpacing, this.editor.spacing);
-              s.snippet = `${this.JSON2YAML.stringify({ '${1:step_name}': stepsConfig.types[key].snippet })}`;
-              this.JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
-            }
-            console.log(s);
-            arr.push(s);
-            // // });
+            JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing);
+            arr.push(snippet);
           });
-
-        }
-
-        if ((isEmptyRow || isEndOfLine) && path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.action\.configuration/)) {
-          // JSON2YAML.setSpacing(this.editor.minimumSpacing + this.editor.spacing * 4, this.editor.spacing);
-          if (!isEmptyRow) {
-            this.JSON2YAML.setSpacing(this.editor.spacing, this.editor.spacing);
-          } else {
-            let startedSpacing = (this.editor.minimumSpacing + this.editor.spacing * 4) - currentText.length;
-            if (startedSpacing < 0) {
-              startedSpacing = 0;
-            }
-            this.JSON2YAML.setSpacing(startedSpacing, this.editor.spacing);
-          }
-          // ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].forEach((m: string) => {
-          arr.push({
-            name: `Add method`,
-            score: 501,
-            meta: 'Snippet',
-            snippet: (isEmptyRow ? '' : '\n') + this.JSON2YAML.stringify({ method: `\${1:}` }) + (isEndOfLine ? '' : '\n')
-          });
-          // });
-          this.JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
-        }
-        if (path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.action\.configuration\.method$/)) {
-          arr.push({
-            name: 'POST', value: 'POST', score: 502, meta: 'Method'
-          });
-          arr.push({
-            name: 'GET', value: 'GET', score: 502, meta: 'Method'
-          });
-          arr.push({
-            name: 'PATCH', value: 'PATCH', score: 502, meta: 'Method'
-          });
-          arr.push({
-            name: 'DELETE', value: 'DELETE', score: 502, meta: 'Method'
-          });
-          arr.push({
-            name: 'PUT', value: 'PUT', score: 502, meta: 'Method'
-          });
-        }
-        if ((isEmptyRow || isEndOfLine) && path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.dependencies$/)) {
+        } else if (path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.dependencies$/)) {
           const stepsName = this.TemplateYamlHelper.getStepsName(this.editor.text);
           stepsName.map((key: string) => {
             arr.push({ name: key, value: key, score: 500, meta: 'Step' });
           });
         }
-        callback(null, arr);
 
-        // const currentText = this.editor.text.split('\n')[pos.row];
-        // if (YamlHelper.getKey(currentText, 4) === 'method') {
-        //   callback(null, [{
-        //     name: 'POST', value: 'POST', score: 501, meta: 'Method'
-        //   },
-        //   {
-        //     name: 'GET', value: 'GET', score: 501, meta: 'Method'
-        //   },
-        //   {
-        //     name: 'PUT', value: 'PUT', score: 501, meta: 'Method'
-        //   },
-        //   {
-        //     name: 'DELETE', value: 'DELETE', score: 501, meta: 'Method'
-        //   },
-        //   {
-        //     name: 'PATCH', value: 'PATCH', score: 501, meta: 'Method'
-        //   }]);
-        // } else {
-        //   const path = YamlHelper.getPath(this.editor.text, pos.row).join('.');
-        //   const arr = _.clone(this.editor.snippets);
-        //   if (path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.dependencies$/)) {
-        //     const stepsName = YamlHelper.getStepsName(this.editor.text);
-        //     stepsName.map((key: string) => {
-        //       arr.push({ name: key, value: key, score: 500, meta: 'Step' });
-        //     });
-        //   }
-        //   callback(null, arr);
-        // }
+        callback(null, arr);
       }
     });
 
@@ -279,24 +170,22 @@ export class EditorComponent implements OnInit {
   }
 
   getMinimumSpacing(text: string) {
-    const min = _.min(text.split('\n').map((item) => {
-      // Empty line
-      if (item.trim() === '') {
+    const min = _.min(text.split('\n').map((line: string) => {
+      if (line.trim() === '') {
         return null;
       }
 
-      // Start & End Document (https://fr.wikipedia.org/wiki/YAML)
-      const isEndOrStartFile = item.match(/^\s*(\.{3}|\-{3})/);
+      const isEndOrStartFile = line.match(/^\s*(\.{3}|\-{3})/);
       if (isEndOrStartFile) {
         return null;
       }
 
-      const isComment = item.match(/^\s*#/);
+      const isComment = line.match(/^\s*#/);
       if (isComment) {
         return null;
       }
 
-      const match = item.match(/^\s*/);
+      const match = line.match(/^\s*/);
       if (match) {
         return match[0].length;
       }
@@ -306,14 +195,12 @@ export class EditorComponent implements OnInit {
     return min;
   }
 
-  getSpacing(text: string, minSpacing: number) {
+  getSpacing(text: string, minSpacing: number): number {
     const spacing = _.min(text.split('\n').map((item) => {
-      // Empty line
       if (item.trim() === '') {
         return null;
       }
 
-      // Start & End Document (https://fr.wikipedia.org/wiki/YAML)
       const isEndOrStartFile = item.match(/^\s*(\.{3}|\-{3})/);
       if (isEndOrStartFile) {
         return null;
@@ -337,9 +224,9 @@ export class EditorComponent implements OnInit {
     return 4;
   }
 
-  randomStepName(length) {
+  randomStepName(length: number): string {
     let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -369,7 +256,6 @@ export class EditorComponent implements OnInit {
       this.editor.ace.getSession().clearAnnotations();
       this.editor.error = null;
     } catch (err) {
-      console.log(err);
       if (this.editor.ace) {
         this.editor.ace.getSession().setAnnotations([{
           row: err.mark.line,
@@ -399,13 +285,10 @@ export class EditorComponent implements OnInit {
   toYaml(obj: any, hasStep: boolean): string[] {
     let str;
     if (hasStep) {
-      this.JSON2YAML.setSpacing(this.editor.minimumSpacing + this.editor.spacing, this.editor.spacing);
-      str = this.JSON2YAML.stringify(obj);
-      this.JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
-    } else {
-      this.JSON2YAML.setSpacing(this.editor.minimumSpacing, this.editor.spacing);
-      str = this.JSON2YAML.stringify(obj);
+      JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing + this.editor.spacing);
     }
+    str = JSToYaml.stringify(obj).value;
+    JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing);
     return str.split('\n');
   }
 
@@ -417,32 +300,30 @@ export class EditorComponent implements OnInit {
   }
 
   addStep(type: string) {
+    this.tryConvertToObject();
     this.clearMarkers();
-
     const textEditor: string[] = this.editor.text.split('\n');
-    const indexSteps: number = this.TemplateYamlHelper.getStepsRow(this.editor.text);//this.whereIsSteps(textEditor);
-    const obj = indexSteps === -1 ? { steps: {} } : {};
-    const randomName = `Step${this.randomStepName(16)}`;
-    if (indexSteps === -1) {
+    const stepsRow: number = this.TemplateYamlHelper.getStepsRow(this.editor.text, this.getMinimumSpacing(this.editor.text));
+    const obj = stepsRow === -1 ? { steps: {} } : {};
+    const randomName = `Step_${this.randomStepName(16)}`;
+    if (stepsRow === -1) {
       obj.steps[randomName] = this.types[type].value;
     } else {
       obj[randomName] = this.types[type].value;
     }
 
-    const textToInject = this.toYaml(obj, indexSteps > -1);
-    this.injectText(textEditor, textToInject, indexSteps + 1);
-
-    this.setText(textEditor.join('\n'), indexSteps, textToInject.length);
+    const textToInject = this.toYaml(obj, stepsRow > -1);
+    this.injectText(textEditor, textToInject, stepsRow + 1);
+    this.setText(textEditor.join('\n'), stepsRow, textToInject.length);
   }
 
   setText(text: string, stepPosition: number, linesNumber: number) {
     this.editor.ace.setValue(text);
-    // this.editor.ace.moveCursorTo(stepPosition, 0, true);
-    this.editor.ace.gotoLine(stepPosition, 0, true);
     this.editor.ace.clearSelection();
     const range = new Range(stepPosition, 0, stepPosition + linesNumber, 0);
     const markerId: number = this.editor.ace.session.addMarker(range, 'ace_active-highlight', 'fullLine', true);
     this.editor.markerIds.push(markerId);
+    this.editor.ace.gotoLine(stepPosition, 0, true);
     setTimeout(() => {
       this.editor.ace.session.removeMarker(markerId);
     }, 850);

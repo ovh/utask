@@ -37,26 +37,62 @@ const routes: Routes = [
       {
         path: 'home',
         component: HomeComponent,
+        data: {
+          title: {
+            value: '{0}',
+            args: ['meta.application_name']
+          }
+        }
       },
       {
         path: 'templates',
         component: TemplatesComponent,
+        data: {
+          title: {
+            value: 'Templates - {0}',
+            args: ['meta.application_name']
+          }
+        },
       },
       {
         path: 'template/:templateName',
         component: TemplateComponent,
+        data: {
+          title: {
+            value: 'Template - {1}',
+            args: ['meta.application_name']
+          }
+        },
       },
       {
         path: 'task/:id',
         component: TaskComponent,
+        data: {
+          title: {
+            value: 'Task - {0}',
+            args: ['meta.application_name']
+          }
+        },
       },
       {
         path: 'new',
         component: NewComponent,
+        data: {
+          title: {
+            value: 'New task - {0}',
+            args: ['meta.application_name']
+          }
+        },
       },
       {
         path: 'stats',
         component: StatsComponent,
+        data: {
+          title: {
+            value: 'Stats - {0}',
+            args: ['meta.application_name']
+          }
+        },
         resolve: {
           stats: StatsResolve
         }
@@ -71,6 +107,7 @@ const routes: Routes = [
       routes,
       {
         useHash: true,
+        paramsInheritanceStrategy: 'always',
       }
     )
   ],

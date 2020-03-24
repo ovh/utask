@@ -16,7 +16,7 @@ export class ResolutionService {
             });
             modal.componentInstance.question = `Are you sure you want to pause this resolution #${resolutionId}`;
             modal.componentInstance.title = `Pause resolution`;
-            modal.componentInstance.yes = `Yes, i'm sure`;
+            modal.componentInstance.yes = `Yes, I'm sure`;
             modal.componentInstance.apiCall = () => {
                 return this.api.pauseResolution(resolutionId);
             };
@@ -35,7 +35,7 @@ export class ResolutionService {
             });
             modal.componentInstance.question = `Are you sure you want to cancel this resolution #${resolutionId}`;
             modal.componentInstance.title = `Cancel resolution`;
-            modal.componentInstance.yes = `Yes, i'm sure`;
+            modal.componentInstance.yes = `Yes, I'm sure`;
             modal.componentInstance.apiCall = () => {
                 return this.api.cancelResolution(resolutionId);
             };
@@ -54,7 +54,7 @@ export class ResolutionService {
             });
             modal.componentInstance.question = `Are you sure you want to extend this resolution #${resolutionId}`;
             modal.componentInstance.title = `Extend resolution`;
-            modal.componentInstance.yes = `Yes, i'm sure`;
+            modal.componentInstance.yes = `Yes, I'm sure`;
             modal.componentInstance.apiCall = () => {
                 return this.api.extendResolution(resolutionId);
             };
@@ -73,7 +73,7 @@ export class ResolutionService {
             });
             modal.componentInstance.question = `Are you sure you want to run this resolution #${resolutionId}`;
             modal.componentInstance.title = `Run resolution`;
-            modal.componentInstance.yes = `Yes, i'm sure`;
+            modal.componentInstance.yes = `Yes, I'm sure`;
             modal.componentInstance.apiCall = () => {
                 return this.api.runResolution(resolutionId);
             };
