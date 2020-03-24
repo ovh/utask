@@ -425,7 +425,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			}
 			allDone = false
 		}
-		if s.IsFinal() {
+		if s.IsFinal() && !s.IsChild() {
 			doneCount++
 		}
 	}
