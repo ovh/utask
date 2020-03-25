@@ -230,7 +230,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 
 	ctx := runner.Context(st.Name)
 	if ctx != nil {
-		ctxMarshal, err := json.Marshal(ctx)
+		ctxMarshal, err := utils.JSONMarshal(ctx)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = fmt.Sprintf("failed to marshal context: %s", err.Error())
@@ -267,7 +267,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			st.Output, st.Metadata, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
 			if baseOutput != nil {
 				if st.Output != nil {
-					marshaled, err := json.Marshal(st.Output)
+					marshaled, err := utils.JSONMarshal(st.Output)
 					if err == nil {
 						_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
 					}

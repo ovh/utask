@@ -173,7 +173,7 @@ func New(pluginName string, pluginVersion string, execfunc ExecFunc, opts ...fun
 		for v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}
-		marshaled, err := json.Marshal(pOpt.contextObj)
+		marshaled, err := utils.JSONMarshal(pOpt.contextObj)
 		if err != nil {
 			panic(fmt.Sprintf("plugin executor '%s': failed to marshal context object: %s", pluginName, err))
 		}

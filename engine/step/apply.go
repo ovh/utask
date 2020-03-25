@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/ovh/utask/engine/values"
+	"github.com/ovh/utask/pkg/utils"
 )
 
 var (
@@ -18,14 +19,12 @@ func resolveObject(val *values.Values, objson json.RawMessage, item interface{},
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(obj)
+	return utils.JSONMarshal(obj)
 }
 
 func rawResolveObject(val *values.Values, objson json.RawMessage, item interface{}, stepName string) (interface{}, error) {
-	dec := json.NewDecoder(bytes.NewBuffer(objson))
-	dec.UseNumber()
 	var obj interface{}
-	if err := dec.Decode(&obj); err != nil {
+	if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(objson), &obj); err != nil {
 		return nil, err
 	}
 	v := reflect.ValueOf(obj)

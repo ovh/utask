@@ -329,7 +329,7 @@ func (tt *TaskTemplate) Valid() (err error) {
 	}
 
 	// MarshalIndent as it's easier to read line by line
-	tmplJSON, err := json.MarshalIndent(tt, "", "")
+	tmplJSON, err := utils.JSONMarshalIndent(tt, "", " ")
 	if err != nil {
 		return err
 	}

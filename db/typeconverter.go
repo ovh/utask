@@ -18,7 +18,7 @@ type typeConverter struct{}
 func (tc typeConverter) ToDb(val interface{}) (interface{}, error) {
 	switch t := val.(type) {
 	case []string, map[string]*step.Step, map[string]string, map[string]interface{}, []input.Input, []values.Variable, map[string]json.RawMessage:
-		b, err := json.Marshal(t)
+		b, err := utils.JSONMarshal(t)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -69,6 +70,25 @@ func JSONnumberUnmarshal(r io.Reader, i interface{}) error {
 	dec := json.NewDecoder(r)
 	dec.UseNumber()
 	return dec.Decode(i)
+}
+
+// JSONMarshal will JSON encode a given object, without escaping HTML characters
+func JSONMarshal(obj interface{}) ([]byte, error) {
+	b := new(bytes.Buffer)
+	enc := json.NewEncoder(b)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(obj)
+	return b.Bytes(), err
+}
+
+// JSONMarshalIndent will JSON encode a given object, without escaping HTML characters and indentation
+func JSONMarshalIndent(obj interface{}, prefix, indent string) ([]byte, error) {
+	b := new(bytes.Buffer)
+	enc := json.NewEncoder(b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent(prefix, indent)
+	err := enc.Encode(obj)
+	return b.Bytes(), err
 }
 
 // ConvertJSONRowToSlice takes a json-formatted array and returns a string slice

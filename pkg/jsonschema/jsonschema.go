@@ -89,7 +89,7 @@ func computeVersion(rawSchema json.RawMessage) json.RawMessage {
 		m["$schema"] = draft7
 	}
 
-	newSchema, err := json.Marshal(&m)
+	newSchema, err := utils.JSONMarshal(&m)
 	if err != nil {
 		return rawSchema
 	}

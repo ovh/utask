@@ -2,7 +2,6 @@ package values
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"text/template"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/pkg/utils"
 	"github.com/robertkrimen/otto"
 )
 
@@ -283,7 +283,7 @@ func (v *Values) jsonFieldTmpl(key ...string) (interface{}, error) {
 }
 
 func (v *Values) jsonMarshal(i interface{}) (interface{}, error) {
-	marshalled, err := json.Marshal(i)
+	marshalled, err := utils.JSONMarshal(i)
 	if err != nil {
 		return nil, err
 	}

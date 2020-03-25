@@ -1,7 +1,6 @@
 package task
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -110,7 +109,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 	// force empty to stop using old crypto code
 	t.CryptKey = []byte{}
 
-	resultB, err := json.Marshal(t.Result)
+	resultB, err := utils.JSONMarshal(t.Result)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +323,7 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 func (t *Task) Update(dbp zesty.DBProvider, skipValidation, recordLastActivity bool) (err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to update task")
 
-	resultB, err := json.Marshal(t.Result)
+	resultB, err := utils.JSONMarshal(t.Result)
 	if err != nil {
 		return err
 	}
