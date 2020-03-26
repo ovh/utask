@@ -1,4 +1,3 @@
-import { timer } from 'rxjs';
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import dagreD3 from 'dagre-d3';

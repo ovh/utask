@@ -10,8 +10,8 @@
           <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type"
             (change)="pagination.state = pagination.type === 'resolvable' ? '' : pagination.state;search();">
             <option value="all" *ngIf="meta.user_is_admin">All</option>
-            <option value="own">My own</option>
-            <option value="resolvable">I can resolvable</option>
+            <option value="own">As a requester</option>
+            <option value="resolvable">As a resolver</option>
           </select>
           &nbsp;
           <select class="form-control" id="filter_state" name="filter_state" [(ngModel)]="pagination.state"

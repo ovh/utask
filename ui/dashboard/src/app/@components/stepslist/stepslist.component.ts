@@ -35,6 +35,7 @@ export class StepsListComponent implements OnChanges {
     states: any = null;
     JSON = JSON;
     presentStates: string[] = [];
+    defaultState = WorkflowHelper.defaultState;
 
     constructor(private modalService: NgbModal) {
         this.states = WorkflowHelper.getMapStates();
