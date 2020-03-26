@@ -8,7 +8,7 @@ import { GraphService } from 'src/app/@services/graph.service';
     templateUrl: 'stepsviewer.html',
 })
 export class StepsViewerComponent implements OnChanges, AfterViewInit{
-    @ViewChild('svg', null) svg: ElementRef;
+    @ViewChild('svg') svg: ElementRef;
     @Input() item: any;
     // TODO: RENAME DONE OU DELETE IT
     @Input() done: boolean;
