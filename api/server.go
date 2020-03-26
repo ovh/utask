@@ -148,6 +148,13 @@ func (s *Server) build(ctx context.Context) {
 				generateBaseHref(s.editorPathPrefix, "/ui/editor"))).
 			StaticFS("/ui/editor", http.Dir("./static/editor"))
 
+		ginEngine.
+			Group("/",
+				StaticFilePatternReplaceMiddleware(
+					"___UTASK_DASHBOARD_PREFIXAPIBASEURL___",
+					generatePathPrefixAPI(s.dashboardAPIPathPrefix))).
+			StaticFS("/ui/swagger", http.Dir("./static/swagger-ui"))
+
 		collectMetrics(ctx)
 		ginEngine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
