@@ -68,6 +68,10 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.display.resolution = !this.resolution && this.taskIsResolvable;
         this.display.comments = this.task.comments && this.task.comments.length > 0;
         this.autorefresh = ['TODO', 'RUNNING'].indexOf(this.task.state) > -1;
+      }).catch((err) => {
+        if (!this.task) {
+          this.errors.main = err;
+        }
       });
     });
 
@@ -184,8 +188,8 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.task.comments = _.orderBy(_.get(this.task, 'comments', []), ['created'], ['asc']);
         this.item.task_id = this.task.id;
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
-        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames);
-        if (!this.taskIsResolvable && this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames)) {
+        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
+        if (!this.taskIsResolvable && this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || [])) {
           this.template.resolver_inputs.forEach((field: any) => {
             if (field.type === 'bool' && field.default === null) {
               this.item.resolver_inputs[field.name] = false;

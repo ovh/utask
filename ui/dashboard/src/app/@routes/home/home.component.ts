@@ -130,7 +130,8 @@ export class HomeComponent implements OnInit {
     } else {
       item.page_size = 20;
     }
-    item.type = params.type ? params.type : 'own';
+    const defaultType = this.meta.user_is_admin ? 'all' : 'own';
+    item.type = params.type ? params.type : defaultType;
     item.last = '';
     item.state = params.state ? params.state : '';
     return item;

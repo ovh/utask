@@ -15,13 +15,19 @@
 
 <div style="height:600px;overflow: auto;">
   <div class="utask_step" *ngFor="let stepName of filteredStepNames" [ngStyle]="{
-          'border-left': '1px solid '+ states[steps[stepName].state].color,
-          'border-right': '1px solid '+ states[steps[stepName].state].color,
-          'border-bottom': '1px solid '+ states[steps[stepName].state].color
+          'border-left': 
+            '1px solid ' + 
+              (states[steps[stepName].state] ? states[steps[stepName].state].color : defaultState.color),
+          'border-right': '1px solid ' + 
+              (states[steps[stepName].state] ? states[steps[stepName].state].color : defaultState.color),
+          'border-bottom': '1px solid ' + 
+              (states[steps[stepName].state] ? states[steps[stepName].state].color : defaultState.color)
         }">
     <div class="utask_step-name nowrap" title="{{steps[stepName].state}} - {{stepName}}" [ngStyle]="{
-          'background': states[steps[stepName].state].color,
-          'color': states[steps[stepName].state].fontColor
+          'background': 
+              (states[steps[stepName].state] ? states[steps[stepName].state].color : defaultState.color),
+          'color': 
+              (states[steps[stepName].state] ? states[steps[stepName].state].fontColor : defaultState.fontColor)
        }" (click)="displayDetails[stepName] = !displayDetails[stepName]" style="cursor:pointer;">
 
       <span *ngIf="!displayDetails[stepName]">
@@ -54,7 +60,7 @@
       <small *ngIf="steps[stepName].last_run && steps[stepName].last_run != '0001-01-01T00:00:00Z'">
         Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong>
       </small>
-      <button type="button" class="btn btn-secondary" (click)="previewStepDetails(steps[stepName])">View</button>
+      <button type="button" class="btn btn-secondary btn-outline-primary" (click)="previewStepDetails(steps[stepName])">View</button>
     </div>
   </div>
 </div>
