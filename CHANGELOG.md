@@ -6,6 +6,16 @@ We will list in this document any breaking changes between versions, that requir
 
 ## Breaking changes
 
+### v1.4.0
+##### API routes
+- `GET /resolution` API route has been __deleted__. We decided that resolutions should always be accessed through tasks
+
+##### Configuration
+- `resolver_usernames` configuration field __deleted__. Global resolver is not a feature we want to support, and its usage was misguided.
+
+##### SQL
+- `001_resolver_watcher_usernames_indexes.sql` migration file should be applied while upgrading. This migration is non-breaking but will boost performance on big instances for tasks listing.
+
 ### v1.3.0 (2020-03-17)
 ##### HTTP plugin
 - `timeout_seconds` configuration field __deleted__. It has been replaced by the field `timeout`, using the Golang time.Duration format (5s, 1m, ...), for consistency with other plugins and to express timeout durations inferior than 1 second. #86
