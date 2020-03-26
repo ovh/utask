@@ -79,7 +79,8 @@ postgres://user:pass@db/utask?sslmode=disable
     "database_config": {
         "max_open_conns": 50, // default 50
         "max_idle_conns": 30, // default 30
-        "conn_max_lifetime": 60 // default 60, unit: seconds
+        "conn_max_lifetime": 60, // default 60, unit: seconds
+        "config_name": "database" // configuration entry where connection info can be found, default "database"
     },
     // concealed_secrets allows you to render some configstore items inaccessible to the task engine
    "concealed_secrets": ["database", "encryption-key", "utask-cfg"],

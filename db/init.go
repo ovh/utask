@@ -52,7 +52,11 @@ func Init(store *configstore.Store) error {
 		return err
 	}
 	cfg := config.DatabaseConfig
-	dbConn, err := configstore.Filter().Slice(databaseCfgKey).Squash().Store(store).MustGetFirstItem().Value()
+	cfgName := databaseCfgKey
+	if cfg != nil && cfg.ConfigName != "" {
+		cfgName = cfg.ConfigName
+	}
+	dbConn, err := configstore.Filter().Slice(cfgName).Squash().Store(store).MustGetFirstItem().Value()
 	if err != nil {
 		return err
 	}
