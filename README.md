@@ -174,6 +174,16 @@ A user can be allowed to resolve a task in three ways:
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
 
+The following templating functions are available:
+|Name|Description|Reference
+|---|---|---
+|**`Golang`** | Builtin functions from Golang text template  | [Doc](https://golang.org/pkg/text/template/#hdr-Actions)
+|**`Sprig`** | Extended set of functions from the Sprig project  | [Doc](https://masterminds.github.io/sprig/)
+|**`field`** | Equivalent to the dot notation, for entries with forbidden characters | ``{{field `config` `foo.bar`}}``
+|**`jsonmarshal`** | Used as part of a templating pipeline, outputs a JSON representation | ``{{.step.foo.output.bar \| jsonmarshal}}``
+|**`jsonfield`** | Similar to **field**, outputs a JSON representation | ``{{jsonfield `foo` `bar`}}``
+|**`eval`** | Evaluates the value of a template variable | ``{{eval `var1`}}``
+
 ### Basic properties
 
 - `name`: a short unique human-readable identifier
@@ -213,9 +223,11 @@ An input's definition allows to define validation constraints on the values prov
 
 A template variable is a named holder of either:
 -  a fixed value
--  a JS expression evaluated on the fly.
+-  a JavaScript expression evaluated on the fly.
 
 See the example template above to see variables in action. The expression in a variable can contain template handles to introduce values dynamically (from executed steps, for instance), like a step's configuration.
+
+The JavaScript evaluation is done using [otto](https://github.com/robertkrimen/otto).
 
 ### Steps
 
