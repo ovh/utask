@@ -256,12 +256,6 @@ func (s *Server) build(ctx context.Context) {
 				},
 				maintenanceMode,
 				tonic.Handler(handler.CreateResolution, 201))
-			authRoutes.GET("/resolution",
-				[]fizz.OperationOption{
-					fizz.Summary("List task resolutions"),
-					fizz.Description("By default, only resolution for which the user is responsible will be displayed. Admin users can list every task resolution."),
-				},
-				tonic.Handler(handler.ListResolutions, 200))
 			authRoutes.GET("/resolution/:id",
 				[]fizz.OperationOption{
 					fizz.Summary("Get the details of a task resolution"),
