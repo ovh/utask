@@ -4,9 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
-	"github.com/ovh/utask"
-	"github.com/ovh/utask/models/task"
 
+	"github.com/ovh/utask"
+	"github.com/ovh/utask/models/resolution"
+	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 )
@@ -33,11 +34,19 @@ func CreateComment(c *gin.Context, in *createCommentIn) (*task.Comment, error) {
 		return nil, err
 	}
 
-	requester := isRequester(t, c) == nil
-	watcher := isWatcher(t, c) == nil
-	resolver := auth.IsAllowedResolver(c, tt, t.ResolverUsernames) == nil
+	var res *resolution.Resolution
+	if t.Resolution != nil {
+		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	if !requester && !watcher && !resolver {
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
+
+	if !requester && !watcher && !resolutionManager {
 		return nil, errors.Forbiddenf("Can't create comment")
 	}
 
@@ -68,6 +77,32 @@ func GetComment(c *gin.Context, in *getCommentIn) (*task.Comment, error) {
 		return nil, err
 	}
 
+	t, err := task.LoadFromPublicID(dbp, in.TaskID)
+	if err != nil {
+		return nil, err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res *resolution.Resolution
+	if t.Resolution != nil {
+		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
+
+	if !requester && !watcher && !resolutionManager {
+		return nil, errors.Forbiddenf("Can't get comment")
+	}
+
 	return comment, nil
 }
 
@@ -85,6 +120,27 @@ func ListComments(c *gin.Context, in *listCommentsIn) ([]*task.Comment, error) {
 	t, err := task.LoadFromPublicID(dbp, in.TaskID)
 	if err != nil {
 		return nil, err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res *resolution.Resolution
+	if t.Resolution != nil {
+		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
+
+	if !requester && !watcher && !resolutionManager {
+		return nil, errors.Forbiddenf("Can't list comment")
 	}
 
 	comments, err := task.LoadCommentsFromTaskID(dbp, t.ID)
@@ -120,7 +176,7 @@ func UpdateComment(c *gin.Context, in *updateCommentIn) (*task.Comment, error) {
 
 	reqUsername := auth.GetIdentity(c)
 
-	if reqUsername != comment.Username {
+	if auth.IsAdmin(c) != nil && reqUsername != comment.Username {
 		return nil, errors.Forbiddenf("Can't update comment")
 	}
 
@@ -160,7 +216,7 @@ func DeleteComment(c *gin.Context, in *deleteCommentIn) error {
 
 	reqUsername := auth.GetIdentity(c)
 
-	if reqUsername != comment.Username {
+	if auth.IsAdmin(c) != nil && reqUsername != comment.Username {
 		return errors.Forbiddenf("Can't update comment")
 	}
 

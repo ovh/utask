@@ -286,14 +286,16 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 	if filter.RequesterUser != nil {
 		sel = sel.Where(squirrel.Or{
 			squirrel.Eq{`"task".requester_username`: *filter.RequesterUser},
-			squirrel.Eq{`"resolution".resolver_username`: *filter.RequesterUser},
 			squirrel.Expr(`"task".watcher_usernames @> ?::jsonb`, strconv.Quote(*filter.RequesterUser)),
 		})
 	}
 
 	if filter.PotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.PotentialResolverUser)
-		sel = sel.Where(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg)
+		sel = sel.Where(squirrel.Or{
+			squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg),
+			squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, arg),
+		})
 	}
 
 	if filter.State != nil {

@@ -41,12 +41,10 @@ postgres://user:pass@db/utask?sslmode=disable
     "application_name": "µTask Foo",
     // admin_usernames is a list of usernames with admin privileges over µTask resources, ie. the ability to view and execute any task, and to hotfix resolutions if a problem arises
     "admin_usernames": ["admin1", "admin2"],
-    // resolver_usernames is a list of usernames with the privilege to resolve any task
-    "resolver_usernames": ["user1"],
     // completed_task_expiration is a textual representation of how long a task is kept in DB after its completion
     "completed_task_expiration": "720h", // default == 720h == 30 days
-    // notify_config contains a map of named notification configurations, composed of a type and config data, 
-    // implemented notifiers include: 
+    // notify_config contains a map of named notification configurations, composed of a type and config data,
+    // implemented notifiers include:
     // - tat (github.com/ovh/tat)
     // - slack webhook (https://api.slack.com/messaging/webhooks)
     "notify_config": {

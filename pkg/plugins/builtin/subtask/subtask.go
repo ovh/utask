@@ -7,11 +7,11 @@ import (
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/utask"
-	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
+	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/templateimport"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -31,6 +31,8 @@ type SubtaskConfig struct {
 	Template          string                 `json:"template"`
 	Input             map[string]interface{} `json:"input"`
 	ResolverUsernames string                 `json:"resolver_usernames"`
+	WatcherUsernames  string                 `json:"watcher_usernames"`
+	Delay             *string                `json:"delay"`
 }
 
 // SubtaskContext is the metadata inherited from the "parent" task"
@@ -97,37 +99,26 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, err
 		}
 
-		var resolverUsernames []string
+		var resolverUsernames, watcherUsernames []string
 		if cfg.ResolverUsernames != "" {
 			resolverUsernames, err = utils.ConvertJSONRowToSlice(cfg.ResolverUsernames)
 			if err != nil {
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
 			}
 		}
+		if cfg.WatcherUsernames != "" {
+			watcherUsernames, err = utils.ConvertJSONRowToSlice(cfg.WatcherUsernames)
+			if err != nil {
+				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
 
 		// TODO inherit watchers from parent task
-		t, err = task.Create(dbp, tt, stepContext.RequesterUsername, nil, resolverUsernames, cfg.Input, nil)
+		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask", cfg.Delay)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err
-		}
-
-		com, err := task.CreateComment(dbp, t, stepContext.RequesterUsername, "Auto created subtask")
-		if err != nil {
-			dbp.Rollback()
-			return nil, nil, err
-		}
-
-		t.Comments = []*task.Comment{com}
-
-		if tt.IsAutoRunnable() {
-			ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
-			if err := auth.IsAllowedResolver(ctx, tt, resolverUsernames); err == nil {
-				if _, err := resolution.Create(dbp, t, nil, stepContext.RequesterUsername, true, nil); err != nil {
-					dbp.Rollback()
-					return nil, nil, err
-				}
-			}
 		}
 
 		if err := dbp.Commit(); err != nil {

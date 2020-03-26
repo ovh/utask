@@ -48,12 +48,20 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		return nil, err
 	}
 
-	if err := auth.IsAllowedResolver(c, tt, t.ResolverUsernames); err != nil {
+	if err := auth.IsResolutionManager(c, tt, t, nil); err != nil {
 		dbp.Rollback()
-		return nil, err
+		return nil, errors.Forbiddenf("You are not allowed to resolve this task")
 	}
 
 	resUser := auth.GetIdentity(c)
+
+	// adding current resolver to task.resolver_usernames, to be able to list resolved tasks
+	// as 'resolvable', if current resolver used admins privileges.
+	t.ResolverUsernames = append(t.ResolverUsernames, resUser)
+	if err := t.Update(dbp, false, false); err != nil {
+		dbp.Rollback()
+		return nil, err
+	}
 
 	r, err := resolution.Create(dbp, t, in.ResolverInputs, resUser, false, nil) // TODO accept delay in handler
 	if err != nil {
@@ -169,7 +177,7 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadFromPublicID(dbp, in.PublicID)
+	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -220,16 +228,27 @@ func RunResolution(c *gin.Context, in *runResolutionIn) error {
 		return err
 	}
 
+	// not using a LoadLocked here, because GetEngine().Resolve will lock row
 	r, err := resolution.LoadFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		return err
 	}
 
-	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler RunResolution: manual resolve %s", r.PublicID)
-
-	if err := auth.IsResolver(c, r); err != nil {
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
 		return err
 	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+		return errors.Forbiddenf("You are not allowed to resolve this task")
+	}
+
+	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler RunResolution: manual resolve %s", r.PublicID)
 
 	return engine.GetEngine().Resolve(in.PublicID)
 }
@@ -246,27 +265,36 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadFromPublicID(dbp, in.PublicID)
+	if err := dbp.Tx(); err != nil {
+		return err
+	}
+
+	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
 	if err != nil {
+		dbp.Rollback()
 		return err
-	}
-
-	if err := auth.IsResolver(c, r); err != nil {
-		return err
-	}
-
-	if r.State != resolution.StateBlockedMaxRetries {
-		return errors.NotValidf("Cannot extend a resolution which is not in state '%s'", resolution.StateBlockedMaxRetries)
 	}
 
 	t, err := task.LoadFromID(dbp, r.TaskID)
 	if err != nil {
+		dbp.Rollback()
 		return err
 	}
 
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
+		dbp.Rollback()
 		return err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if r.State != resolution.StateBlockedMaxRetries {
+		dbp.Rollback()
+		return errors.NotValidf("Cannot extend a resolution which is not in state '%s'", resolution.StateBlockedMaxRetries)
 	}
 
 	if tt.RetryMax != nil {
@@ -278,7 +306,17 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 	r.SetState(resolution.StateError)
 	r.SetNextRetry(time.Now())
 
-	return r.Update(dbp)
+	if err := r.Update(dbp); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 type cancelResolutionIn struct {
@@ -303,7 +341,19 @@ func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
 		return err
 	}
 
-	if err := auth.IsResolver(c, r); err != nil {
+	t, err := task.LoadFromPublicID(dbp, r.TaskPublicID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
 		dbp.Rollback()
 		return err
 	}
@@ -317,12 +367,6 @@ func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
 	r.SetState(resolution.StateCancelled)
 
 	if err := r.Update(dbp); err != nil {
-		dbp.Rollback()
-		return err
-	}
-
-	t, err := task.LoadLockedFromPublicID(dbp, r.TaskPublicID)
-	if err != nil {
 		dbp.Rollback()
 		return err
 	}
@@ -367,13 +411,26 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 		return err
 	}
 
-	if err := auth.IsResolver(c, r); err != nil {
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
 		dbp.Rollback()
 		return err
 	}
 
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+		dbp.Rollback()
+		return errors.Forbiddenf("You are not allowed to resolve this task")
+	}
+
 	if in.Force {
 		if err := auth.IsAdmin(c); err != nil {
+			dbp.Rollback()
 			return err
 		}
 	} else {

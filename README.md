@@ -159,8 +159,8 @@ The user that creates a task is called `requester`, and the user that executes i
 
 A user can be allowed to resolve a task in three ways:
 - the user is included in the global configuration's list of `admin_usernames`
-- the user is included in the global configuration's list of `resolver_usernames`
 - the user is included in the task's template list of `allowed_resolver_usernames`
+- the user is included in the task `resolver_usernames` list
 
 ### Value Templating
 

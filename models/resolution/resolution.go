@@ -180,7 +180,7 @@ func load(dbp zesty.DBProvider, publicID string, locked bool) (r *Resolution, er
 	sel := rSelector
 	if locked {
 		sel = sel.Suffix(
-			`FOR NO KEY UPDATE OF "resolution"`,
+			`FOR NO KEY UPDATE OF "resolution" NOWAIT`,
 		)
 	}
 
@@ -444,7 +444,11 @@ func (r *Resolution) ClearOutputs() {
 	for _, s := range r.Steps {
 		s.Payload = nil // FIXME deprecate
 		s.Output = nil
+		s.Metadata = nil
+		s.Children = nil
+		s.Item = nil
 	}
+	r.ResolverInput = map[string]interface{}{}
 }
 
 ///

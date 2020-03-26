@@ -4,9 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/taskutils"
 )
 
 type createBatchIn struct {
@@ -14,7 +16,6 @@ type createBatchIn struct {
 	CommonInput      map[string]interface{}   `json:"common_input"`
 	Inputs           []map[string]interface{} `json:"inputs" binding:"required"`
 	Comment          string                   `json:"comment"`
-	WatcherTokens    []string                 `json:"watcher_tokens"`
 	WatcherUsernames []string                 `json:"watcher_usernames"`
 }
 
@@ -49,7 +50,7 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 			return nil, err
 		}
 
-		_, err = transactionTaskCreate(c, dbp, tt, in.WatcherUsernames, input, b, in.Comment, nil)
+		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, input, b, in.Comment, nil)
 		if err != nil {
 			dbp.Rollback()
 			return nil, err

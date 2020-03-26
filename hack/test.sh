@@ -39,8 +39,7 @@ EOF
 
 cat <<EOF >$PWD/config/utask-cfg
 {
-    "admin_usernames": ["admin"],
-    "resolver_usernames": ["resolver"]
+    "admin_usernames": ["admin"]
 }
 EOF
 

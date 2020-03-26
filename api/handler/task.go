@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
-	"github.com/ovh/utask/pkg/utils"
+	"github.com/ovh/utask/pkg/taskutils"
 )
 
 type createTaskIn struct {
@@ -49,7 +49,7 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	t, err := transactionTaskCreate(c, dbp, tt, in.WatcherUsernames, in.Input, nil, in.Comment, in.Delay)
+	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, in.Input, nil, in.Comment, in.Delay)
 	if err != nil {
 		dbp.Rollback()
 		return nil, err
@@ -58,43 +58,6 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 	if err := dbp.Commit(); err != nil {
 		dbp.Rollback()
 		return nil, err
-	}
-
-	return t, nil
-}
-
-func transactionTaskCreate(c *gin.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, watcherUsernames []string, input map[string]interface{}, b *task.Batch, comment string, delay *string) (*task.Task, error) {
-	reqUsername := auth.GetIdentity(c)
-
-	if tt.Blocked {
-		return nil, errors.NewNotValid(nil, "Template not available (blocked)")
-	}
-
-	t, err := task.Create(dbp, tt, reqUsername, watcherUsernames, nil, input, b)
-	if err != nil {
-		return nil, err
-	}
-
-	if comment != "" {
-		com, err := task.CreateComment(dbp, t, reqUsername, comment)
-		if err != nil {
-			return nil, err
-		}
-		t.Comments = []*task.Comment{com}
-	}
-
-	if tt.IsAutoRunnable() {
-		if err := auth.IsAllowedResolver(c, tt, t.ResolverUsernames); err == nil {
-			var delayUntil *time.Time
-			if delay != nil {
-				delayDuration, _ := time.ParseDuration(*delay)
-				delayTime := time.Now().Add(delayDuration)
-				delayUntil = &delayTime
-			}
-			if _, err := resolution.Create(dbp, t, nil, reqUsername, true, delayUntil); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	return t, nil
@@ -154,14 +117,7 @@ func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 	case taskTypeOwn:
 		filter.RequesterUser = user
 	case taskTypeResolvable:
-		// all tasks are resolvable by an admin
-		filter.State = utils.StrPtr(task.StateTODO)
-		if auth.IsGlobalResolverUser(reqUsername) {
-			user = nil
-		}
-		if err2 := auth.IsAdmin(c); err2 != nil {
-			filter.PotentialResolverUser = user
-		}
+		filter.PotentialResolverUser = user
 	case taskTypeAll:
 		if err2 := auth.IsAdmin(c); err2 != nil {
 			return nil, err2
@@ -210,23 +166,27 @@ func GetTask(c *gin.Context, in *getTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	admin := auth.IsAdmin(c) == nil
-	requester := isRequester(t, c) == nil
-	watcher := isWatcher(t, c) == nil
-	resolver := isResolver(t, c) == nil
+	var res *resolution.Resolution
+	if t.Resolution != nil {
+		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	if !admin && !requester && !watcher && !resolver {
+	admin := auth.IsAdmin(c) == nil
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
+
+	if !admin && !requester && !watcher && !resolutionManager {
 		return nil, errors.Forbiddenf("Can't display task details")
 	}
 	if !admin {
 		t.Input = obfuscateInput(tt.Inputs, t.Input)
 	}
 
-	if t.State == task.StateBlocked && t.Resolution != nil {
-		res, err := resolution.LoadFromPublicID(dbp, *t.Resolution)
-		if err != nil {
-			return nil, err
-		}
+	if t.State == task.StateBlocked && res != nil {
 		for _, s := range res.Steps {
 			if s.State == step.StateClientError {
 				t.Errors = append(t.Errors, task.StepError{
@@ -259,9 +219,28 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	if err := auth.IsAdmin(c); err != nil {
-		if err := isRequester(t, c); err != nil {
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	admin := auth.IsAdmin(c) == nil
+	requester := (auth.IsRequester(c, t) == nil && t.Resolution == nil)
+	templateOwner := auth.IsTemplateOwner(c, tt) == nil
+
+	if !admin && !requester && !templateOwner {
+		return nil, errors.Forbiddenf("Can't update task")
+	}
+
+	var res *resolution.Resolution
+	if t.Resolution != nil {
+		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
 			return nil, err
+		}
+
+		if res.State != resolution.StatePaused {
+			return nil, errors.NotValidf("Cannot update a task which resolution is not in state '%s'", resolution.StatePaused)
 		}
 	}
 
@@ -294,6 +273,10 @@ func DeleteTask(c *gin.Context, in *deleteTaskIn) error {
 
 	t, err := task.LoadFromPublicID(dbp, in.PublicID)
 	if err != nil {
+		return err
+	}
+
+	if err := auth.IsAdmin(c); err != nil {
 		return err
 	}
 
@@ -330,9 +313,11 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 		return err
 	}
 
-	resolver := auth.IsAllowedResolver(c, tt, t.ResolverUsernames) == nil
+	admin := auth.IsAdmin(c) == nil
+	requester := auth.IsRequester(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
 
-	if !resolver {
+	if !admin && !requester && !resolutionManager {
 		return errors.Forbiddenf("Can't set task's state to %s", task.StateWontfix)
 	}
 

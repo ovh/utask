@@ -78,7 +78,6 @@ const (
 type Cfg struct {
 	ApplicationName         string                   `json:"application_name"`
 	AdminUsernames          []string                 `json:"admin_usernames"`
-	ResolverUsernames       []string                 `json:"resolver_usernames"`
 	CompletedTaskExpiration string                   `json:"completed_task_expiration"`
 	NotifyConfig            map[string]NotifyBackend `json:"notify_config"`
 	NotifyActions           NotifyActions            `json:"notify_actions"`

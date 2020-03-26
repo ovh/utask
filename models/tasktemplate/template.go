@@ -311,6 +311,10 @@ func (tt *TaskTemplate) Valid() (err error) {
 		return errors.NotValidf("A template can't be auto runnable if it has resolver inputs")
 	}
 
+	if tt.AllowAllResolverUsernames && !tt.AutoRunnable {
+		return errors.NotValidf("A template that can be resolved by everybody have to be auto-runnable")
+	}
+
 	inputNames, err := validateInputs(tt.Inputs)
 	if err != nil {
 		return err
