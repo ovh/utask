@@ -10,7 +10,7 @@ Configuration is stored in `items` with text content, each found under a `key`.
 
 ## Mandatory items
 
-### Datasbase
+### Database
 
 `database` key is a postgres connection string from configstore.
 
