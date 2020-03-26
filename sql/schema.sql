@@ -57,6 +57,8 @@ CREATE INDEX ON "task"(id_batch);
 CREATE INDEX ON "task"(requester_username);
 CREATE INDEX ON "task"(state);
 CREATE INDEX ON "task"(last_activity DESC);
+CREATE INDEX ON "task"(watcher_usernames);
+CREATE INDEX ON "task"(resolver_usernames);
 
 CREATE TABLE "task_comment" (
     id BIGSERIAL PRIMARY KEY,
