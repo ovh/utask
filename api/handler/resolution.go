@@ -177,7 +177,7 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -269,7 +269,7 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -335,7 +335,7 @@ func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -405,7 +405,7 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadLockedFromPublicID(dbp, in.PublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err

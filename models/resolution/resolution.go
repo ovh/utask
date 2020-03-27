@@ -163,24 +163,38 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 
 // LoadFromPublicID returns a single task resolution given its public ID
 func LoadFromPublicID(dbp zesty.DBProvider, publicID string) (*Resolution, error) {
-	return load(dbp, publicID, false)
+	return load(dbp, publicID, false, false)
 }
 
 // LoadLockedFromPublicID returns a single task resolution given its public ID
 // while acquiring a lock on its DB row, to ensure only this instance keeps access to it
 // until the surrounding transaction is done (ensure that only this instance of µTask
-// collects this resolution for execution)
+// collects this resolution for execution). If another instance already has a lock, it will
+// wait until the other instance release it.
 func LoadLockedFromPublicID(dbp zesty.DBProvider, publicID string) (*Resolution, error) {
-	return load(dbp, publicID, true)
+	return load(dbp, publicID, true, false)
 }
 
-func load(dbp zesty.DBProvider, publicID string, locked bool) (r *Resolution, err error) {
+// LoadLockedNoWaitFromPublicID returns a single task resolution given its public ID
+// while acquiring a lock on its DB row, to ensure only this instance keeps access to it
+// until the surrounding transaction is done (ensure that only this instance of µTask
+// collects this resolution for execution). If another instance already has a lock, it will
+// directly return an error.
+func LoadLockedNoWaitFromPublicID(dbp zesty.DBProvider, publicID string) (*Resolution, error) {
+	return load(dbp, publicID, true, true)
+}
+
+func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (r *Resolution, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to load resolution from public id")
 
 	sel := rSelector
-	if locked {
+	if locked && lockNoWait {
 		sel = sel.Suffix(
 			`FOR NO KEY UPDATE OF "resolution" NOWAIT`,
+		)
+	} else if locked {
+		sel = sel.Suffix(
+			`FOR NO KEY UPDATE OF "resolution"`,
 		)
 	}
 
