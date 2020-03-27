@@ -69,6 +69,7 @@ CREATE TABLE "task_comment" (
     updated TIMESTAMP with time zone DEFAULT now() NOT NULL,
     content TEXT NOT NULL
 );
+CREATE INDEX ON "task_comment"(id_task);
 
 CREATE TABLE "resolution" (
     id BIGSERIAL PRIMARY KEY,
