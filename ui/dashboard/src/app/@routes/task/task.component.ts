@@ -113,35 +113,30 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   editResolution(resolution: any) {
     this.resolutionService.edit(resolution).then((data: any) => {
-      console.log(data);
       this.loadTask();
     });
   }
 
   runResolution(resolution: any) {
     this.resolutionService.run(resolution.id).then((data: any) => {
-      console.log(data);
       this.loadTask();
     });
   }
 
   pauseResolution(resolution: any) {
     this.resolutionService.pause(resolution.id).then((data: any) => {
-      console.log(data);
       this.loadTask();
     });
   }
 
   cancelResolution(resolution: any) {
     this.resolutionService.cancel(resolution.id).then((data: any) => {
-      console.log(data);
       this.loadTask();
     });
   }
 
   extendResolution(resolution: any) {
     this.resolutionService.extend(resolution.id).then((data: any) => {
-      console.log(data);
       this.loadTask();
     });
   }
@@ -189,7 +184,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.item.task_id = this.task.id;
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
         const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
-        if (!this.taskIsResolvable && this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || [])) {
+        if (!this.taskIsResolvable && resolvable) {
           this.template.resolver_inputs.forEach((field: any) => {
             if (field.type === 'bool' && field.default === null) {
               this.item.resolver_inputs[field.name] = false;
@@ -200,10 +195,17 @@ export class TaskComponent implements OnInit, OnDestroy {
         }
         this.taskIsResolvable = resolvable;
         if (this.task.resolution) {
-          this.loadResolution(this.task.resolution).then(() => {
+          this.loadResolution(this.task.resolution).then((data) => {
+            if (!this.resolution && data) {
+              this.display.execution = true;
+              this.display.request = false;
+            }
+            this.resolution = data;
             resolve();
           }).catch((err) => {
             reject(err);
+          }).finally(() => {
+            this.loaders.resolution = false;
           });
         } else {
           this.resolution = null;
@@ -221,14 +223,9 @@ export class TaskComponent implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       this.loaders.resolution = true;
       this.api.resolution(resolutionId).subscribe((data) => {
-        this.resolution = data;
-        // this.generateSteps();
-        resolve();
+        resolve(data);
       }, (err: any) => {
-        console.log(err);
-        reject();
-      }, () => {
-        this.loaders.resolution = false;
+        reject(err);
       });
     });
   }

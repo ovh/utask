@@ -26,8 +26,7 @@
     </header>
     <section>
 
-      <div class="utask_bloc" [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}"
-        *ngIf="task.result && task.resolution">
+      <div class="utask_bloc" *ngIf="task.result && task.resolution">
         <header (click)="display.result = !display.result">
           <div class="utask_bloc_header_title">
             <span *ngIf="display.result">
@@ -44,7 +43,7 @@
         </section>
       </div>
 
-      <div class="utask_bloc" [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}">
+      <div class="utask_bloc">
         <header>
           <div class="utask_bloc_header_title" (click)="display.request = !display.request">
             <span *ngIf="display.request">
@@ -97,8 +96,7 @@
         </section>
       </div>
 
-      <div class="utask_bloc" [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}"
-        *ngIf="resolution && resolution.steps">
+      <div class="utask_bloc" *ngIf="resolution && resolution.steps">
         <header>
           <div class="utask_bloc_header_title" (click)="display.execution = !display.execution">
             <span *ngIf="display.execution">
@@ -110,6 +108,8 @@
             Execution -
             <small>{{resolution.id}}</small> -
             <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}</small>
+
+            <span *ngIf="loaders.execution || loaders.task">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
           </div>
           <div class="btn-group utask_bloc_header_dropdown" ngbDropdown role="group">
             <button class="btn btn-sm btn-primary" ngbDropdownToggle>Actions</button>
@@ -152,8 +152,7 @@
 
       <div class="row" *ngIf="taskIsResolvable">
         <div class="col-md-6">
-          <div class="utask_bloc utask_bloc_SUCCESS"
-            [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}">
+          <div class="utask_bloc utask_bloc_SUCCESS">
             <header (click)="display.resolution = !display.resolution">
               <div class="utask_bloc_header_title">
                 <span *ngIf="display.resolution">
@@ -162,7 +161,8 @@
                 <span *ngIf="!display.resolution">
                   <i class="fas fa-caret-up"></i>
                 </span>
-                Resolve this task</div>
+                Resolve this task
+              </div>
             </header>
             <section *ngIf="display.resolution">
 
@@ -251,8 +251,7 @@
         </div>
 
         <div class="col-md-6">
-          <div class="utask_bloc utask_bloc_ERROR"
-            [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}">
+          <div class="utask_bloc utask_bloc_ERROR">
             <header (click)="display.reject = !display.reject">
               <div class="utask_bloc_header_title">
                 <span *ngIf="display.reject">
@@ -288,7 +287,7 @@
         </div>
       </div>
 
-      <div class="utask_bloc" [ngClass]="{'utask_bloc__LOADING': (loaders.task || loaders.resolution)}">
+      <div class="utask_bloc">
         <header (click)="display.comments = !display.comments">
           <div class="utask_bloc_header_title">
             <span *ngIf="display.comments">
@@ -299,6 +298,7 @@
             </span>
             Comments - <span class="badge"
               [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
+            <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
           </div>
         </header>
         <section *ngIf="display.comments">
