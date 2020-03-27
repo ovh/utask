@@ -148,18 +148,3 @@ func IsTemplateOwner(ctx context.Context, tt *tasktemplate.TaskTemplate) error {
 
 	return errors.Forbiddenf("User not authorized on this resolution")
 }
-
-// from a list of tokens (names and/or ids), return a list of token IDs
-// translation only available if the token name is found in config
-func translatedTokens(tokenNames map[string]string, tks []string) []string {
-	translated := make([]string, 0)
-	for _, tk := range tks {
-		translation, ok := tokenNames[tk]
-		if ok {
-			translated = append(translated, translation)
-		} else {
-			translated = append(translated, tk)
-		}
-	}
-	return translated
-}

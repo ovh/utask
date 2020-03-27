@@ -115,9 +115,7 @@ type Executor struct {
 
 // Context provides a step with extra metadata about the task
 type Context struct {
-	RequesterToken    string    `json:"requester_token"`
 	RequesterUsername string    `json:"requester_username"`
-	ResolverToken     string    `json:"resolver_token"`
 	ResolverUsername  string    `json:"resolver_username"`
 	TaskID            string    `json:"task_id"`
 	Created           time.Time `json:"created"`
