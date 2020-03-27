@@ -26,7 +26,8 @@ COPY --from=js-builder /home/node/ui/dashboard/dist/utask-ui/*  /app/static/dash
 COPY --from=js-builder /home/node/ui/editor/dist/utask-editor/* /app/static/editor/
 
 RUN cp /go/src/github.com/ovh/utask/utask /app/utask && \
-    chmod +x /app/utask
+    chmod +x /app/utask && \
+    cp -r /go/src/github.com/ovh/utask/ui/swagger-ui /app/static/swagger-ui
 
 EXPOSE 8081
 

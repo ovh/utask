@@ -567,6 +567,8 @@ In order to iterate on feature development, run the utask server plus a backing 
 
 In a separate terminal, rebuild (`make re`) each time you want to iterate on a code patch, then reboot the server in the terminal where it is running.
 
+To visualize API routes, a swagger-ui interface is available with the docker image, accessible through your browser at `http://hostname.example/ui/swagger/`. Swagger UI is an open-source software, under Apache 2 license.
+
 ### Frontend
 
 µTask serves two graphical interfaces: one for general use of the tool (`dashboard`), the other one for task template authoring (`editor`). They're found in the `ui` folder and each have their own Makefile for development purposes.

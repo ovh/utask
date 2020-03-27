@@ -165,148 +165,159 @@ func (s *Server) build(ctx context.Context) {
 		tonic.SetErrorHook(jujerr.ErrHook)
 		tonic.SetBindHook(yamlBindHook)
 
-		authRoutes := router.Group("/", "Authenticated routes", "Utask CRUD: authentication and authorization is required", s.authMiddleware)
+		authRoutes := router.Group("/", "x-misc", "Misc authenticated routes", s.authMiddleware)
 		{
-			// public template listing
-			authRoutes.GET("/template",
-				[]fizz.OperationOption{
-					fizz.Summary("List task templates"),
-				},
-				tonic.Handler(handler.ListTemplates, 200))
-			authRoutes.GET("/template/:name",
-				[]fizz.OperationOption{
-					fizz.Summary("Get task template details"),
-				},
-				tonic.Handler(handler.GetTemplate, 200))
-
-			// task creation in batches
-			authRoutes.POST("/batch",
-				[]fizz.OperationOption{
-					fizz.Summary("Create a batch of tasks"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.CreateBatch, 201))
+			templateRoutes := authRoutes.Group("/", "04 - template", "Manage uTask task templates")
+			{
+				// public template listing
+				templateRoutes.GET("/template",
+					[]fizz.OperationOption{
+						fizz.Summary("List task templates"),
+					},
+					tonic.Handler(handler.ListTemplates, 200))
+				templateRoutes.GET("/template/:name",
+					[]fizz.OperationOption{
+						fizz.Summary("Get task template details"),
+					},
+					tonic.Handler(handler.GetTemplate, 200))
+			}
 
 			// task
-			authRoutes.POST("/task",
-				[]fizz.OperationOption{
-					fizz.Summary("Create new task"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.CreateTask, 201))
-			authRoutes.GET("/task",
-				[]fizz.OperationOption{
-					fizz.Summary("List tasks"),
-				},
-				tonic.Handler(handler.ListTasks, 200))
-			authRoutes.GET("/task/:id",
-				[]fizz.OperationOption{
-					fizz.Summary("Get task details"),
-				},
-				tonic.Handler(handler.GetTask, 200))
-			authRoutes.PUT("/task/:id",
-				[]fizz.OperationOption{
-					fizz.Summary("Edit task"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.UpdateTask, 200))
-			authRoutes.POST("/task/:id/wontfix",
-				[]fizz.OperationOption{
-					fizz.Summary("Cancel task"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.WontfixTask, 204))
-			authRoutes.DELETE("/task/:id",
-				[]fizz.OperationOption{
-					fizz.Summary("Delete task"),
-					fizz.Description("Admin rights required"),
-				},
-				requireAdmin,
-				maintenanceMode,
-				tonic.Handler(handler.DeleteTask, 204))
+			taskRoutes := authRoutes.Group("/", "01 - task", "Manage uTask tasks")
+			{
+				// task creation in batches
+				taskRoutes.POST("/batch",
+					[]fizz.OperationOption{
+						fizz.Summary("Create a batch of tasks"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.CreateBatch, 201))
+				taskRoutes.POST("/task",
+					[]fizz.OperationOption{
+						fizz.Summary("Create new task"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.CreateTask, 201))
+				taskRoutes.GET("/task",
+					[]fizz.OperationOption{
+						fizz.Summary("List tasks"),
+					},
+					tonic.Handler(handler.ListTasks, 200))
+				taskRoutes.GET("/task/:id",
+					[]fizz.OperationOption{
+						fizz.Summary("Get task details"),
+					},
+					tonic.Handler(handler.GetTask, 200))
+				taskRoutes.PUT("/task/:id",
+					[]fizz.OperationOption{
+						fizz.Summary("Edit task"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.UpdateTask, 200))
+				taskRoutes.POST("/task/:id/wontfix",
+					[]fizz.OperationOption{
+						fizz.Summary("Cancel task"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.WontfixTask, 204))
+				taskRoutes.DELETE("/task/:id",
+					[]fizz.OperationOption{
+						fizz.Summary("Delete task"),
+						fizz.Description("Admin rights required"),
+					},
+					requireAdmin,
+					maintenanceMode,
+					tonic.Handler(handler.DeleteTask, 204))
+			}
 
 			// comments
-			authRoutes.POST("/task/:id/comment",
-				[]fizz.OperationOption{
-					fizz.Summary("Post new comment on task"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.CreateComment, 201))
-			authRoutes.GET("/task/:id/comment",
-				[]fizz.OperationOption{
-					fizz.Summary("List task comments"),
-				},
-				tonic.Handler(handler.ListComments, 200))
-			authRoutes.GET("/task/:id/comment/:commentid",
-				[]fizz.OperationOption{
-					fizz.Summary("Get single task comment"),
-				},
-				tonic.Handler(handler.GetComment, 200))
-			authRoutes.PUT("/task/:id/comment/:commentid",
-				[]fizz.OperationOption{
-					fizz.Summary("Edit task comment"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.UpdateComment, 200))
-			authRoutes.DELETE("/task/:id/comment/:commentid",
-				[]fizz.OperationOption{
-					fizz.Summary("Delete task comment"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.DeleteComment, 204))
+			commentsRoutes := authRoutes.Group("/", "03 - comment", "Manage uTask task comments")
+			{
+				commentsRoutes.POST("/task/:id/comment",
+					[]fizz.OperationOption{
+						fizz.Summary("Post new comment on task"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.CreateComment, 201))
+				commentsRoutes.GET("/task/:id/comment",
+					[]fizz.OperationOption{
+						fizz.Summary("List task comments"),
+					},
+					tonic.Handler(handler.ListComments, 200))
+				commentsRoutes.GET("/task/:id/comment/:commentid",
+					[]fizz.OperationOption{
+						fizz.Summary("Get single task comment"),
+					},
+					tonic.Handler(handler.GetComment, 200))
+				commentsRoutes.PUT("/task/:id/comment/:commentid",
+					[]fizz.OperationOption{
+						fizz.Summary("Edit task comment"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.UpdateComment, 200))
+				commentsRoutes.DELETE("/task/:id/comment/:commentid",
+					[]fizz.OperationOption{
+						fizz.Summary("Delete task comment"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.DeleteComment, 204))
+			}
 
 			// resolution
-			authRoutes.POST("/resolution",
-				[]fizz.OperationOption{
-					fizz.Summary("Create task resolution"),
-					fizz.Summary("This action instantiates a holder for the task's execution state. Only an approved resolver or admin user can perform this action."),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.CreateResolution, 201))
-			authRoutes.GET("/resolution/:id",
-				[]fizz.OperationOption{
-					fizz.Summary("Get the details of a task resolution"),
-					fizz.Description("Details include the intermediate results of every step. Admin users can view any resolution's details."),
-				},
-				tonic.Handler(handler.GetResolution, 200))
-			authRoutes.PUT("/resolution/:id",
-				[]fizz.OperationOption{
-					fizz.Summary("Edit a task's resolution during execution."),
-					fizz.Description("Action of last resort if a task needs fixing. Admin users only."),
-				},
-				requireAdmin,
-				maintenanceMode,
-				tonic.Handler(handler.UpdateResolution, 204))
-			authRoutes.POST("/resolution/:id/run",
-				[]fizz.OperationOption{
-					fizz.Summary("Execute a task"),
-				},
-				tonic.Handler(handler.RunResolution, 204))
-			authRoutes.POST("/resolution/:id/pause",
-				[]fizz.OperationOption{
-					fizz.Summary("Pause a task's execution"),
-					fizz.Description("This action takes a task out of the execution pipeline, it will not be considered for automatic retry until it is re-run manually."),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.PauseResolution, 204))
-			authRoutes.POST("/resolution/:id/extend",
-				[]fizz.OperationOption{
-					fizz.Summary("Extend max retry limit for a task's execution"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.ExtendResolution, 204))
-			authRoutes.POST("/resolution/:id/cancel",
-				[]fizz.OperationOption{
-					fizz.Summary("Cancel a task's execution"),
-				},
-				maintenanceMode,
-				tonic.Handler(handler.CancelResolution, 204))
+			resolutionRoutes := authRoutes.Group("/", "02 - resolution", "Manager uTask resolutions")
+			{
+				resolutionRoutes.POST("/resolution",
+					[]fizz.OperationOption{
+						fizz.Summary("Create task resolution"),
+						fizz.Summary("This action instantiates a holder for the task's execution state. Only an approved resolver or admin user can perform this action."),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.CreateResolution, 201))
+				resolutionRoutes.GET("/resolution/:id",
+					[]fizz.OperationOption{
+						fizz.Summary("Get the details of a task resolution"),
+						fizz.Description("Details include the intermediate results of every step. Admin users can view any resolution's details."),
+					},
+					tonic.Handler(handler.GetResolution, 200))
+				resolutionRoutes.PUT("/resolution/:id",
+					[]fizz.OperationOption{
+						fizz.Summary("Edit a task's resolution during execution."),
+						fizz.Description("Action of last resort if a task needs fixing. Admin users only."),
+					},
+					requireAdmin,
+					maintenanceMode,
+					tonic.Handler(handler.UpdateResolution, 204))
+				resolutionRoutes.POST("/resolution/:id/run",
+					[]fizz.OperationOption{
+						fizz.Summary("Execute a task"),
+					},
+					tonic.Handler(handler.RunResolution, 204))
+				resolutionRoutes.POST("/resolution/:id/pause",
+					[]fizz.OperationOption{
+						fizz.Summary("Pause a task's execution"),
+						fizz.Description("This action takes a task out of the execution pipeline, it will not be considered for automatic retry until it is re-run manually."),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.PauseResolution, 204))
+				resolutionRoutes.POST("/resolution/:id/extend",
+					[]fizz.OperationOption{
+						fizz.Summary("Extend max retry limit for a task's execution"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.ExtendResolution, 204))
+				resolutionRoutes.POST("/resolution/:id/cancel",
+					[]fizz.OperationOption{
+						fizz.Summary("Cancel a task's execution"),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.CancelResolution, 204))
 
-			//	authRoutes.POST("/resolution/:id/rollback",
-			//		[]fizz.OperationOption{
-			// 			fizz.Summary(""),
-			//		},
-			//		tonic.Handler(handler.ResolutionRollback, 200))
+				//	resolutionRoutes.POST("/resolution/:id/rollback",
+				//		[]fizz.OperationOption{
+				// 			fizz.Summary(""),
+				//		},
+				//		tonic.Handler(handler.ResolutionRollback, 200))
+			}
 
 			authRoutes.GET("/",
 				[]fizz.OperationOption{
