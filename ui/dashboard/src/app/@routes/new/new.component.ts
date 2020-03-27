@@ -17,21 +17,23 @@ export class NewComponent implements OnInit {
   selectedTemplate: Template = null;
   Object = Object;
 
-  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router) {
+  constructor(private api: ApiService, private activatedRoute: ActivatedRoute, private router: Router) {
   }
 
   ngOnInit() {
-    this.templates = _.orderBy(this.route.snapshot.data.templates, (t: any) => t.description.toLowerCase(), ['asc']);
+    this.templates = _.orderBy(this.activatedRoute.snapshot.data.templates, (t: any) => t.description.toLowerCase(), ['asc']);
 
-    this.route.queryParams.subscribe((values) => {
-      const tmp = _.find(this.templates, { name: values.template_name });
-      this.selectedTemplate = tmp;
-      this.newTask(tmp);
-      Object.keys(this.item.input).forEach((inputName) => {
-        if (values[inputName]) {
-          this.item.input[inputName] = values[inputName];
-        }
-      });
+    this.activatedRoute.queryParams.subscribe((values) => {
+      const template = _.find(this.templates, { name: values.template_name });
+      if (template) {
+        this.selectedTemplate = template;
+        this.newTask(template);
+        Object.keys(this.item.input).forEach((inputName) => {
+          if (values[inputName]) {
+            this.item.input[inputName] = values[inputName];
+          }
+        });
+      }
     });
   }
 
@@ -55,5 +57,17 @@ export class NewComponent implements OnInit {
       o[i.name] = i.default;
       return o;
     }));
+  }
+
+  saveFormInQueryParams() {
+    this.router.navigate(
+      [],
+      {
+        relativeTo: this.activatedRoute,
+        queryParams: _.merge({
+          template_name: this.item.template_name
+        }, this.item.input),
+        queryParamsHandling: 'merge',
+      });
   }
 }

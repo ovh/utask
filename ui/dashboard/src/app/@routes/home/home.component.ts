@@ -28,7 +28,7 @@ export class HomeComponent implements OnInit {
   hasMore = true;
   percentages: { [key: string]: number } = {};
 
-  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private modalService: NgbModal, private resolutionService: ResolutionService, private taskService: TaskService) {
+  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private resolutionService: ResolutionService, private taskService: TaskService) {
   }
 
   loadTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
@@ -105,14 +105,6 @@ export class HomeComponent implements OnInit {
       }
     });
   }
-
-  // previewDetails(obj: any, title: string) {
-  //   const previewModal = this.modalService.open(ModalYamlPreviewComponent, {
-  //     size: 'xl'
-  //   });
-  //   previewModal.componentInstance.value = obj;
-  //   previewModal.componentInstance.title = title;
-  // }
 
   ngOnInit() {
     this.meta = this.route.parent.snapshot.data.meta as MetaUtask;

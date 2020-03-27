@@ -13,7 +13,7 @@
         <div class="form-group">
           <label for="input_templates">Templates</label>
           <select class="form-control" id="input_templates" name="input_templates" required
-            [(ngModel)]="selectedTemplate" (change)="newTask(selectedTemplate)">
+            [(ngModel)]="selectedTemplate" (change)="newTask(selectedTemplate);saveFormInQueryParams()">
             <option *ngIf="!selectedTemplate">-- Template --</option>
             <ng-template ngFor let-template [ngForOf]="templates">
               <option *ngIf="!template.blocked" [ngValue]="template">{{template.description}}</option>
@@ -44,16 +44,16 @@
                 <i class="fas fa-question-circle" *ngIf="input.regex" title="{{input.regex}}"></i>
               </label>
 
-              <input type="number" [(ngModel)]="item.input[input.name]" *ngIf="input.type=='number'"
-                [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}"
-                placeholder="{{input.default}}" class="form-control"
+              <input type="number" [(ngModel)]="item.input[input.name]" (change)="saveFormInQueryParams()"
+                *ngIf="input.type=='number'" [required]="!input.optional" name="input_{{input.name}}"
+                id="input_{{input.name}}" placeholder="{{input.default}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
               <input type="password" [(ngModel)]="item.input[input.name]" *ngIf="input.type=='password'"
                 [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
-              <input type="text" [(ngModel)]="item.input[input.name]"
+              <input type="text" [(ngModel)]="item.input[input.name]" (change)="saveFormInQueryParams()"
                 *ngIf="input.type!='number' && input.type!='password'" [required]="!input.optional"
                 name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
@@ -111,19 +111,8 @@
               </label>
 
               <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
-                [(ngModel)]='item.input[input.name]' />
+                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" />
             </div>
-
-            <!--  -->
-            <!-- <div ng-if="input.type=='bool'" class="oui-input-formfield">
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox" ng-model="$ctrl.newTask.item.input[input.name]" name="input_{{input.name}}"
-                      id="input_{{input.name}}" ng-init="$ctrl.newTask.item.input[input.name]=false"><b
-                      ng-bind="input.description || input.name"></b>
-                  </label>
-                </div>
-              </div> -->
           </div>
         </div>
 
