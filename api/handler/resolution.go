@@ -57,10 +57,12 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 
 	// adding current resolver to task.resolver_usernames, to be able to list resolved tasks
 	// as 'resolvable', if current resolver used admins privileges.
-	t.ResolverUsernames = append(t.ResolverUsernames, resUser)
-	if err := t.Update(dbp, false, false); err != nil {
-		dbp.Rollback()
-		return nil, err
+	if auth.IsAdmin(c) == nil {
+		t.ResolverUsernames = append(t.ResolverUsernames, resUser)
+		if err := t.Update(dbp, false, false); err != nil {
+			dbp.Rollback()
+			return nil, err
+		}
 	}
 
 	r, err := resolution.Create(dbp, t, in.ResolverInputs, resUser, false, nil) // TODO accept delay in handler
