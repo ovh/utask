@@ -17,7 +17,7 @@ import (
 // TaskPlugin represents the interface for every executor for µtask step actions
 type TaskPlugin interface {
 	ValidConfig(baseConfig json.RawMessage, config json.RawMessage) error
-	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, error)
+	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error)
 	Context(stepName string) interface{}
 	PluginName() string
 	PluginVersion() string

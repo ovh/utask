@@ -41,6 +41,7 @@ type TaskTemplate struct {
 	Inputs             []input.Input              `json:"inputs,omitempty" db:"inputs"`
 	ResolverInputs     []input.Input              `json:"resolver_inputs,omitempty" db:"resolver_inputs"`
 	Variables          []values.Variable          `json:"variables,omitempty" db:"variables"`
+	Tags               map[string]string          `json:"tags,omitempty" db:"tags"`
 	Steps              map[string]*step.Step      `json:"steps,omitempty" db:"steps"`
 	BaseConfigurations map[string]json.RawMessage `json:"base_configurations" db:"base_configurations"`
 }
@@ -55,6 +56,7 @@ func Create(dbp zesty.DBProvider,
 	allowAllResolverUsernames, autoRunnable bool,
 	steps map[string]*step.Step,
 	variables []values.Variable,
+	tags map[string]string,
 	resultFormat map[string]interface{},
 	titleFormat string,
 	retryMax *int,
@@ -71,6 +73,7 @@ func Create(dbp zesty.DBProvider,
 		Inputs:                    inputs,
 		ResolverInputs:            resolverInputs,
 		Variables:                 variables,
+		Tags:                      tags,
 		AllowedResolverUsernames:  allowedResolverUsernames,
 		AllowAllResolverUsernames: allowAllResolverUsernames,
 		AutoRunnable:              autoRunnable,
@@ -182,6 +185,7 @@ func (tt *TaskTemplate) Update(dbp zesty.DBProvider,
 	allowAllResolverUsernames, autoRunnable, blocked, hidden *bool,
 	steps map[string]*step.Step,
 	variables []values.Variable,
+	tags map[string]string,
 	resultFormat map[string]interface{},
 	titleFormat *string,
 	retryMax *int,
@@ -221,6 +225,9 @@ func (tt *TaskTemplate) Update(dbp zesty.DBProvider,
 	}
 	if variables != nil {
 		tt.Variables = variables
+	}
+	if tags != nil {
+		tt.Tags = tags
 	}
 	if resultFormat != nil {
 		tt.ResultFormat = resultFormat
@@ -408,7 +415,7 @@ func validateInputs(inputs []input.Input) ([]string, error) {
 
 var (
 	ttBasicSelector = sqlgenerator.PGsql.Select(
-		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations`,
+		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations, "task_template".tags`,
 	).From(
 		`"task_template"`,
 	).OrderBy(

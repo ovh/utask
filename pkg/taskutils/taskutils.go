@@ -14,14 +14,14 @@ import (
 )
 
 // CreateTask creates a task with the given inputs, and creates a resolution if autorunnable
-func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, b *task.Batch, comment string, delay *string) (*task.Task, error) {
+func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, b *task.Batch, comment string, delay *string, tags map[string]string) (*task.Task, error) {
 	reqUsername := auth.GetIdentity(c)
 
 	if tt.Blocked {
 		return nil, errors.NewNotValid(nil, "Template not available (blocked)")
 	}
 
-	t, err := task.Create(dbp, tt, reqUsername, watcherUsernames, resolverUsernames, input, b)
+	t, err := task.Create(dbp, tt, reqUsername, watcherUsernames, resolverUsernames, input, tags, b)
 	if err != nil {
 		return nil, err
 	}

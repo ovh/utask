@@ -25,7 +25,8 @@ CREATE TABLE "task_template" (
     result_format JSONB NOT NULL,
     title_format TEXT NOT NULL,
     retry_max INTEGER,
-    base_configurations JSONB NOT NULL
+    base_configurations JSONB NOT NULL,
+    tags JSONB
 );
 
 CREATE TABLE "batch" (
@@ -49,7 +50,8 @@ CREATE TABLE "task" (
     steps_total INTEGER NOT NULL,
     crypt_key BYTEA NOT NULL,
     encrypted_input BYTEA NOT NULL,
-    encrypted_result BYTEA NOT NULL
+    encrypted_result BYTEA NOT NULL,
+    tags JSONB
 );
 
 CREATE INDEX ON "task"(id_template);
@@ -59,6 +61,10 @@ CREATE INDEX ON "task"(state);
 CREATE INDEX ON "task"(last_activity DESC);
 CREATE INDEX ON "task"(watcher_usernames);
 CREATE INDEX ON "task"(resolver_usernames);
+
+-- See section 8.14.4 relative to jsonb indexing:
+-- https://www.postgresql.org/docs/9.4/datatype-json.html
+CREATE INDEX ON "task" USING gin (tags jsonb_path_ops);
 
 CREATE TABLE "task_comment" (
     id BIGSERIAL PRIMARY KEY,

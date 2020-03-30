@@ -27,6 +27,7 @@ type PluginExecutor struct {
 	pluginVersion  string
 	contextFactory func(string) interface{}
 	metadataSchema json.RawMessage
+	tagsFunc       tagsFunc
 }
 
 // Context generates a context payload to pass to Exec()
@@ -58,7 +59,7 @@ func (r PluginExecutor) ValidConfig(baseConfig json.RawMessage, config json.RawM
 }
 
 // Exec performs the action implemented by the executor
-func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, error) {
+func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error) {
 	var cfg interface{}
 
 	if r.configFactory != nil {
@@ -66,16 +67,21 @@ func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config
 		if len(baseConfig) > 0 {
 			err := utils.JSONnumberUnmarshal(bytes.NewReader(baseConfig), cfg)
 			if err != nil {
-				return nil, nil, errors.Annotate(err, "failed to unmarshal base configuration")
+				return nil, nil, nil, errors.Annotate(err, "failed to unmarshal base configuration")
 			}
 		}
 		err := utils.JSONnumberUnmarshal(bytes.NewReader(config), cfg)
 		if err != nil {
-			return nil, nil, errors.Annotate(err, "failed to unmarshal configuration")
+			return nil, nil, nil, errors.Annotate(err, "failed to unmarshal configuration")
 		}
 	}
+	output, metadata, err := r.execfunc(stepName, cfg, ctx)
 
-	return r.execfunc(stepName, cfg, ctx)
+	var tags map[string]string
+	if r.tagsFunc != nil {
+		tags = r.tagsFunc(cfg, ctx, output, metadata, err)
+	}
+	return output, metadata, tags, err
 }
 
 // PluginName returns a plugin's name
@@ -93,6 +99,8 @@ func (r PluginExecutor) MetadataSchema() json.RawMessage {
 	return r.metadataSchema
 }
 
+type tagsFunc func(config, ctx, output, metadata interface{}, err error) map[string]string
+
 // PluginOpt is a helper struct to customize an action executor
 type PluginOpt struct {
 	configCheckFunc ConfigFunc
@@ -100,6 +108,7 @@ type PluginOpt struct {
 	contextObj      interface{}
 	contextFunc     func(string) interface{}
 	metadataFunc    func() string
+	tagsFunc        tagsFunc
 }
 
 // WithConfig defines the configuration struct and validation function
@@ -129,6 +138,13 @@ func WithContextFunc(contextFunc func(string) interface{}) func(*PluginOpt) {
 func WithExecutorMetadata(metadataFunc func() string) func(*PluginOpt) {
 	return func(o *PluginOpt) {
 		o.metadataFunc = metadataFunc
+	}
+}
+
+// WithTags defines a function to manipulate the tags of a task.
+func WithTags(fn tagsFunc) func(*PluginOpt) {
+	return func(o *PluginOpt) {
+		o.tagsFunc = fn
 	}
 }
 
@@ -204,5 +220,6 @@ func New(pluginName string, pluginVersion string, execfunc ExecFunc, opts ...fun
 		configFactory:  configFactory,
 		contextFactory: contextFactory,
 		metadataSchema: schema,
+		tagsFunc:       pOpt.tagsFunc,
 	}
 }

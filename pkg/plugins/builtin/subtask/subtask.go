@@ -33,6 +33,7 @@ type SubtaskConfig struct {
 	ResolverUsernames string                 `json:"resolver_usernames"`
 	WatcherUsernames  string                 `json:"watcher_usernames"`
 	Delay             *string                `json:"delay"`
+	Tags              map[string]string      `json:"tags"`
 }
 
 // SubtaskContext is the metadata inherited from the "parent" task"
@@ -115,7 +116,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
-		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask", cfg.Delay)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask", cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err

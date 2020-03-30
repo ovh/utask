@@ -103,6 +103,8 @@ type Step struct {
 	Item            interface{}     `json:"item,omitempty"` // "child" step: item value, issued from foreach
 
 	Resources []string `json:"resources"` // resource limits to enforce
+
+	Tags map[string]string `json:"tags"`
 }
 
 // Executor matches an executor type with its required configuration
@@ -252,7 +254,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	}
 
 	go func() {
-
 		limits := uniqueSortedList(st.Resources)
 		for _, limit := range limits {
 			utask.AcquireResource(limit)
@@ -262,7 +263,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		case <-stopRunningSteps:
 			st.State = StateToRetry
 		default:
-			st.Output, st.Metadata, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
+			st.Output, st.Metadata, st.Tags, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
 			if baseOutput != nil {
 				if st.Output != nil {
 					marshaled, err := utils.JSONMarshal(st.Output)

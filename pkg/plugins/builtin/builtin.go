@@ -11,6 +11,7 @@ import (
 	pluginscript "github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginssh "github.com/ovh/utask/pkg/plugins/builtin/ssh"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
+	plugintag "github.com/ovh/utask/pkg/plugins/builtin/tag"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
@@ -26,6 +27,7 @@ func Register() error {
 		pluginemail.Plugin,
 		pluginping.Plugin,
 		pluginscript.Plugin,
+		plugintag.Plugin,
 	} {
 		if err := step.RegisterRunner(p.PluginName(), p); err != nil {
 			return err

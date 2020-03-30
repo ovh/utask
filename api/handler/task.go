@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ type createTaskIn struct {
 	Comment          string                 `json:"comment"`
 	WatcherUsernames []string               `json:"watcher_usernames"`
 	Delay            *string                `json:"delay"`
+	Tags             map[string]string      `json:"tags"`
 }
 
 // CreateTask handles the creation of a new task based on an existing template
@@ -49,7 +51,7 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, in.Input, nil, in.Comment, in.Delay)
+	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, in.Input, nil, in.Comment, in.Delay, in.Tags)
 	if err != nil {
 		dbp.Rollback()
 		return nil, err
@@ -70,13 +72,14 @@ const (
 )
 
 type listTasksIn struct {
-	Type          string     `query:"type, default=own"`
+	Type          string     `query:"type,default=own"`
 	State         *string    `query:"state"`
 	BatchPublicID *string    `query:"batch"`
 	PageSize      uint64     `query:"page_size"`
 	Last          *string    `query:"last"`
 	After         *time.Time `query:"after"`
 	Before        *time.Time `query:"before"`
+	Tags          []string   `query:"tag" explode:"true"`
 }
 
 // ListTasks returns a list of tasks, which can be filtered by state, batch ID,
@@ -89,13 +92,24 @@ func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 	if err != nil {
 		return nil, err
 	}
-
+	tags := make(map[string]string, len(in.Tags))
+	for _, t := range in.Tags {
+		parts := strings.Split(t, "=")
+		if len(parts) != 2 {
+			return nil, errors.BadRequestf("invalid tag %s", t)
+		}
+		if parts[0] == "" || parts[1] == "" {
+			return nil, errors.BadRequestf("invalid tag %s", t)
+		}
+		tags[parts[0]] = parts[1]
+	}
 	filter := task.ListFilter{
 		PageSize: normalizePageSize(in.PageSize),
 		Last:     in.Last,
 		State:    in.State,
 		After:    in.After,
 		Before:   in.Before,
+		Tags:     tags,
 	}
 
 	var b *task.Batch
@@ -201,9 +215,10 @@ func GetTask(c *gin.Context, in *getTaskIn) (*task.Task, error) {
 }
 
 type updateTaskIn struct {
-	PublicID         string                 `path:"id, required"`
+	PublicID         string                 `path:"id,required"`
 	Input            map[string]interface{} `json:"input"`
 	WatcherUsernames []string               `json:"watcher_usernames"`
+	Tags             map[string]string      `json:"tags"`
 }
 
 // UpdateTask modifies a task, allowing it's requester or an administrator
@@ -249,6 +264,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 
 	t.SetInput(clearInput)
 	t.SetWatcherUsernames(in.WatcherUsernames)
+	t.SetTags(in.Tags, nil)
 
 	if err := t.Update(dbp,
 		false, // do validate task contents
