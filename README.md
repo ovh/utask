@@ -171,6 +171,7 @@ A user can be allowed to resolve a task in three ways:
 - `.step.[STEP_NAME].metadata.HTTPStatus`: field `HTTPStatus` from the metadata of a named step
 - `.step.[STEP_NAME].children`: the collection of results from a 'foreach' step
 - `.step.[STEP_NAME].error`: error message from a failed step
+- `.step.[STEP_NAME].state`: current state of the given step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
 

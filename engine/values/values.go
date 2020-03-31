@@ -23,6 +23,7 @@ const (
 	VarKey           = "var"
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
 
+	StateKey    = "state"
 	OutputKey   = "output"
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
@@ -140,6 +141,21 @@ func (v *Values) UnsetError(stepName string) {
 	v.unsetStepData(stepName, ErrorKey)
 }
 
+// GetState returns the state of a step
+func (v *Values) GetState(stepName string) interface{} {
+	return v.getStepData(stepName, StateKey)
+}
+
+// SetState stores the state of a step
+func (v *Values) SetState(stepName string, value interface{}) {
+	v.setStepData(stepName, StateKey, value)
+}
+
+// UnsetState empties the state of a step
+func (v *Values) UnsetState(stepName string) {
+	v.unsetStepData(stepName, StateKey)
+}
+
 func (v *Values) getStepData(stepName, field string) interface{} {
 	stepmap := v.m[StepKey].(map[string]interface{})
 	if stepmap[stepName] == nil {
@@ -232,6 +248,9 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 		v.SetError(utask.This, v.GetError(stepName))
 		defer v.UnsetError(utask.This)
+
+		v.SetState(utask.This, v.GetState(stepName))
+		defer v.UnsetState(utask.This)
 	}
 
 	err = tmpl.Execute(b, v.m)

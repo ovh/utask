@@ -349,6 +349,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			res.Values.SetMetadata(s.Name, s.Metadata)
 			res.Values.SetChildren(s.Name, s.Children)
 			res.Values.SetError(s.Name, s.Error)
+			res.Values.SetState(s.Name, s.State)
 
 			// call after-run step logic
 			modifiedSteps := map[string]bool{
@@ -823,7 +824,9 @@ func resolutionStateSetter(res *resolution.Resolution, modifiedSteps map[string]
 	return func(step, state, message string) {
 		if _, ok := res.Steps[step]; ok {
 			res.Steps[step].State = state
+			res.Values.SetState(step, state)
 			res.Steps[step].Error = message
+			res.Values.SetError(step, message)
 			modifiedSteps[step] = true
 		}
 	}

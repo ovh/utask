@@ -41,3 +41,38 @@ steps:
               then:
                   this: REGEXP_MATCH
               message: email address belongs to example.com 
+    stepThree:
+        dependencies: [stepTwo:ANY]
+        description: multiple conditions changing state
+        custom_states: [FOO, BAR]
+        action:
+            type: echo
+            configuration: {output: {foo: bar}}
+        conditions:
+            - type: check
+              if:
+                  - value:    '{{.step.this.output.foo}}'
+                    operator: EQ
+                    expected: barrrr
+              then:
+                  this: CLIENT_ERROR
+              message: should not have matched
+            - type: check
+              if:
+                  - value:    '{{.step.this.output.foo}}'
+                    operator: EQ
+                    expected: bar
+                  - value:    '{{.step.this.state}}'
+                    operator: EQ
+                    expected: DONE
+              then:
+                  this: BAR
+              message: matching is correct
+            - type: check
+              if:
+                  - value:    '{{.step.this.state}}'
+                    operator: EQ
+                    expected: BAR
+              then:
+                  this: FOO
+              message: changed state matched correctly
