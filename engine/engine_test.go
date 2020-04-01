@@ -520,6 +520,25 @@ func TestForeach(t *testing.T) {
 	assert.Equal(t, "foo-b-bar-b", firstItemOutput["concat"])
 }
 
+func TestForeachWithPreRun(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := createResolution("foreachAndPreRun.yaml", input, nil)
+	require.Nilf(t, err, "expecting nil error, got %s", err)
+	require.NotNil(t, res)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateDone, res.State)
+	for _, st := range []string{"stepForeachNoDep", "stepSkippedNoDep", "stepNoDep", "stepForeachWithDep", "stepSkippedWithDep"} {
+		assert.Equal(t, step.StateDone, res.Steps[st].State)
+	}
+	for _, st := range []string{"stepDep", "stepDep2"} {
+		assert.Equal(t, step.StatePrune, res.Steps[st].State)
+	}
+}
+
 func TestVariables(t *testing.T) {
 	res, err := createResolution("variables.yaml", map[string]interface{}{}, nil)
 	assert.NotNil(t, res)
