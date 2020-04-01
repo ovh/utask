@@ -26,13 +26,19 @@ export class NewComponent implements OnInit {
     this.activatedRoute.queryParams.subscribe((values) => {
       const template = _.find(this.templates, { name: values.template_name });
       if (template) {
-        this.selectedTemplate = template;
-        this.newTask(template);
-        Object.keys(this.item.input).forEach((inputName) => {
-          if (values[inputName]) {
-            this.item.input[inputName] = values[inputName];
+        if (!this.selectedTemplate || this.selectedTemplate.name !== template.name) {
+          this.selectedTemplate = template;
+          this.newTask(template);
+        }
+        _.get(template, 'inputs', []).forEach((input) => {
+          if (input.type === 'number' && _.get(values, input.name)) {
+            this.item.input[input.name] = +values[input.name];
+          } else if (input.type === 'bool') {
+            this.item.input[input.name] = values[input.name] === 'true';
+          } else if (input.type !== 'password') {
+            this.item.input[input.name] = values[input.name];
           }
-        });
+        })
       }
     });
   }
@@ -60,13 +66,15 @@ export class NewComponent implements OnInit {
   }
 
   saveFormInQueryParams() {
+    const passwordFieldsName = _.filter(_.get(this.selectedTemplate, 'inputs', []), { type: 'password' }).map((e: any) => e.name);
+    let inputs = _.omit(_.clone(this.item.input), passwordFieldsName);
     this.router.navigate(
       [],
       {
         relativeTo: this.activatedRoute,
         queryParams: _.merge({
           template_name: this.item.template_name
-        }, this.item.input),
+        }, inputs),
         queryParamsHandling: 'merge',
       });
   }

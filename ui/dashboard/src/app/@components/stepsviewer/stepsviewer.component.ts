@@ -22,8 +22,8 @@ export class StepsViewerComponent implements OnChanges, AfterViewInit{
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        const prev = JSON.stringify(changes.item.previousValue);
-        const cur = JSON.stringify(changes.item.currentValue);
+        const prev = JSON.stringify(_.get(changes, 'item.previousValue.steps'));
+        const cur = JSON.stringify(_.get(changes, 'item.currentValue.steps'));
         if (changes.item && this.loaded && prev !== cur) {
             const steps = this.graphService.generateSteps(this.item);
             const dataValid = this.graphService.checkSteps(steps);

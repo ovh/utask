@@ -5,7 +5,6 @@ import { ApiService } from './api.service';
 
 @Injectable()
 export class TaskService {
-
     constructor(private modalService: NgbModal, private api: ApiService) { }
 
     delete(taskId: string) {
