@@ -22,8 +22,8 @@ RUN make re && \
     chmod +x /wait-for-it.sh
 WORKDIR /app
 
-COPY --from=js-builder /home/node/ui/dashboard/dist/utask-ui/*  /app/static/dashboard/
-COPY --from=js-builder /home/node/ui/editor/dist/utask-editor/* /app/static/editor/
+COPY --from=js-builder /home/node/ui/dashboard/dist/utask-ui/  /app/static/dashboard/
+COPY --from=js-builder /home/node/ui/editor/dist/utask-editor/ /app/static/editor/
 
 RUN cp /go/src/github.com/ovh/utask/utask /app/utask && \
     chmod +x /app/utask && \
