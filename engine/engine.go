@@ -334,7 +334,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 	executedSteps := map[string]bool{}
 	stepChan := make(chan *step.Step)
 
-	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, debugLogger)
+	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, debugLogger)
 
 	for expectedMessages > 0 {
 		debugLogger.Debugf("Engine: resolve() %s loop, %d expected steps", res.PublicID, expectedMessages)
@@ -374,7 +374,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			// one less step to go
 			expectedMessages--
 			// state change might unlock more steps for execution
-			expectedMessages += runAvailableSteps(dbp, modifiedSteps, res, t, stepChan, executedSteps, debugLogger)
+			expectedMessages += runAvailableSteps(dbp, modifiedSteps, res, t, stepChan, executedSteps, []string{}, debugLogger)
 
 			// attempt to persist all changes in db
 			if err := commit(dbp, res, t); err != nil {
@@ -510,8 +510,8 @@ func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) erro
 	return dbp.Commit()
 }
 
-func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, debugLogger *logrus.Entry) int {
-	av := availableSteps(modifiedSteps, res, executedSteps, debugLogger)
+func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, debugLogger *logrus.Entry) int {
+	av := availableSteps(modifiedSteps, res, executedSteps, expandedSteps, debugLogger)
 	preRunModifiedSteps := map[string]bool{}
 	expanded := 0
 
@@ -527,6 +527,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				case step.StateTODO:
 					expanded++
 					expandStep(s, res)
+					expandedSteps = append(expandedSteps, s.ChildrenSteps...)
 				case step.StateToRetry:
 					// attempt contracting step, clean up any children steps
 					// any available children have been ignored by availableSteps()
@@ -536,6 +537,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 					} else {
 						expanded++
 						expandStep(s, res)
+						expandedSteps = append(expandedSteps, s.ChildrenSteps...)
 					}
 				case step.StateExpanded:
 					s.State = contractStep(s, res)
@@ -570,7 +572,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 	// - loop step generated new steps
 	if len(preRunModifiedSteps) > 0 || expanded > 0 {
 		pruneSteps(res, preRunModifiedSteps)
-		return len(av) + runAvailableSteps(dbp, preRunModifiedSteps, res, t, stepChan, executedSteps, debugLogger)
+		return len(av) + runAvailableSteps(dbp, preRunModifiedSteps, res, t, stepChan, executedSteps, expandedSteps, debugLogger)
 	}
 
 	return len(av)
@@ -690,7 +692,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 	}
 }
 
-func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, executedSteps map[string]bool, debugLogger *logrus.Entry) map[string]*step.Step {
+func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, executedSteps map[string]bool, expandedSteps []string, debugLogger *logrus.Entry) map[string]*step.Step {
 
 	// pre-filter candidate steps
 	// prioritize those which depended on modified steps
@@ -708,6 +710,11 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 		for _, s := range res.StepList {
 			candidateSteps[s] = struct{}{}
 		}
+	}
+	// looping on just created steps from an EXPANDED step, to verify if they are eligible
+	// (in case we had modifiedSteps at the same time)
+	for _, s := range expandedSteps {
+		candidateSteps[s] = struct{}{}
 	}
 
 	// look for runnable steps among candidates

@@ -1,0 +1,90 @@
+name            : foreachAndPreRun
+title_format    : 'validating that foreach steps and skip conditions are working seamlessly'
+description     : 'validating that foreach steps and skip conditions are working seamlessly'
+
+auto_runnable: true
+allow_all_resolver_usernames: true
+allowed_resolver_tokens: []
+allowed_resolver_usernames: []
+
+
+steps:
+  stepForeachNoDep:
+    description: a foreach step without any dep
+    foreach: '["1","2"]'
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/{{ .iterator }}'
+  stepSkippedNoDep:
+    description: a skipped step without any dep
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/1'
+    conditions:
+      - type: skip
+        if:
+          - value: 'foo'
+            operator: EQ
+            expected: 'foo'
+        then:
+          this: DONE
+  stepNoDep:
+    description: a regular step without any dep
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/1'
+  stepForeachWithDep:
+    dependencies: [stepNoDep]
+    description: a foreach step with dep
+    foreach: '["1","2"]'
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/{{ .iterator }}'
+  stepSkippedWithDep:
+    dependencies: [stepNoDep]
+    description: a skipped step with dep
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/1'
+    conditions:
+      - type: skip
+        if:
+          - value: 'foo'
+            operator: EQ
+            expected: 'foo'
+        then:
+          this: DONE
+  stepDep:
+    dependencies: [stepNoDep]
+    description: a regular step with dep
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/1'
+    conditions:
+      - type: skip
+        if:
+          - value: 'foo'
+            operator: EQ
+            expected: 'foo'
+        then:
+          this: PRUNE
+  stepDep2:
+    dependencies: [stepDep]
+    description: a regular step with dep
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/1'
