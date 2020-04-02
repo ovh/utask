@@ -1,13 +1,18 @@
 import { of } from 'rxjs';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../@services/api.service';
 import * as _ from 'lodash';
 import MetaUtask from 'src/app/@models/meta-utask.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ResolutionService } from 'src/app/@services/resolution.service';
 import { TaskService } from 'src/app/@services/task.service';
 import { delay, repeat } from 'rxjs/operators';
+import { ActiveInterval } from 'active-interval';
+import * as bbPromise from 'bluebird';
+import * as moment from 'moment';
+bbPromise.config({
+  cancellation: true
+});
 
 export class SearchTask {
   page_size?: number;
@@ -19,7 +24,7 @@ export class SearchTask {
 @Component({
   templateUrl: './home.html',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   loaders: { [key: string]: boolean } = {};
   errors: { [key: string]: any } = {};
   meta: MetaUtask = null;
@@ -27,36 +32,169 @@ export class HomeComponent implements OnInit {
   pagination: SearchTask = {};
   hasMore = true;
   percentages: { [key: string]: number } = {};
+  interval: ActiveInterval;
+  refresh: { [key: string]: bbPromise<any> } = {};
+  display: { [key: string]: boolean } = {};
 
   constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private resolutionService: ResolutionService, private taskService: TaskService) {
   }
 
-  loadTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
-    if (!this.loaders[`task${id}`]) {
-      this.loaders[`task${id}`] = true;
-      this.api.task(id).toPromise().then(data => {
-        const index = _.findIndex(this.tasks, { id });
-        this.tasks.splice(index, 1, data);
+  ngOnInit() {
+    this.meta = this.route.parent.snapshot.data.meta as MetaUtask;
+    this.route.queryParams.subscribe(params => {
+      this.pagination = this.queryToSearchTask(params);
+      this.loaders.tasks = true;
+      this.loadTasks().then((tasks) => {
+        this.errors.tasks = null;
+        this.tasks = tasks;
+        this.generateProgressBars(this.tasks);
+        this.hasMore = (tasks as any[]).length === this.pagination.page_size;
+      }).catch((err) => {
+        this.errors.tasks = err;
       }).finally(() => {
-        this.loaders[`task${id}`] = false;
+        this.loaders.tasks = false;
       });
-    }
-    of(id).pipe(delay(delayMillisecond)).pipe(repeat(times)).subscribe((id: string) => {
-      if (!this.loaders[`task${id}`]) {
-        this.loaders[`task${id}`] = true;
-        this.api.task(id).toPromise().then(data => {
-          const index = _.findIndex(this.tasks, { id });
-          this.tasks.splice(index, 1, data);
-        }).finally(() => {
-          this.loaders[`task${id}`] = false;
+    });
+
+    this.interval = new ActiveInterval();
+    this.interval.setInterval(() => {
+      if (this.tasks.length) {
+        const lastActivity = moment(_.maxBy(this.tasks, t => t.last_activity).last_activity).toDate();
+        this.refresh.lastActivities = this.fetchLastActivities(lastActivity).then((tasks: any[]) => {
+          if (tasks.length) {
+            tasks.forEach((task: any) => {
+              const t = _.find(this.tasks, { id: task.id });
+              if (t) {
+                this.mergeTask(t);
+                this.refreshTask(t.id, 4, 1000);
+              } else {
+                task.hide = true;
+                this.tasks.unshift(task);
+                this.refreshTask(task.id, 4, 1000);
+                this.display.newTasks = true;
+              }
+            });
+            this.generateProgressBars(this.tasks);
+          }
+        }).catch((err) => {
+          console.log(err);
         });
       }
+    }, 15000, false);
+  }
+
+  ngOnDestroy() {
+    this.cancelRefresh();
+    this.interval.stopInterval();
+  }
+
+  displayNewTasks() {
+    this.display.newTasks = false;
+    this.tasks.forEach((t) => {
+      t.hide = false;
+    });
+  }
+
+  fetchLastActivities(lastActivity: Date, allTasks: any[] = [], last: string = '') {
+    return new bbPromise((resolve, reject, onCancel) => {
+      const loadTasks = this.loadTasks(last).then((tasks: any[]) => {
+        if (tasks.length) {
+          let task;
+          for (let i = 0; i < tasks.length; i++) {
+            task = tasks[i];
+            if (moment(task.last_activity).toDate() > lastActivity) {
+              allTasks.push(task);
+            }
+          }
+          if (allTasks.length === this.pagination.page_size) {
+            this.fetchLastActivities(lastActivity, allTasks, task.id).then((data) => {
+              resolve(data);
+            }).catch((err) => {
+              reject(err);
+            });
+          } else {
+            resolve(_.reverse(allTasks));
+          }
+        } else {
+          resolve(_.reverse(allTasks));
+        }
+      }).catch((err) => {
+        reject(err);
+      });
+
+      onCancel(() => {
+        loadTasks.cancel();
+      });
+    });
+  }
+
+  cancelRefresh() {
+    if (this.refresh.lastActivities) {
+      this.refresh.lastActivities.cancel();
+      this.refresh.lastActivities = null;
+    }
+  }
+
+  mergeTask(task) {
+    const t = _.find(this.tasks, { id: task.id });
+    if (t) {
+      t.title = task.title;
+      t.state = task.state;
+      t.steps_done = task.steps_done;
+      t.steps_total = task.steps_total;
+      t.last_activity = task.last_activity;
+      t.resolution = task.resolution;
+      t.last_start = task.last_start;
+      t.last_stop = task.last_stop;
+      t.resolver_username = task.resolver_username;
+      this.generateProgressBars([t]);
+    }
+  }
+
+  refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
+    if (!this.loaders[`task${id}`]) {
+      const sub = of(id).pipe(delay(delayMillisecond)).pipe(repeat(times - 1)).subscribe((id: string) => {
+        this.loaders[`task${id}`] = true;
+        this.api.task(id).toPromise().then((task: any) => {
+          this.mergeTask(task);
+          if (['DONE', 'CANCELLED'].indexOf(task.state) > -1) {
+            sub.unsubscribe();
+          }
+        });
+      }, (err) => {
+        console.log(err);
+      }, () => {
+        this.loaders[`task${id}`] = false;
+      });
+
+      this.loaders[`task${id}`] = true;
+      this.api.task(id).toPromise().then((task: any) => {
+        if (['DONE', 'CANCELLED'].indexOf(task.state) > -1 && times > 1) {
+          sub.unsubscribe();
+        }
+        this.mergeTask(task);
+      });
+    }
+  }
+
+  loadTasks(last: string = '') {
+    return new bbPromise((resolve, reject, onCancel) => {
+      const params: SearchTask = _.clone(this.pagination);
+      params.last = last;
+      const sub = this.api.tasks(params).subscribe((data) => {
+        resolve(data.body);
+      }, (err) => {
+        reject(err);
+      });
+      onCancel(() => {
+        sub.unsubscribe();
+      });
     });
   }
 
   runResolution(resolutionId: string, taskId: string) {
     this.resolutionService.run(resolutionId).then((data: any) => {
-      this.loadTask(taskId, 4, 2500);
+      this.refreshTask(taskId, 4, 1000);
     }).catch((err) => {
       if (err !== 0) {
         console.log(err);
@@ -78,7 +216,7 @@ export class HomeComponent implements OnInit {
 
   pauseResolution(resolutionId: string, taskId: string) {
     this.resolutionService.pause(resolutionId).then((data: any) => {
-      this.loadTask(taskId, 4, 2500);
+      this.refreshTask(taskId, 4, 1000);
     }).catch((err) => {
       if (err !== 0) {
         console.log(err);
@@ -88,7 +226,7 @@ export class HomeComponent implements OnInit {
 
   cancelResolution(resolutionId: string, taskId: string) {
     this.resolutionService.cancel(resolutionId).then((data: any) => {
-      this.loadTask(taskId, 0, 2500);
+      this.refreshTask(taskId, 1, 1000);
     }).catch((err) => {
       if (err !== 0) {
         console.log(err);
@@ -98,19 +236,11 @@ export class HomeComponent implements OnInit {
 
   extendResolution(resolutionId: string, taskId: string) {
     this.resolutionService.extend(resolutionId).then((data: any) => {
-      this.loadTask(taskId, 4, 2500);
+      this.refreshTask(taskId, 4, 1000);
     }).catch((err) => {
       if (err !== 0) {
         console.log(err);
       }
-    });
-  }
-
-  ngOnInit() {
-    this.meta = this.route.parent.snapshot.data.meta as MetaUtask;
-    this.route.queryParams.subscribe(params => {
-      this.pagination = this.queryToSearchTask(params);
-      this.loadTasks();
     });
   }
 
@@ -131,13 +261,34 @@ export class HomeComponent implements OnInit {
 
   next(force: boolean = false) {
     if (!this.loaders.next && (this.hasMore || force)) {
-      this.loadTasks(_.last(this.tasks).id);
+      this.loaders.next = true;
+      this.loadTasks(_.last(this.tasks).id).then((tasks) => {
+        this.errors.next = null;
+        this.tasks = this.tasks.concat(tasks);
+        this.generateProgressBars(this.tasks);
+        this.hasMore = (tasks as any[]).length === this.pagination.page_size;
+      }).catch((err) => {
+        this.errors.next = err;
+      }).finally(() => {
+        this.loaders.next = false;
+      });
     }
   }
 
   search() {
+    this.cancelRefresh();
     if (_.isEqual(this.pagination, this.queryToSearchTask())) {
-      this.loadTasks();
+      this.loaders.tasks = true;
+      this.loadTasks().then((tasks) => {
+        this.errors.tasks = null;
+        this.tasks = tasks;
+        this.generateProgressBars(this.tasks);
+        this.hasMore = (tasks as any[]).length === this.pagination.page_size;
+      }).catch((err) => {
+        this.errors.tasks = err;
+      }).finally(() => {
+        this.loaders.tasks = false;
+      });
     } else {
       this.router.navigate([], {
         queryParams: this.pagination,
@@ -146,36 +297,9 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  loadTasks(last: string = '') {
-    if (last) {
-      this.loaders.next = true;
-    } else {
-      this.loaders.tasks = true;
-    }
-    const params: SearchTask = _.clone(this.pagination);
-    params.last = last;
-
-    this.api.tasks(params).subscribe((data) => {
-      if (params.last) {
-        this.tasks = this.tasks.concat(data.body);
-      } else {
-        this.tasks = data.body;
-      }
-
-      (data.body as any[]).forEach((task: any) => {
-        this.percentages[task.id] = Math.round(task.steps_done / task.steps_total * 100);
-      });
-      this.errors.tasks = null;
-      this.hasMore = (data.body as any[]).length === this.pagination.page_size;
-    }, (err: any) => {
-      if (last) {
-        this.hasMore = false;
-      } else {
-        this.errors.tasks = err;
-      }
-    }).add(() => {
-      this.loaders.tasks = false;
-      this.loaders.next = false;
+  generateProgressBars(tasks: any[]) {
+    tasks.forEach((task: any) => {
+      this.percentages[task.id] = Math.round(task.steps_done / task.steps_total * 100);
     });
   }
 }

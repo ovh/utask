@@ -56,17 +56,19 @@
             <small>{{task.id}}</small>
           </div>
 
-          <div class="btn-group utask_bloc_header_dropdown" ngbDropdown role="group">
-            <button class="btn btn-sm btn-primary" ngbDropdownToggle>Actions</button>
-            <div class="dropdown-menu" ngbDropdownMenu>
-              <button ngbDropdownItem (click)="previewDetails(task, 'Request preview'); $event.stopPropagation();">
-                View as code
+          <div class="btn-group utask_bloc_header_dropdown">
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-sm btn-primary" title="View as code"
+                (click)="previewDetails(task, 'Request preview'); $event.stopPropagation();">
+                <i class="fas fa-file-code"></i>
               </button>
-              <button ngbDropdownItem (click)="editRequest(task); $event.stopPropagation();">
-                Edit
+              <button type="button" class="btn btn-sm btn-primary" title="Edit the task"
+                (click)="editRequest(task); $event.stopPropagation();">
+                <i class="fas fa-edit"></i>
               </button>
-              <button ngbDropdownItem (click)="deleteTask(task.id); $event.stopPropagation();">
-                Delete
+              <button type="button" class="btn btn-sm btn-primary" title="Delete the task"
+                (click)="deleteTask(task.id); $event.stopPropagation();">
+                <i class="fas fa-trash-alt"></i>
               </button>
             </div>
           </div>
@@ -111,14 +113,22 @@
 
             <span *ngIf="loaders.execution || loaders.task">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
           </div>
-          <div class="btn-group utask_bloc_header_dropdown" ngbDropdown role="group">
-            <button class="btn btn-sm btn-primary" ngbDropdownToggle>Actions</button>
+          <div class="btn-group utask_bloc_header_dropdown" ngbDropdown>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-sm btn-primary" title="Run" (click)="runResolution(resolution);">
+                <i class="fas fa-play"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" title="Cancel" (click)="cancelResolution(resolution);">
+                <i class="fas fa-ban"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle>
+                More
+              </button>
+            </div>
             <div class="dropdown-menu" ngbDropdownMenu>
               <button ngbDropdownItem (click)="previewDetails(resolution, 'Resolution preview');">View as code</button>
-              <button ngbDropdownItem (click)="runResolution(resolution);">Run</button>
               <button ngbDropdownItem (click)="pauseResolution(resolution);">Pause</button>
               <button ngbDropdownItem (click)="extendResolution(resolution);">Extend</button>
-              <button ngbDropdownItem (click)="cancelResolution(resolution);">Cancel</button>
               <button ngbDropdownItem (click)="editResolution(resolution);">Edit</button>
             </div>
           </div>

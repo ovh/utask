@@ -33,7 +33,6 @@
         </div>
 
         <div *ngIf="selectedTemplate">
-
           <div *ngFor="let input of selectedTemplate.inputs">
 
             <!-- INPUT TYPE TEXT(regex) / NUMBER / PASSWORD / TEXTAREA-->
@@ -69,37 +68,40 @@
                     placeholder="{{input.default}}" class="form-control"
                     [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}"> -->
 
-            <div *ngIf="input.legal_values && input.collection" class="form-group">
+            <div *ngIf="input.legal_values && input.collection" class="form-group"
+              [ngClass]="{'input__required': !input.optional}">
               <label for="input_{{input.name}}">
                 {{input.description || input.name}}
               </label>
 
               <tag-input name="input_{{input.name}}" id="input_{{input.name}}" [(ngModel)]='item.input[input.name]'
                 [modelAsStrings]="true" [onlyFromAutocomplete]="true" [required]="!input.optional"
-                [secondaryPlaceholder]="'Items'" [placeholder]="'Add'">
+                [secondaryPlaceholder]="'Items'" [placeholder]="'Add'" (onBlur)="saveFormInQueryParams()">
                 <tag-input-dropdown [showDropdownIfEmpty]="true" [autocompleteItems]="input.legal_values">
                 </tag-input-dropdown>
               </tag-input>
             </div>
 
-            <div *ngIf="!input.legal_values && input.collection" class="form-group">
+            <div *ngIf="!input.legal_values && input.collection" class="form-group"
+              [ngClass]="{'input__required': !input.optional}">
               <label for="input_{{input.name}}">
                 {{input.description || input.name}}
               </label>
 
               <tag-input name="input_{{input.name}}" id="input_{{input.name}}" [(ngModel)]='item.input[input.name]'
                 [modelAsStrings]="true" [required]="!input.optional" [secondaryPlaceholder]="'Items'"
-                [placeholder]="'Add'">
+                [placeholder]="'Add'" (onBlur)="saveFormInQueryParams()">
               </tag-input>
             </div>
 
-            <div *ngIf="input.legal_values && !input.collection" class="form-group">
+            <div *ngIf="input.legal_values && !input.collection" class="form-group"
+              [ngClass]="{'input__required': !input.optional}">
               <label for="input_{{input.name}}">
                 {{input.description || input.name}}
               </label>
 
               <select name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
-                [(ngModel)]='item.input[input.name]' [required]="!input.optional">
+                [(ngModel)]='item.input[input.name]' [required]="!input.optional" (change)="saveFormInQueryParams()">
                 <option></option>
                 <option *ngFor="let option of input.legal_values" value="{{option}}">{{option}}</option>
               </select>
@@ -142,5 +144,4 @@
   <loader *ngIf="loaders.templates"></loader>
 
   <error-message [data]="errors.templates" *ngIf="errors.templates"></error-message>
-
 </div>
