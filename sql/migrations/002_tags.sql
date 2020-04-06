@@ -1,7 +1,7 @@
 -- +migrate Up
 
-ALTER TABLE "task" ADD COLUMN "tags" JSONB;
-ALTER TABLE "task_template" ADD COLUMN "tags" JSONB;
+ALTER TABLE "task" ADD COLUMN "tags" JSONB NOT NULL DEFAULT 'null';
+ALTER TABLE "task_template" ADD COLUMN "tags" JSONB NOT NULL DEFAULT 'null';
 
 -- See section 8.14.4 relative to jsonb indexing:
 -- https://www.postgresql.org/docs/9.4/datatype-json.html

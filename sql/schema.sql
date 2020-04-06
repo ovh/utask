@@ -16,8 +16,8 @@ CREATE TABLE "task_template" (
     inputs JSONB NOT NULL,
     resolver_inputs JSONB NOT NULL,
     steps JSONB NOT NULL,
-    variables JSONB,
-    allowed_resolver_usernames JSONB,
+    variables JSONB NOT NULL DEFAULT 'null',
+    allowed_resolver_usernames JSONB NOT NULL DEFAULT '[]',
     allow_all_resolver_usernames BOOL NOT NULL DEFAULT false,
     auto_runnable BOOL NOT NULL DEFAULT false,
     blocked BOOL NOT NULL DEFAULT false,
@@ -26,7 +26,7 @@ CREATE TABLE "task_template" (
     title_format TEXT NOT NULL,
     retry_max INTEGER,
     base_configurations JSONB NOT NULL,
-    tags JSONB
+    tags JSONB NOT NULL DEFAULT 'null'
 );
 
 CREATE TABLE "batch" (
@@ -41,8 +41,8 @@ CREATE TABLE "task" (
     id_batch BIGINT REFERENCES "batch"(id),
     title TEXT NOT NULL,
     requester_username TEXT,
-    watcher_usernames JSONB,
-    resolver_usernames JSONB,
+    watcher_usernames JSONB NOT NULL DEFAULT 'null',
+    resolver_usernames JSONB NOT NULL DEFAULT 'null',
     created TIMESTAMP with time zone DEFAULT now() NOT NULL,
     last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     state TEXT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE "task" (
     crypt_key BYTEA NOT NULL,
     encrypted_input BYTEA NOT NULL,
     encrypted_result BYTEA NOT NULL,
-    tags JSONB
+    tags JSONB NOT NULL DEFAULT 'null'
 );
 
 CREATE INDEX ON "task"(id_template);
@@ -59,11 +59,10 @@ CREATE INDEX ON "task"(id_batch);
 CREATE INDEX ON "task"(requester_username);
 CREATE INDEX ON "task"(state);
 CREATE INDEX ON "task"(last_activity DESC);
-CREATE INDEX ON "task"(watcher_usernames);
-CREATE INDEX ON "task"(resolver_usernames);
-
 -- See section 8.14.4 relative to jsonb indexing:
 -- https://www.postgresql.org/docs/9.4/datatype-json.html
+CREATE INDEX ON "task" USING gin (watcher_usernames jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (resolver_usernames jsonb_path_ops);
 CREATE INDEX ON "task" USING gin (tags jsonb_path_ops);
 
 CREATE TABLE "task_comment" (
