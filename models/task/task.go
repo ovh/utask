@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -62,19 +63,20 @@ type Task struct {
 
 // DBModel is the "strict" representation of a task in DB, as expressed in SQL schema
 type DBModel struct {
-	ID                int64     `json:"-" db:"id"`
-	PublicID          string    `json:"id" db:"public_id"`
-	Title             string    `json:"title" db:"title"`
-	TemplateID        int64     `json:"-" db:"id_template"`
-	BatchID           *int64    `json:"-" db:"id_batch"`
-	RequesterUsername string    `json:"requester_username" db:"requester_username"`
-	WatcherUsernames  []string  `json:"watcher_usernames,omitempty" db:"watcher_usernames"`
-	ResolverUsernames []string  `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
-	Created           time.Time `json:"created" db:"created"`
-	State             string    `json:"state" db:"state"`
-	StepsDone         int       `json:"steps_done" db:"steps_done"`
-	StepsTotal        int       `json:"steps_total" db:"steps_total"`
-	LastActivity      time.Time `json:"last_activity" db:"last_activity"`
+	ID                int64             `json:"-" db:"id"`
+	PublicID          string            `json:"id" db:"public_id"`
+	Title             string            `json:"title" db:"title"`
+	TemplateID        int64             `json:"-" db:"id_template"`
+	BatchID           *int64            `json:"-" db:"id_batch"`
+	RequesterUsername string            `json:"requester_username" db:"requester_username"`
+	WatcherUsernames  []string          `json:"watcher_usernames,omitempty" db:"watcher_usernames"`
+	ResolverUsernames []string          `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
+	Created           time.Time         `json:"created" db:"created"`
+	State             string            `json:"state" db:"state"`
+	StepsDone         int               `json:"steps_done" db:"steps_done"`
+	StepsTotal        int               `json:"steps_total" db:"steps_total"`
+	LastActivity      time.Time         `json:"last_activity" db:"last_activity"`
+	Tags              map[string]string `json:"tags,omitempty" db:"tags"`
 
 	CryptKey        []byte `json:"-" db:"crypt_key"` // key for encrypting steps (itself encrypted with master key)
 	EncryptedInput  []byte `json:"-" db:"encrypted_input"`
@@ -82,7 +84,7 @@ type DBModel struct {
 }
 
 // Create inserts a new Task in DB
-func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, b *Batch) (t *Task, err error) {
+func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to create new Task")
 
 	t = &Task{
@@ -140,6 +142,18 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 		return nil, err
 	}
 	t.Title = string(title)
+
+	// Merge input tags into template tags.
+	mergedTags := make(map[string]string)
+	for k, v := range tt.Tags {
+		mergedTags[k] = v
+	}
+	for k, v := range tags {
+		mergedTags[k] = v
+	}
+	if err := t.SetTags(mergedTags, v); err != nil {
+		return nil, err
+	}
 
 	err = dbp.DB().Insert(&t.DBModel)
 	if err != nil {
@@ -255,6 +269,7 @@ type ListFilter struct {
 	PageSize              uint64
 	Before                *time.Time
 	After                 *time.Time
+	Tags                  map[string]string
 }
 
 // ListTasks returns a list of tasks, optionally filtered on one or several criteria
@@ -304,6 +319,14 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 
 	if filter.Batch != nil {
 		sel = sel.Where(squirrel.Eq{`"task".id_batch`: filter.Batch.ID})
+	}
+
+	if filter.Tags != nil && len(filter.Tags) > 0 {
+		b, err := json.Marshal(filter.Tags)
+		if err != nil {
+			return nil, err
+		}
+		sel = sel.Where(`"task".tags @> ?::jsonb`, string(b))
 	}
 
 	query, params, err := sel.ToSql()
@@ -500,6 +523,21 @@ func (t *Task) SetState(s string) {
 	t.notifyState(nil)
 }
 
+func (t *Task) SetTags(tags map[string]string, values *values.Values) error {
+	t.Tags = tags
+	if values == nil {
+		return nil
+	}
+	for k, v := range t.Tags {
+		tempv, err := values.Apply(v, nil, "")
+		if err != nil {
+			return fmt.Errorf("failed to template: %s", err.Error())
+		}
+		t.Tags[k] = string(tempv)
+	}
+	return nil
+}
+
 // Valid asserts that the task holds valid data: the state is among accepted states,
 // and input is present and valid given the template spec
 func (t *Task) Valid(tt *tasktemplate.TaskTemplate) error {
@@ -534,7 +572,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 
 var (
 	tSelector = sqlgenerator.PGsql.Select(
-		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".created, "task".state, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task_template".name as template_name, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
+		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task_template".name as template_name, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
 	).From(
 		`"task"`,
 	).Join(

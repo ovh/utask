@@ -17,6 +17,7 @@ type createBatchIn struct {
 	Inputs           []map[string]interface{} `json:"inputs" binding:"required"`
 	Comment          string                   `json:"comment"`
 	WatcherUsernames []string                 `json:"watcher_usernames"`
+	Tags             map[string]string        `json:"tags"`
 }
 
 // CreateBatch handles the creation of a collection of tasks based on the same template
@@ -50,7 +51,7 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 			return nil, err
 		}
 
-		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, input, b, in.Comment, nil)
+		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, input, b, in.Comment, nil, in.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, err

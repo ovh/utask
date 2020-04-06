@@ -342,6 +342,15 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 		case s := <-stepChan:
 			s.LastRun = time.Now()
 
+			// Replace task's tags with the tags returned in the step.
+			for k, v := range s.Tags {
+				if v == "" {
+					delete(t.Tags, k)
+				} else {
+					t.Tags[k] = v
+				}
+			}
+
 			// "commit" step back into resolution
 			res.SetStep(s.Name, s)
 			// consolidate its result into live values
@@ -370,7 +379,6 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			if s.IsFinal() && !s.IsChild() {
 				t.StepsDone++
 			}
-
 			// one less step to go
 			expectedMessages--
 			// state change might unlock more steps for execution
@@ -501,11 +509,15 @@ func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) erro
 	if err != nil {
 		return err
 	}
-	if err := res.Update(dbp); err != nil {
-		return err
+	if res != nil {
+		if err := res.Update(dbp); err != nil {
+			return err
+		}
 	}
-	if err := t.Update(dbp, false, true); err != nil {
-		return err
+	if t != nil {
+		if err := t.Update(dbp, false, true); err != nil {
+			return err
+		}
 	}
 	return dbp.Commit()
 }
@@ -546,7 +558,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				}
 				// rebuild step dependency tree to include generated loop steps
 				res.BuildStepTree()
-				commit(dbp, res, t)
+				commit(dbp, res, nil)
 				go func() { stepChan <- s }()
 			} else { // regular step
 				s.ResultValidate = jsonschema.Validator(s.Name, s.Schema)
@@ -557,7 +569,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				if s.State != step.StateAfterrunError {
 					s.State = step.StateRunning
 					step.PreRun(s, res.Values, resolutionStateSetter(res, preRunModifiedSteps))
-					commit(dbp, res, t)
+					commit(dbp, res, nil)
 				}
 
 				// run

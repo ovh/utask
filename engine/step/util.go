@@ -9,7 +9,7 @@ import (
 // Runner represents a component capable of executing a specific action,
 // provided a configuration and a context
 type Runner interface {
-	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, error)
+	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error)
 	ValidConfig(baseConfig json.RawMessage, config json.RawMessage) error
 	Context(stepName string) interface{}
 	MetadataSchema() json.RawMessage
