@@ -102,6 +102,13 @@ func dependenciesChain(steps map[string]*Step, dependencies []string) []string {
 	}
 
 	for i := 0; i < len(chain); i++ {
+		if steps[chain[i]] == nil {
+			// 2nd level dependency may not exist
+			// if that happens when validating a step, then that probably means that
+			// the direct dependency has not been validated yet (non deterministic order).
+			// continue to fail gracefully later
+			continue
+		}
 		for _, stepDep := range steps[chain[i]].Dependencies {
 			s, _ := DependencyParts(stepDep)
 
