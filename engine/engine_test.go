@@ -551,6 +551,10 @@ func TestVariables(t *testing.T) {
 	payload := res.Steps["renderVariables"].Output.(map[string]interface{})
 	assert.Equal(t, "4", payload["truc"])
 	assert.Equal(t, "5", payload["bidule"])
+	assert.Equal(t, "Hello World!", payload["templated"])
+	assert.Equal(t, "6", payload["cached"])
+	payload = res.Steps["renderVariablesWithCache"].Output.(map[string]interface{})
+	assert.Equal(t, "6", payload["cached"])
 }
 
 const (

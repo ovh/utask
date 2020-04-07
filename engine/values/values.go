@@ -39,9 +39,10 @@ type Values struct {
 // Variable holds a named variable, with either a JS expression to be evalued
 // or a concrete value
 type Variable struct {
-	Name       string      `json:"name"`
-	Expression string      `json:"expression"`
-	Value      interface{} `json:"value"`
+	Name             string      `json:"name"`
+	Expression       string      `json:"expression"`
+	Value            interface{} `json:"value"`
+	evalCachedResult interface{} `json:"-"`
 }
 
 // NewValues instantiates a new Values holder,
@@ -61,6 +62,7 @@ func NewValues() *Values {
 	v.funcMap = sprig.FuncMap()
 	v.funcMap["field"] = v.fieldTmpl
 	v.funcMap["eval"] = v.varEval
+	v.funcMap["evalCache"] = v.varEvalCache
 	return v
 }
 
@@ -295,27 +297,55 @@ func (v *Values) fieldTmpl(key ...string) reflect.Value {
 	return reflect.ValueOf(i)
 }
 
+func (v *Values) varEvalCache(varName string) (interface{}, error) {
+	i, ok := v.GetVariables()[varName]
+	if !ok {
+		return nil, fmt.Errorf("Var name not found in template: '%s'", varName)
+	}
+
+	if i.evalCachedResult != nil {
+		return i.evalCachedResult, nil
+	}
+
+	res, err := v.varEval(varName)
+	if err != nil {
+		return nil, err
+	}
+
+	i.evalCachedResult = res
+	return i.evalCachedResult, nil
+}
+
 func (v *Values) varEval(varName string) (interface{}, error) {
 	i, ok := v.GetVariables()[varName]
 	if !ok {
 		return nil, fmt.Errorf("Var name not found in template: '%s'", varName)
 	}
 
-	if i.Value == nil {
-		exp, err := v.Apply(i.Expression, nil, "")
+	if i.Value != nil {
+		val, ok := i.Value.(string)
+		if !ok {
+			// Value is not a string, won't be able to template it
+			return i.Value, nil
+		}
+		valS, err := v.Apply(val, nil, "")
 		if err != nil {
 			return nil, err
 		}
-
-		res, err := evalUnsafe(exp, time.Second*5)
-		if err != nil {
-			return nil, err
-		}
-
-		i.Value = res.String()
+		return string(valS), nil
 	}
 
-	return i.Value, nil
+	exp, err := v.Apply(i.Expression, nil, "")
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := evalUnsafe(exp, time.Second*5)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.String(), nil
 }
 
 var errTimedOut = errors.New("Timed out variable evaluation")

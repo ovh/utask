@@ -182,6 +182,7 @@ The following templating functions are available:
 |**`Sprig`** | Extended set of functions from the Sprig project  | [Doc](https://masterminds.github.io/sprig/)
 |**`field`** | Equivalent to the dot notation, for entries with forbidden characters | ``{{field `config` `foo.bar`}}``
 |**`eval`** | Evaluates the value of a template variable | ``{{eval `var1`}}``
+|**`evalCache`** | Evaluates the value of a template variable, and cache for future usage (to avoid further computation) | ``{{evalCache `var1`}}``
 
 ### Basic properties
 
