@@ -127,9 +127,9 @@ type NotifyActionsParameters struct {
 
 // DatabaseConfig holds configuration to fine-tune DB connection
 type DatabaseConfig struct {
-	MaxOpenConns    int    `json:"max_open_conns"`
-	MaxIdleConns    int    `json:"max_idle_conns"`
-	ConnMaxLifetime int    `json:"conn_max_lifetime"`
+	MaxOpenConns    *int   `json:"max_open_conns"`
+	MaxIdleConns    *int   `json:"max_idle_conns"`
+	ConnMaxLifetime *int   `json:"conn_max_lifetime"`
 	ConfigName      string `json:"config_name"`
 }
 
