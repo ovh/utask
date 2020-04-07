@@ -33,6 +33,7 @@ type Server struct {
 	authMiddleware         func(*gin.Context)
 	dashboardPathPrefix    string
 	dashboardAPIPathPrefix string
+	dashboardSentryDSN     string
 	editorPathPrefix       string
 }
 
@@ -56,28 +57,24 @@ func (s *Server) WithAuth(authProvider func(*http.Request) (string, error)) {
 // It doesn't change the path used by utask API to serve the files, it's only used inside UI files
 // in order that dashboard can be aware of a ProxyPass configuration.
 func (s *Server) SetDashboardPathPrefix(dashboardPathPrefix string) {
-	if dashboardPathPrefix == "" {
-		return
-	}
 	s.dashboardPathPrefix = dashboardPathPrefix
 }
 
 // SetDashboardAPIPathPrefix configures a custom path prefix that UI should use when calling utask API.
 // Required when utask API is exposed behind a ProxyPass and UI need to know the absolute URI to call.
 func (s *Server) SetDashboardAPIPathPrefix(dashboardAPIPathPrefix string) {
-	if dashboardAPIPathPrefix == "" {
-		return
-	}
 	s.dashboardAPIPathPrefix = dashboardAPIPathPrefix
+}
+
+// SetDashboardSentryDSN configures a Sentry DSN URI to send UI exceptions and failures to.
+func (s *Server) SetDashboardSentryDSN(dashboardSentryDSN string) {
+	s.dashboardSentryDSN = dashboardSentryDSN
 }
 
 // SetEditorPathPrefix configures a custom path prefix for editor static files hosting.
 // It doesn't change the path used by utask API to serve the files, it's only used inside UI files
 // in order that editor can be aware of a ProxyPass configuration.
 func (s *Server) SetEditorPathPrefix(editorPathPrefix string) {
-	if editorPathPrefix == "" {
-		return
-	}
 	s.editorPathPrefix = editorPathPrefix
 }
 
@@ -139,7 +136,9 @@ func (s *Server) build(ctx context.Context) {
 					"___UTASK_DASHBOARD_BASEHREF___",
 					generateBaseHref(s.dashboardPathPrefix, "/ui/dashboard"),
 					"___UTASK_DASHBOARD_PREFIXAPIBASEURL___",
-					generatePathPrefixAPI(s.dashboardAPIPathPrefix))).
+					generatePathPrefixAPI(s.dashboardAPIPathPrefix),
+					"___UTASK_DASHBOARD_SENTRY_DSN___",
+					s.dashboardSentryDSN)).
 			StaticFS("/ui/dashboard", http.Dir("./static/dashboard"))
 
 		ginEngine.Group("/",
@@ -152,7 +151,9 @@ func (s *Server) build(ctx context.Context) {
 			Group("/",
 				StaticFilePatternReplaceMiddleware(
 					"___UTASK_DASHBOARD_PREFIXAPIBASEURL___",
-					generatePathPrefixAPI(s.dashboardAPIPathPrefix))).
+					generatePathPrefixAPI(s.dashboardAPIPathPrefix),
+					"___UTASK_DASHBOARD_SENTRY_DSN___",
+					s.dashboardSentryDSN)).
 			StaticFS("/ui/swagger", http.Dir("./static/swagger-ui"))
 
 		collectMetrics(ctx)

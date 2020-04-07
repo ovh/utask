@@ -69,6 +69,7 @@ func TestMain(m *testing.M) {
 	srv.WithAuth(dumbIdentityProvider)
 	srv.SetDashboardPathPrefix("")
 	srv.SetDashboardAPIPathPrefix("")
+	srv.SetDashboardSentryDSN("")
 	srv.SetEditorPathPrefix("")
 
 	go srv.ListenAndServe()

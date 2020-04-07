@@ -87,6 +87,7 @@ type Cfg struct {
 	MaxConcurrentExecutions uint                     `json:"max_concurrent_executions"`
 	DashboardPathPrefix     string                   `json:"dashboard_path_prefix"`
 	DashboardAPIPathPrefix  string                   `json:"dashboard_api_path_prefix"`
+	DashboardSentryDSN      string                   `json:"dashboard_sentry_dsn"`
 	EditorPathPrefix        string                   `json:"editor_path_prefix"`
 
 	resourceSemaphores map[string]*semaphore.Weighted
