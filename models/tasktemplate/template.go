@@ -332,6 +332,10 @@ func (tt *TaskTemplate) Valid() (err error) {
 		return err
 	}
 
+	if err := validateVariables(tt.Variables); err != nil {
+		return err
+	}
+
 	// valid and normalize steps:
 	for name, st := range tt.Steps {
 		if err := st.ValidAndNormalize(name, tt.BaseConfigurations, tt.Steps); err != nil {
@@ -411,6 +415,22 @@ func validateInputs(inputs []input.Input) ([]string, error) {
 		inputNames = append(inputNames, i.Name)
 	}
 	return inputNames, nil
+}
+
+func validateVariables(variables []values.Variable) error {
+	for _, variable := range variables {
+		if variable.Name == "" {
+			return errors.BadRequestf("variable name can't be empty")
+		}
+		if variable.Value != nil && variable.Expression != "" {
+			return errors.BadRequestf("variable %q can't have both value and expression defined", variable.Name)
+		}
+		if variable.Value == nil && variable.Expression == "" {
+			return errors.BadRequestf("variable %q expression and value can't be empty at the same time", variable.Name)
+		}
+	}
+
+	return nil
 }
 
 var (

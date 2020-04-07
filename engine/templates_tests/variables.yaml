@@ -7,11 +7,25 @@ variables:
     2 + 2; // javascript
 - name: bidule
   value: 5
+- name: templated
+  value: "Hello {{ `World` }}!"
+- name: expressionCached
+  expression: >
+    4 + 2; // javascript
 steps:
     renderVariables:
         action:
             type: echo
-            configuration: 
-                output: 
+            configuration:
+                output:
                     truc:   "{{eval `truc`}}"
                     bidule: "{{eval `bidule`}}"
+                    templated: "{{eval `templated`}}"
+                    cached: "{{evalCache `expressionCached`}}"
+    renderVariablesWithCache:
+        dependencies: [renderVariables]
+        action:
+            type: echo
+            configuration:
+                output:
+                    cached: "{{evalCache `expressionCached`}}"

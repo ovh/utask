@@ -1,6 +1,7 @@
 package tasktemplate_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -108,4 +109,49 @@ func TestLoadFromDir(t *testing.T) {
 	assert.False(t, tt.Blocked, "previous template should have not been blocked")
 	assert.True(t, tt2.Hidden, "template should have been hidden as not existing in dir but have linked task")
 	assert.True(t, tt2.Blocked, "template should have been blocked as not existing in dir but have linked task")
+}
+
+func TestInvalidVariablesTemplates(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = dbp.DB().Query("DELETE FROM resolution;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task_comment;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task;")
+	assert.Nil(t, err, "Emptying database failed")
+	_, err = dbp.DB().Query("DELETE FROM task_template;")
+	assert.Nil(t, err, "Emptying database failed")
+
+	err = tasktemplate.LoadFromDir(dbp, "templates_tests")
+	assert.Nil(t, err, "LoadFromDir failed")
+
+	taskTemplatesFromDatabase, err := tasktemplate.ListTemplates(dbp, true, 10, nil)
+	assert.Nil(t, err, "ListTemplates failed")
+	assert.Len(t, taskTemplatesFromDatabase, 2, "wrong size of imported templates")
+
+	tt := tasktemplate.TaskTemplate{}
+	tmpl, err := ioutil.ReadFile(path.Join("templates_errors_tests", "error-variables.yaml"))
+	assert.Nil(t, err, "unable to read file error-variables.yaml")
+	err = yaml.Unmarshal(tmpl, &tt)
+	assert.Nil(t, err, "unable to unmarshal tasktemplate")
+
+	tt.Normalize()
+	err = tt.Valid()
+	assert.Contains(t, fmt.Sprint(err), "can't have both value and expression defined")
+
+	tt.Variables[0].Name = ""
+	tt.Normalize()
+	err = tt.Valid()
+	assert.Contains(t, fmt.Sprint(err), "variable name can't be empty")
+
+	tt.Variables[0].Name = "toto"
+	tt.Variables[0].Expression = ""
+	tt.Variables[0].Value = nil
+	tt.Normalize()
+	err = tt.Valid()
+	assert.Contains(t, fmt.Sprint(err), "expression and value can't be empty at the same time")
 }
