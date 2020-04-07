@@ -160,6 +160,17 @@ func (s *Server) build(ctx context.Context) {
 
 		router := fizz.NewFromEngine(ginEngine)
 
+		openapiPathPrefix := s.dashboardAPIPathPrefix
+		if openapiPathPrefix == "" {
+			openapiPathPrefix = "/"
+		}
+		router.Generator().SetServers([]*openapi.Server{
+			&openapi.Server{
+				URL:         openapiPathPrefix,
+				Description: utask.AppName(),
+			},
+		})
+
 		router.Use(ajaxHeadersMiddleware, errorLogMiddleware)
 
 		tonic.SetErrorHook(jujerr.ErrHook)
