@@ -66,21 +66,29 @@ func Init(store *configstore.Store) error {
 	}
 
 	if cfg == nil {
-		cfg = &utask.DatabaseConfig{
-			MaxOpenConns:    defaultMaxOpenConns,
-			MaxIdleConns:    defaultMaxIdleConns,
-			ConnMaxLifetime: defaultConnMaxLifetime,
-		}
-	} else {
-		cfg.MaxOpenConns = normalize(cfg.MaxOpenConns, defaultMaxOpenConns)
-		cfg.MaxIdleConns = normalize(cfg.MaxIdleConns, defaultMaxIdleConns)
-		cfg.ConnMaxLifetime = normalize(cfg.ConnMaxLifetime, defaultConnMaxLifetime)
+		cfg = &utask.DatabaseConfig{}
 	}
-
-	logrus.Infof("[DatabaseConfig] Using %d max open connections, %d max idle connections, %d seconds timeout", cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime)
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetime) * time.Second)
+	if cfg.MaxOpenConns != nil {
+		*cfg.MaxOpenConns = normalize(*cfg.MaxOpenConns, defaultMaxOpenConns)
+	} else {
+		cfg.MaxOpenConns = intPtr(defaultMaxOpenConns)
+	}
+	if cfg.MaxIdleConns != nil {
+		*cfg.MaxIdleConns = normalize(*cfg.MaxIdleConns, defaultMaxIdleConns)
+	} else {
+		cfg.MaxIdleConns = intPtr(defaultMaxIdleConns)
+	}
+	if cfg.ConnMaxLifetime != nil {
+		*cfg.ConnMaxLifetime = normalize(*cfg.ConnMaxLifetime, defaultConnMaxLifetime)
+	} else {
+		cfg.ConnMaxLifetime = intPtr(defaultConnMaxLifetime)
+	}
+	logrus.Infof("[DatabaseConfig] Using %d max open connections, %d max idle connections, %d seconds timeout",
+		cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime,
+	)
+	db.SetMaxOpenConns(*cfg.MaxOpenConns)
+	db.SetMaxIdleConns(*cfg.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(*cfg.ConnMaxLifetime) * time.Second)
 
 	dbmap, err := getDbMap(db, schema, typeConverter{})
 	if err != nil {
@@ -117,4 +125,8 @@ func normalize(current, fallback int) int {
 		return fallback
 	}
 	return current
+}
+
+func intPtr(i int) *int {
+	return &i
 }
