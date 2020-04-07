@@ -14,7 +14,7 @@ steps:
                 output: {foo: bar}
     generateItems:
         description: generate list for next step
-        foreach: '{{.input.list | jsonmarshal}}'
+        foreach: '{{.input.list | toJson}}'
         conditions:
             - type: skip
               if:
@@ -39,7 +39,7 @@ steps:
     concatItems:
         description:  transform a list of items
         dependencies: [generateItems]
-        foreach: '{{.step.generateItems.children | jsonmarshal}}'
+        foreach: '{{.step.generateItems.children | toJson}}'
         conditions:
             - type: check
               if:

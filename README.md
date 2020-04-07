@@ -181,8 +181,6 @@ The following templating functions are available:
 |**`Golang`** | Builtin functions from Golang text template  | [Doc](https://golang.org/pkg/text/template/#hdr-Actions)
 |**`Sprig`** | Extended set of functions from the Sprig project  | [Doc](https://masterminds.github.io/sprig/)
 |**`field`** | Equivalent to the dot notation, for entries with forbidden characters | ``{{field `config` `foo.bar`}}``
-|**`jsonmarshal`** | Used as part of a templating pipeline, outputs a JSON representation | ``{{.step.foo.output.bar \| jsonmarshal}}``
-|**`jsonfield`** | Similar to **field**, outputs a JSON representation | ``{{jsonfield `foo` `bar`}}``
 |**`eval`** | Evaluates the value of a template variable | ``{{eval `var1`}}``
 
 ### Basic properties
@@ -436,7 +434,7 @@ The following output can be expected to be accessible at `{{.step.prefixStrings.
 
 This output can be then passed to another step in json format:
 ```yaml
-foreach: '{{.step.prefixStrings.children | jsonmarshal}}'
+foreach: '{{.step.prefixStrings.children | toJson}}'
 ```
 
 ### Task templates validation

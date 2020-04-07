@@ -3,13 +3,13 @@ package values
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"text/template"
 	"time"
 
 	"github.com/Masterminds/sprig"
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
-	"github.com/ovh/utask/pkg/utils"
 	"github.com/robertkrimen/otto"
 )
 
@@ -60,8 +60,6 @@ func NewValues() *Values {
 	}
 	v.funcMap = sprig.FuncMap()
 	v.funcMap["field"] = v.fieldTmpl
-	v.funcMap["jsonfield"] = v.jsonFieldTmpl
-	v.funcMap["jsonmarshal"] = v.jsonMarshal
 	v.funcMap["eval"] = v.varEval
 	return v
 }
@@ -174,6 +172,11 @@ func (v *Values) setStepData(stepName, field string, value interface{}) {
 		stepmap[stepName] = map[string]interface{}{}
 	}
 	stepdata := stepmap[stepName].(map[string]interface{})
+	// replace nil value by an empty map to avoid storing nil elements which could lead
+	// to problems when executing long dot notation chains in templates
+	if value == nil {
+		value = map[string]interface{}{}
+	}
 	stepdata[field] = value
 }
 
@@ -263,50 +266,33 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 // templating funcs
 
-func (v *Values) fieldTmpl(key ...string) (interface{}, error) {
+// zero-value return so that text template will evaluate to false in pipelines
+// and print it to <no value> outside of pipelines
+var zero reflect.Value
+
+func (v *Values) fieldTmpl(key ...string) reflect.Value {
 	var i interface{}
 
 	i = map[string]interface{}(v.m)
 	var ok bool
-	var previousNotFound string
 
 	for _, k := range key {
 		switch i.(type) {
 		case map[string]interface{}:
-			previousNotFound = ""
 			i, ok = i.(map[string]interface{})[k]
 			if !ok {
-				previousNotFound = k
-				i = "<no value>"
+				return zero
 			}
 		case map[string]string:
-			previousNotFound = ""
 			i, ok = i.(map[string]string)[k]
 			if !ok {
-				previousNotFound = k
-				i = "<no value>"
+				return zero
 			}
 		default:
-			return nil, fmt.Errorf("cannot dereference %T for key %q; previous key not found %q", i, k, previousNotFound)
+			return zero
 		}
 	}
-	return i, nil
-}
-
-func (v *Values) jsonFieldTmpl(key ...string) (interface{}, error) {
-	i, err := v.fieldTmpl(key...)
-	if err != nil {
-		return nil, err
-	}
-	return v.jsonMarshal(i)
-}
-
-func (v *Values) jsonMarshal(i interface{}) (interface{}, error) {
-	marshalled, err := utils.JSONMarshal(i)
-	if err != nil {
-		return nil, err
-	}
-	return string(marshalled), nil
+	return reflect.ValueOf(i)
 }
 
 func (v *Values) varEval(varName string) (interface{}, error) {
