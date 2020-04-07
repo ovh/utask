@@ -19,6 +19,6 @@ steps:
           my-json-body: >
             {
               "single": "{{.input.singleString}}",
-              "singleMarshalled": {{.input.singleString | jsonmarshal}},
-              "multiline": {{.input.multilineString | jsonmarshal}}
+              "singleMarshalled": {{.input.singleString | toJson}},
+              "multiline": {{.input.multilineString | toJson}}
             }

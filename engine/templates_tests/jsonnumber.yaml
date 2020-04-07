@@ -26,7 +26,7 @@ steps:
   loopStep:
     description: apply numbers to configuration
     dependencies: [listStep]
-    foreach: '{{.step.listStep.output | jsonmarshal}}'
+    foreach: '{{.step.listStep.output | toJson}}'
     action:
       type: echo
       configuration:
