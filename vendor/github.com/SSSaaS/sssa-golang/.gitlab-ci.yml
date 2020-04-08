@@ -1,5 +1,0 @@
-image: golang:latest
-
-tests:
-  script:
-    - go test
