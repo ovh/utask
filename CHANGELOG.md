@@ -6,7 +6,15 @@ We will list in this document any breaking changes between versions, that requir
 
 ## Breaking changes
 
-### v1.4.0
+### v1.5.0 (2020-04-09)
+##### Templating
+- `jsonmarshal` function has been __deleted__. It was obsolete since the `sprig` package used by utask provides many JSON related functions (e.g. `toJson`).
+- `jsonfield` function has been __deleted__. It was obsolete since a pipeline such as ``{{ field `foo` | toJson }}`` achieves the same thing.
+
+##### API model
+- ``/resolution``: `resolution.payload` (deprecated, duplicate of / replaced by `resolution.output` since 1.0) has finally been __deleted__.
+
+### v1.4.0 (2020-03-31)
 ##### API routes
 - `GET /resolution` API route has been __deleted__. We decided that resolutions should always be accessed through tasks
 
