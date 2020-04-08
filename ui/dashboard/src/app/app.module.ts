@@ -1,5 +1,8 @@
 import { NgModule, ErrorHandler } from '@angular/core';
-
+/*
+  Toaster
+*/
+import { ToastrModule } from 'ngx-toastr';
 /*
   Font AWESOME
 */
@@ -126,6 +129,9 @@ const pages = [
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    ToastrModule.forRoot({
+      positionClass: 'toast-bottom-right',
+    }),
   ],
   providers: [GraphService, ApiService, ResolutionService, TaskService, RequestService, { provide: ErrorHandler, useClass: MyErrorHandler }],
   bootstrap: [AppComponent],

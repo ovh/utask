@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../@services/api.service';
 import * as _ from 'lodash';
@@ -10,6 +10,7 @@ import { delay, repeat } from 'rxjs/operators';
 import { ActiveInterval } from 'active-interval';
 import * as bbPromise from 'bluebird';
 import * as moment from 'moment';
+import { ToastrService } from 'ngx-toastr';
 bbPromise.config({
   cancellation: true
 });
@@ -35,8 +36,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   interval: ActiveInterval;
   refresh: { [key: string]: bbPromise<any> } = {};
   display: { [key: string]: boolean } = {};
+  displayTest: boolean = false;
 
-  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private resolutionService: ResolutionService, private taskService: TaskService) {
+  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private resolutionService: ResolutionService, private taskService: TaskService, private zone: NgZone, private toastr: ToastrService) {
   }
 
   ngOnInit() {
@@ -65,13 +67,17 @@ export class HomeComponent implements OnInit, OnDestroy {
             tasks.forEach((task: any) => {
               const t = _.find(this.tasks, { id: task.id });
               if (t) {
-                this.mergeTask(t);
+                this.zone.run(() => {
+                  this.mergeTask(t);
+                });
                 this.refreshTask(t.id, 4, 1000);
               } else {
-                task.hide = true;
-                this.tasks.unshift(task);
+                this.zone.run(() => {
+                  this.display.newTasks = true;
+                  task.hide = true;
+                  this.tasks.unshift(task);
+                });
                 this.refreshTask(task.id, 4, 1000);
-                this.display.newTasks = true;
               }
             });
             this.generateProgressBars(this.tasks);
@@ -89,9 +95,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   displayNewTasks() {
-    this.display.newTasks = false;
-    this.tasks.forEach((t) => {
-      t.hide = false;
+    this.zone.run(() => {
+      this.display.newTasks = false;
+      this.tasks.forEach((t) => {
+        t.hide = false;
+      });
     });
   }
 
@@ -154,9 +162,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
     if (!this.loaders[`task${id}`]) {
       const sub = of(id).pipe(delay(delayMillisecond)).pipe(repeat(times - 1)).subscribe((id: string) => {
-        this.loaders[`task${id}`] = true;
+        this.zone.run(() => {
+          this.loaders[`task${id}`] = true;
+        });
         this.api.task(id).toPromise().then((task: any) => {
-          this.mergeTask(task);
+          this.zone.run(() => {
+            this.mergeTask(task);
+          });
           if (['DONE', 'CANCELLED'].indexOf(task.state) > -1) {
             sub.unsubscribe();
           }
@@ -164,7 +176,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       }, (err) => {
         console.log(err);
       }, () => {
-        this.loaders[`task${id}`] = false;
+        this.zone.run(() => {
+          this.loaders[`task${id}`] = false;
+        });
       });
 
       this.loaders[`task${id}`] = true;
@@ -172,7 +186,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (['DONE', 'CANCELLED'].indexOf(task.state) > -1 && times > 1) {
           sub.unsubscribe();
         }
-        this.mergeTask(task);
+        this.zone.run(() => {
+          this.mergeTask(task);
+        });
       });
     }
   }
@@ -195,9 +211,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   runResolution(resolutionId: string, taskId: string) {
     this.resolutionService.run(resolutionId).then((data: any) => {
       this.refreshTask(taskId, 4, 1000);
+      this.toastr.info('The resolution has been run.');
     }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
+      this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+    });
+  }
+
+  pauseResolution(resolutionId: string, taskId: string) {
+    this.resolutionService.pause(resolutionId).then((data: any) => {
+      this.refreshTask(taskId, 4, 1000);
+      this.toastr.info('The resolution has been paused.');
+    }).catch((err) => {
+      this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+    });
+  }
+
+  cancelResolution(resolutionId: string, taskId: string) {
+    this.resolutionService.cancel(resolutionId).then((data: any) => {
+      this.refreshTask(taskId, 1, 1000);
+      this.toastr.info('The resolution has been cancelled.');
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -207,29 +242,10 @@ export class HomeComponent implements OnInit, OnDestroy {
       _.remove(this.tasks, {
         id
       });
+      this.toastr.info('The task has been deleted.');
     }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
-    });
-  }
-
-  pauseResolution(resolutionId: string, taskId: string) {
-    this.resolutionService.pause(resolutionId).then((data: any) => {
-      this.refreshTask(taskId, 4, 1000);
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
-    });
-  }
-
-  cancelResolution(resolutionId: string, taskId: string) {
-    this.resolutionService.cancel(resolutionId).then((data: any) => {
-      this.refreshTask(taskId, 1, 1000);
-    }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
+      if (err !== 0 && err !== 'Cross click') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -237,10 +253,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   extendResolution(resolutionId: string, taskId: string) {
     this.resolutionService.extend(resolutionId).then((data: any) => {
       this.refreshTask(taskId, 4, 1000);
+      this.toastr.info('The resolution has been extended.');
     }).catch((err) => {
-      if (err !== 0) {
-        console.log(err);
-      }
+      console.log(err);
+      this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
     });
   }
 

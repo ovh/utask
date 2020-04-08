@@ -185,7 +185,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
         const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
         if (!this.taskIsResolvable && resolvable) {
-          this.template.resolver_inputs.forEach((field: any) => {
+          _.get(this.template, 'resolver_inputs', []).forEach((field: any) => {
             if (field.type === 'bool' && field.default === null) {
               this.item.resolver_inputs[field.name] = false;
             } else {
