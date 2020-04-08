@@ -170,20 +170,20 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		errorMetadataKey:         metaError,
 	}
 
-	payload := make(map[string]interface{})
+	output := make(map[string]interface{})
 
 	if resultLine, err := scriptutil.ParseOutput(outStr, cfg.OutputMode, cfg.OutputManualDelimiters); err != nil {
 		return nil, metadata, err
 	} else if resultLine != "" {
-		err = json.Unmarshal([]byte(resultLine), &payload)
+		err = json.Unmarshal([]byte(resultLine), &output)
 		if err != nil && exitCode == 0 {
 			return nil, metadata, err
 		}
 	}
 
 	if exitCode != 0 {
-		return payload, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
+		return output, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
 	}
 
-	return payload, metadata, nil
+	return output, metadata, nil
 }

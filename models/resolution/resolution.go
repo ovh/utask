@@ -456,7 +456,6 @@ func (r *Resolution) ExtendRunMax(i int) {
 // -> renders a simplified view of a resolution
 func (r *Resolution) ClearOutputs() {
 	for _, s := range r.Steps {
-		s.Payload = nil // FIXME deprecate
 		s.Output = nil
 		s.Metadata = nil
 		s.Children = nil
@@ -470,11 +469,6 @@ func (r *Resolution) ClearOutputs() {
 func (r *Resolution) setSteps(st map[string]*step.Step) {
 	r.Steps = st
 	for name, s := range r.Steps {
-		// for legacy resolutions, value is found in "payload"
-		// -> copy to "output"
-		if s.Output == nil && s.Payload != nil { // FIXME deprecate
-			s.Output = s.Payload
-		}
 		r.Values.SetOutput(name, s.Output)
 		r.Values.SetMetadata(name, s.Metadata)
 		r.Values.SetChildren(name, s.Children)

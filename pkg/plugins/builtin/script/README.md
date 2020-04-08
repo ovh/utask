@@ -54,15 +54,15 @@ action:
 
 ## Note
 
-The plugin returns two objects, the `Payload` who is the last returned line of your script as json:
+The plugin returns two objects, `output` and `metadata`.
+
+`output` depends on the `output_mode` configuration. It is read from the stdout of the script, either on the last line (`output_mode` set to `manual-lastline`) or between given delimiters (`output_mode` set to `manual-delimiters`, delimiters defined in `output_manual_delimiters`).
 
 ```json
 {"dumb_string":"Hello world!","random_object":{"foo":"bar"}}
 ```
 
-*Your JSON must be printed on last line*
-
-The `Metadata` to fetch informations about plugin execution:
+`metadata` contains information about the script execution:
 
 ```js
 {

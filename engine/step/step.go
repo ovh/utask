@@ -78,7 +78,6 @@ type Step struct {
 	// result
 	Schema         json.RawMessage         `json:"json_schema,omitempty"`
 	ResultValidate jsonschema.ValidateFunc `json:"-"`
-	Payload        interface{}             `json:"payload,omitempty"` // deprecated, kept for UI backwards compatibility
 	Output         interface{}             `json:"output,omitempty"`
 	Metadata       interface{}             `json:"metadata,omitempty"`
 	Children       []interface{}           `json:"children,omitempty"`
@@ -273,7 +272,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 				}
 				st.Output = baseOutput
 			}
-			st.Payload = st.Output // FIXME deprecate
 			if err != nil {
 				if errors.IsBadRequest(err) {
 					st.State = StateClientError
