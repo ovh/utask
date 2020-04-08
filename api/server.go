@@ -176,6 +176,7 @@ func (s *Server) build(ctx context.Context) {
 
 		tonic.SetErrorHook(jujerr.ErrHook)
 		tonic.SetBindHook(yamlBindHook)
+		tonic.SetRenderHook(yamljsonRenderHook, "application/json")
 
 		authRoutes := router.Group("/", "x-misc", "Misc authenticated routes", s.authMiddleware)
 		{
