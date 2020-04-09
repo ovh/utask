@@ -3,6 +3,7 @@ package pluginsubtask
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
@@ -132,9 +133,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	switch t.State {
 	case task.StateDone:
 		stepError = nil
-	case task.StateCancelled:
-		// stop retrying if subtask was cancelled
-		stepError = errors.BadRequestf("Task '%s' was cancelled", t.PublicID)
+	case task.StateCancelled, task.StateWontfix, task.StateBlocked:
+		// Stop retrying the subtask.
+		stepError = errors.BadRequestf("Task '%s' changed state: %s", t.PublicID, strings.ToLower(t.State))
 	default:
 		// keep step running while subtask is not done
 		// FIXME, use proper error type
