@@ -10,22 +10,7 @@ export class ResolutionService {
     constructor(private modalService: NgbModal, private api: ApiService) { }
 
     pause(resolutionId: string) {
-        return new Promise((resolve, reject) => {
-            const modal = this.modalService.open(ModalConfirmationApiComponent, {
-                size: 'xl'
-            });
-            modal.componentInstance.question = `Are you sure you want to pause this resolution #${resolutionId}`;
-            modal.componentInstance.title = `Pause resolution`;
-            modal.componentInstance.yes = `Yes, I'm sure`;
-            modal.componentInstance.apiCall = () => {
-                return this.api.pauseResolution(resolutionId);
-            };
-            modal.result.then((res: any) => {
-                resolve(res);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        return this.api.pauseResolution(resolutionId).toPromise();
     }
 
     cancel(resolutionId: string) {
@@ -48,41 +33,11 @@ export class ResolutionService {
     }
 
     extend(resolutionId: string) {
-        return new Promise((resolve, reject) => {
-            const modal = this.modalService.open(ModalConfirmationApiComponent, {
-                size: 'xl'
-            });
-            modal.componentInstance.question = `Are you sure you want to extend this resolution #${resolutionId}`;
-            modal.componentInstance.title = `Extend resolution`;
-            modal.componentInstance.yes = `Yes, I'm sure`;
-            modal.componentInstance.apiCall = () => {
-                return this.api.extendResolution(resolutionId);
-            };
-            modal.result.then((res: any) => {
-                resolve(res);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        return this.api.extendResolution(resolutionId).toPromise();
     }
 
     run(resolutionId: string) {
-        return new Promise((resolve, reject) => {
-            const modal = this.modalService.open(ModalConfirmationApiComponent, {
-                size: 'xl'
-            });
-            modal.componentInstance.question = `Are you sure you want to run this resolution #${resolutionId}`;
-            modal.componentInstance.title = `Run resolution`;
-            modal.componentInstance.yes = `Yes, I'm sure`;
-            modal.componentInstance.apiCall = () => {
-                return this.api.runResolution(resolutionId);
-            };
-            modal.result.then((res: any) => {
-                resolve(res);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        return this.api.runResolution(resolutionId).toPromise();
     }
 
     edit(resolution: any) {
