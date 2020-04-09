@@ -298,7 +298,11 @@ steps:
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
 - `dependencies`: a list of step names on which this step waits before running
-- `retry_pattern`: (seconds|minutes|hours) define on what temporal order of magnitude the re-runs of this step should be spread
+- `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
+
+<p align="center">
+<img src="./assets/img/utask_backoff.png" width="70%">
+</p>
 
 #### Action
 

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff"
 	"github.com/ghodss/yaml"
+	expbk "github.com/jpillora/backoff"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
@@ -820,23 +820,52 @@ func minDuration(a, b time.Duration) time.Duration {
 	return b
 }
 
-// for retryCount:    1,  2,  3,  4,  5,  6......
-// seconds: 	      10, 17, 21, 24, 26, 28.....
-// minutes and hours: 1,  1,  7,  11, 14, 16.....
-func computeDelay(d time.Duration, rc int) time.Duration {
-	// shorter two first retries for "minutes" and "hours" retry patterns
-	if d >= time.Minute {
-		if rc <= 2 {
-			return d
-		}
-		rc--
-	}
-	ret := time.Duration(float64(d) * math.Log(float64(rc)) * 10)
-	// baseline 10s for "seconds" retry pattern
-	if d < time.Minute {
-		ret += 10 * d
+const maxMinutes = 30 * time.Minute
+
+// 1m36s, 3m12s, 4m48s, 6m24s, 8m0s, 9m36s, 11m12s, 12m48s, 14m24s, 16m0s
+// 17m36s, 19m12s, 20m48s, 22m24s, 24m0s, 25m36s, 27m12s, 28m48s, 30m0s
+// 30m0s, 30m0s, ...
+// cap 30m0s is reached at 20th retry
+func computeDelayMinutesLinear(d time.Duration, rc int) time.Duration {
+	ret := time.Duration((float64(1.6) * float64(rc)) * float64(d))
+	if ret >= maxMinutes {
+		ret = maxMinutes
 	}
 	return ret
+}
+
+const maxHours = 3 * time.Hour
+
+// 1h, 1h10, 1h20, 1h30, ... 3h, 3h, 3h, ...
+// cap 3h is reached at 13th retry
+func computeDelayHoursLinear(d time.Duration, rc int) time.Duration {
+	rc--
+	ret := d + (time.Duration(rc) * 10 * time.Minute)
+	if ret >= maxHours {
+		ret = maxHours
+	}
+	return ret
+}
+
+var expBackoff = expbk.Backoff{Min: 8 * time.Second, Max: 10 * time.Minute, Factor: 1.25}
+
+// 10s, 12.5s, 15.625s, 19.53125s, 24.4140625s, 30.517578125s, 38.146972656s, 47.68371582s
+// 59.604644775s, 1m14.505805969s, 1m33.132257461s, 1m56.415321826s, 2m25.519152283s
+// 3m1.898940354s, 3m47.373675443s, 4m44.217094304s, 5m55.27136788s, 7m24.08920985s, 9m15.111512312s
+// 10m0s, 10m0s, 10m0s, ...
+// the 10m0s cap is reached at the 20th retry
+func computeDelaySecondsExponential(d time.Duration, rc int) time.Duration {
+	return expBackoff.ForAttempt(float64(rc))
+}
+
+func computeDelay(d time.Duration, rc int) time.Duration {
+	switch d {
+	case time.Minute:
+		return computeDelayMinutesLinear(d, rc)
+	case time.Hour:
+		return computeDelayHoursLinear(d, rc)
+	}
+	return computeDelaySecondsExponential(time.Second, rc)
 }
 
 func resolutionStateSetter(res *resolution.Resolution, modifiedSteps map[string]bool) step.StateSetter {
