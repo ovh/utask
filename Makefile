@@ -3,7 +3,7 @@ BINARY			= utask
 MAIN_LOCATION	= ./cmd
 
 TEST_LOCATION	= ./...
-TEST_CMD		= go test -count=1 -v -mod=vendor -cover -p 1 ${TEST_LOCATION}
+TEST_CMD		= go test -count=1 -v -cover -p 1 ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
 SOURCE_FILES 	= $(shell find ./ -type f -name "*.go" | grep -v _test.go)
@@ -24,7 +24,7 @@ define goreleaser
 endef
 
 define build_binary
-	GO111MODULE=on go build -mod=vendor -ldflags "-X ${VERSION_PKG}.Commit=${LAST_COMMIT} -X ${VERSION_PKG}.Version=${VERSION}" \
+	GO111MODULE=on go build -ldflags "-X ${VERSION_PKG}.Commit=${LAST_COMMIT} -X ${VERSION_PKG}.Version=${VERSION}" \
 		-o $(1) ${MAIN_LOCATION}/$(1)
 	@[ ${DOCKER} -eq 0 ] || $(call docker_build,$(1))
 endef
@@ -51,12 +51,12 @@ release:
 	bash hack/generate-install-script.sh
 
 test:
-	# moving to another location to go get some packages, otherwise it will modify our go.mod and vendor will be out of sync
+	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod
 	cd ${HOME} && go get github.com/jstemmer/go-junit-report github.com/stretchr/testify/assert
 	GO111MODULE=on DEV=true bash hack/test.sh ${TEST_CMD} 2>&1 | go-junit-report > report.xml
 
 test-travis:
-	# moving to another location to go get some packages, otherwise it will modify our go.mod and vendor will be out of sync
+	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod
 	cd ${HOME} && go get golang.org/x/tools/cmd/cover github.com/mattn/goveralls
 	hack/test.sh ${TEST_CMD_COV}
 
