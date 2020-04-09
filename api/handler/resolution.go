@@ -65,7 +65,7 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		}
 	}
 
-	r, err := resolution.Create(dbp, t, in.ResolverInputs, resUser, false, nil) // TODO accept delay in handler
+	r, err := resolution.Create(dbp, t, in.ResolverInputs, resUser, true, nil) // TODO accept delay in handler
 	if err != nil {
 		dbp.Rollback()
 		return nil, err
