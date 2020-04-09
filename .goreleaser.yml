@@ -10,9 +10,6 @@ builds:
       - CGO_ENABLED=0
       - GO111MODULE=on
 
-    flags:
-      - -mod=vendor
-
     ldflags:
       - -X {{.Env.VERSION_PKG}}.Commit={{.Env.LASTCOMMIT}} -X {{.Env.VERSION_PKG}}.Version={{.Env.VERSION}}
 
