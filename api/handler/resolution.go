@@ -140,7 +140,7 @@ type getResolutionIn struct {
 	PublicID string `path:"id, required"`
 }
 
-// GetResolution returns a single resolution, with its full content (all step payloads included)
+// GetResolution returns a single resolution, with its full content (all step outputs included)
 func GetResolution(c *gin.Context, in *getResolutionIn) (*resolution.Resolution, error) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {

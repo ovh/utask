@@ -5,7 +5,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
 
-// the echo plugin is used to "manually" build result payloads
+// the echo plugin is used to "manually" build result outputs
 // allowing to aggregate several results in a consolidated structure
 var (
 	Plugin = taskplugin.New("echo", "0.1", exec,

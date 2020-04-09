@@ -454,8 +454,8 @@ func TestInputNumber(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
-	payload := res.Steps["stepOne"].Output.(map[string]interface{})
-	assert.Equal(t, "-2.3", payload["value"])
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "-2.3", output["value"])
 }
 
 func TestAnyDependency(t *testing.T) {
@@ -467,8 +467,8 @@ func TestAnyDependency(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 
-	payload := res.Steps["secondStepRunsIfAny"].Output.(map[string]interface{})
-	assert.Equal(t, "yes", payload["i_ran_anyway"])
+	output := res.Steps["secondStepRunsIfAny"].Output.(map[string]interface{})
+	assert.Equal(t, "yes", output["i_ran_anyway"])
 
 	thirdOKState := res.Steps["thirdStepRunsIfSecondOK"].State
 	assert.Equal(t, step.StateDone, thirdOKState)
@@ -548,13 +548,13 @@ func TestVariables(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 
-	payload := res.Steps["renderVariables"].Output.(map[string]interface{})
-	assert.Equal(t, "4", payload["truc"])
-	assert.Equal(t, "5", payload["bidule"])
-	assert.Equal(t, "Hello World!", payload["templated"])
-	assert.Equal(t, "6", payload["cached"])
-	payload = res.Steps["renderVariablesWithCache"].Output.(map[string]interface{})
-	assert.Equal(t, "6", payload["cached"])
+	output := res.Steps["renderVariables"].Output.(map[string]interface{})
+	assert.Equal(t, "4", output["truc"])
+	assert.Equal(t, "5", output["bidule"])
+	assert.Equal(t, "Hello World!", output["templated"])
+	assert.Equal(t, "6", output["cached"])
+	output = res.Steps["renderVariablesWithCache"].Output.(map[string]interface{})
+	assert.Equal(t, "6", output["cached"])
 }
 
 const (
@@ -578,11 +578,11 @@ func TestJSONTemplating(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, resolution.StateDone, res.State)
 
-	payload := res.Steps["stepOne"].Output.(map[string]interface{})
-	assert.Equal(t, multilineString, payload["raw-multiline"])
-	assert.Equal(t, singleString, payload["raw-single"])
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, multilineString, output["raw-multiline"])
+	assert.Equal(t, singleString, output["raw-single"])
 
-	jsonBody := payload["my-json-body"].(string)
+	jsonBody := output["my-json-body"].(string)
 	body := map[string]interface{}{}
 	err = json.Unmarshal([]byte(jsonBody), &body)
 	assert.Nil(t, err)
@@ -598,8 +598,8 @@ func TestJSONNumberTemplating(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, resolution.StateDone, res.State)
 
-	payload := res.Steps["loopStep"].Children
-	child := payload[0].(map[string]interface{})
+	output := res.Steps["loopStep"].Children
+	child := output[0].(map[string]interface{})
 	assert.Equal(t, "/id/1619464078", child[values.OutputKey].(string))
 }
 
@@ -698,9 +698,9 @@ func TestScriptPlugin(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 
-	payload := make(map[string]interface{})
-	payload["dumb_string"] = fmt.Sprintf("Hello %s!", argv)
-	payload["random_object"] = map[string]interface{}{"foo": "bar"}
+	output := make(map[string]interface{})
+	output["dumb_string"] = fmt.Sprintf("Hello %s!", argv)
+	output["random_object"] = map[string]interface{}{"foo": "bar"}
 
 	metadata := map[string]interface{}{
 		"exit_code":      "0",
@@ -714,7 +714,7 @@ func TestScriptPlugin(t *testing.T) {
 	metadataOutput := res.Steps["stepOne"].Metadata.(map[string]interface{})
 	metadataOutput["execution_time"] = ""
 
-	assert.Equal(t, payload, res.Steps["stepOne"].Payload)
+	assert.Equal(t, output, res.Steps["stepOne"].Output)
 	assert.Equal(t, metadata, metadataOutput)
 }
 

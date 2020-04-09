@@ -210,7 +210,7 @@ trap printResultJSON EXIT
 		extraCmd = execStr
 	}
 
-	output, err := session.CombinedOutput(extraCmd)
+	stdoutstderr, err := session.CombinedOutput(extraCmd)
 	if err != nil {
 		exitErr, ok := err.(*ssh.ExitError)
 		if ok {
@@ -222,7 +222,7 @@ trap printResultJSON EXIT
 		}
 	}
 
-	outStr := string(output)
+	outStr := string(stdoutstderr)
 	metadata := map[string]interface{}{
 		"output":      outStr,
 		"exit_code":   fmt.Sprint(exitCode),
@@ -230,20 +230,20 @@ trap printResultJSON EXIT
 		"exit_msg":    exitMessage,
 	}
 
-	payload := make(map[string]interface{})
+	output := make(map[string]interface{})
 
 	if resultLine, err := scriptutil.ParseOutput(outStr, cfg.OutputMode, cfg.OutputManualDelimiters); err != nil {
 		return nil, metadata, err
 	} else if resultLine != "" {
-		err = json.Unmarshal([]byte(resultLine), &payload)
+		err = json.Unmarshal([]byte(resultLine), &output)
 		if err != nil && exitCode == 0 {
 			return nil, metadata, err
 		}
 	}
 
 	if exitCode != 0 {
-		return payload, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
+		return output, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
 	}
 
-	return payload, metadata, nil
+	return output, metadata, nil
 }
