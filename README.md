@@ -242,8 +242,8 @@ A user can be allowed to resolve a task in four ways:
 - `.step.[STEP_NAME].state`: current state of the given step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
-- `.pre_hook.output.foo`: field `foo` from the output of the step's preHook (see `preHooks` below)
-- `.pre_hook.metadata.HTTPStatus`: field `HTTPStatus` from the metadata of the step's preHook (see `preHooks` below)
+- `.pre_hook.output.foo`: field `foo` from the output of the step's pre-hook (see [pre-hooks](#pre-hooks))
+- `.pre_hook.metadata.HTTPStatus`: field `HTTPStatus` from the metadata of the step's pre-hook (see [pre-hooks](#pre-hooks))
 - `.function_args.[ARG_NAME]`: argument that needs to be given in the conifguration section to the function (see `functions` below)
 
 The following templating functions are available:
@@ -277,6 +277,7 @@ The following templating functions are available:
 - `blocked`: boolean (default: false): no tasks can be created from this template
 - `hidden`: boolean (default: false): the template is not listed on the API, it is concealed to regular users
 - `retry_max`: int (default: 100): maximum amount of consecutive executions of a task based on this template, before being blocked for manual review
+- `tags`: templatable map, used to filter tasks (see [tags](#tags))
 
 ### Inputs
 
@@ -304,6 +305,25 @@ A template variable is a named holder of either:
 See the example template above to see variables in action. The expression in a variable can contain template handles to introduce values dynamically (from executed steps, for instance), like a step's configuration.
 
 The JavaScript evaluation is done using [otto](https://github.com/robertkrimen/otto).
+
+### Tags <a name="tags"></a>
+
+Tags are a map of strings property of a task. They will be used in the task listing to search for some tasks using filters. With tags, uTask can be used as a task backend by others APIs.
+
+Tags values are expected to be a `string`: it support all uTask templating on values. To remove a tag from a task, use the empty value `""`.
+
+```yaml
+  tags:
+      customer: "{{.input.customer_id}}"
+      type: "billing"
+```
+
+In this example, tag `customer` will be templated from the task inputs, and allow others APIs to search all the tasks for a given customer.
+
+Tags can be added to a task:
+- from the template definition of the task
+- while creating a task, requester can input custom tags
+- during the execution, using the [`tag` builtin plugin](./pkg/plugins/builtin/tag/README.md)
 
 ### Steps
 
@@ -396,9 +416,13 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
-- `action`: the actual task the step executes
+- `action`: the actual task the step executes, see [Action](#step-action)
+- `foreach`: see [Loops](#step-foreach)
 - `pre_hook`: an action that can be executed before the actual action of the step
 - `dependencies`: a list of step names on which this step waits before running
+- `idempotent`: a boolean indicating if this step is safe to be replayed in case of uTask instance crash
+- `json_schema`: a JSON-Schema object to validate the step output
+- `resources`: a list of resources that will be used by this step to apply some rate-limiting (see [resources](#resources))
 - `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
 - `resources`: a list of resources that will be used during the step execution, to control and limit the concurrent execution of the step (more information in [the resources section](#resources)).
@@ -407,7 +431,7 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 <img src="./assets/img/utask_backoff.png" width="70%">
 </p>
 
-#### Action
+#### Action <a name="step-action"></a>
 
 The `action` field of a step defines the actual workload to be performed. It consists of at least a `type` chosen among the registered action plugins, and a `configuration` fitting that plugin. See below for a detailed description of builtin plugins. For information on how to develop your own action plugins, refer to [this section](#plugins).
 
@@ -517,11 +541,12 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`email`**    | Send an email                                                                                                                                                                                                                                     | [Access plugin doc](./pkg/plugins/builtin/email/README.md)    |
 | **`ping`**     | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)     |
 | **`script`**   | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)   |
+| **`tag`**      | Add tags to the current running task                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/tag/README.md)      |
 | **`callback`** | Use callbacks to manage your tasks  life-cycle                                                                                                                                                                                                    | [Access plugin doc](./pkg/plugins/builtin/callback/README.md) |
 
-#### PreHooks <a name="preHooks"></a>
+#### Pre-hooks <a name="pre-hooks"></a>
 
-The `pre_hook` field of a step can be set to define an action that is executed before the step's action. This fields supports all the sames fields as the action. It aims to fetch data for the execution of the action that can change over time and needs to be fetched at every retry, such as OTPs. All the result values of the preHook are available under the templating variable `.pre_hook`
+The `pre_hook` field of a step can be set to define an action that is executed before the step's action. This field supports all the same fields as the action. It aims to fetch data for the execution of the action that can change over time and needs to be fetched at every retry, such as OTPs. All the result values of the pre-hook are available under the templating variable `.pre_hook`.
 
 ```yaml
 doSomeAuthPost:
@@ -541,7 +566,7 @@ doSomeAuthPost:
 
 #### Functions <a name="functions"></a>
 
-Functions are abstraction of the actions to define a behavior that can be re-used in templates. They act like a plugin but are fully declared in dedicated directory `functions`. They can have arguments that need to be given in the `configuration` section of the action and can be used in the declaration of the function by accessing the templating variables under `.function_args`.
+Functions are abstraction of the actions to define a behavior that can be re-used in templates. They act like a plugin but are pre-declared in dedicated directory `functions`. They can have arguments that need to be given in the `configuration` section of the action and can be used in the declaration of the function by accessing the templating variables under `.function_args`.
 
 ```yaml
 name: ovh::request
@@ -603,7 +628,7 @@ For example, `step2` can declare a dependency on `step1` in the following ways:
 - `step1:DONE,ALREADY_EXISTS`: wait for `step1` to be either in state `DONE` or `ALREADY_EXISTS`
 - `step1:ANY`: wait for `step1` to be in any "final" state, ie. it cannot keep running
 
-#### Loops
+#### Loops  <a name="step-foreach"></a>
 
 A step can be configured to take a json-formatted collection as input, in its `foreach` property. It will be executed once for each element in the collection, and its result will be a collection of each iteration. This scheme makes it possible to chain several steps with the `foreach` property.
 
@@ -654,14 +679,18 @@ This output can be then passed to another step in json format:
 foreach: '{{.step.prefixStrings.children | toJson}}'
 ```
 
-It's possible to configure the strategy used to run each elements: default strategy is `parallel`: each elements will be run in parallel to maximize throughput ; `sequence` will run each element when the previous one is done, to ensure the sequence between elements. It can be declared in the template as is:
+It's possible to configure the strategy used to run each elements: 
+- `parallel` (default): each elements will be run in parallel to maximize throughput
+- `sequence`: will run each element when the previous one is done, to ensure the sequence between elements. 
+
+It can be declared in the template like this:
 ```yaml
 foreach_strategy: "sequence"
 ```
 
 #### Resources <a name="resources"></a>
 
-Resources are a way to restrict the concurrency factor of certain operations, to control the throughput and avoid dangerous behavior e.g. flooding the targets.
+Resources are a way to restrict the concurrency factor of operations, to control the throughput and avoid dangerous behavior (e.g. flooding the targets).
 
 High level view:
 

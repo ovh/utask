@@ -87,6 +87,13 @@
                         "type": "string"
                     }
                 },
+                "resources": {
+                    "type": "array",
+                    "description": "Declares resources that will be used during this step",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "foreach": {
                     "type": "string",
                     "description": "Elements on which the step will loop"
@@ -107,13 +114,6 @@
                 "idempotent": {
                     "type": "boolean",
                     "description": "Indicate if the step can be retried safely if the uTask instance dies during the step execution"
-                },
-                "resources": {
-                    "type": "array",
-                    "description": "Resources that will be used during the execution of the step",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -1138,6 +1138,15 @@
             "patternProperties": {
                 ".*": {
                     "$ref": "#/definitions/Step"
+                }
+            }
+        },
+        "tags": {
+            "type": "object",
+            "description": "Defines this template tags",
+            "patternProperties": {
+                ".*": {
+                    "type": "string"
                 }
             }
         },
