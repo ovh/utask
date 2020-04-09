@@ -29,6 +29,7 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/loopfz/gadgeto v0.9.1
 	github.com/magiconair/properties v1.8.1 // indirect
+	github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
 	github.com/mattn/go-sqlite3 v1.11.0 // indirect
 	github.com/miscreant/miscreant-go v0.0.0-20190615163012-4f5dc8c406f6 // indirect
 	github.com/miscreant/miscreant.go v0.0.0-20190615163012-4f5dc8c406f6 // indirect
@@ -56,7 +57,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	github.com/tjarratt/babble v0.0.0-20191126185718-ccc47f626248 // indirect
-	github.com/ugorji/go v1.1.7 // indirect
+	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/wI2L/fizz v0.0.0-20190425144348-6274bc96d962
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
