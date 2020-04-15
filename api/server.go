@@ -35,6 +35,7 @@ type Server struct {
 	dashboardAPIPathPrefix string
 	dashboardSentryDSN     string
 	editorPathPrefix       string
+	maxBodyBytes           int64
 }
 
 // NewServer returns a new Server
@@ -76,6 +77,11 @@ func (s *Server) SetDashboardSentryDSN(dashboardSentryDSN string) {
 // in order that editor can be aware of a ProxyPass configuration.
 func (s *Server) SetEditorPathPrefix(editorPathPrefix string) {
 	s.editorPathPrefix = editorPathPrefix
+}
+
+// SetMaxBodyBytes
+func (s *Server) SetMaxBodyBytes(max int64) {
+	s.maxBodyBytes = max
 }
 
 // ListenAndServe launches an http server and stays blocked until
@@ -166,7 +172,7 @@ func (s *Server) build(ctx context.Context) {
 			openapiPathPrefix = "/"
 		}
 		router.Generator().SetServers([]*openapi.Server{
-			&openapi.Server{
+			{
 				URL:         openapiPathPrefix,
 				Description: utask.AppName(),
 			},
@@ -175,7 +181,7 @@ func (s *Server) build(ctx context.Context) {
 		router.Use(ajaxHeadersMiddleware, errorLogMiddleware)
 
 		tonic.SetErrorHook(jujerr.ErrHook)
-		tonic.SetBindHook(yamlBindHook)
+		tonic.SetBindHook(yamlBindHook(s.maxBodyBytes))
 		tonic.SetRenderHook(yamljsonRenderHook, "application/json")
 
 		authRoutes := router.Group("/", "x-misc", "Misc authenticated routes", s.authMiddleware)

@@ -89,9 +89,15 @@ type Cfg struct {
 	DashboardAPIPathPrefix  string                   `json:"dashboard_api_path_prefix"`
 	DashboardSentryDSN      string                   `json:"dashboard_sentry_dsn"`
 	EditorPathPrefix        string                   `json:"editor_path_prefix"`
+	ServerOptions           ServerOpt                `json:"server_options"`
 
 	resourceSemaphores map[string]*semaphore.Weighted
 	executionSemaphore *semaphore.Weighted
+}
+
+// ServerOpt holds the configuration for the http server
+type ServerOpt struct {
+	MaxBodyBytes int64 `json:"max_body_bytes"`
 }
 
 // NotifyBackend holds configuration for instantiating a notify client
