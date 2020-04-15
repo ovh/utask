@@ -143,6 +143,7 @@ var rootCmd = &cobra.Command{
 		server.SetDashboardAPIPathPrefix(cfg.DashboardAPIPathPrefix)
 		server.SetEditorPathPrefix(cfg.EditorPathPrefix)
 		server.SetDashboardSentryDSN(cfg.DashboardSentryDSN)
+		server.SetMaxBodyBytes(cfg.ServerOptions.MaxBodyBytes)
 
 		if utask.FDebug {
 			log.SetLevel(log.DebugLevel)

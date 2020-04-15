@@ -11,7 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const maxBodyBytes = 256 * 1024
+const (
+	// default max body bytes: 256KB
+	// this can be overriden via configuration
+	defaultMaxBodyBytes = 256 * 1024
+
+	// absolute upper limit for configuration max body bytes: 10MB
+	upperLimitMaxBodyBytes = 10 * 1024 * 1024
+
+	// absolute lower limit for configuration max body bytes: 1KB
+	lowerLimitMaxBodyBytes = 1024
+)
 
 var yamlBind = yamlBinding{}
 
@@ -27,15 +37,24 @@ func (yamlBinding) Bind(req *http.Request, obj interface{}) error {
 	return yaml.Unmarshal(bodyBytes, obj, jsonNumberOpt)
 }
 
-func yamlBindHook(c *gin.Context, i interface{}) error {
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodyBytes)
-	if c.Request.ContentLength == 0 || c.Request.Method == http.MethodGet {
+func yamlBindHook(maxBodyBytes int64) func(*gin.Context, interface{}) error {
+	if maxBodyBytes == 0 {
+		maxBodyBytes = defaultMaxBodyBytes
+	} else if maxBodyBytes > upperLimitMaxBodyBytes {
+		maxBodyBytes = upperLimitMaxBodyBytes
+	} else if maxBodyBytes < lowerLimitMaxBodyBytes {
+		maxBodyBytes = lowerLimitMaxBodyBytes
+	}
+	return func(c *gin.Context, i interface{}) error {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBodyBytes)
+		if c.Request.ContentLength == 0 || c.Request.Method == http.MethodGet {
+			return nil
+		}
+		if err := c.ShouldBindWith(i, yamlBind); err != nil && err != io.EOF {
+			return fmt.Errorf("error parsing request body: %s", err.Error())
+		}
 		return nil
 	}
-	if err := c.ShouldBindWith(i, yamlBind); err != nil && err != io.EOF {
-		return fmt.Errorf("error parsing request body: %s", err.Error())
-	}
-	return nil
 }
 
 func jsonNumberOpt(dec *json.Decoder) *json.Decoder {
