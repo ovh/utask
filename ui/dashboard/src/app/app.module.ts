@@ -86,6 +86,7 @@ import { MyErrorHandler } from './handlers/error.handler';
 import { GraphService } from './@services/graph.service';
 import { StatsComponent } from './@routes/stats/stats.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
+import { AutofocusDirective } from './@directives/autofocus.directive';
 
 const pages = [
   AppComponent,
@@ -114,6 +115,7 @@ const pages = [
   ModalEditResolutionComponent,
 
   FullHeightDirective,
+  AutofocusDirective,
 
   FromNowPipe
 ];

@@ -1,7 +1,6 @@
 <div>
   <loader *ngIf="loaders.tasks"></loader>
   <error-message [data]="errors.tasks" *ngIf="errors.tasks && !loaders.tasks"></error-message>
-
   <div class="main" *ngIf="!loaders.tasks && !errors.tasks">
     <header>
       <h1>
@@ -16,7 +15,7 @@
           &nbsp;
           <select class="form-control" id="filter_state" name="filter_state" [(ngModel)]="pagination.state"
             (change)="search()">
-            <option value="">-- All state --</option>
+            <option value="">-- Any state --</option>
             <option value="BLOCKED">BLOCKED</option>
             <option value="CANCELLED">CANCELLED</option>
             <option value="DONE">DONE</option>
@@ -32,17 +31,55 @@
         <header>
           <div class="utask_bloc_header_title" style="width:100%">
             Tasks
+            <div style="float:right;width: calc(100% - 100px);text-align:right;">
+              <div style="margin-left: 4px;display:inline-block;" class="btn-group" ngbDropdown>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle
+                    [disabled]="!multiActions.enable">
+                    Actions (bulk)
+                  </button>
+                </div>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                  <button type="button" ngbDropdownItem (click)="runAll()" [disabled]="!multiActions.actions['run']">
+                    Run
+                  </button>
+                  <button type="button" ngbDropdownItem (click)="cancelAll()"
+                    [disabled]="!multiActions.actions['cancel']">
+                    Cancel
+                  </button>
+                  <button type="button" ngbDropdownItem (click)="pauseAll()"
+                    [disabled]="!multiActions.actions['pause']">
+                    Pause
+                  </button>
+                  <button type="button" ngbDropdownItem (click)="extendAll()"
+                    [disabled]="!multiActions.actions['extend']">
+                    Extend
+                  </button>
+                  <button type="button" ngbDropdownItem (click)="deleteAll()"
+                    [disabled]="!multiActions.actions['delete']">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </header>
         <section>
           <div *ngIf="display.newTasks" class="alert alert-info">
             <strong>New tasks</strong> have been added. <button type="button" class="btn btn-info"
-              (click)="displayNewTasks()">Refresh</button>
+              (click)="displayNewTasks();">Refresh</button>
           </div>
+
           <div class="table-striped table-condensed" infiniteScroll (scrolled)="next()">
             <table class="table home_tasks">
               <thead>
                 <tr>
+                  <th scope="col">
+                    <input type="checkbox" [(ngModel)]="multiActions.all" title="Select all" *ngIf="multiActions.all"
+                      (change)="multiActions.selection = {};checkActions(true);" />
+                    <input type="checkbox" [(ngModel)]="multiActions.all" title="Unselect all" *ngIf="!multiActions.all"
+                      (change)="selectAll();checkActions(true);" />
+                  </th>
                   <th scope="col">Title</th>
                   <th scope="col">Status</th>
                   <th scope="col" class="d-none d-md-table-cell">Requester</th>
@@ -54,6 +91,10 @@
               <tbody>
                 <ng-template ngFor let-item [ngForOf]="tasks">
                   <tr *ngIf="!item.hide">
+                    <th style="padding-top: 8px;">
+                      <input type="checkbox" name="selection-{{item.id}}" [(ngModel)]='multiActions.selection[item.id]'
+                        (change)="checkActions($event)" />
+                    </th>
                     <th scope="row">
                       <p class="task_title"><a [routerLink]="'/task/'+item.id" title="{{item.title}}" class="nowrap"
                           style="display:block">{{item.title}}</a></p>
@@ -84,7 +125,7 @@
                     <td class="nowrap d-none d-xl-table-cell">{{item.last_activity | fromNow}}</td>
                     <td class="task_actions">
                       <div
-                        *ngIf="(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED') || meta.user_is_admin"
+                        *ngIf="((item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED') || meta.user_is_admin)"
                         class="btn-group utask_bloc_header_dropdown" ngbDropdown>
                         <div class="btn-group" role="group">
                           <button type="button" class="btn btn-sm btn-primary" title="Run"
@@ -103,6 +144,7 @@
                           </button>
                           <button type="button" class="btn btn-sm btn-primary" title="Delete"
                             *ngIf="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED') && meta.user_is_admin"
+                            [disabled]="item.state === 'BLOCKED'"
                             (click)="deleteTask(item.id);$event.stopPropagation();">
                             <i class="fas fa-trash"></i>
                           </button>
@@ -115,7 +157,8 @@
                             *ngIf="item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED'"
                             (click)="extendResolution(item.resolution, item.id); $event.stopPropagation();">Extend</button>
                           <button type="button" ngbDropdownItem *ngIf="meta.user_is_admin"
-                            (click)="deleteTask(item.id);$event.stopPropagation();">Delete</button>
+                            (click)="deleteTask(item.id);$event.stopPropagation();"
+                            [disabled]="item.state === 'BLOCKED'">Delete</button>
                         </div>
                       </div>
                     </td>

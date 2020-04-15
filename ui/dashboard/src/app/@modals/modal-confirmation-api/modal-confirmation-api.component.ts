@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ApiService } from '../../@services/api.service';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-modal-confirmation-api',
@@ -11,7 +11,6 @@ export class ModalConfirmationApiComponent {
   @Input() title: string;
   @Input() yes: string;
   @Input() apiCall: any;
-  errors: any[];
   loading = false;
   error = null;
 
@@ -20,12 +19,15 @@ export class ModalConfirmationApiComponent {
 
   submit() {
     this.loading = true;
-    this.apiCall().subscribe((data: any) => {
+    this.apiCall().then((data: any) => {
       this.error = null;
       this.activeModal.close(data);
-    }, (err: any) => {
-      this.error = err;
-    }).add(() => {
+    }).catch((err: any) => {
+      console.log(err);
+      if (err) {
+        this.error = err;
+      }
+    }).finally(() => {
       this.loading = false;
     });
   }

@@ -37,6 +37,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   refresh: { [key: string]: bbPromise<any> } = {};
   display: { [key: string]: boolean } = {};
   displayTest: boolean = false;
+  multiActions = {
+    enable: false,
+    selection: {},
+    actions: {},
+    all: false,
+  };
 
   constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private resolutionService: ResolutionService, private taskService: TaskService, private zone: NgZone, private toastr: ToastrService) {
   }
@@ -60,7 +66,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.interval = new ActiveInterval();
     this.interval.setInterval(() => {
-      if (this.tasks.length) {
+      if (this.tasks.length && !this.loaders.tasks) {
         const lastActivity = moment(_.maxBy(this.tasks, t => t.last_activity).last_activity).toDate();
         this.refresh.lastActivities = this.fetchLastActivities(lastActivity).then((tasks: any[]) => {
           if (tasks.length) {
@@ -87,6 +93,13 @@ export class HomeComponent implements OnInit, OnDestroy {
         });
       }
     }, 15000, false);
+  }
+
+  selectAll() {
+    _.filter(this.tasks, t => !t.hide).map(t => t.id).forEach((id) => {
+      this.multiActions.selection[id] = true;
+    });
+    this.checkActions(true);
   }
 
   ngOnDestroy() {
@@ -174,7 +187,11 @@ export class HomeComponent implements OnInit, OnDestroy {
           }
         });
       }, (err) => {
-        console.log(err);
+        if (err.status === 404) {
+          _.remove(this.tasks, {
+            id
+          });
+        }
       }, () => {
         this.zone.run(() => {
           this.loaders[`task${id}`] = false;
@@ -189,6 +206,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.zone.run(() => {
           this.mergeTask(task);
         });
+      }).catch((err) => {
+        if (err.status === 404) {
+          _.remove(this.tasks, {
+            id
+          });
+        }
       });
     }
   }
@@ -255,7 +278,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.refreshTask(taskId, 4, 1000);
       this.toastr.info('The resolution has been extended.');
     }).catch((err) => {
-      console.log(err);
       this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
     });
   }
@@ -293,6 +315,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   search() {
     this.cancelRefresh();
+    this.zone.run(() => {
+      this.multiActions.selection = {};
+      this.multiActions.all = false;
+    });
     if (_.isEqual(this.pagination, this.queryToSearchTask())) {
       this.loaders.tasks = true;
       this.loadTasks().then((tasks) => {
@@ -317,5 +343,174 @@ export class HomeComponent implements OnInit, OnDestroy {
     tasks.forEach((task: any) => {
       this.percentages[task.id] = Math.round(task.steps_done / task.steps_total * 100);
     });
+  }
+
+  cancelAll() {
+    const tmpIds = Object.keys(this.multiActions.selection);
+    const taskIds = [];
+    for (let i = 0; i < tmpIds.length; i++) {
+      if (this.multiActions.selection[tmpIds[i]]) {
+        taskIds.push(tmpIds[i]);
+      }
+    }
+    const resolutionIds = _.compact(taskIds.map((id) => {
+      return _.get(_.find(this.tasks, { id: id }), 'resolution');
+    }));
+    this.resolutionService.cancelAll(resolutionIds).then(() => {
+      taskIds.forEach((id) => {
+        this.refreshTask(id, 4, 1000);
+      });
+      this.toastr.info('The tasks have been cancelled.');
+      this.multiActions.selection = {};
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.search();
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
+    }).finally(() => {
+      this.checkActions(true);
+    });
+  }
+
+  pauseAll() {
+    const tmpIds = Object.keys(this.multiActions.selection);
+    const taskIds = [];
+    for (let i = 0; i < tmpIds.length; i++) {
+      if (this.multiActions.selection[tmpIds[i]]) {
+        taskIds.push(tmpIds[i]);
+      }
+    }
+    const resolutionIds = _.compact(taskIds.map((id) => {
+      return _.get(_.find(this.tasks, { id: id }), 'resolution');
+    }));
+    this.resolutionService.pauseAll(resolutionIds).then(() => {
+      taskIds.forEach((id) => {
+        this.refreshTask(id, 4, 1000);
+      });
+      this.toastr.info('The tasks have been paused.');
+      this.multiActions.selection = {};
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.search();
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
+    }).finally(() => {
+      this.checkActions(true);
+    });
+  }
+
+  extendAll() {
+    const tmpIds = Object.keys(this.multiActions.selection);
+    const taskIds = [];
+    for (let i = 0; i < tmpIds.length; i++) {
+      if (this.multiActions.selection[tmpIds[i]]) {
+        taskIds.push(tmpIds[i]);
+      }
+    }
+    const resolutionIds = _.compact(taskIds.map((id) => {
+      return _.get(_.find(this.tasks, { id: id }), 'resolution');
+    }));
+    this.resolutionService.extendAll(resolutionIds).then(() => {
+      taskIds.forEach((id) => {
+        this.refreshTask(id, 4, 1000);
+      });
+      this.toastr.info('The tasks have been extended.');
+      this.multiActions.selection = {};
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.search();
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
+    }).finally(() => {
+      this.checkActions(true);
+    });
+  }
+
+  deleteAll() {
+    const tmpIds = Object.keys(this.multiActions.selection);
+    const taskIds = [];
+    for (let i = 0; i < tmpIds.length; i++) {
+      if (this.multiActions.selection[tmpIds[i]]) {
+        taskIds.push(tmpIds[i]);
+      }
+    }
+    this.taskService.deleteAll(taskIds).then(() => {
+      taskIds.forEach((id: string) => {
+        _.remove(this.tasks, {
+          id
+        });
+      })
+      this.toastr.info('The tasks have been deleted.');
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.search();
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
+      taskIds.forEach((id) => {
+        this.refreshTask(id, 1);
+      });
+    }).finally(() => {
+      this.checkActions(true);
+    });
+  }
+
+  runAll() {
+    const tmpIds = Object.keys(this.multiActions.selection);
+    const taskIds = [];
+    for (let i = 0; i < tmpIds.length; i++) {
+      if (this.multiActions.selection[tmpIds[i]]) {
+        taskIds.push(tmpIds[i]);
+      }
+    }
+    const resolutionIds = _.compact(taskIds.map((id) => {
+      return _.get(_.find(this.tasks, { id: id }), 'resolution');
+    }));
+    this.resolutionService.runAll(resolutionIds).then(() => {
+      taskIds.forEach((id) => {
+        this.refreshTask(id, 4, 1000);
+      });
+      this.toastr.info('The tasks have been run.');
+      this.multiActions.selection = {};
+    }).catch((err) => {
+      if (err !== 0 && err !== 'Cross click') {
+        this.search();
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
+    }).finally(() => {
+      this.checkActions(true);
+    });
+  }
+
+  checkActions(open: boolean) {
+    if (!open) {
+      return;
+    }
+    this.multiActions.enable = false;
+    if (this.meta.user_is_admin) {
+      this.multiActions.actions['delete'] = true;
+    }
+    this.multiActions.actions['cancel'] = true;
+    this.multiActions.actions['run'] = true;
+    this.multiActions.actions['pause'] = true;
+    this.multiActions.actions['extend'] = true;
+    const ids = Object.keys(this.multiActions.selection);
+    for (let i = 0; i < ids.length; i++) {
+      const task = _.find(this.tasks, { id: ids[i] });
+      if (task && this.multiActions.selection[ids[i]] === true) {
+        this.multiActions.enable = true;
+        if ((!task.resolution || task.state === 'DONE' || task.state === 'CANCELLED')) {
+          this.multiActions.actions['cancel'] = false;
+          this.multiActions.actions['run'] = false;
+          this.multiActions.actions['pause'] = false;
+          this.multiActions.actions['extend'] = false;
+          if (!this.meta.user_is_admin) {
+            this.toastr.info(`The task '${ids[i]}' has no resolution or is finished, you can\'t make multi actions on it.`);
+          }
+          break;
+        } else if (task.state === 'BLOCKED') {
+          this.multiActions.actions['delete'] = false;
+        }
+      }
+    }
   }
 }

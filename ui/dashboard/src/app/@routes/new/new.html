@@ -12,7 +12,7 @@
             </ul> -->
         <div class="form-group">
           <label for="input_templates">Templates</label>
-          <select class="form-control" id="input_templates" name="input_templates" required
+          <select class="form-control" id="input_templates" [autofocus]="true" name="input_templates" required
             [(ngModel)]="selectedTemplate" (change)="newTask(selectedTemplate);saveFormInQueryParams()">
             <option *ngIf="!selectedTemplate">-- Template --</option>
             <ng-template ngFor let-template [ngForOf]="templates">
