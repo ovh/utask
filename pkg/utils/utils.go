@@ -78,7 +78,17 @@ func JSONMarshal(obj interface{}) ([]byte, error) {
 	enc := json.NewEncoder(b)
 	enc.SetEscapeHTML(false)
 	err := enc.Encode(obj)
-	return b.Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+
+	// json.NewEncoder.Encode adds a final '\n', json.Marshal does not.
+	// Let's keep the default json.Marshal behaviour.
+	res := b.Bytes()
+	if len(res) >= 1 && res[len(res)-1] == '\n' {
+		res = res[:len(res)-1]
+	}
+	return res, nil
 }
 
 // JSONMarshalIndent will JSON encode a given object, without escaping HTML characters and indentation
@@ -88,7 +98,17 @@ func JSONMarshalIndent(obj interface{}, prefix, indent string) ([]byte, error) {
 	enc.SetEscapeHTML(false)
 	enc.SetIndent(prefix, indent)
 	err := enc.Encode(obj)
-	return b.Bytes(), err
+	if err != nil {
+		return nil, err
+	}
+
+	// json.NewEncoder.Encode adds a final '\n', json.Marshal does not.
+	// Let's keep the default json.Marshal behaviour.
+	res := b.Bytes()
+	if len(res) >= 1 && res[len(res)-1] == '\n' {
+		res = res[:len(res)-1]
+	}
+	return res, nil
 }
 
 // ConvertJSONRowToSlice takes a json-formatted array and returns a string slice
