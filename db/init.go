@@ -84,7 +84,7 @@ func Init(store *configstore.Store) error {
 		cfg.ConnMaxLifetime = intPtr(defaultConnMaxLifetime)
 	}
 	logrus.Infof("[DatabaseConfig] Using %d max open connections, %d max idle connections, %d seconds timeout",
-		cfg.MaxOpenConns, cfg.MaxIdleConns, cfg.ConnMaxLifetime,
+		*cfg.MaxOpenConns, *cfg.MaxIdleConns, *cfg.ConnMaxLifetime,
 	)
 	db.SetMaxOpenConns(*cfg.MaxOpenConns)
 	db.SetMaxIdleConns(*cfg.MaxIdleConns)
