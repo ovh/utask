@@ -108,3 +108,34 @@ steps:
               then:
                   this: OK
               message: OK
+    stepSix:
+        dependencies: [stepThree:ANY]
+        description: a check against a list of acceptable values
+        custom_states: [LIST_MATCH,LIST_NOMATCH]
+        action:
+            type: echo
+            configuration:
+                output:
+                    items: 'foo,bar'
+        conditions:
+            - type: check
+              if:
+                  - expected: foo
+                    operator: IN
+                    value: '{{.step.this.output.items}}'
+                    list_separator: ","
+              then:
+                  this: LIST_MATCH
+              message: List contains matching value
+            - type: check
+              if:
+                  - expected: {{.step.this.state}}
+                    operator: EQ
+                    value: 'LIST_MATCH'
+                  - expected: baz
+                    operator: NOTIN
+                    value: '{{.step.this.output.items}}'
+                    list_separator: ","
+              then:
+                  this: LIST_NOMATCH
+              message: List doesn't contains matching value

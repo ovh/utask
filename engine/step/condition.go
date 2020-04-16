@@ -19,6 +19,10 @@ const (
 	GE     = "GE"
 	LE     = "LE"
 	REGEXP = "REGEXP"
+	IN     = "IN"
+	NOTIN  = "NOTIN"
+
+	defaultSeparator = ","
 )
 
 type (
@@ -27,10 +31,11 @@ type (
 	// the intent of this condition can be explained through a contextual message
 	// for clearer error surfacing
 	Assert struct {
-		Value    string `json:"value"`
-		Operator string `json:"operator"`
-		Expected string `json:"expected"`
-		Message  string `json:"message"`
+		Value         string `json:"value"`
+		Operator      string `json:"operator"`
+		Expected      string `json:"expected"`
+		ListSeparator string `json:"list_separator"`
+		Message       string `json:"message"`
 	}
 
 	// ErrConditionNotMet is the typed error returned by Condition when its evaluation fails
@@ -91,6 +96,14 @@ func (a *Assert) Eval(v *values.Values, item interface{}, stepName string) error
 			if !regexp.MustCompile(expStr).MatchString(valStr) {
 				return ErrConditionNotMet(fmt.Sprintf("Condition not met: %s does not match regular expression %s", valStr, expStr))
 			}
+		case IN:
+			if !matchList(valStr, expStr, a.ListSeparator) {
+				return ErrConditionNotMet(fmt.Sprintf("Condition not met: expected %s to be found in list of acceptable values", valStr))
+			}
+		case NOTIN:
+			if matchList(valStr, expStr, a.ListSeparator) {
+				return ErrConditionNotMet(fmt.Sprintf("Condition not met: expected %s not to be found in list of unacceptable values", valStr))
+			}
 		}
 	}
 	return nil
@@ -101,7 +114,7 @@ func (a *Assert) Eval(v *values.Values, item interface{}, stepName string) error
 func (a *Assert) Valid() error {
 	if a != nil {
 		switch strings.ToUpper(a.Operator) {
-		case EQ, NE, GT, LT, GE, LE:
+		case EQ, NE, GT, LT, GE, LE, IN, NOTIN:
 		case REGEXP:
 			if _, err := regexp.Compile(a.Expected); err != nil {
 				return err
@@ -111,6 +124,19 @@ func (a *Assert) Valid() error {
 		}
 	}
 	return nil
+}
+
+func matchList(valStr, expStr, sep string) bool {
+	if sep == "" {
+		sep = defaultSeparator
+	}
+	values := strings.Split(valStr, sep)
+	for _, v := range values {
+		if expStr == strings.TrimSpace(v) {
+			return true
+		}
+	}
+	return false
 }
 
 // Error implements standard error

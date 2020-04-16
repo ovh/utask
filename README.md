@@ -177,13 +177,14 @@ A user can be allowed to resolve a task in three ways:
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
 
 The following templating functions are available:
-|Name|Description|Reference
-|---|---|---
-|**`Golang`** | Builtin functions from Golang text template  | [Doc](https://golang.org/pkg/text/template/#hdr-Actions)
-|**`Sprig`** | Extended set of functions from the Sprig project  | [Doc](https://masterminds.github.io/sprig/)
-|**`field`** | Equivalent to the dot notation, for entries with forbidden characters | ``{{field `config` `foo.bar`}}``
-|**`eval`** | Evaluates the value of a template variable | ``{{eval `var1`}}``
-|**`evalCache`** | Evaluates the value of a template variable, and cache for future usage (to avoid further computation) | ``{{evalCache `var1`}}``
+
+| Name            | Description                                                                                           | Reference                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **`Golang`**    | Builtin functions from Golang text template                                                           | [Doc](https://golang.org/pkg/text/template/#hdr-Actions) |
+| **`Sprig`**     | Extended set of functions from the Sprig project                                                      | [Doc](https://masterminds.github.io/sprig/)              |
+| **`field`**     | Equivalent to the dot notation, for entries with forbidden characters                                 | ``{{field `config` `foo.bar`}}``                         |
+| **`eval`**      | Evaluates the value of a template variable                                                            | ``{{eval `var1`}}``                                      |
+| **`evalCache`** | Evaluates the value of a template variable, and cache for future usage (to avoid further computation) | ``{{evalCache `var1`}}``                                 |
 
 ### Basic properties
 
@@ -301,6 +302,21 @@ steps:
           {"user_id":"{{.input.id}}"}
 ```
 
+#### Condition Operators
+
+A condition can use one of the following operators:
+- `EQ`: equal
+- `NE`: not equal
+- `GT`: greater than
+- `LT`: less than
+- `GE`: greater or equal
+- `LE`: less than or equal
+- `REGEXP`: match a regexp
+- `IN`: found in a list of values
+- `NOTIN`: not found in a list of values
+
+Note that the operators `IN` and `NOTIN` expect a list of acceptable values in the field `value`, instead of a single one. You can specify the separator character to use to split the values of the list using the field `list_separator` (default: `,`). Each value of the list will be trimmed of its leading and trailing white spaces before comparison.
+
 #### Basic Step Properties
 
 - `name`: a unique identifier
@@ -406,17 +422,17 @@ Will render the following output, a combination of the action's raw output and t
 
 Browse [builtin actions](./pkg/plugins/builtin)
 
-|Plugin name|Description|Documentation
-|---|---|---
-|**`echo`** | Print out a pre-determined result | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)
-|**`http`** | Make an http request | [Access plugin doc](./pkg/plugins/builtin/http/README.md)
-|**`subtask`** | Spawn a new task on µTask | [Access plugin doc](./pkg/plugins/builtin/subtask/README.md)
-|**`notify`**  | Dispatch a notification over a registered channel | [Access plugin doc](./pkg/plugins/builtin/notify/README.md)
-|**`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)) | [Access plugin doc](./pkg/plugins/builtin/apiovh/README.md)
-|**`ssh`**     | Connect to a remote system and run commands on it | [Access plugin doc](./pkg/plugins/builtin/ssh/README.md)
-|**`email`**   | Send an email | [Access plugin doc](./pkg/plugins/builtin/email/README.md)
-|**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)
-|**`script`**    | Execute a script under `scripts` folder | [Access plugin doc](./pkg/plugins/builtin/script/README.md)
+| Plugin name   | Description                                                                                                                                                                                                                                       | Documentation                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **`echo`**    | Print out a pre-determined result                                                                                                                                                                                                                 | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)    |
+| **`http`**    | Make an http request                                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/http/README.md)    |
+| **`subtask`** | Spawn a new task on µTask                                                                                                                                                                                                                         | [Access plugin doc](./pkg/plugins/builtin/subtask/README.md) |
+| **`notify`**  | Dispatch a notification over a registered channel                                                                                                                                                                                                 | [Access plugin doc](./pkg/plugins/builtin/notify/README.md)  |
+| **`apiovh`**  | Make a signed call on OVH's public API (requires credentials retrieved from configstore, containing the fields `endpoint`, `appKey`, `appSecret`, `consumerKey`, more info [here](https://docs.ovh.com/gb/en/customer/first-steps-with-ovh-api/)) | [Access plugin doc](./pkg/plugins/builtin/apiovh/README.md)  |
+| **`ssh`**     | Connect to a remote system and run commands on it                                                                                                                                                                                                 | [Access plugin doc](./pkg/plugins/builtin/ssh/README.md)     |
+| **`email`**   | Send an email                                                                                                                                                                                                                                     | [Access plugin doc](./pkg/plugins/builtin/email/README.md)   |
+| **`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)    |
+| **`script`**  | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)  |
 
 #### Dependencies <a name="dependencies"></a>
 
