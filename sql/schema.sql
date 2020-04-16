@@ -79,7 +79,7 @@ CREATE INDEX ON "task_comment"(id_task);
 CREATE TABLE "resolution" (
     id BIGSERIAL PRIMARY KEY,
     public_id UUID UNIQUE NOT NULL,
-    id_task BIGINT UNIQUE NOT NULL REFERENCES "task"(id),
+    id_task BIGINT UNIQUE NOT NULL REFERENCES "task"(id) ON DELETE CASCADE,
     resolver_username TEXT,
     state TEXT NOT NULL,
     instance_id BIGINT,
