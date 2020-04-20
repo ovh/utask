@@ -30,11 +30,11 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 		}
 		tmpl, err := ioutil.ReadFile(path.Join(dir, file.Name()))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read template '%s': %s", file.Name(), err)
 		}
 		var tt TaskTemplate
 		if err := yaml.Unmarshal(tmpl, &tt); err != nil {
-			return fmt.Errorf("failed to unmarshal '%s': '%s'", file.Name(), err)
+			return fmt.Errorf("failed to unmarshal template '%s': '%s'", file.Name(), err)
 		}
 
 		tt.Normalize()
@@ -51,13 +51,13 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 				return err
 			}
 			if _, err := create(dbp, &tt); err != nil {
-				return err
+				return fmt.Errorf("failed to create template '%s': %s", tt.Name, err)
 			}
 		} else {
 			verb = "Updated"
 			tt.ID = existing.ID
 			if err := update(dbp, &tt); err != nil {
-				return err
+				return fmt.Errorf("failed to update template '%s': %s", tt.Name, err)
 			}
 		}
 		logrus.Infof("%s task template '%s'", verb, tt.Name)
