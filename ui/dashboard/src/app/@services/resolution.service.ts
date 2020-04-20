@@ -48,7 +48,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }
@@ -67,7 +71,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }
@@ -106,7 +114,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }
@@ -149,7 +161,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }
@@ -192,7 +208,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }
@@ -206,7 +226,11 @@ export class ResolutionService {
             modal.result.then((res: any) => {
                 resolve(res);
             }).catch((err) => {
-                reject(err);
+                if (err !== 0 && err !== 1 && err !== 'Cross click') {
+                    reject(err);
+                } else {
+                    reject('close');
+                }
             });
         });
     }

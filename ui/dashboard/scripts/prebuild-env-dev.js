@@ -11,7 +11,9 @@ const files = [
     template: 'environment.ts.template',
     file: 'environment.ts',
     defaultValues: {
-      PREFIX_API_BASE_URL: '/api/'
+      PREFIX_API_BASE_URL: '/api/',
+      PREFIX_LOCALSTORAGE: 'utask-',
+      SENTRY_DSN: '',
     }
   }
 ];

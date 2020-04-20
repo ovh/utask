@@ -87,6 +87,7 @@ import { GraphService } from './@services/graph.service';
 import { StatsComponent } from './@routes/stats/stats.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
 import { AutofocusDirective } from './@directives/autofocus.directive';
+import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 
 const pages = [
   AppComponent,
@@ -103,6 +104,7 @@ const pages = [
 
   LoaderComponent,
   ErrorMessageComponent,
+  InputTagsComponent,
   EditorComponent,
   StepsViewerComponent,
   StepsListComponent,

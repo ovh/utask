@@ -20,38 +20,52 @@
       background: $color-success
       color: white
       padding: 0.75rem
+      transition: background 1.25s
     &__RUNNING
-      background: $color-primary
+      background-color: $color-primary
+      background-image: linear-gradient(-45deg, transparent 33%, rgba(0, 0, 0, .1) 33%, rgba(0, 0, 0, .1) 66%, transparent 66%)
+      background-size: 4rem 2rem, 100% 100%, 100% 100%
+      animation: animate-state-running 1s linear infinite
       color: white
+      transition: background 1.25s
     &__CANCELLED, &__WONTFIX
       background: $color-warning
       color: white
+      transition: background 1.25s
     &__BLOCKED
       background: $color-danger
       color: white
+      transition: background 1.25s
     &__TODO
       background: $color-primary
       color: white
+      transition: background 1.25s
 
+@keyframes animate-state-running
+  from
+      background-position-x: 0
+  to
+      background-position-x: 4rem
 
-  .utask_state_steps-steps
+.utask_state_steps-steps
+  position: relative
+  margin-top: -15px
+  height: 15px
+  width: 100%
+  border-top: 1px solid white
+  background: #DDD
+  
+  .utask_state_steps-steps-progressbar
+    background: #AAA
+    height: 15px
+    transition: width 0.25s
+  
+  .utask_state_steps-steps-text
     position: relative
+    width: 100%
     margin-top: -15px
     height: 15px
-    width: 100%
-    border-top: 1px solid white
-    background: #DDD
-    
-    .utask_state_steps-steps-progressbar
-      background: #AAA
-      height: 15px
-    
-    .utask_state_steps-steps-text
-      position: relative
-      width: 100%
-      margin-top: -15px
-      height: 15px
-      color: #333
-      font-size: 10px
-      text-align: center
-      font-weight: bold
+    color: #333
+    font-size: 10px
+    text-align: center
+    font-weight: bold

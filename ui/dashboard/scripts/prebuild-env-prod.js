@@ -15,6 +15,8 @@ const targetEnvironmentFileName = 'environment.ts';
 // for your production environment
 const defaultEnvValues = {
     PREFIX_API_BASE_URL: '/',
+    PREFIX_LOCALSTORAGE: 'utask-',
+    SENTRY_DSN: '',
 };
 
 // Load template file

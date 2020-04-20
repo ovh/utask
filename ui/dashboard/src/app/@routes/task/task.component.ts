@@ -9,9 +9,11 @@ import Template from 'src/app/@models/template.model';
 import { ResolutionService } from 'src/app/@services/resolution.service';
 import { RequestService } from 'src/app/@services/request.service';
 import MetaUtask from 'src/app/@models/meta-utask.model';
-import Task from '../../@models/task.model';
+import Task, { Comment } from '../../@models/task.model';
 import { TaskService } from 'src/app/@services/task.service';
 import { ActiveInterval } from 'active-interval';
+import { ToastrService } from 'ngx-toastr';
+import { environment } from 'src/environments/environment';
 
 @Component({
   templateUrl: './task.html',
@@ -30,10 +32,8 @@ export class TaskComponent implements OnInit, OnDestroy {
   };
   task: Task = null;
   taskIsResolvable = false;
-  autorefresh = false;
   taskId = '';
   resolution: any = null;
-  // steps: any[] = [];
   editorConfigResult: EditorConfig = {
     readonly: true,
     mode: 'ace/mode/json',
@@ -48,8 +48,13 @@ export class TaskComponent implements OnInit, OnDestroy {
   comment: any = {
     content: ''
   };
+  autorefresh: any = {
+    hasChanged: false,
+    enable: false,
+    actif: false
+  };
 
-  constructor(private modalService: NgbModal, private api: ApiService, private route: ActivatedRoute, private resolutionService: ResolutionService, private requestService: RequestService, private taskService: TaskService, private router: Router) {
+  constructor(private modalService: NgbModal, private api: ApiService, private route: ActivatedRoute, private resolutionService: ResolutionService, private requestService: RequestService, private taskService: TaskService, private router: Router, private toastr: ToastrService) {
   }
 
   ngOnDestroy() {
@@ -67,7 +72,6 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.display.reject = !this.resolution && this.taskIsResolvable;
         this.display.resolution = !this.resolution && this.taskIsResolvable;
         this.display.comments = this.task.comments && this.task.comments.length > 0;
-        this.autorefresh = ['TODO', 'RUNNING'].indexOf(this.task.state) > -1;
       }).catch((err) => {
         if (!this.task) {
           this.errors.main = err;
@@ -77,15 +81,15 @@ export class TaskComponent implements OnInit, OnDestroy {
 
     this.refreshes.tasks = new ActiveInterval();
     this.refreshes.tasks.setInterval(() => {
-      if (!this.loaders.tasks && this.autorefresh) {
+      if (!this.loaders.tasks && this.autorefresh.actif) {
         this.loadTask();
       }
-    }, 5000, false);
+    }, environment.refresh.task, false);
   }
 
   addComment() {
     this.loaders.addComment = true;
-    this.api.addComment(this.task.id, this.comment.content).toPromise().then((comment) => {
+    this.api.addComment(this.task.id, this.comment.content).toPromise().then((comment: Comment) => {
       this.task.comments = _.get(this.task, 'comments', []);
       this.task.comments.push(comment);
       this.errors.addComment = null;
@@ -105,45 +109,80 @@ export class TaskComponent implements OnInit, OnDestroy {
     previewModal.componentInstance.title = title;
   }
 
-  editRequest(task: any) {
+  editRequest(task: Task) {
     this.requestService.edit(task).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The request has been edited.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   editResolution(resolution: any) {
     this.resolutionService.edit(resolution).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The resolution has been edited.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   runResolution(resolution: any) {
     this.resolutionService.run(resolution.id).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The resolution has been run.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   pauseResolution(resolution: any) {
     this.resolutionService.pause(resolution.id).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The resolution has been paused.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   cancelResolution(resolution: any) {
     this.resolutionService.cancel(resolution.id).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The resolution has been cancelled.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   extendResolution(resolution: any) {
     this.resolutionService.extend(resolution.id).then((data: any) => {
       this.loadTask();
+      this.toastr.info('The resolution has been extended.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
   deleteTask(taskId: string) {
     this.taskService.delete(taskId).then((data: any) => {
       this.router.navigate([`/home`]);
+      this.toastr.info('The task has been deleted.');
+    }).catch((err) => {
+      if (err !== 'close') {
+        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+      }
     });
   }
 
@@ -184,6 +223,15 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.item.task_id = this.task.id;
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
         const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
+        if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
+          this.autorefresh.enable = false;
+          this.autorefresh.actif = false;
+        } else {
+          this.autorefresh.enable = true;
+          if (!this.autorefresh.hasChanged) {
+            this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN'].indexOf(this.task.state) > -1;
+          }
+        }
         if (!this.taskIsResolvable && resolvable) {
           _.get(this.template, 'resolver_inputs', []).forEach((field: any) => {
             if (field.type === 'bool' && field.default === null) {

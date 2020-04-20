@@ -1,13 +1,10 @@
 <div>
-  <loader *ngIf="loaders.tasks"></loader>
-  <error-message [data]="errors.tasks" *ngIf="errors.tasks && !loaders.tasks"></error-message>
-  <div class="main" *ngIf="!loaders.tasks && !errors.tasks">
+  <div class="main">
     <header>
       <h1>
         Tasks -
         <div class="form-inline" style="display:inline-block;">
-          <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type"
-            (change)="search();">
+          <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type" (change)="search();">
             <option value="all" *ngIf="meta.user_is_admin">All</option>
             <option value="own">As a requester</option>
             <option value="resolvable">As a resolver</option>
@@ -23,10 +20,16 @@
             <option value="TODO">TODO</option>
             <option value="WONTFIX">WONTFIX</option>
           </select>
+          &nbsp;
+          <app-input-tags class="form-control" (update)="inputTagsChanged($event);" [value]="pagination.tag" [placeholder]="'Search tags...'"></app-input-tags>
         </div>
       </h1>
     </header>
-    <section>
+
+    <loader *ngIf="loaders.tasks"></loader>
+    <error-message [data]="errors.tasks" *ngIf="errors.tasks && !loaders.tasks"></error-message>
+
+    <section *ngIf="!loaders.tasks && !errors.tasks">
       <div class="utask_bloc">
         <header>
           <div class="utask_bloc_header_title" style="width:100%">
@@ -35,28 +38,28 @@
               <div style="margin-left: 4px;display:inline-block;" class="btn-group" ngbDropdown>
                 <div class="btn-group" role="group">
                   <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle
-                    [disabled]="!multiActions.enable">
+                    *ngIf="bulkActions.enable">
                     Actions (bulk)
                   </button>
                 </div>
                 <div class="dropdown-menu" ngbDropdownMenu>
-                  <button type="button" ngbDropdownItem (click)="runAll()" [disabled]="!multiActions.actions['run']">
+                  <button type="button" ngbDropdownItem (click)="runAll()" [disabled]="!bulkActions.actions['run']">
                     Run
                   </button>
                   <button type="button" ngbDropdownItem (click)="cancelAll()"
-                    [disabled]="!multiActions.actions['cancel']">
+                    [disabled]="!bulkActions.actions['cancel']">
                     Cancel
                   </button>
                   <button type="button" ngbDropdownItem (click)="pauseAll()"
-                    [disabled]="!multiActions.actions['pause']">
+                    [disabled]="!bulkActions.actions['pause']">
                     Pause
                   </button>
                   <button type="button" ngbDropdownItem (click)="extendAll()"
-                    [disabled]="!multiActions.actions['extend']">
+                    [disabled]="!bulkActions.actions['extend']">
                     Extend
                   </button>
                   <button type="button" ngbDropdownItem (click)="deleteAll()"
-                    [disabled]="!multiActions.actions['delete']">
+                    [disabled]="!bulkActions.actions['delete']">
                     Delete
                   </button>
                 </div>
@@ -75,10 +78,10 @@
               <thead>
                 <tr>
                   <th scope="col">
-                    <input type="checkbox" [(ngModel)]="multiActions.all" title="Select all" *ngIf="multiActions.all"
-                      (change)="multiActions.selection = {};checkActions(true);" />
-                    <input type="checkbox" [(ngModel)]="multiActions.all" title="Unselect all" *ngIf="!multiActions.all"
-                      (change)="selectAll();checkActions(true);" />
+                    <input type="checkbox" [(ngModel)]="bulkActions.all" title="Select all" *ngIf="bulkActions.all"
+                      (change)="bulkActions.selection = {};checkActions();" />
+                    <input type="checkbox" [(ngModel)]="bulkActions.all" title="Unselect all" *ngIf="!bulkActions.all"
+                      (change)="selectAll();checkActions();" />
                   </th>
                   <th scope="col">Title</th>
                   <th scope="col">Status</th>
@@ -90,10 +93,9 @@
               </thead>
               <tbody>
                 <ng-template ngFor let-item [ngForOf]="tasks">
-                  <tr *ngIf="!item.hide">
+                  <tr *ngIf="!hide[item.id]">
                     <th style="padding-top: 8px;">
-                      <input type="checkbox" name="selection-{{item.id}}" [(ngModel)]='multiActions.selection[item.id]'
-                        (change)="checkActions($event)" />
+                      <input type="checkbox" name="selection-{{item.id}}" [(ngModel)]='bulkActions.selection[item.id]' (change)="checkActions()" />
                     </th>
                     <th scope="row">
                       <p class="task_title"><a [routerLink]="'/task/'+item.id" title="{{item.title}}" class="nowrap"
@@ -124,41 +126,32 @@
                     </td>
                     <td class="nowrap d-none d-xl-table-cell">{{item.last_activity | fromNow}}</td>
                     <td class="task_actions">
-                      <div
-                        *ngIf="((item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED') || meta.user_is_admin)"
-                        class="btn-group utask_bloc_header_dropdown" ngbDropdown>
+                      <div class="btn-group utask_bloc_header_dropdown" ngbDropdown>
                         <div class="btn-group" role="group">
                           <button type="button" class="btn btn-sm btn-primary" title="Run"
                             (click)="runResolution(item.resolution, item.id); $event.stopPropagation();"
-                            *ngIf="item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED'">
+                            [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')">
                             <i class="fas fa-play"></i>
                           </button>
                           <button type="button" class="btn btn-sm btn-primary" title="Cancel"
                             (click)="cancelResolution(item.resolution, item.id); $event.stopPropagation();"
-                            *ngIf="item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED'">
+                            [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')">
                             <i class="fas fa-ban"></i>
                           </button>
-                          <button *ngIf="(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')"
-                            type="button" class="btn btn-sm btn-primary" ngbDropdownToggle>
+                          <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle [disabled]="(!item.resolution || item.state === 'DONE' || item.state === 'CANCELLED') && (!meta.user_is_admin || item.state === 'BLOCKED')">
                             More
-                          </button>
-                          <button type="button" class="btn btn-sm btn-primary" title="Delete"
-                            *ngIf="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED') && meta.user_is_admin"
-                            [disabled]="item.state === 'BLOCKED'"
-                            (click)="deleteTask(item.id);$event.stopPropagation();">
-                            <i class="fas fa-trash"></i>
                           </button>
                         </div>
                         <div class="dropdown-menu" ngbDropdownMenu>
                           <button type="button" ngbDropdownItem
-                            *ngIf="item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED'"
+                          [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')"
                             (click)="pauseResolution(item.resolution, item.id); $event.stopPropagation();">Pause</button>
                           <button type="button" ngbDropdownItem
-                            *ngIf="item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED'"
+                          [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')"
                             (click)="extendResolution(item.resolution, item.id); $event.stopPropagation();">Extend</button>
-                          <button type="button" ngbDropdownItem *ngIf="meta.user_is_admin"
+                          <button type="button" ngbDropdownItem
                             (click)="deleteTask(item.id);$event.stopPropagation();"
-                            [disabled]="item.state === 'BLOCKED'">Delete</button>
+                            [disabled]="item.state === 'BLOCKED' || !meta.user_is_admin">Delete</button>
                         </div>
                       </div>
                     </td>

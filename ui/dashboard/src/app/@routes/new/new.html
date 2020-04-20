@@ -108,12 +108,12 @@
             </div>
 
             <div *ngIf="input.type=='bool'" class="form-group">
-              <label for="input_{{input.name}}">
+              <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
+                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" style="float: left;margin-top: 5px;width: 30px;"/>
+              <label for="input_{{input.name}}" style="float: right;width: calc(100% - 30px);">
                 {{input.description || input.name}}
               </label>
-
-              <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
-                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" />
+              <br clear="all"/>
             </div>
           </div>
         </div>

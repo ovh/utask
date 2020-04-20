@@ -4,10 +4,34 @@ import { ModalConfirmationApiComponent } from '../@modals/modal-confirmation-api
 import { ApiService } from './api.service';
 import * as _ from 'lodash';
 import { allSettled } from 'q';
+import { environment } from 'src/environments/environment';
+import { Subject } from 'rxjs';
+import Task from '../@models/task.model';
 
 @Injectable()
 export class TaskService {
-  constructor(private modalService: NgbModal, private api: ApiService) { }
+  private localStorageTags = `${environment.localStorage}tags`;
+  public tagsRaw: string[] = localStorage.getItem(this.localStorageTags) ? JSON.parse(localStorage.getItem(this.localStorageTags)) : [];
+  public tags = new Subject<string[]>();
+
+  constructor(private modalService: NgbModal, private api: ApiService) {
+  }
+
+  registerTags(task: Task): any {
+    let hasNewTags = false;
+    const tags = Object.keys(_.get(task, 'tags', {}));
+    tags.forEach((t: string) => {
+      if (this.tagsRaw.indexOf(t) === -1) {
+        this.tagsRaw.push(t);
+        hasNewTags = true;
+      }
+    });
+    if (hasNewTags) {
+      this.tags.next(this.tagsRaw);
+      localStorage.setItem(this.localStorageTags, JSON.stringify(this.tagsRaw));
+    }
+    return task;
+  }
 
   delete(taskId: string) {
     return new Promise((resolve, reject) => {
@@ -23,7 +47,11 @@ export class TaskService {
       modal.result.then((res: any) => {
         resolve(res);
       }).catch((err) => {
-        reject(err);
+        if (err !== 0 && err !== 1 && err !== 'Cross click') {
+          reject(err);
+        } else {
+          reject('close');
+        }
       });
     });
   }
@@ -62,7 +90,11 @@ export class TaskService {
       modal.result.then((res: any) => {
         resolve(res);
       }).catch((err) => {
-        reject(err);
+        if (err !== 0 && err !== 1 && err !== 'Cross click') {
+          reject(err);
+        } else {
+          reject('close');
+        }
       });
     });
   }
