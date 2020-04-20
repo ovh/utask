@@ -190,7 +190,7 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 	}
 
 	// check/update states for all concerned objects
-	res, t, err := initialize(dbp, publicID)
+	res, t, err := initialize(dbp, publicID, debugLogger)
 	if err != nil {
 		debugLogger.Debugf("Engine: Resolve() %s initialize error: %s", publicID, err)
 		return nil, err
@@ -226,7 +226,7 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 	return res, nil
 }
 
-func initialize(dbp zesty.DBProvider, publicID string) (*resolution.Resolution, *task.Task, error) {
+func initialize(dbp zesty.DBProvider, publicID string, debugLogger *logrus.Entry) (*resolution.Resolution, *task.Task, error) {
 	sp, err := dbp.TxSavepoint()
 	defer dbp.RollbackTo(sp)
 	if err != nil {
@@ -272,36 +272,39 @@ func initialize(dbp zesty.DBProvider, publicID string) (*resolution.Resolution, 
 		return nil, nil, err
 	}
 
-	// if crash recover determined the resolution to be blocked, abort run
-	if res.State == resolution.StateBlockedToCheck {
-		if err := dbp.Commit(); err != nil {
-			return nil, nil, err
-		}
-		return nil, nil, nil
-	}
-
-	// otherwise, proceed
 	t, err := task.LoadFromID(dbp, res.TaskID)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	t.SetState(task.StateRunning)
+	// if crash recover determined the resolution to be blocked, task is also blocked
+	if res.State == resolution.StateBlockedToCheck {
+		t.SetState(task.StateBlocked)
+	} else {
+		t.SetState(task.StateRunning)
+	}
+
 	if err := t.Update(dbp, false, true); err != nil {
 		if !errors.IsNotValid(err) {
 			// not a validation error -> rollback and let a collector re-handle this
 			return nil, nil, err
 		}
+
 		// task validation error
 		// -> possible race condition with updated template
-		// put task on hold
+		// put task and resolution on hold for human check + force update task state
+		debugLogger.Warnf("Engine: Resolve() %s: failed to update task %q: %s", publicID, t.PublicID, err)
+		res.SetState(resolution.StateBlockedToCheck)
+		if err := res.Update(dbp); err != nil {
+			return nil, nil, err
+		}
 		t.SetState(task.StateBlocked)
 		if err := t.Update(dbp, true, true); err != nil {
 			return nil, nil, err
 		}
 	}
 
-	// if task could not be updated owing to validation error, abort run
+	// if the crashed task couldn't be recovered or task could not be updated owing to validation error, abort run
 	if t.State == task.StateBlocked {
 		if err := dbp.Commit(); err != nil {
 			return nil, nil, err
