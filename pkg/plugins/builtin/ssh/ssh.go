@@ -157,6 +157,7 @@ func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, inte
 	if err != nil {
 		return nil, nil, err
 	}
+	defer client.Close()
 
 	session, err := client.NewSession()
 	if err != nil {
