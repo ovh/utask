@@ -26,6 +26,7 @@
 - [Authoring Task Templates](#templates)
 - [Extending µTask with plugins](#plugins)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## Real-world examples <a name="examples"></a>
 
@@ -571,7 +572,7 @@ In order to iterate on feature development, run the utask server plus a backing 
 
 In a separate terminal, rebuild (`make re`) each time you want to iterate on a code patch, then reboot the server in the terminal where it is running.
 
-To visualize API routes, a swagger-ui interface is available with the docker image, accessible through your browser at `http://hostname.example/ui/swagger/`. Swagger UI is an open-source software, under Apache 2 license.
+To visualize API routes, a swagger-ui interface is available with the docker image, accessible through your browser at `http://hostname.example/ui/swagger/`.
 
 ### Frontend
 
@@ -592,10 +593,16 @@ $ make test-docker
 You've developed a new cool feature ? Fixed an annoying bug ? We'll be happy
 to hear from you! Take a look at [CONTRIBUTING.md](https://github.com/ovh/utask/blob/master/CONTRIBUTING.md)
 
+## License <a name="license"></a>
+
+The [uTask logo](assets/img/utask.png) is an original artwork under [Creative Commons 3.0 license](https://creativecommons.org/licenses/by/3.0/) based on a [design by Renee French under Creative Commons 3.0 Attributions](https://blog.golang.org/gopher).
+
+Swagger UI is an open-source software, under [Apache 2 license](https://swagger.io/license/).
+
+For the rest of the code, see [LICENSE](LICENSE).
 
 ## Related links
 
  * Contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
  * Report bugs: [https://github.com/ovh/utask/issues](https://github.com/ovh/utask/issues)
  * Get latest version: [https://github.com/ovh/utask/releases](https://github.com/ovh/utask/releases)
- * License: [LICENSE](LICENSE)
