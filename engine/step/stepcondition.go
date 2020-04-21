@@ -1,46 +1,13 @@
 package step
 
 import (
-	"fmt"
-
 	"github.com/juju/errors"
-	"github.com/ovh/utask/engine/values"
+	"github.com/ovh/utask/engine/step/condition"
 	"github.com/ovh/utask/pkg/utils"
 )
 
-//go:generate jsonenums -type=CondType --lower --no-stringer
-//go:generate stringer -type=CondType
-const (
-	SKIP  = "skip"
-	CHECK = "check"
-)
-
-// Condition defines a condition to be evaluated before or after a step's action
-type Condition struct {
-	Type    string            `json:"type"`
-	If      []*Assert         `json:"if"`
-	Then    map[string]string `json:"then"`
-	Message string            `json:"message"`
-}
-
-// Eval runs the condition against a set of values, evaluating the underlying Condition
-func (sc *Condition) Eval(v *values.Values, item interface{}, stepName string) error {
-	for _, c := range sc.If {
-		if err := c.Eval(v, item, stepName); err != nil {
-			return err
-		}
-	}
-	msg, err := v.Apply(sc.Message, item, stepName)
-	if err != nil {
-		sc.Message = fmt.Sprintf("%s (TEMPLATING ERROR: %s)", sc.Message, err.Error())
-	} else {
-		sc.Message = string(msg)
-	}
-	return nil
-}
-
-// Valid asserts that the definition for a StepCondition is valid
-func (sc *Condition) Valid(stepName string, steps map[string]*Step) error {
+// ValidCondition asserts that the definition for a StepCondition is valid
+func ValidCondition(sc *condition.Condition, stepName string, steps map[string]*Step) error {
 	for _, c := range sc.If {
 		if err := c.Valid(); err != nil {
 			return err
@@ -68,7 +35,12 @@ func (sc *Condition) Valid(stepName string, steps map[string]*Step) error {
 			return errors.BadRequestf("Step condition cannot impact the state of step %s, only those who belong to the dependency chain are allowed", thenStep)
 		}
 
-		validStates := append(stepConditionValidStates, impactedStep.CustomStates...)
+		customStates, err := impactedStep.GetCustomStates()
+		if err != nil {
+			return errors.New("Step custom states are invalid")
+		}
+
+		validStates := utils.AppendUniq(stepConditionValidStates, customStates...)
 		if !utils.ListContainsString(validStates, thenState) {
 			return errors.BadRequestf("Step condition implies invalid state for step %s: %s", thenStep, thenState)
 		}

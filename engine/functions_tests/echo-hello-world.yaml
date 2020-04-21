@@ -1,0 +1,6 @@
+name: echo::hello::world
+action:
+  type: echo
+  configuration:
+    output:
+      value: 'Hello {{ .function_args.name }} !'

@@ -1,0 +1,11 @@
+name: functionCustomState
+description: A template with a custom state
+title_format: "[test] Custom State function"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::custom::state

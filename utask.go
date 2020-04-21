@@ -30,6 +30,9 @@ var (
 	// FTemplatesFolder is the path to a folder containing
 	// .yaml templates for tasks
 	FTemplatesFolder string
+	// FFunctionsFolder is the path to a folder containing
+	// functions files used by script plugin
+	FFunctionsFolder string
 	// FScriptsFolder is the path to a folder containing
 	// scripts files used by script plugin
 	FScriptsFolder string

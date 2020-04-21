@@ -16,6 +16,7 @@ import (
 // keys to store/retrieve data from a Values struct
 const (
 	InputKey         = "input"
+	FunctionsArgsKey = "function_args"
 	ResolverInputKey = "resolver_input"
 	StepKey          = "step"
 	ConfigKey        = "config"
@@ -52,6 +53,7 @@ func NewValues() *Values {
 		m: map[string]interface{}{
 			InputKey:         map[string]interface{}{},
 			ResolverInputKey: map[string]interface{}{},
+			FunctionsArgsKey: map[string]interface{}{},
 			StepKey:          map[string]interface{}{},
 			TaskKey:          map[string]interface{}{},
 			ConfigKey:        map[string]interface{}{},
@@ -74,6 +76,11 @@ func (v *Values) SetInput(in map[string]interface{}) {
 // SetResolverInput stores a task resolver's inputs in Values
 func (v *Values) SetResolverInput(in map[string]interface{}) {
 	v.m[ResolverInputKey] = in
+}
+
+// SetFunctionsArgs stores a task function args in Values
+func (v *Values) SetFunctionsArgs(in map[string]interface{}) {
+	v.m[FunctionsArgsKey] = in
 }
 
 // SetConfig stores items retrieved from configstore in Values

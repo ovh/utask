@@ -1,0 +1,13 @@
+name: functionHelloWorldError
+description: A template with a basic function that errors
+title_format: "[test] Hello world function erroring"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::hello::world
+            configuration:
+              invalidName: toto

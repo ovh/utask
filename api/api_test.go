@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/input"
 	"github.com/ovh/utask/engine/step"
+	"github.com/ovh/utask/engine/step/executor"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
@@ -494,7 +495,7 @@ func templateWithPasswordInput() tasktemplate.TaskTemplate {
 		},
 		Steps: map[string]*step.Step{
 			"stepOne": {
-				Action: step.Executor{
+				Action: executor.Executor{
 					Type: "echo",
 					Configuration: json.RawMessage(`{
 						"output": {"showSecret":"{{.input.verysecret}}"}
@@ -517,7 +518,7 @@ func dummyTemplate() tasktemplate.TaskTemplate {
 		},
 		Steps: map[string]*step.Step{
 			"step": {
-				Action: step.Executor{
+				Action: executor.Executor{
 					Type: "echo",
 					Configuration: json.RawMessage(`{
 						"output": {"foo":"bar"}

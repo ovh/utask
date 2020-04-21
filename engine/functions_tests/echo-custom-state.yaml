@@ -1,0 +1,7 @@
+name: echo::custom::state
+action:
+  type: echo
+  configuration:
+    output:
+      value: 'Hello world!'
+custom_states: [STATE_HELLO]

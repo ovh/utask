@@ -21,6 +21,8 @@ import (
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/engine"
+	"github.com/ovh/utask/engine/functions"
+	functionsrunner "github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	notify "github.com/ovh/utask/pkg/notify/init"
@@ -32,6 +34,7 @@ const (
 	defaultInitializersFolder = "./init"
 	defaultPluginFolder       = "./plugins"
 	defaultTemplatesFolder    = "./templates"
+	defaultFunctionsFolder    = "./functions"
 	defaultScriptsFolder      = "./scripts"
 	defaultRegion             = "default"
 	defaultPort               = 8081
@@ -39,6 +42,7 @@ const (
 	envInit        = "INIT"
 	envPlugins     = "PLUGINS"
 	envTemplates   = "TEMPLATES"
+	envFunctions   = "FUNCTIONS"
 	envScripts     = "SCRIPTS"
 	envRegion      = "REGION"
 	envHTTPPort    = "SERVER_PORT"
@@ -57,6 +61,7 @@ func init() {
 	viper.BindEnv(envInit)
 	viper.BindEnv(envPlugins)
 	viper.BindEnv(envTemplates)
+	viper.BindEnv(envFunctions)
 	viper.BindEnv(envScripts)
 	viper.BindEnv(envRegion)
 	viper.BindEnv(envHTTPPort)
@@ -75,6 +80,7 @@ func init() {
 	flags.StringVar(&utask.FInitializersFolder, "init-path", defaultInitializersFolder, "Initializer folder absolute path")
 	flags.StringVar(&utask.FPluginFolder, "plugins-path", defaultPluginFolder, "Plugins folder absolute path")
 	flags.StringVar(&utask.FTemplatesFolder, "templates-path", defaultTemplatesFolder, "Templates folder absolute path")
+	flags.StringVar(&utask.FFunctionsFolder, "functions-path", defaultFunctionsFolder, "Functions folder absolute path")
 	flags.StringVar(&utask.FScriptsFolder, "scripts-path", defaultScriptsFolder, "Scripts folder absolute path")
 	flags.StringVar(&utask.FRegion, "region", defaultRegion, "Region in which instance is located")
 	flags.UintVar(&utask.FPort, "http-port", defaultPort, "HTTP port to expose")
@@ -84,6 +90,7 @@ func init() {
 	viper.BindPFlag(envInit, rootCmd.Flags().Lookup("init-path"))
 	viper.BindPFlag(envPlugins, rootCmd.Flags().Lookup("plugins-path"))
 	viper.BindPFlag(envTemplates, rootCmd.Flags().Lookup("templates-path"))
+	viper.BindPFlag(envFunctions, rootCmd.Flags().Lookup("functions-path"))
 	viper.BindPFlag(envScripts, rootCmd.Flags().Lookup("scripts-path"))
 	viper.BindPFlag(envRegion, rootCmd.Flags().Lookup("region"))
 	viper.BindPFlag(envHTTPPort, rootCmd.Flags().Lookup("http-port"))
@@ -126,6 +133,10 @@ var rootCmd = &cobra.Command{
 			plugins.InitializersFromFolder(utask.FInitializersFolder, &plugins.Service{Store: store, Server: server}),
 			// load custom executors built as *.so plugins
 			plugins.ExecutorsFromFolder(utask.FPluginFolder),
+			// load the functions
+			functions.LoadFromDir(utask.FFunctionsFolder),
+			// register functions as runners
+			functionsrunner.Init(),
 			// init authorization module (admin username list)
 			auth.Init(store),
 			// init notify module

@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"plugin"
@@ -16,13 +15,9 @@ import (
 
 // TaskPlugin represents the interface for every executor for µtask step actions
 type TaskPlugin interface {
-	ValidConfig(baseConfig json.RawMessage, config json.RawMessage) error
-	Resources(baseConfig json.RawMessage, config json.RawMessage) []string
-	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error)
-	Context(stepName string) interface{}
+	step.Runner
 	PluginName() string
 	PluginVersion() string
-	MetadataSchema() json.RawMessage
 }
 
 // ExecutorsFromFolder loads a collection of TaskPlugin from compiled .so plugins
