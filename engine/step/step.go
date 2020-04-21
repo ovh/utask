@@ -195,6 +195,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 
 		if len(executor.BaseOutput) > 0 {
 			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
+
 			if err != nil {
 				st.State = StateFatalError
 				st.Error = errors.Annotate(err, "failed to template base output").Error()
