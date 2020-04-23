@@ -13,6 +13,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	maxResolved = 50
+)
+
 // InstanceCollector launches a process that retrieves resolutions
 // which might have been running on a dead instance and marks them as
 // crashed, for examination
@@ -48,11 +52,17 @@ func collect(dbp zesty.DBProvider) error {
 	if err != nil {
 		return err
 	}
+	log := logrus.WithFields(logrus.Fields{"instance_id": utask.InstanceID, "collector": "instance_collector"})
 	for _, i := range instances {
 		// if an instance is dead
 		if i.IsDead() {
 			// loop while there are running resolutions from this instance
+			resolved := 0
 			for {
+				if resolved >= maxResolved {
+					// not selecting more than maxResolved tasks at the same time, so scheduling can be splitted on multiple instances
+					break
+				}
 				r, err := getUpdateRunningResolution(dbp, i)
 				if err != nil {
 					// no more resolutions found, break out of loop
@@ -61,12 +71,19 @@ func collect(dbp zesty.DBProvider) error {
 					}
 				} else {
 					// run found resolution
-					logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Instance Collector: collected crashed resolution %s", r.PublicID)
+					log.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("collected crashed resolution %s", r.PublicID)
 					_ = GetEngine().Resolve(r.PublicID)
+
+					// waiting between two resolve, so others instances can also select tasks
+					time.Sleep(2 * time.Second)
+					resolved++
 				}
 			}
 			// no resolutions left to retry, delete instance
-			i.Delete(dbp)
+			if remaining, err := getRemainingResolution(dbp, i); err == nil && remaining == 0 {
+				log.Debugf("collected all resolution from %d, deleting instance from instance list", i.ID)
+				i.Delete(dbp)
+			}
 		}
 	}
 
@@ -102,4 +119,18 @@ func getUpdateRunningResolution(dbp zesty.DBProvider, i *runnerinstance.Instance
 	}
 
 	return &r, nil
+}
+
+func getRemainingResolution(dbp zesty.DBProvider, i *runnerinstance.Instance) (int64, error) {
+	sqlStmt := `SELECT COUNT(id)
+			FROM "resolution"
+			WHERE instance_id = $1 AND state IN ($2,$3,$4,$5)`
+
+	return dbp.DB().SelectInt(sqlStmt,
+		i.ID,
+		resolution.StateCrashed,
+		resolution.StateRunning,
+		resolution.StateRetry,
+		resolution.StateAutorunning,
+	)
 }

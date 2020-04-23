@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
 	"github.com/robertkrimen/otto"
