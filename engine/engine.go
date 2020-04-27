@@ -527,6 +527,7 @@ func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) erro
 
 func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, debugLogger *logrus.Entry) int {
 	av := availableSteps(modifiedSteps, res, executedSteps, expandedSteps, debugLogger)
+	expandedSteps = []string{}
 	preRunModifiedSteps := map[string]bool{}
 	expanded := 0
 
