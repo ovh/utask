@@ -679,6 +679,13 @@ func contractStep(s *step.Step, res *resolution.Resolution) string {
 func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 	recursiveModif := map[string]bool{}
 	for stepName := range modifiedSteps {
+		if !res.Steps[stepName].IsFinal() {
+			// current state is not final (CLIENT_ERROR, SERVER_ERROR, FATAL_ERROR), not going to prune childs
+			continue
+		}
+		// Will prune child dependency if:
+		// - current modified step state is PRUNE
+		// - current modified step state is not one of child dependency expected state
 		if res.Steps[stepName].State == step.StatePrune {
 			// use StepTreeIndexPrune: lists dependencies which should be pruned when their parent is pruned
 			for _, dep := range res.StepTreeIndexPrune[stepName] {
@@ -686,18 +693,25 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 				recursiveModif[dep] = true
 			}
 		} else {
-			if res.Steps[stepName].IsFinal() {
-				// use StepTreeIndexPrune: lists dependencies which should be pruned when their parent is pruned
-				for _, childStep := range res.StepTreeIndexPrune[stepName] {
-					for _, childDep := range res.Steps[childStep].Dependencies {
-						depStep, depState := step.DependencyParts(childDep)
-						if depStep == stepName {
-							if res.Steps[stepName].State != depState {
-								res.Steps[childStep].State = step.StatePrune
-								recursiveModif[childStep] = true
-							}
+			// use StepTreeIndexPrune: lists dependencies which should be pruned when their parent is pruned
+			for _, childStep := range res.StepTreeIndexPrune[stepName] {
+				for _, childDep := range res.Steps[childStep].Dependencies {
+					depStep, depStates := step.DependencyParts(childDep)
+					if depStep != stepName {
+						continue
+					}
+					matchingExpectedState := false
+					for _, depState := range depStates {
+						if res.Steps[stepName].State == depState {
+							matchingExpectedState = true
+							break
 						}
 					}
+					if !matchingExpectedState {
+						res.Steps[childStep].State = step.StatePrune
+						recursiveModif[childStep] = true
+					}
+					break
 				}
 			}
 		}
@@ -738,34 +752,58 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 	availableLoops := make([]*step.Step, 0)
 	for name := range candidateSteps {
 		s := res.Steps[name]
-		if s.IsRunnable() {
-			if executedSteps[name] {
+		if !s.IsRunnable() {
+			continue
+		}
+
+		if executedSteps[name] {
+			continue
+		}
+		eligible := true // eligible unless dependencies are not met
+		for _, dep := range s.Dependencies {
+			depStep, depStates := step.DependencyParts(dep)
+
+			// 3 cases for a dependency to be considered as OK:
+			// - one of the dependency states is matching the depStep state
+			// - dependency state is ANY, and depStep is in a final state
+			// - depStep is a child of a Foreach loop step in TO_RETRY state, and child is not running
+
+			if res.Steps[depStep].IsFinal() && depStates[0] == step.StateAny {
+				// if dependency doesn't require a specific state, and depStep is in a final state
+				// then dependency is matching
 				continue
 			}
-			elligible := true // elligible unless dependencies are not met
-			for _, dep := range s.Dependencies {
-				depStep, depState := step.DependencyParts(dep)
-				if (res.Steps[depStep].State != depState) && // elligibility check: step state matches dependency target
-					!(depState == step.StateAny && res.Steps[depStep].IsFinal()) { // eligibility check: depdency on ANY with step in a final state {
-					// a loop step which gets retried should ignore previous children.
-					// children steps are stored as dependencies, so we check if the unmet dependency is a child.
-					// if it is, we ignore it unless it is already running (to avoid weird behavior when the result comes back)
-					if s.ForEach != "" && // it's a loop step
-						s.State != step.StateExpanded && // expanded is the only state in which it may have a legit dependency on its children
-						s.ChildrenStepMap[depStep] && // the unmet dependency is indeed a child of the step
-						res.Steps[depStep].State != step.StateRunning { // the child is not running currently
-						continue
-					}
-					// in every other case, an unmet dependency
-					elligible = false
+
+			matchingState := false
+			for _, depState := range depStates {
+				if res.Steps[depStep].State == depState {
+					matchingState = true
 					break
 				}
 			}
-			if elligible {
-				available[name] = s
-				if s.ForEach != "" {
-					availableLoops = append(availableLoops, s)
-				}
+			if matchingState {
+				// dependency requires a specific state, and depStep state is matching
+				continue
+			}
+
+			// a loop step which gets retried should ignore previous children.
+			// children steps are stored as dependencies, so we check if the unmet dependency is a child.
+			// if it is, we ignore it unless it is already running (to avoid weird behavior when the result comes back)
+			if s.ForEach != "" && // it's a loop step
+				s.State != step.StateExpanded && // expanded is the only state in which it may have a legit dependency on its children
+				s.ChildrenStepMap[depStep] && // the unmet dependency is indeed a child of the step
+				res.Steps[depStep].State != step.StateRunning { // the child is not running currently
+				continue
+			}
+
+			// in every other case, an unmet dependency
+			eligible = false
+			break
+		}
+		if eligible {
+			available[name] = s
+			if s.ForEach != "" {
+				availableLoops = append(availableLoops, s)
 			}
 		}
 	}

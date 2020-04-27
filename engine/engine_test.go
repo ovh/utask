@@ -372,6 +372,11 @@ func TestStepConditionStates(t *testing.T) {
 	assert.Equal(t, "REGEXP_MATCH", res.Steps["stepTwo"].State)
 	assert.Equal(t, "FOO", res.Steps["stepThree"].State)
 	assert.Equal(t, "changed state matched correctly", res.Steps["stepThree"].Error)
+
+	assert.Equal(t, "OK", res.Steps["stepFour"].State)
+	assert.Equal(t, "OK", res.Steps["stepFour"].Error)
+
+	assert.Equal(t, "PRUNE", res.Steps["stepFive"].State)
 }
 
 func TestResolutionStateCrashed(t *testing.T) {
