@@ -572,7 +572,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				// juggling with STATE_AFTERRUN_ERROR should probably only be inside step pkg
 				if s.State != step.StateAfterrunError {
 					res.SetStepState(s.Name, step.StateRunning)
-					step.PreRun(s, res.Values, resolutionStateSetter(res, preRunModifiedSteps))
+					step.PreRun(s, res.Values, resolutionStateSetter(res, preRunModifiedSteps), executedSteps)
 					commit(dbp, res, nil)
 				}
 

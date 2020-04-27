@@ -307,13 +307,14 @@ type StateSetter func(step, state, message string)
 
 // PreRun evaluates a step's "skip" conditions before the Step's action has been performed
 // and impacts the entire task's execution flow through the provided StateSetter
-func PreRun(st *Step, values *values.Values, ss StateSetter) {
+func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[string]bool) {
 	for _, sc := range st.Conditions {
 		if sc.Type != SKIP {
 			continue
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
 			if _, ok := err.(ErrConditionNotMet); ok {
+				logrus.Debugf("PreRun: Step [%s] condition eval: %s", st.Name, err)
 				continue
 			} else { // Templating / strconv errors
 				// Putting the step in SERVER_ERROR makes the resolution collectable by the RetryCollector.
@@ -321,10 +322,14 @@ func PreRun(st *Step, values *values.Values, ss StateSetter) {
 
 				// Do not run the step.
 				st.skipped = true
+				// inserting current skipped step into executedSteps to avoid being picked-up again in availableSteps candidates
+				executedSteps[st.Name] = true
 				break
 			}
 		}
 		st.skipped = true
+		// inserting current skipped step into executedSteps to avoid being picked-up again in availableSteps candidates
+		executedSteps[st.Name] = true
 		for step, state := range sc.Then {
 			if step == stepRefThis {
 				step = st.Name
@@ -346,7 +351,7 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
 			if _, ok := err.(ErrConditionNotMet); ok {
-				logrus.Debugf("Step [%s] condition eval: %s", st.Name, err)
+				logrus.Debugf("AfterRun: Step [%s] condition eval: %s", st.Name, err)
 				continue
 			} else { // Templating / strconv errors
 				// Putting the step in AFTERRUN_ERROR makes the resolution collectable (like step.PreRun),
