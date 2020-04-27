@@ -345,6 +345,16 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 		case s := <-stepChan:
 			s.LastRun = time.Now()
 
+			if _, ok := res.ForeachChildrenAlreadyContracted[s.Name]; ok {
+				// If foreach children has been PRUNE in a skip condition, contraction of the
+				// parent step might already happened when receiving this message in channel
+				// We need to discard this step, otherwise we will commit it back the child
+				// into the resolution, while parent is already done
+				expectedMessages--
+				debugLogger.Debugf("Engine: resolve() %s loop, step %s while already contracted result: %s", res.PublicID, s.Name, s.State)
+				continue
+			}
+
 			// Replace task's tags with the tags returned in the step.
 			for k, v := range s.Tags {
 				if v == "" {
@@ -625,6 +635,7 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 			Conditions:   s.Conditions,
 			Item:         item,
 		}
+		delete(res.ForeachChildrenAlreadyContracted, childStepName)
 	}
 	// update parent dependencies to wait on children
 	s.ChildrenSteps = []string{}
@@ -643,6 +654,7 @@ func contractStep(s *step.Step, res *resolution.Resolution) {
 	collectedChildren := []interface{}{}
 	for _, childStepName := range s.ChildrenSteps {
 		child, ok := res.Steps[childStepName]
+		res.ForeachChildrenAlreadyContracted[childStepName] = true
 		if ok {
 			if child.State != step.StatePrune {
 				childM := map[string]interface{}{}
