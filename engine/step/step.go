@@ -412,16 +412,34 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	st.Schema = schema
 
 	// valid dependencies
+	seenDependencies := map[string]bool{}
 	for _, d := range st.Dependencies {
 		// no orphan dependencies,
 		depStep, depState := DependencyParts(d)
 		s, ok := steps[depStep]
 		if !ok {
-			return errors.NotValidf("Invalid dependency, no step with that name: %s", depStep)
+			return errors.NotValidf("Invalid dependency, no step with that name: %q", depStep)
 		}
-		if depState != StateDone && depState != StateAny && !utils.ListContainsString(s.CustomStates, depState) {
-			return errors.NotValidf("Invalid dependency on step %s, step state not allowed: %s", depStep, depState)
+		if _, ok := seenDependencies[depStep]; ok {
+			return errors.NotValidf("Invalid dependency, already defined dependency to: %q", depStep)
 		}
+		if duplicated := utils.HasDupsArray(depState); duplicated {
+			return errors.NotValidf("Invalid dependency, duplicated state detected")
+		}
+		for _, state := range depState {
+			switch state {
+			case StateDone:
+			case StateAny:
+				if len(depState) != 1 {
+					return errors.NotValidf("Invalid dependency, no other state allowed if ANY is declared")
+				}
+			default:
+				if !utils.ListContainsString(s.CustomStates, state) {
+					return errors.NotValidf("Invalid dependency on step %s, step state not allowed: %q", depStep, state)
+				}
+			}
+		}
+		seenDependencies[depStep] = true
 	}
 
 	// no circular dependencies,
@@ -480,14 +498,15 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex Executor) error {
 
 // DependencyParts de-composes a Step's dependency into its constituent parts: step name + step state
 // a dependency expressed only as a step name is equivalent to depending on that step being in DONE state
-func DependencyParts(dep string) (string, string) {
-	var depStep, depState string
-	parts := strings.Split(dep, ":")
+func DependencyParts(dep string) (string, []string) {
+	var depStep string
+	var depState []string
+	parts := strings.SplitN(dep, ":", 2)
 	depStep = parts[0]
-	if len(parts) > 1 {
-		depState = parts[1]
+	if len(parts) == 1 {
+		depState = []string{StateDone}
 	} else {
-		depState = StateDone
+		depState = strings.Split(parts[1], ",")
 	}
 	return depStep, depState
 }

@@ -117,3 +117,13 @@ func ConvertJSONRowToSlice(in string) ([]string, error) {
 	err := json.Unmarshal([]byte(in), &tmpslice)
 	return tmpslice, err
 }
+
+// HasDupsArray returns a boolean indicating if array contains duplicates
+func HasDupsArray(elements []string) bool {
+	encountered := map[string]bool{}
+	for v := range elements {
+		encountered[elements[v]] = true
+	}
+
+	return len(elements) != len(encountered)
+}

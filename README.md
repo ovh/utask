@@ -234,10 +234,7 @@ The JavaScript evaluation is done using [otto](https://github.com/robertkrimen/o
 
 A step is the smallest unit of work that can be performed within a task. At is's heart, a step defines an **action**: several types of actions are available, and each type requires a different configuration, provided as part of the step definition. The state of a step will change during a task's resolution process, and determine which steps become eligible for execution. Custom states can be defined for a step, to fine-tune execution flow (see below).
 
-A sequence of ordered steps constitutes the entire workload of a task. Steps are ordered by declaring **dependencies** between each other. A step declares its dependencies as a list of step names on which it waits, meaning that a step's execution will be on hold until its dependencies have been resolved. A dependency can be qualified with a step's state. For example, `step2` can declare a dependency on `step1` in the following ways:
-- `step1`: wait for `step1` to be in state `DONE`
-- `step1:PRUNE`: wait for `step1` to be in state `PRUNE`
-- `step1:ANY`: wait for `step1` to be in any "final" state, ie. it cannot keep running
+A sequence of ordered steps constitutes the entire workload of a task. Steps are ordered by declaring **dependencies** between each other. A step declares its dependencies as a list of step names on which it waits, meaning that a step's execution will be on hold until its dependencies have been resolved. [More details about dependencies](#dependencies).
 
 The flow of this sequence can further be controlled with **conditions** on the steps: a condition is a clause that can be run before or after the step's action. A condition can either be used:
 - to skip a step altogether
@@ -292,6 +289,16 @@ steps:
       then:
         this: NOT_FOUND
       message: User {{.input.id}} not found
+  createUser:
+    description: Create the user
+    dependencies: ["getUser:NOT_FOUND"]
+    action:
+      type: http
+      configuration:
+        url: http://example.org/user
+        method: POST
+        body: |-
+          {"user_id":"{{.input.id}}"}
 ```
 
 #### Basic Step Properties
@@ -299,6 +306,7 @@ steps:
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
 - `dependencies`: a list of step names on which this step waits before running
+- `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
 
 <p align="center">
@@ -409,6 +417,21 @@ Browse [builtin actions](./pkg/plugins/builtin)
 |**`email`**   | Send an email | [Access plugin doc](./pkg/plugins/builtin/email/README.md)
 |**`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done* | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)
 |**`script`**    | Execute a script under `scripts` folder | [Access plugin doc](./pkg/plugins/builtin/script/README.md)
+
+#### Dependencies <a name="dependencies"></a>
+
+Dependencies can be declared on a step, to indicate what are the requirements to be met before the step can actually run. A step can have multiple dependencies, which will have to be all matched before the step can be running.
+
+A dependency can be qualified with a step's state. Two kinds of step states exists: builtins and customs. Builtins are provided by uTask and include: `TODO`, `RUNNING`, `DONE`, `CLIENT_ERROR`, `SERVER_ERROR`, `FATAL_ERROR`, `CRASHED`, `PRUNE`, `TO_RETRY`, `AFTERRUN_ERROR`. Each step can also have some custom states, declared within the step using `custom_states`. Dependency can be all custom states declared, however, it can only use the `DONE` builtin state, as it's the only one considered as "final state". Final state represents states that can no longer be run by uTask engine ; all custom states are considered as "final states".
+
+It is possible that a dependency will never match the expected state. For example, `step1` is in `DONE` state, and `step2` has a dependency declared as `step1:NOT_FOUND`: it means that `step2` requires that `step1` finishes its execution with state `NOT_FOUND`. In that case, `step2` will never be allowed to run, as `step1` finished with `DONE` state ; `step2` state will be changed to `PRUNE`, meaning that the execution of this step hasn't be selected, and won't be run. All the steps which have declared `step2` as a dependency will also be pruned.
+
+Another qualifier that can be use as a step state is `ANY`. `ANY` indicates that dependency will match all the "final states" of the step. It's also the only way for a `step2` with a dependency on `step1` which is in the `PRUNE` state to not be pruned as well: if the dependency has been declared to state `ANY`, the prune chain will be interrupted.
+
+For example, `step2` can declare a dependency on `step1` in the following ways:
+- `step1`: wait for `step1` to be in state `DONE` (could also be written as `step1:DONE`)
+- `step1:DONE,ALREADY_EXISTS`: wait for `step1` to be either in state `DONE` or `ALREADY_EXISTS`
+- `step1:ANY`: wait for `step1` to be in any "final" state, ie. it cannot keep running
 
 #### Loops
 

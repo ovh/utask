@@ -12,7 +12,7 @@ steps:
         conditions:
             - type: check
               if:
-                  - value   : '{{.step.stepOne.output.foo}}'
+                  - value: "{{.step.stepOne.output.foo}}"
                     operator: EQ
                     expected: bar
               then:
@@ -20,7 +20,7 @@ steps:
               message: First condition evals to true and is applied
             - type: check
               if:
-                  - value   : '{{.step.stepOne.output.foo}}'
+                  - value: "{{.step.stepOne.output.foo}}"
                     operator: NE
                     expected: grault
               then:
@@ -31,27 +31,27 @@ steps:
         custom_states: [REGEXP_MATCH]
         action:
             type: echo
-            configuration: {output: {email: "john.doe@example.com"}}
+            configuration: { output: { email: "john.doe@example.com" } }
         conditions:
             - type: check
               if:
-                  - value:    '{{.step.this.output.email}}'
+                  - value: "{{.step.this.output.email}}"
                     operator: regexp
                     expected: '[a-z\.]+@example\.com$'
               then:
                   this: REGEXP_MATCH
-              message: email address belongs to example.com 
+              message: email address belongs to example.com
     stepThree:
         dependencies: [stepTwo:ANY]
         description: multiple conditions changing state
-        custom_states: [FOO, BAR]
+        custom_states: [FOO, BAR, FUZZ]
         action:
             type: echo
-            configuration: {output: {foo: bar}}
+            configuration: { output: { foo: bar } }
         conditions:
             - type: check
               if:
-                  - value:    '{{.step.this.output.foo}}'
+                  - value: "{{.step.this.output.foo}}"
                     operator: EQ
                     expected: barrrr
               then:
@@ -59,10 +59,10 @@ steps:
               message: should not have matched
             - type: check
               if:
-                  - value:    '{{.step.this.output.foo}}'
+                  - value: "{{.step.this.output.foo}}"
                     operator: EQ
                     expected: bar
-                  - value:    '{{.step.this.state}}'
+                  - value: "{{.step.this.state}}"
                     operator: EQ
                     expected: DONE
               then:
@@ -70,9 +70,41 @@ steps:
               message: matching is correct
             - type: check
               if:
-                  - value:    '{{.step.this.state}}'
+                  - value: "{{.step.this.state}}"
                     operator: EQ
                     expected: BAR
               then:
                   this: FOO
               message: changed state matched correctly
+    stepFour:
+        dependencies: ["stepThree:DONE,FOO"]
+        description: multiple state dependencies
+        custom_states: [OK]
+        action:
+            type: echo
+            configuration: { output: { foo: bar } }
+        conditions:
+            - type: check
+              if:
+                  - value: "{{.step.stepThree.state}}"
+                    operator: EQ
+                    expected: FOO
+              then:
+                  this: OK
+              message: OK
+    stepFive:
+        dependencies: ["stepThree:DONE,BAR,FUZZ"]
+        description: multiple state dependencies none matching
+        custom_states: [OK]
+        action:
+            type: echo
+            configuration: { output: { foo: bar } }
+        conditions:
+            - type: check
+              if:
+                  - value: "{{.step.stepThree.state}}"
+                    operator: EQ
+                    expected: FOO
+              then:
+                  this: OK
+              message: OK

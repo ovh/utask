@@ -33,6 +33,17 @@ inputs:
 steps:
   sayHello:
     description: Echo a greeting in your language of choice
+    custom_states: [NOT_FOUND, ALREADY_EXISTS]
+    action:
+      type: echo
+      configuration:
+        output:
+          message: >-
+            {{if (eq .input.language "english")}}{{eval "english-message"}}
+            {{else if (eq .input.language "spanish")}}bla{{end}}
+  step2:
+    description: Echo a greeting in your language of choice
+    dependencies: [sayHello]
     action:
       type: echo
       configuration:

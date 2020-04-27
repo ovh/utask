@@ -244,7 +244,7 @@ func (r *Resolution) BuildStepTree() {
 				treeIdx[dName] = []string{}
 			}
 			treeIdx[dName] = append(treeIdx[dName], name)
-			if dState != step.StateAny {
+			if dState[0] != step.StateAny {
 				if treeIdxPrune[dName] == nil {
 					treeIdxPrune[dName] = []string{}
 				}
