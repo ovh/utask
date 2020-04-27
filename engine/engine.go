@@ -40,7 +40,7 @@ var (
 // Engine is the heart of utask: it is the active process
 // that handles the lifecycle of every task resolution.
 // All the logic for resolution state changes is expressed here
-// - the engine determines which steps in a resolution are elligible
+// - the engine determines which steps in a resolution are eligible
 // for execution, and which should be pruned
 // - the engine computes step dependencies
 // - the conditions expressed in a step (skip/check) that impact resolution

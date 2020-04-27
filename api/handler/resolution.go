@@ -223,7 +223,7 @@ type runResolutionIn struct {
 }
 
 // RunResolution launches the asynchronous execution of a resolution
-// the engine determines if resolution is elligible for execution
+// the engine determines if resolution is eligible for execution
 func RunResolution(c *gin.Context, in *runResolutionIn) error {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {

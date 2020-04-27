@@ -442,7 +442,7 @@ func (r *Resolution) IncrementRunCount() {
 	r.RunCount++
 }
 
-// SetNextRetry assigns a point in time when the resolution will become elligible for execution
+// SetNextRetry assigns a point in time when the resolution will become eligible for execution
 func (r *Resolution) SetNextRetry(t time.Time) {
 	r.NextRetry = &t
 }
