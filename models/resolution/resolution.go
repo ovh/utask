@@ -52,14 +52,15 @@ const (
 // All intermediary state of execution will be held by this structure
 type Resolution struct {
 	DBModel
-	TaskPublicID       string                 `json:"task_id" db:"task_public_id"`
-	TaskTitle          string                 `json:"task_title" db:"task_title"`
-	Values             *values.Values         `json:"-" db:"-"`                         // never persisted: rebuilt on instantiation
-	Steps              map[string]*step.Step  `json:"steps,omitempty" db:"-"`           // persisted in encrypted blob
-	ResolverInput      map[string]interface{} `json:"resolver_inputs,omitempty" db:"-"` // persisted in encrypted blob
-	StepTreeIndex      map[string][]string    `json:"-" db:"-"`
-	StepTreeIndexPrune map[string][]string    `json:"-" db:"-"`
-	StepList           []string               `json:"-" db:"-"`
+	TaskPublicID                     string                 `json:"task_id" db:"task_public_id"`
+	TaskTitle                        string                 `json:"task_title" db:"task_title"`
+	Values                           *values.Values         `json:"-" db:"-"`                         // never persisted: rebuilt on instantiation
+	Steps                            map[string]*step.Step  `json:"steps,omitempty" db:"-"`           // persisted in encrypted blob
+	ResolverInput                    map[string]interface{} `json:"resolver_inputs,omitempty" db:"-"` // persisted in encrypted blob
+	StepTreeIndex                    map[string][]string    `json:"-" db:"-"`
+	StepTreeIndexPrune               map[string][]string    `json:"-" db:"-"`
+	StepList                         []string               `json:"-" db:"-"`
+	ForeachChildrenAlreadyContracted map[string]bool        `json:"-" db:"-"`
 }
 
 // DBModel is a resolution's representation in DB
@@ -258,6 +259,9 @@ func (r *Resolution) BuildStepTree() {
 	r.StepList = stepList
 	r.StepTreeIndex = treeIdx
 	r.StepTreeIndexPrune = treeIdxPrune
+	if r.ForeachChildrenAlreadyContracted == nil {
+		r.ForeachChildrenAlreadyContracted = map[string]bool{}
+	}
 }
 
 // ListResolutions returns a collection of existing task resolutions
