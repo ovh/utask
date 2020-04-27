@@ -142,8 +142,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		stepError = fmt.Errorf("Task '%s' not done yet", t.PublicID)
 	}
 	return map[string]interface{}{
-		"id":     t.PublicID,
-		"state":  t.State,
-		"result": t.Result,
+		"id":                t.PublicID,
+		"state":             t.State,
+		"result":            t.Result,
+		"resolverUsername":  t.ResolverUsername,
+		"requesterUsername": t.RequesterUsername,
 	}, nil, stepError
 }
