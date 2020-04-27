@@ -123,8 +123,9 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 	}
 
 	r.setSteps(tt.Steps)
-	for _, s := range r.Steps {
-		s.State = step.StateTODO
+	for stepName := range r.Steps {
+		r.Steps[stepName].Name = stepName
+		r.SetStepState(stepName, step.StateTODO)
 	}
 
 	if tt.RetryMax != nil {
@@ -475,6 +476,14 @@ func (r *Resolution) setSteps(st map[string]*step.Step) {
 		r.Values.SetError(s.Name, s.Error)
 		r.Values.SetState(s.Name, s.State)
 	}
+}
+
+func (r *Resolution) SetStepState(stepName, state string) {
+	r.Steps[stepName].State = state
+	if r.Values == nil {
+		return
+	}
+	r.Values.SetState(stepName, state)
 }
 
 // SetInput stores the inputs provided by the task's resolver

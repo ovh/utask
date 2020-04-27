@@ -249,10 +249,10 @@ func initialize(dbp zesty.DBProvider, publicID string, debugLogger *logrus.Entry
 			if s.State == step.StateRunning {
 				if s.Idempotent {
 					// if a crashed step is idempotent, repeat
-					s.State = step.StateTODO
+					res.SetStepState(s.Name, step.StateTODO)
 				} else {
 					// otherwise, block the resolution for human intervention
-					s.State = step.StateCrashed
+					res.SetStepState(s.Name, step.StateCrashed)
 					res.SetState(resolution.StateBlockedToCheck)
 				}
 			}
@@ -555,7 +555,8 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 						expandedSteps = append(expandedSteps, s.ChildrenSteps...)
 					}
 				case step.StateExpanded:
-					s.State = contractStep(s, res)
+					contractStep(s, res)
+					res.SetStepState(s.Name, step.StateDone)
 				default:
 					continue
 				}
@@ -570,7 +571,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				// TODO fixme, ugly
 				// juggling with STATE_AFTERRUN_ERROR should probably only be inside step pkg
 				if s.State != step.StateAfterrunError {
-					s.State = step.StateRunning
+					res.SetStepState(s.Name, step.StateRunning)
 					step.PreRun(s, res.Values, resolutionStateSetter(res, preRunModifiedSteps))
 					commit(dbp, res, nil)
 				}
@@ -596,14 +597,14 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 func expandStep(s *step.Step, res *resolution.Resolution) {
 	foreach, err := res.Values.Apply(s.ForEach, nil, "")
 	if err != nil {
-		s.State = step.StateFatalError
+		res.SetStepState(s.Name, step.StateFatalError)
 		s.Error = err.Error()
 		return
 	}
 	// unmarshal into collection
 	var items []interface{}
 	if err := utils.JSONnumberUnmarshal(bytes.NewReader(foreach), &items); err != nil {
-		s.State = step.StateFatalError
+		res.SetStepState(s.Name, step.StateFatalError)
 		s.Error = err.Error()
 		return
 	}
@@ -633,12 +634,10 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 		s.ChildrenSteps = append(s.ChildrenSteps, childStepName)
 		s.ChildrenStepMap[childStepName] = true
 	}
-	s.State = step.StateExpanded
+	res.SetStepState(s.Name, step.StateExpanded)
 }
 
-func contractStep(s *step.Step, res *resolution.Resolution) string {
-	resultingLoopState := step.StateDone
-
+func contractStep(s *step.Step, res *resolution.Resolution) {
 	// collect results, metadata and errors
 	collectedChildren := []interface{}{}
 	for _, childStepName := range s.ChildrenSteps {
@@ -672,8 +671,6 @@ func contractStep(s *step.Step, res *resolution.Resolution) string {
 	s.Dependencies = cleanDependencies
 	s.ChildrenSteps = nil
 	s.ChildrenStepMap = nil
-
-	return resultingLoopState
 }
 
 func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
@@ -689,7 +686,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 		if res.Steps[stepName].State == step.StatePrune {
 			// use StepTreeIndexPrune: lists dependencies which should be pruned when their parent is pruned
 			for _, dep := range res.StepTreeIndexPrune[stepName] {
-				res.Steps[dep].State = step.StatePrune
+				res.SetStepState(dep, step.StatePrune)
 				recursiveModif[dep] = true
 			}
 		} else {
@@ -708,7 +705,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 						}
 					}
 					if !matchingExpectedState {
-						res.Steps[childStep].State = step.StatePrune
+						res.SetStepState(childStep, step.StatePrune)
 						recursiveModif[childStep] = true
 					}
 					break
@@ -912,8 +909,7 @@ func computeDelay(d time.Duration, rc int) time.Duration {
 func resolutionStateSetter(res *resolution.Resolution, modifiedSteps map[string]bool) step.StateSetter {
 	return func(step, state, message string) {
 		if _, ok := res.Steps[step]; ok {
-			res.Steps[step].State = state
-			res.Values.SetState(step, state)
+			res.SetStepState(step, state)
 			res.Steps[step].Error = message
 			res.Values.SetError(step, message)
 			modifiedSteps[step] = true

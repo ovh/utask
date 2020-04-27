@@ -384,7 +384,7 @@ func TestResolutionStateCrashed(t *testing.T) {
 	assert.Nil(t, err)
 
 	res.State = resolution.StateCrashed
-	res.Steps["stepOne"].State = step.StateRunning
+	res.SetStepState("stepOne", step.StateRunning)
 	err = updateResolution(res)
 	assert.Nil(t, err)
 
