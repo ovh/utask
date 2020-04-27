@@ -232,7 +232,7 @@ The JavaScript evaluation is done using [otto](https://github.com/robertkrimen/o
 
 ### Steps
 
-A step is the smallest unit of work that can be performed within a task. At is's heart, a step defines an **action**: several types of actions are available, and each type requires a different configuration, provided as part of the step definition. The state of a step will change during a task's resolution process, and determine which steps become elligible for execution. Custom states can be defined for a step, to fine-tune execution flow (see below).
+A step is the smallest unit of work that can be performed within a task. At is's heart, a step defines an **action**: several types of actions are available, and each type requires a different configuration, provided as part of the step definition. The state of a step will change during a task's resolution process, and determine which steps become eligible for execution. Custom states can be defined for a step, to fine-tune execution flow (see below).
 
 A sequence of ordered steps constitutes the entire workload of a task. Steps are ordered by declaring **dependencies** between each other. A step declares its dependencies as a list of step names on which it waits, meaning that a step's execution will be on hold until its dependencies have been resolved. A dependency can be qualified with a step's state. For example, `step2` can declare a dependency on `step1` in the following ways:
 - `step1`: wait for `step1` to be in state `DONE`

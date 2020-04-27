@@ -4,7 +4,7 @@ This plugin returns the output defined in its configuration, without performing 
 
 ## Configuration
 
-|Field|Description  
+|Field|Description
 |---|---
 | `output` | an object with the complete output of the step
 | `metadata` | an object containing the metadata returned by the step
@@ -13,7 +13,7 @@ This plugin returns the output defined in its configuration, without performing 
 
 ## Example
 
-An action of type `echo` requires the following kind of configuration. The default outcome is a successful step: by adding an error_message, the step will consider the action a failure and set the step in `SERVER_ERROR` state. This is the default error type, which will cause the step to be elligible for retry. To block the task, error_type can be set to `client`, causing the step state to be set to `CLIENT_ERROR`.
+An action of type `echo` requires the following kind of configuration. The default outcome is a successful step: by adding an error_message, the step will consider the action a failure and set the step in `SERVER_ERROR` state. This is the default error type, which will cause the step to be eligible for retry. To block the task, error_type can be set to `client`, causing the step state to be set to `CLIENT_ERROR`.
 
 ```yaml
 action:
@@ -25,7 +25,7 @@ action:
     metadata: # an arbitrary yaml object representing the step's returned metadata
       HTTPStatus: 200
     error_message: Epic fail! # an arbitrary error message
-    error_type: client # client|server   
+    error_type: client # client|server
 ```
 
 ## Requirements

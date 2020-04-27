@@ -438,7 +438,7 @@ func (st *Step) IsRunnable() bool {
 	return utils.ListContainsString(runnableStates, st.State)
 }
 
-// IsRetriable asserts that Step is elligible for retry
+// IsRetriable asserts that Step is eligible for retry
 func (st *Step) IsRetriable() bool {
 	return utils.ListContainsString(retriableStates, st.State)
 }

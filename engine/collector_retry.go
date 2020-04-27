@@ -12,7 +12,7 @@ import (
 )
 
 // RetryCollector launches a process that collects all resolutions
-// elligible for a new run and passes them to the engine for execution
+// eligible for a new run and passes them to the engine for execution
 func RetryCollector(ctx context.Context) error {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
