@@ -688,6 +688,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 			// use StepTreeIndexPrune: lists dependencies which should be pruned when their parent is pruned
 			for _, dep := range res.StepTreeIndexPrune[stepName] {
 				res.SetStepState(dep, step.StatePrune)
+				modifiedSteps[dep] = true
 				recursiveModif[dep] = true
 			}
 		} else {
@@ -707,6 +708,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 					}
 					if !matchingExpectedState {
 						res.SetStepState(childStep, step.StatePrune)
+						modifiedSteps[childStep] = true
 						recursiveModif[childStep] = true
 					}
 					break
@@ -716,11 +718,14 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 	}
 	if len(recursiveModif) > 0 {
 		pruneSteps(res, recursiveModif)
+		// all recursive pruned steps should be commited back to the parent modifiedSteps, to be picked by next availableSteps() call
+		for stepName := range recursiveModif {
+			modifiedSteps[stepName] = true
+		}
 	}
 }
 
 func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, executedSteps map[string]bool, expandedSteps []string, debugLogger *logrus.Entry) map[string]*step.Step {
-
 	// pre-filter candidate steps
 	// prioritize those which depended on modified steps
 	candidateSteps := map[string]struct{}{}
