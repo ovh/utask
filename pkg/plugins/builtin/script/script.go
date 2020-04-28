@@ -22,6 +22,7 @@ import (
 var (
 	Plugin = taskplugin.New("script", "0.2", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
+		taskplugin.WithResources(resourcesscript),
 	)
 )
 
@@ -51,6 +52,15 @@ type Config struct {
 	OutputMode             string   `json:"output_mode"`
 	OutputManualDelimiters []string `json:"output_manual_delimiters"`
 	ExitCodesUnrecoverable []string `json:"exit_codes_unrecoverable"`
+}
+
+func resourcesscript(i interface{}) []string {
+	cfg := i.(*Config)
+
+	return []string{
+		"fork",
+		fmt.Sprintf("script:%s", cfg.File),
+	}
 }
 
 func validConfig(config interface{}) error {

@@ -253,7 +253,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	}
 
 	go func() {
-		limits := uniqueSortedList(st.Resources)
+		resources := append(runner.Resources(baseCfgRaw, config), st.Resources...)
+		limits := uniqueSortedList(resources)
 		for _, limit := range limits {
 			utask.AcquireResource(limit)
 		}

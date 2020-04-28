@@ -15,6 +15,7 @@ import (
 var (
 	Plugin = taskplugin.New("ping", "0.1", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
+		taskplugin.WithResources(resourcesping),
 	)
 )
 
@@ -58,6 +59,15 @@ func validConfig(config interface{}) error {
 	}
 
 	return nil
+}
+
+func resourcesping(i interface{}) []string {
+	cfg := i.(*Config)
+
+	return []string{
+		"socket",
+		"url:" + cfg.Hostname,
+	}
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {

@@ -23,17 +23,17 @@ action:
     path: /dbaas/logs/{{.input.serviceName}}/output/graylog/stream
     credendials: ovh-api-credentials
     # body is optional, not used for method GET
-    body: | 
+    body: |
       {
         "title": "{{.input.applicationName}}",
-        "description": "{{.input.applicationDescription}}",  
+        "description": "{{.input.applicationDescription}}",
         "autoSelectOption": true
       }
 ```
 
 ## Requirements
 
-The `apiovh` plugin requires a config item to be found under the key given in the `credentials` config field. It's content should match the following schema (see [go-ovh](https://github.com/ovh/go-ovh) for more details): 
+The `apiovh` plugin requires a config item to be found under the key given in the `credentials` config field. It's content should match the following schema (see [go-ovh](https://github.com/ovh/go-ovh) for more details):
 
 ```js
 {
@@ -43,3 +43,9 @@ The `apiovh` plugin requires a config item to be found under the key given in th
   "consumerKey": "ZZZZ"
 }
 ```
+
+## Resources
+
+The `apiovh` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:api.ovh.com` or `url:ca.api.ovh.com`, ... (depending on the region) to rate-limit concurrent executions on an endpoint of the OVH API
