@@ -4,13 +4,13 @@ This plugin creates a new task. A step based on this type of action will remain 
 
 ## Configuration
 
-|Fields|Description
-|---|---
-| `template` | the name of a task template, as accepted through µTask's  API
-| `input` | a map of named values, as accepted on µTask's API
-| `resolver_usernames` | a string containing a JSON array of additional resolver users for the subtask
-| `watcher_usernames` | a string containing a JSON array of additional watcher users for the subtask
-| `delay` | a duration indicating if subtask execution needs to be delayed, expects Golang time.Duration format (5s, 1m, ...)
+| Fields               | Description                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `template`           | the name of a task template, as accepted through µTask's  API                                                     |
+| `input`              | a map of named values, as accepted on µTask's API                                                                 |
+| `resolver_usernames` | a string containing a JSON array of additional resolver users for the subtask                                     |
+| `watcher_usernames`  | a string containing a JSON array of additional watcher users for the subtask                                      |
+| `delay`              | a duration indicating if subtask execution needs to be delayed, expects Golang time.Duration format (5s, 1m, ...) |
 
 ## Example
 
@@ -34,3 +34,15 @@ action:
 ## Requirements
 
 None.
+
+## Return
+
+### Output
+
+| Name                | Description                               |
+| ------------------- | ----------------------------------------- |
+| `id`                | The public identifier of the task         |
+| `state`             | The state of the task                     |
+| `result`            | The result of the task                    |
+| `resolverUsername`  | The username of the resolver of the task  |
+| `requesterUsername` | The username ot the requester of the task |
