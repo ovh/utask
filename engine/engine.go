@@ -625,6 +625,7 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 		res.Steps[childStepName] = &step.Step{
 			Name:         childStepName,
 			Description:  fmt.Sprintf("%d - %s", i, s.Description),
+			Idempotent:   s.Idempotent,
 			Action:       s.Action,
 			Schema:       s.Schema,
 			State:        step.StateTODO,
@@ -633,6 +634,7 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 			Dependencies: s.Dependencies,
 			CustomStates: s.CustomStates,
 			Conditions:   s.Conditions,
+			Resources:    s.Resources,
 			Item:         item,
 		}
 		delete(res.ForeachChildrenAlreadyContracted, childStepName)
