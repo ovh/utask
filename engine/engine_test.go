@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,7 +49,9 @@ func TestMain(m *testing.M) {
 
 	now.Init()
 
-	if err := engine.Init(context.Background(), store); err != nil {
+	var wg sync.WaitGroup
+
+	if err := engine.Init(context.Background(), &wg, store); err != nil {
 		panic(err)
 	}
 

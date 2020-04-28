@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -61,7 +62,8 @@ func TestMain(m *testing.M) {
 	auth.Init(store)
 
 	ctx := context.Background()
-	if err := engine.Init(ctx, store); err != nil {
+	var wg sync.WaitGroup
+	if err := engine.Init(ctx, &wg, store); err != nil {
 		panic(err)
 	}
 
