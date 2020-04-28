@@ -39,10 +39,10 @@ None.
 
 ### Output
 
-| Name                | Description                               |
-| ------------------- | ----------------------------------------- |
-| `id`                | The public identifier of the task         |
-| `state`             | The state of the task                     |
-| `result`            | The result of the task                    |
-| `resolverUsername`  | The username of the resolver of the task  |
-| `requesterUsername` | The username ot the requester of the task |
+| Name                 | Description                               |
+| -------------------- | ----------------------------------------- |
+| `id`                 | The public identifier of the task         |
+| `state`              | The state of the task                     |
+| `result`             | The result of the task                    |
+| `resolver_username`  | The username of the resolver of the task  |
+| `requester_username` | The username ot the requester of the task |
