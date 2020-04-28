@@ -252,7 +252,7 @@ func RunResolution(c *gin.Context, in *runResolutionIn) error {
 
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler RunResolution: manual resolve %s", r.PublicID)
 
-	return engine.GetEngine().Resolve(in.PublicID)
+	return engine.GetEngine().Resolve(in.PublicID, nil)
 }
 
 type extendResolutionIn struct {

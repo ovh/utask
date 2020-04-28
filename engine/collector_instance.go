@@ -11,24 +11,26 @@ import (
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/runnerinstance"
 	"github.com/sirupsen/logrus"
-)
-
-const (
-	maxResolved = 50
+	"golang.org/x/sync/semaphore"
 )
 
 // InstanceCollector launches a process that retrieves resolutions
 // which might have been running on a dead instance and marks them as
 // crashed, for examination
-func InstanceCollector(ctx context.Context) error {
+func InstanceCollector(ctx context.Context, maxConcurrentExecutions int, waitDuration time.Duration) error {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
 	}
 
+	var sm *semaphore.Weighted
+	if maxConcurrentExecutions >= 0 {
+		sm = semaphore.NewWeighted(int64(maxConcurrentExecutions))
+	}
+
 	go func() {
 		// Start immediately
-		collect(dbp)
+		collect(dbp, sm, waitDuration)
 
 		for running := true; running; {
 			// wake up every minute
@@ -38,7 +40,7 @@ func InstanceCollector(ctx context.Context) error {
 			case <-ctx.Done():
 				running = false
 			default:
-				collect(dbp)
+				collect(dbp, sm, waitDuration)
 			}
 		}
 	}()
@@ -46,7 +48,7 @@ func InstanceCollector(ctx context.Context) error {
 	return nil
 }
 
-func collect(dbp zesty.DBProvider) error {
+func collect(dbp zesty.DBProvider, sm *semaphore.Weighted, waitDuration time.Duration) error {
 	// get a list of all instances
 	instances, err := runnerinstance.ListInstances(dbp)
 	if err != nil {
@@ -57,12 +59,7 @@ func collect(dbp zesty.DBProvider) error {
 		// if an instance is dead
 		if i.IsDead() {
 			// loop while there are running resolutions from this instance
-			resolved := 0
 			for {
-				if resolved >= maxResolved {
-					// not selecting more than maxResolved tasks at the same time, so scheduling can be splitted on multiple instances
-					break
-				}
 				r, err := getUpdateRunningResolution(dbp, i)
 				if err != nil {
 					// no more resolutions found, break out of loop
@@ -72,16 +69,15 @@ func collect(dbp zesty.DBProvider) error {
 				} else {
 					// run found resolution
 					log.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("collected crashed resolution %s", r.PublicID)
-					_ = GetEngine().Resolve(r.PublicID)
+					_ = GetEngine().Resolve(r.PublicID, sm)
 
 					// waiting between two resolve, so others instances can also select tasks
-					time.Sleep(2 * time.Second)
-					resolved++
+					time.Sleep(waitDuration)
 				}
 			}
 			// no resolutions left to retry, delete instance
 			if remaining, err := getRemainingResolution(dbp, i); err == nil && remaining == 0 {
-				log.Debugf("collected all resolution from %d, deleting instance from instance list", i.ID)
+				log.Infof("collected all resolution from %d, deleting instance from instance list", i.ID)
 				i.Delete(dbp)
 			}
 		}

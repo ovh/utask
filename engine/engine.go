@@ -15,6 +15,7 @@ import (
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/step"
@@ -131,7 +132,7 @@ func Init(ctx context.Context, store *configstore.Store) error {
 			return err
 		}
 		// init crashed instance collector
-		if err := InstanceCollector(ctx); err != nil {
+		if err := InstanceCollector(ctx, cfg.MaxConcurrentExecutionsFromCrashedComputed, cfg.InstanceCollectorWaitDuration); err != nil {
 			return err
 		}
 		// init retry collector (retry resolutions with state == error)
@@ -169,17 +170,17 @@ func GetEngine() Engine {
 }
 
 // Resolve launches the asynchronous execution of a resolution, given its ID
-func (e Engine) Resolve(publicID string) error {
-	_, err := e.launchResolution(publicID, true)
+func (e Engine) Resolve(publicID string, sm *semaphore.Weighted) error {
+	_, err := e.launchResolution(publicID, true, sm)
 	return err
 }
 
 // SyncResolve launches the synchronous execution of a resolution, given its ID
-func (e Engine) SyncResolve(publicID string) (*resolution.Resolution, error) {
-	return e.launchResolution(publicID, false)
+func (e Engine) SyncResolve(publicID string, sm *semaphore.Weighted) (*resolution.Resolution, error) {
+	return e.launchResolution(publicID, false, sm)
 }
 
-func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resolution, error) {
+func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weighted) (*resolution.Resolution, error) {
 
 	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID})
 	debugLogger.Debugf("Engine: Resolve() starting for %s", publicID)
@@ -209,6 +210,10 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 
 	utask.AcquireExecutionSlot()
 
+	if sm != nil {
+		sm.Acquire(context.Background(), 1)
+	}
+
 	recap := make([]string, 0)
 	for name, s := range res.Steps {
 		recap = append(recap, fmt.Sprintf("step %s = %s", name, s.State))
@@ -219,9 +224,9 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 	}
 	debugLogger.Debugf("Engine: Resolve() %s RECAP BEFORE resolve: state: %s, steps: %s", publicID, res.State, strings.Join(recap, ", "))
 	if async {
-		go resolve(dbp, res, t, debugLogger)
+		go resolve(dbp, res, t, sm, debugLogger)
 	} else {
-		resolve(dbp, res, t, debugLogger)
+		resolve(dbp, res, t, sm, debugLogger)
 	}
 	return res, nil
 }
@@ -331,7 +336,7 @@ func initialize(dbp zesty.DBProvider, publicID string, debugLogger *logrus.Entry
 	return res, t, nil
 }
 
-func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, debugLogger *logrus.Entry) {
+func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm *semaphore.Weighted, debugLogger *logrus.Entry) {
 
 	// keep track of steps which get executed during each run, to avoid looping+retrying the same failing step endlessly
 	executedSteps := map[string]bool{}
@@ -511,6 +516,10 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			break
 		}
 		time.Sleep(bkoff.NextBackOff())
+	}
+
+	if sm != nil {
+		sm.Release(1)
 	}
 
 	utask.ReleaseExecutionSlot()

@@ -33,7 +33,7 @@ func AutorunCollector(ctx context.Context) error {
 				if r != nil {
 					sl.wakeup()
 					logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Autorun Collector: collected resolution %s", r.PublicID)
-					_ = GetEngine().Resolve(r.PublicID)
+					_ = GetEngine().Resolve(r.PublicID, nil)
 				}
 			}
 		}

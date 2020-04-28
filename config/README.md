@@ -81,14 +81,43 @@ postgres://user:pass@db/utask?sslmode=disable
         "config_name": "database" // configuration entry where connection info can be found, default "database"
     },
     // concealed_secrets allows you to render some configstore items inaccessible to the task engine
-   "concealed_secrets": ["database", "encryption-key", "utask-cfg"],
-   // resource_limits allows you to define named resources and allocate a maximum number of concurrent actions on them (see Authoring task templates below)
-   "resource_limits": {
-       "openstack": 15,
-   },
-   // max_concurrent_executions defines a global maximum of concurrent actions running at any given time
-   // if none provided, no upper bound is enforced
-   "max_concurrent_executions": 100
+    "concealed_secrets": ["database", "encryption-key", "utask-cfg"],
+    // resource_limits allows you to define named resources and allocate a maximum number of concurrent actions on them (see Authoring task templates in /README.md)
+    "resource_limits": {
+        "openstack": 15,
+        "socket": 1024,
+        "fork": 50,
+        "url:example.org": 10
+    },
+    // max_concurrent_executions defines a global maximum of concurrent tasks running at any given time
+    // default value: 100; 0 will stop all tasks processing; -1 to indicate no limit
+    "max_concurrent_executions": 100,
+    // max_concurrent_executions_from_crashed defines a maximum of concurrent tasks from a crashed instance running at any given time
+    // default value: 20; 0 will stop all tasks processing; -1 to indicate no limit
+    "max_concurrent_executions_from_crashed": 20,
+    // delay_between_crashed_tasks_resolution defines a wait duration between two tasks from a crashed instance will be schedule in the current uTask instance
+    // default 1, unit: seconds
+    "delay_between_crashed_tasks_resolution": 1,
+    // dashboard_path_prefix defines the path prefix for the dashboard UI. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path
+    // default: empty, no prefix
+    "dashboard_path_prefix": "/my-utask-instance",
+    // editor_path_prefix defines the path prefix for the editor UI. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path
+    // default: empty, no prefix
+    "editor_path_prefix": "/my-utask-instance",
+    // dashboard_api_path_prefix defines the path prefix for the uTask API. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path.
+    // dashboard_api_path_prefix will be used by Dashboard UI to contact the uTask API
+    // default: empty, no prefix
+    "dashboard_api_path_prefix": "/my-utask-instance",
+    // dashboard_sentry_dsn defines the Sentry DSN for the Dashboard UI. Used to retrieve Javascript execution errors inside a Sentry instance.
+    // default: empty, no SENTRY_DSN
+    "dashboard_sentry_dsn": "",
+     // server_options holds configuration to fine-tune DB connection
+    "server_options": {
+        // max_body_bytes defines the maximum size that will be read when sending a body to the uTask server.
+        // value can't be smaller than 1KB (1024), and can't be bigger than 10MB (10*1024*1024)
+        // default: 262144 (256KB), unit: byte
+        "max_body_bytes": 262144
+    }
 }
 ```
 
