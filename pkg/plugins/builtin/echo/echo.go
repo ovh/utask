@@ -1,6 +1,9 @@
 package echo
 
 import (
+	"fmt"
+
+	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
@@ -16,11 +19,13 @@ var (
 // Config describes transparently the outcome of execution
 // output:   an arbitrary object, equivalent to a successful return
 // metadata: the metadata returned by execution, if any
+// unmarshal: defines whether unmarshal the output if it's a string or byte array before returning
 // error_message: the outcome of a non-successful execution
 // error_type:    choose between client|server, to trigger different behavior (blocked VS retry)
 type Config struct {
 	Output       interface{}            `json:"output"`
 	Metadata     map[string]interface{} `json:"metadata"`
+	Unmarshal    bool                   `json:"unmarshal"`
 	ErrorMessage string                 `json:"error_message"`
 	ErrorType    string                 `json:"error_type"` // default if empty: server -> ie. retry
 }
@@ -46,5 +51,23 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			resultErr = errors.New(cfg.ErrorMessage)
 		}
 	}
-	return cfg.Output, cfg.Metadata, resultErr
+
+	var output interface{} = cfg.Output
+	if cfg.Unmarshal {
+		var content []byte
+		switch v := cfg.Output.(type) {
+		case string:
+			content = []byte(v)
+		case []byte:
+			content = v
+		default:
+			return nil, nil, fmt.Errorf("cannot unmarshal: invalid data type (%T)", cfg.Output)
+		}
+
+		if err := yaml.Unmarshal(content, &output); err != nil {
+			return nil, nil, fmt.Errorf("failed to unmarshal output: %s", err)
+		}
+	}
+
+	return output, cfg.Metadata, resultErr
 }

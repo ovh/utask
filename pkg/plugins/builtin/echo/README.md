@@ -8,6 +8,7 @@ This plugin returns the output defined in its configuration, without performing 
 |---|---
 | `output` | an object with the complete output of the step
 | `metadata` | an object containing the metadata returned by the step
+| `unmarshal` | defines whether unmarshal the output if it's a string or byte array before returning
 | `error_message` | for testing purposes, an error message to simulate execution failure
 | `error_type` | (client/server) for testing purposes: `client` error blocks execution, `server` lets the step be retried
 
