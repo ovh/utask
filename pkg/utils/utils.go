@@ -118,6 +118,12 @@ func ConvertJSONRowToSlice(in string) ([]string, error) {
 	return tmpslice, err
 }
 
+// JSONUseNumber returns a json decoder to use numbers while decoding json
+func JSONUseNumber(d *json.Decoder) *json.Decoder {
+	d.UseNumber()
+	return d
+}
+
 // HasDupsArray returns a boolean indicating if array contains duplicates
 func HasDupsArray(elements []string) bool {
 	encountered := map[string]bool{}
