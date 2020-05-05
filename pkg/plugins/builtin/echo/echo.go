@@ -6,6 +6,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
+	"github.com/ovh/utask/pkg/utils"
 )
 
 // the echo plugin is used to "manually" build result outputs
@@ -64,7 +65,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, fmt.Errorf("cannot unmarshal: invalid data type (%T)", cfg.Output)
 		}
 
-		if err := yaml.Unmarshal(content, &output); err != nil {
+		if err := yaml.Unmarshal(content, &output, utils.JSONUseNumber); err != nil {
 			return nil, nil, fmt.Errorf("failed to unmarshal output: %s", err)
 		}
 	}
