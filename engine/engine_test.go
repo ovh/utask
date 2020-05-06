@@ -377,6 +377,7 @@ func TestStepConditionStates(t *testing.T) {
 	assert.Equal(t, "OK", res.Steps["stepFour"].Error)
 
 	assert.Equal(t, "PRUNE", res.Steps["stepFive"].State)
+	assert.Equal(t, "LIST_NOMATCH", res.Steps["stepSix"].State)
 }
 
 func TestResolutionStateCrashed(t *testing.T) {
