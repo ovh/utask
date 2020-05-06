@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/configstore"
 	"github.com/ovh/go-ovh/ovh"
@@ -17,6 +18,7 @@ var (
 	Plugin = taskplugin.New("apiovh", "0.6", exec,
 		taskplugin.WithConfig(validConfig, APIOVHConfig{}),
 		taskplugin.WithExecutorMetadata(ExecutorMetadata),
+		taskplugin.WithResources(resourcesapiovh),
 	)
 )
 
@@ -69,6 +71,35 @@ func validConfig(config interface{}) error {
 	}
 
 	return nil
+}
+
+func resourcesapiovh(i interface{}) []string {
+	cfg := i.(*APIOVHConfig)
+	resources := []string{
+		"socket",
+	}
+
+	ovhCfgStr, err := configstore.GetItemValue(cfg.Credentials)
+	if err != nil {
+		return resources
+	}
+
+	var ovhcfg ovhConfig
+	if err := json.Unmarshal([]byte(ovhCfgStr), &ovhcfg); err != nil {
+		return resources
+	}
+
+	endpoint := "ovh-eu" // default value
+	if ovhcfg.Endpoint != "" {
+		endpoint = ovhcfg.Endpoint
+	}
+	if host, ok := ovh.Endpoints[endpoint]; ok {
+		uri, _ := url.Parse(host)
+		if uri.Host != "" {
+			resources = append(resources, "url:"+uri.Host)
+		}
+	}
+	return resources
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {

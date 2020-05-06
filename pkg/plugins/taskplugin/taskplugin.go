@@ -22,6 +22,7 @@ type ExecFunc func(string, interface{}, interface{}) (interface{}, interface{}, 
 type PluginExecutor struct {
 	configfunc     ConfigFunc
 	execfunc       ExecFunc
+	resourcesFunc  func(interface{}) []string
 	configFactory  func() interface{}
 	pluginName     string
 	pluginVersion  string
@@ -36,6 +37,30 @@ func (r PluginExecutor) Context(stepName string) interface{} {
 		return r.contextFactory(stepName)
 	}
 	return nil
+}
+
+// Resources returns a list of resources to be used by uTask engine for this plugin
+func (r PluginExecutor) Resources(baseConfig json.RawMessage, config json.RawMessage) []string {
+	if r.resourcesFunc == nil {
+		return []string{}
+	}
+
+	var cfg interface{}
+
+	if r.configFactory != nil {
+		cfg = r.configFactory()
+		if len(baseConfig) > 0 {
+			err := utils.JSONnumberUnmarshal(bytes.NewReader(baseConfig), cfg)
+			if err != nil {
+				return []string{}
+			}
+		}
+		err := utils.JSONnumberUnmarshal(bytes.NewReader(config), cfg)
+		if err != nil {
+			return []string{}
+		}
+	}
+	return r.resourcesFunc(cfg)
 }
 
 // ValidConfig asserts that a given configuration payload complies with the executor's definition
@@ -107,6 +132,7 @@ type PluginOpt struct {
 	configObj       interface{}
 	contextObj      interface{}
 	contextFunc     func(string) interface{}
+	resourcesFunc   func(interface{}) []string
 	metadataFunc    func() string
 	tagsFunc        tagsFunc
 }
@@ -145,6 +171,13 @@ func WithExecutorMetadata(metadataFunc func() string) func(*PluginOpt) {
 func WithTags(fn tagsFunc) func(*PluginOpt) {
 	return func(o *PluginOpt) {
 		o.tagsFunc = fn
+	}
+}
+
+// WithResources defines a function indicating what resources will be needed by the plugin
+func WithResources(resourcesFunc func(interface{}) []string) func(*PluginOpt) {
+	return func(o *PluginOpt) {
+		o.resourcesFunc = resourcesFunc
 	}
 }
 
@@ -217,6 +250,7 @@ func New(pluginName string, pluginVersion string, execfunc ExecFunc, opts ...fun
 		pluginVersion:  pluginVersion,
 		configfunc:     pOpt.configCheckFunc,
 		execfunc:       execfunc,
+		resourcesFunc:  pOpt.resourcesFunc,
 		configFactory:  configFactory,
 		contextFactory: contextFactory,
 		metadataSchema: schema,

@@ -16,6 +16,7 @@ import (
 var (
 	Plugin = taskplugin.New("email", "0.2", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
+		taskplugin.WithResources(resourcesemail),
 	)
 )
 
@@ -83,6 +84,15 @@ func validConfig(config interface{}) error {
 	}
 
 	return nil
+}
+
+func resourcesemail(i interface{}) []string {
+	cfg := i.(*Config)
+
+	return []string{
+		"socket",
+		"url:" + cfg.SMTPHostname,
+	}
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {

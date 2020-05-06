@@ -25,6 +25,7 @@ const (
 var (
 	Plugin = taskplugin.New("ssh", "0.2", execssh,
 		taskplugin.WithConfig(configssh, ConfigSSH{}),
+		taskplugin.WithResources(resourcesssh),
 	)
 )
 
@@ -40,6 +41,20 @@ type ConfigSSH struct {
 	Key                    string            `json:"ssh_key"`
 	KeyPassphrase          string            `json:"ssh_key_passphrase"`
 	ExitCodesUnrecoverable []string          `json:"exit_codes_unrecoverable"`
+}
+
+func resourcesssh(i interface{}) []string {
+	cfg := i.(*ConfigSSH)
+
+	resources := []string{
+		"socket",
+		"url:" + cfg.Target,
+	}
+	for _, hop := range cfg.Hops {
+		resources = append(resources, "url:"+hop)
+	}
+
+	return resources
 }
 
 func configssh(i interface{}) error {

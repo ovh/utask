@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,7 +49,9 @@ func TestMain(m *testing.M) {
 
 	now.Init()
 
-	if err := engine.Init(context.Background(), store); err != nil {
+	var wg sync.WaitGroup
+
+	if err := engine.Init(context.Background(), &wg, store); err != nil {
 		panic(err)
 	}
 
@@ -84,7 +87,7 @@ func runTask(tmplName string, inputs, resolverInputs map[string]interface{}) (*r
 	if err != nil {
 		return nil, err
 	}
-	return engine.GetEngine().SyncResolve(res.PublicID)
+	return engine.GetEngine().SyncResolve(res.PublicID, nil)
 }
 
 func createResolution(tmplName string, inputs, resolverInputs map[string]interface{}) (*resolution.Resolution, error) {
@@ -119,7 +122,7 @@ func runResolution(res *resolution.Resolution) (*resolution.Resolution, error) {
 	if res == nil {
 		return nil, errors.New("Nil resolution")
 	}
-	return engine.GetEngine().SyncResolve(res.PublicID)
+	return engine.GetEngine().SyncResolve(res.PublicID, nil)
 }
 
 func templateFromYAML(dbp zesty.DBProvider, filename string) (*tasktemplate.TaskTemplate, error) {
@@ -442,7 +445,7 @@ func TestAsyncResolve(t *testing.T) {
 	assert.Equal(t, resolution.StateTODO, res.State)
 	assert.Equal(t, 0, res.Steps["stepOne"].TryCount)
 
-	err = engine.GetEngine().Resolve(res.PublicID)
+	err = engine.GetEngine().Resolve(res.PublicID, nil)
 
 	assert.Nil(t, err)
 }

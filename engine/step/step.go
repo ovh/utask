@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/juju/errors"
@@ -146,7 +147,7 @@ func uniqueSortedList(s []string) []string {
 // - a stepChan channel is provided for committing the result back
 // - a stopRunningSteps channel is provided to interrupt execution in flight
 // values IS NOT CONCURRENT SAFE, DO NOT SHARE WITH OTHER GOROUTINES
-func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values, stepChan chan<- *Step, stopRunningSteps <-chan struct{}) {
+func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values, stepChan chan<- *Step, wg *sync.WaitGroup, stopRunningSteps <-chan struct{}) {
 
 	// Step already ran, directly going to afterrun process
 	if st.State == StateAfterrunError {
@@ -252,8 +253,11 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		}
 	}
 
+	wg.Add(1)
 	go func() {
-		limits := uniqueSortedList(st.Resources)
+		defer wg.Done()
+		resources := append(runner.Resources(baseCfgRaw, config), st.Resources...)
+		limits := uniqueSortedList(resources)
 		for _, limit := range limits {
 			utask.AcquireResource(limit)
 		}

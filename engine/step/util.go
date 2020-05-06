@@ -12,6 +12,7 @@ type Runner interface {
 	Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error)
 	ValidConfig(baseConfig json.RawMessage, config json.RawMessage) error
 	Context(stepName string) interface{}
+	Resources(baseConfig json.RawMessage, config json.RawMessage) []string
 	MetadataSchema() json.RawMessage
 }
 

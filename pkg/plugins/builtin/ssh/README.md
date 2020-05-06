@@ -88,3 +88,10 @@ The default `output_mode` (`auto-result`) injects an escaped `echo` command as t
   "exit_msg": "exited 0"
 }
 ```
+
+## Resources
+
+The `ssh` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:target` (where `target` is the outgoing SSH target of the plugin configuration) to rate-limit concurrent execution on a specific target
+- `url:hop` (where `hop` is one of the intermediate machine of the plugin configuration) to rate-limit concurrent execution on the intermediate machines

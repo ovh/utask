@@ -63,3 +63,9 @@ The plugin returns an object to reuse the parameters in a future component:
 ```
 
 Sensitive data should be retrieved from configstore and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.
+
+## Resources
+
+The `email` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:smtp_hostname` (where `smtp_hostname` is the outgoing SMTP server of the plugin configuration) to rate-limit concurrent execution on a specific outgoing SMTP server

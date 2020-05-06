@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -15,6 +16,7 @@ import (
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/step"
@@ -50,11 +52,12 @@ type Engine struct {
 	// available to steps during execution
 	// ie. credentials needed for http calls, etc...
 	config map[string]interface{}
+	wg     *sync.WaitGroup
 }
 
 // Init launches the task orchestration engine, providing it with a global context
 // and with a store from which to inherit configuration items needed for task execution
-func Init(ctx context.Context, store *configstore.Store) error {
+func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) error {
 	cfg, err := utask.Config(store)
 	if err != nil {
 		return err
@@ -91,6 +94,7 @@ func Init(ctx context.Context, store *configstore.Store) error {
 	// channels for handling graceful shutdown
 	stopRunningSteps = make(chan struct{})
 	gracePeriodEnd = make(chan struct{})
+	eng.wg = wg
 	go func() {
 		<-ctx.Done()
 		// Stop running new steps
@@ -131,7 +135,7 @@ func Init(ctx context.Context, store *configstore.Store) error {
 			return err
 		}
 		// init crashed instance collector
-		if err := InstanceCollector(ctx); err != nil {
+		if err := InstanceCollector(ctx, cfg.MaxConcurrentExecutionsFromCrashedComputed, cfg.InstanceCollectorWaitDuration); err != nil {
 			return err
 		}
 		// init retry collector (retry resolutions with state == error)
@@ -169,18 +173,19 @@ func GetEngine() Engine {
 }
 
 // Resolve launches the asynchronous execution of a resolution, given its ID
-func (e Engine) Resolve(publicID string) error {
-	_, err := e.launchResolution(publicID, true)
+func (e Engine) Resolve(publicID string, sm *semaphore.Weighted) error {
+	_, err := e.launchResolution(publicID, true, sm)
 	return err
 }
 
 // SyncResolve launches the synchronous execution of a resolution, given its ID
-func (e Engine) SyncResolve(publicID string) (*resolution.Resolution, error) {
-	return e.launchResolution(publicID, false)
+func (e Engine) SyncResolve(publicID string, sm *semaphore.Weighted) (*resolution.Resolution, error) {
+	return e.launchResolution(publicID, false, sm)
 }
 
-func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resolution, error) {
-
+func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weighted) (*resolution.Resolution, error) {
+	e.wg.Add(1)
+	defer e.wg.Done()
 	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID})
 	debugLogger.Debugf("Engine: Resolve() starting for %s", publicID)
 
@@ -209,6 +214,10 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 
 	utask.AcquireExecutionSlot()
 
+	if sm != nil {
+		sm.Acquire(context.Background(), 1)
+	}
+
 	recap := make([]string, 0)
 	for name, s := range res.Steps {
 		recap = append(recap, fmt.Sprintf("step %s = %s", name, s.State))
@@ -218,10 +227,11 @@ func (e Engine) launchResolution(publicID string, async bool) (*resolution.Resol
 		debugLogger = debugLogger.WithField("instance_id", *res.InstanceID)
 	}
 	debugLogger.Debugf("Engine: Resolve() %s RECAP BEFORE resolve: state: %s, steps: %s", publicID, res.State, strings.Join(recap, ", "))
+	e.wg.Add(1)
 	if async {
-		go resolve(dbp, res, t, debugLogger)
+		go resolve(dbp, res, t, sm, e.wg, debugLogger)
 	} else {
-		resolve(dbp, res, t, debugLogger)
+		resolve(dbp, res, t, sm, e.wg, debugLogger)
 	}
 	return res, nil
 }
@@ -331,13 +341,13 @@ func initialize(dbp zesty.DBProvider, publicID string, debugLogger *logrus.Entry
 	return res, t, nil
 }
 
-func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, debugLogger *logrus.Entry) {
-
+func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm *semaphore.Weighted, wg *sync.WaitGroup, debugLogger *logrus.Entry) {
+	defer wg.Done()
 	// keep track of steps which get executed during each run, to avoid looping+retrying the same failing step endlessly
 	executedSteps := map[string]bool{}
 	stepChan := make(chan *step.Step)
 
-	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, debugLogger)
+	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
 
 	for expectedMessages > 0 {
 		debugLogger.Debugf("Engine: resolve() %s loop, %d expected steps", res.PublicID, expectedMessages)
@@ -395,7 +405,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			// one less step to go
 			expectedMessages--
 			// state change might unlock more steps for execution
-			expectedMessages += runAvailableSteps(dbp, modifiedSteps, res, t, stepChan, executedSteps, []string{}, debugLogger)
+			expectedMessages += runAvailableSteps(dbp, modifiedSteps, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
 
 			// attempt to persist all changes in db
 			if err := commit(dbp, res, t); err != nil {
@@ -405,6 +415,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 			}
 		case <-gracePeriodEnd:
 			// shutting down, time is up: exit the loop no matter how many steps might be pending
+			expectedMessages = 0
 			break
 		}
 	}
@@ -513,6 +524,10 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, deb
 		time.Sleep(bkoff.NextBackOff())
 	}
 
+	if sm != nil {
+		sm.Release(1)
+	}
+
 	utask.ReleaseExecutionSlot()
 }
 
@@ -535,7 +550,7 @@ func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) erro
 	return dbp.Commit()
 }
 
-func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, debugLogger *logrus.Entry) int {
+func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, wg *sync.WaitGroup, debugLogger *logrus.Entry) int {
 	av := availableSteps(modifiedSteps, res, executedSteps, expandedSteps, debugLogger)
 	expandedSteps = []string{}
 	preRunModifiedSteps := map[string]bool{}
@@ -589,7 +604,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 
 				// run
 				stepCopy := *s
-				step.Run(&stepCopy, res.BaseConfigurations, res.Values, stepChan, stopRunningSteps)
+				step.Run(&stepCopy, res.BaseConfigurations, res.Values, stepChan, wg, stopRunningSteps)
 			}
 		}
 	}
@@ -599,7 +614,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 	// - loop step generated new steps
 	if len(preRunModifiedSteps) > 0 || expanded > 0 {
 		pruneSteps(res, preRunModifiedSteps)
-		return len(av) + runAvailableSteps(dbp, preRunModifiedSteps, res, t, stepChan, executedSteps, expandedSteps, debugLogger)
+		return len(av) + runAvailableSteps(dbp, preRunModifiedSteps, res, t, stepChan, executedSteps, expandedSteps, wg, debugLogger)
 	}
 
 	return len(av)
@@ -625,6 +640,7 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 		res.Steps[childStepName] = &step.Step{
 			Name:         childStepName,
 			Description:  fmt.Sprintf("%d - %s", i, s.Description),
+			Idempotent:   s.Idempotent,
 			Action:       s.Action,
 			Schema:       s.Schema,
 			State:        step.StateTODO,
@@ -633,6 +649,7 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 			Dependencies: s.Dependencies,
 			CustomStates: s.CustomStates,
 			Conditions:   s.Conditions,
+			Resources:    s.Resources,
 			Item:         item,
 		}
 		delete(res.ForeachChildrenAlreadyContracted, childStepName)

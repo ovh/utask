@@ -55,3 +55,9 @@ The `Metadata` to reuse the parameters in a future component:
   "interval_second": "1"
 }
 ```
+
+## Resources
+
+The `ping` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:hostname` (where `hostname` is the ping destination host of the plugin configuration) to rate-limit concurrent execution on a specific destination host

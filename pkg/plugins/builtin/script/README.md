@@ -74,3 +74,9 @@ The plugin returns two objects, `output` and `metadata`.
   "error":""
 }
 ```
+
+## Resources
+
+The `script` plugin declares automatically resources for its steps:
+- `fork` to rate-limit concurrent execution on the number of forked processes started by the uTask instance
+- `script:file_path` (where `file_path` is the script path of the plugin configuration) to rate-limit concurrent execution of a specific script

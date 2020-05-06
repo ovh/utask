@@ -13,7 +13,7 @@ This plugin permorms an HTTP request.
 | `body` | a string representing the payload to be sent with the request
 | `headers` | a list of headers, represented as (`name`, `value`) pairs
 | `timeout` | timeout expressed as a duration (e.g. `30s`)
-| `auth` | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization 
+| `auth` | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization
 | `follow_redirect` | if `true` (string) the plugin will follow up to 10 redirects (302, ...)
 | `query_parameters` | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2`
 | `trim_prefix`| prefix in the response that must be removed before unmarshalling (optional)
@@ -34,7 +34,7 @@ action:
     timeout: "5s"
     # optional, authentication you can use either basic or bearer auth
     auth:
-      basic: 
+      basic:
         user: {{.config.basicAuth.user}}
         password: {{.config.basicAuth.password}}
       bearer: {{.config.auth.token}}
@@ -58,3 +58,9 @@ action:
 ## Requirements
 
 None by default. Sensitive data should stored in the configuration and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.
+
+## Resources
+
+The `http` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:hostname` (where `hostname` is e.g. `www.ovh.com`) to rate-limit concurrent execution on a specific destination web-server/API

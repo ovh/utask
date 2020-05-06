@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"golang.org/x/sync/semaphore"
 
@@ -60,6 +61,13 @@ const (
 	// DefaultRetryMax is the default number of retries allowed for a task's execution
 	DefaultRetryMax = 100
 
+	// defaultInstanceCollectorWaitDuration is the default duration between two crashed tasks being resolved
+	defaultInstanceCollectorWaitDuration = time.Second
+	// defaultMaxConcurrentExecutions is the default maximum concurrent task executions in the instance
+	defaultMaxConcurrentExecutions = 100
+	// defaultMaxConcurrentExecutionsFromCrashed is the default maximum concurrent crashed task executions in the instance
+	defaultMaxConcurrentExecutionsFromCrashed = 20
+
 	// MaxTextSizeLong is the maximum number of characters accepted in a text-type field
 	MaxTextSizeLong = 100000 // ~100 kB
 	// MaxTextSize is the maximum number of characters accepted in a simple string field
@@ -76,20 +84,24 @@ const (
 
 // Cfg holds global configuration data
 type Cfg struct {
-	ApplicationName         string                   `json:"application_name"`
-	AdminUsernames          []string                 `json:"admin_usernames"`
-	CompletedTaskExpiration string                   `json:"completed_task_expiration"`
-	NotifyConfig            map[string]NotifyBackend `json:"notify_config"`
-	NotifyActions           NotifyActions            `json:"notify_actions"`
-	DatabaseConfig          *DatabaseConfig          `json:"database_config"`
-	ConcealedSecrets        []string                 `json:"concealed_secrets"`
-	ResourceLimits          map[string]uint          `json:"resource_limits"`
-	MaxConcurrentExecutions uint                     `json:"max_concurrent_executions"`
-	DashboardPathPrefix     string                   `json:"dashboard_path_prefix"`
-	DashboardAPIPathPrefix  string                   `json:"dashboard_api_path_prefix"`
-	DashboardSentryDSN      string                   `json:"dashboard_sentry_dsn"`
-	EditorPathPrefix        string                   `json:"editor_path_prefix"`
-	ServerOptions           ServerOpt                `json:"server_options"`
+	ApplicationName                            string                   `json:"application_name"`
+	AdminUsernames                             []string                 `json:"admin_usernames"`
+	CompletedTaskExpiration                    string                   `json:"completed_task_expiration"`
+	NotifyConfig                               map[string]NotifyBackend `json:"notify_config"`
+	NotifyActions                              NotifyActions            `json:"notify_actions"`
+	DatabaseConfig                             *DatabaseConfig          `json:"database_config"`
+	ConcealedSecrets                           []string                 `json:"concealed_secrets"`
+	ResourceLimits                             map[string]uint          `json:"resource_limits"`
+	MaxConcurrentExecutions                    *int                     `json:"max_concurrent_executions"`
+	MaxConcurrentExecutionsFromCrashed         *int                     `json:"max_concurrent_executions_from_crashed"`
+	MaxConcurrentExecutionsFromCrashedComputed int                      `json:"-"`
+	DelayBetweenCrashedTasksResolution         string                   `json:"delay_between_crashed_tasks_resolution"`
+	InstanceCollectorWaitDuration              time.Duration            `json:"-"`
+	DashboardPathPrefix                        string                   `json:"dashboard_path_prefix"`
+	DashboardAPIPathPrefix                     string                   `json:"dashboard_api_path_prefix"`
+	DashboardSentryDSN                         string                   `json:"dashboard_sentry_dsn"`
+	EditorPathPrefix                           string                   `json:"editor_path_prefix"`
+	ServerOptions                              ServerOpt                `json:"server_options"`
 
 	resourceSemaphores map[string]*semaphore.Weighted
 	executionSemaphore *semaphore.Weighted
@@ -147,8 +159,13 @@ func (c *Cfg) buildLimits() {
 		c.resourceSemaphores[k] = semaphore.NewWeighted(int64(v))
 	}
 
-	if c.MaxConcurrentExecutions > 0 {
-		c.executionSemaphore = semaphore.NewWeighted(int64(c.MaxConcurrentExecutions))
+	maxConcurrentExecutions := defaultMaxConcurrentExecutions
+	if c.MaxConcurrentExecutions != nil {
+		maxConcurrentExecutions = *c.MaxConcurrentExecutions
+	}
+
+	if maxConcurrentExecutions >= 0 {
+		c.executionSemaphore = semaphore.NewWeighted(int64(maxConcurrentExecutions))
 	}
 }
 
@@ -215,6 +232,19 @@ func Config(store *configstore.Store) (*Cfg, error) {
 
 		if err := json.Unmarshal([]byte(cfgStr), &global); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal utask configuration: %s", err)
+		}
+
+		if global.DelayBetweenCrashedTasksResolution != "" {
+			global.InstanceCollectorWaitDuration, err = time.ParseDuration(global.DelayBetweenCrashedTasksResolution)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse \"delay_between_crashed_tasks_resolution\": %s", err)
+			}
+		} else {
+			global.InstanceCollectorWaitDuration = defaultInstanceCollectorWaitDuration
+		}
+		global.MaxConcurrentExecutionsFromCrashedComputed = defaultMaxConcurrentExecutionsFromCrashed
+		if global.MaxConcurrentExecutionsFromCrashed != nil {
+			global.MaxConcurrentExecutionsFromCrashedComputed = *global.MaxConcurrentExecutionsFromCrashed
 		}
 
 		App = global.ApplicationName

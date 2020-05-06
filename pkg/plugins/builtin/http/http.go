@@ -21,6 +21,7 @@ import (
 var (
 	Plugin = taskplugin.New("http", "1.0", exec,
 		taskplugin.WithConfig(validConfig, HTTPConfig{}),
+		taskplugin.WithResources(resourceshttp),
 	)
 )
 
@@ -95,6 +96,27 @@ func validConfig(config interface{}) error {
 	}
 
 	return nil
+}
+
+func resourceshttp(i interface{}) []string {
+	cfg := i.(*HTTPConfig)
+
+	var host string
+	if cfg.Host == "" {
+		uri, _ := url.Parse(cfg.URL)
+		host = uri.Host
+	} else {
+		uri, _ := url.Parse(cfg.Host)
+		host = uri.Host
+	}
+
+	if host == "" {
+		return []string{"socket"}
+	}
+	return []string{
+		"socket",
+		"url:" + host,
+	}
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {

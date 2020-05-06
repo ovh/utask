@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/juju/errors"
@@ -164,19 +165,34 @@ var rootCmd = &cobra.Command{
 		if err := tasktemplate.LoadFromDir(dbp, utask.FTemplatesFolder); err != nil {
 			return err
 		}
-
+		var wg sync.WaitGroup
 		ctx, cancel := context.WithCancel(context.Background())
 		defer func() {
 			// Stop collectors
 			cancel()
-
-			// Grace period to commit still-running resolutions
-			time.Sleep(time.Second)
-
 			log.Info("Exiting...")
+
+			gracePeriodWaitGroup := make(chan struct{})
+			go func() {
+				wg.Wait()
+				close(gracePeriodWaitGroup)
+			}()
+
+			t := time.NewTicker(5 * time.Second)
+			// Running steps have 3 seconds to stop running after context cancelation
+			// Grace period of 2 seconds (3+2=5) to commit still-running resolutions
+			select {
+			case <-gracePeriodWaitGroup:
+				// all important goroutines exited successfully, bye-bye!
+			case <-t.C:
+				// game over, exiting before everyone said bye :(
+				log.Warn("5 seconds timeout for exiting expired")
+			}
+
+			log.Info("Bye!")
 		}()
 
-		if err := engine.Init(ctx, store); err != nil {
+		if err := engine.Init(ctx, &wg, store); err != nil {
 			return err
 		}
 
