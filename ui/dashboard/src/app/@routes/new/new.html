@@ -12,7 +12,7 @@
             </ul> -->
         <div class="form-group">
           <label for="input_templates">Templates</label>
-          <select class="form-control" id="input_templates" name="input_templates" required
+          <select class="form-control" id="input_templates" [autofocus]="true" name="input_templates" required
             [(ngModel)]="selectedTemplate" (change)="newTask(selectedTemplate);saveFormInQueryParams()">
             <option *ngIf="!selectedTemplate">-- Template --</option>
             <ng-template ngFor let-template [ngForOf]="templates">
@@ -108,12 +108,12 @@
             </div>
 
             <div *ngIf="input.type=='bool'" class="form-group">
-              <label for="input_{{input.name}}">
+              <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
+                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" style="float: left;margin-top: 5px;width: 30px;"/>
+              <label for="input_{{input.name}}" style="float: right;width: calc(100% - 30px);">
                 {{input.description || input.name}}
               </label>
-
-              <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
-                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" />
+              <br clear="all"/>
             </div>
           </div>
         </div>

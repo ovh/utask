@@ -113,11 +113,11 @@ describe('GraphService', () => {
             myG.attr('transform', d3.event.transform);
         });
 
-        graphService.initZoom(10, 100, 5, 100, d3Zoom, d3SVG);
-        expect(svg.outerHTML).toEqual('<svg><g transform="translate(5,27.5) scale(9)"></g></svg>');
+        graphService.initZoom(10, 100, 5, 100, d3Zoom, d3SVG, 1);
+        expect(svg.outerHTML).toEqual('<svg><g transform="translate(0,25) scale(10)"></g></svg>');
 
-        graphService.initZoom(10, 45, 10, 45, d3Zoom, d3SVG);
-        expect(svg.outerHTML).toEqual('<svg><g transform="translate(2.25,2.25) scale(4.05)"></g></svg>');
+        graphService.initZoom(10, 45, 10, 45, d3Zoom, d3SVG, 1);
+        expect(svg.outerHTML).toEqual('<svg><g transform="translate(0,0) scale(4.5)"></g></svg>');
     });
 
     it('drawNodesAndEdges', () => {

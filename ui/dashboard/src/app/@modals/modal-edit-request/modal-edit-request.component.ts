@@ -68,7 +68,6 @@ export class ModalEditRequestComponent implements OnInit {
           type: 'error'
         }];
       } else {
-        console.log('Error', err);
         this.error = err;
       }
     }

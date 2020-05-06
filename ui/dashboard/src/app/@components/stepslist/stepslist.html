@@ -1,5 +1,5 @@
 <tag-input [(ngModel)]='filter.tags' [modelAsStrings]="true" #input (onRemove)="filterSteps()" (onAdd)="filterSteps()">
-  <tag-input-dropdown [showDropdownIfEmpty]=" true" [autocompleteItems]="presentStates">
+  <tag-input-dropdown [showDropdownIfEmpty]="true" [autocompleteItems]="presentStates">
   </tag-input-dropdown>
   <ng-template let-item="item" let-index="index">
     <span *ngIf="item.startsWith('State:')">

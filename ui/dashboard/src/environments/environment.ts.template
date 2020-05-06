@@ -1,4 +1,13 @@
 export const environment = {
   production: false,
-  apiBaseUrl: '<%= PREFIX_API_BASE_URL %>'
+  apiBaseUrl: '<%= PREFIX_API_BASE_URL %>',
+  localStorage: '<%= PREFIX_LOCALSTORAGE %>',
+  sentry: '<%= SENTRY_DSN %>',
+  refresh: {
+    home: {
+      tasks: 15000,
+      task: 1000,
+    },
+    task: 5000
+  }
 };

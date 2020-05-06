@@ -4,24 +4,33 @@
 
   <div class="main" *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
     <header>
-      <h1>
-        <span class="bloc_status task_state_{{task.state}}">{{task.state}}</span>
-        {{task.title}}
-
-        <div class="float-right">
-          <div class="btn-group" role="group">
-            <button type="button" class="btn btn-secondary btn-outline-primary" (click)="autorefresh = !autorefresh;">
-              <input type="checkbox" [(ngModel)]="autorefresh" readonly="readonly" style="pointer-events: none;" />
-              &nbsp;Autorefresh (5s)
-            </button>
-            <button class="btn btn-primary control-inline" (click)="loadTask();" title="Refresh tasks"
-              [disabled]="loaders.task || loaders.resolution">
-              <i class="fas fa-sync" ng-class="{'fa-spin': loaders.tasks}"></i>
-              Refresh
-            </button>
-          </div>
+      <div class="title">
+        <h1>
+          <span class="bloc_status task_state_{{task.state}}">{{task.state}}</span>
+          {{task.title}}
+        </h1>
+        <div *ngIf="task.tags">
+          <ng-template ngFor let-tagKey [ngForOf]="objectKeys(task.tags)">
+            <span class="badge badge-primary">
+              {{tagKey}}=<strong>{{task.tags[tagKey]}}</strong>
+            </span>
+            &nbsp;
+          </ng-template>
         </div>
-      </h1>
+      </div>
+      <div class="actions">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-secondary btn-outline-primary" (click)="autorefresh.actif = !autorefresh.actif;autorefresh.hasChanged = true;" [disabled]="!autorefresh.enable">
+            <input type="checkbox" [(ngModel)]="autorefresh.actif" readonly="readonly"/>
+            &nbsp;Autorefresh (5s)
+          </button>
+          <button class="btn btn-primary control-inline" (click)="loadTask();" title="Refresh tasks"
+            [disabled]="loaders.task || loaders.resolution">
+            <i class="fas fa-sync" ng-class="{'fa-spin': loaders.tasks}"></i>
+            Refresh
+          </button>
+        </div>
+      </div>
       <br clear="both" />
     </header>
     <section>
@@ -118,7 +127,8 @@
               <button type="button" class="btn btn-sm btn-primary" title="Run" (click)="runResolution(resolution);">
                 <i class="fas fa-play"></i>
               </button>
-              <button type="button" class="btn btn-sm btn-primary" title="Cancel" (click)="cancelResolution(resolution);">
+              <button type="button" class="btn btn-sm btn-primary" title="Cancel"
+                (click)="cancelResolution(resolution);">
                 <i class="fas fa-ban"></i>
               </button>
               <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle>
@@ -126,7 +136,8 @@
               </button>
             </div>
             <div class="dropdown-menu" ngbDropdownMenu>
-              <button type="button" ngbDropdownItem (click)="previewDetails(resolution, 'Resolution preview');">View as code</button>
+              <button type="button" ngbDropdownItem (click)="previewDetails(resolution, 'Resolution preview');">View as
+                code</button>
               <button type="button" ngbDropdownItem (click)="pauseResolution(resolution);">Pause</button>
               <button type="button" ngbDropdownItem (click)="extendResolution(resolution);">Extend</button>
               <button type="button" ngbDropdownItem (click)="editResolution(resolution);">Edit</button>
@@ -142,7 +153,7 @@
               </steps-list>
 
             </div>
-            <div class="col-8" style="overflow: auto;">
+            <div class="col-8 steps-viewer">
               <steps-viewer [item]="resolution" (select)="selectStepFromViewer($event)" done="true"></steps-viewer>
             </div>
           </div>
@@ -164,7 +175,7 @@
         <div class="col-md-6">
           <div class="utask_bloc utask_bloc_SUCCESS">
             <header (click)="display.resolution = !display.resolution">
-              <div class="utask_bloc_header_title">
+              <div class="utask_bloc_header_title" style="width:100%">
                 <span *ngIf="display.resolution">
                   <i class="fas fa-caret-down"></i>
                 </span>
@@ -263,7 +274,7 @@
         <div class="col-md-6">
           <div class="utask_bloc utask_bloc_ERROR">
             <header (click)="display.reject = !display.reject">
-              <div class="utask_bloc_header_title">
+              <div class="utask_bloc_header_title" style="width:100%">
                 <span *ngIf="display.reject">
                   <i class="fas fa-caret-down"></i>
                 </span>
