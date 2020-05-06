@@ -7,6 +7,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
+	"github.com/tidwall/gjson"
 )
 
 // the echo plugin is used to "manually" build result outputs
@@ -63,6 +64,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			content = v
 		default:
 			return nil, nil, fmt.Errorf("cannot unmarshal: invalid data type (%T)", cfg.Output)
+		}
+
+		// Instanciate either an array or a map to access correctly the variable with text/template
+		gjsonResult := gjson.ParseBytes(content)
+		switch {
+		case gjsonResult.IsArray():
+			output = []interface{}{}
+		case gjsonResult.IsObject():
+			output = map[string]interface{}{}
 		}
 
 		if err := yaml.Unmarshal(content, &output, utils.JSONUseNumber); err != nil {
