@@ -129,7 +129,7 @@ steps:
               message: List contains matching value
             - type: check
               if:
-                  - expected: {{.step.this.state}}
+                  - expected: '{{.step.this.state}}'
                     operator: EQ
                     value: 'LIST_MATCH'
                   - expected: baz
