@@ -10,18 +10,16 @@
             "title": "A µTask template step",
             "default": {},
             "additionalProperties": false,
-            "examples": [
-                {
-                    "description": "Get UTC time",
-                    "action": {
-                        "type": "http",
-                        "configuration": {
-                            "method": "GET",
-                            "url": "http://worldclockapi.com/api/json/utc/now"
-                        }
+            "examples": [{
+                "description": "Get UTC time",
+                "action": {
+                    "type": "http",
+                    "configuration": {
+                        "method": "GET",
+                        "url": "http://worldclockapi.com/api/json/utc/now"
                     }
                 }
-            ],
+            }],
             "required": [
                 "description",
                 "action"
@@ -81,8 +79,7 @@
             }
         },
         "Action": {
-            "oneOf": [
-                {
+            "oneOf": [{
                     "$ref": "#/definitions/ActionHTTP"
                 },
                 {
@@ -668,7 +665,9 @@
                                     "LT",
                                     "GE",
                                     "LE",
-                                    "REGEXP"
+                                    "REGEXP",
+                                    "IN",
+                                    "NOTIN"
                                 ]
                             },
                             "expected": {
@@ -695,18 +694,16 @@
         "Input": {
             "type": "object",
             "additionalProperties": false,
-            "examples": [
-                {
-                    "name": "language",
-                    "default": "english",
-                    "optional": true,
-                    "description": "The language in which you wish to greet the world",
-                    "legal_values": [
-                        "english",
-                        "spanish"
-                    ]
-                }
-            ],
+            "examples": [{
+                "name": "language",
+                "default": "english",
+                "optional": true,
+                "description": "The language in which you wish to greet the world",
+                "legal_values": [
+                    "english",
+                    "spanish"
+                ]
+            }],
             "required": [
                 "name",
                 "description"
@@ -777,8 +774,7 @@
         "Variable": {
             "type": "object",
             "additionalProperties": false,
-            "examples": [
-                {
+            "examples": [{
                     "name": "english-message",
                     "value": "Hello World!"
                 },
@@ -865,12 +861,10 @@
             "type": "object",
             "description": "Describes the object format that will be saved as task result",
             "default": {},
-            "examples": [
-                {
-                    "echo_message": "{{.step.sayHello.output.message}}",
-                    "echo_when": "{{.step.sayHello.output.when}}"
-                }
-            ]
+            "examples": [{
+                "echo_message": "{{.step.sayHello.output.message}}",
+                "echo_when": "{{.step.sayHello.output.when}}"
+            }]
         },
         "allowed_resolver_usernames": {
             "type": "array",
