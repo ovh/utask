@@ -255,7 +255,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		}
 
 		if res.State != resolution.StatePaused {
-			return nil, errors.NotValidf("Cannot update a task which resolution is not in state '%s'", resolution.StatePaused)
+			return nil, errors.BadRequestf("Cannot update a task which resolution is not in state '%s'", resolution.StatePaused)
 		}
 	}
 

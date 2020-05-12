@@ -545,10 +545,10 @@ func (t *Task) Valid(tt *tasktemplate.TaskTemplate) error {
 	case StateTODO, StateRunning, StateDone, StateBlocked, StateCancelled, StateWontfix:
 		break
 	default:
-		return errors.NotValidf("Wrong state: %s", t.State)
+		return errors.BadRequestf("Wrong state: %s", t.State)
 	}
 	if t.Input == nil {
-		return errors.NotValidf("Missing input")
+		return errors.BadRequestf("Missing input")
 	}
 
 	return tt.ValidateInputs(t.Input)

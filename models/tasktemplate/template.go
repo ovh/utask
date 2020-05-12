@@ -315,11 +315,11 @@ func (tt *TaskTemplate) Valid() (err error) {
 	}
 
 	if tt.AutoRunnable && len(tt.ResolverInputs) > 0 {
-		return errors.NotValidf("A template can't be auto runnable if it has resolver inputs")
+		return errors.BadRequestf("A template can't be auto runnable if it has resolver inputs")
 	}
 
 	if tt.AllowAllResolverUsernames && !tt.AutoRunnable {
-		return errors.NotValidf("A template that can be resolved by everybody have to be auto-runnable")
+		return errors.BadRequestf("A template that can be resolved by everybody have to be auto-runnable")
 	}
 
 	inputNames, err := validateInputs(tt.Inputs)
@@ -383,7 +383,7 @@ func validateInputsValues(inputs []input.Input, inputValues map[string]interface
 				continue
 			}
 			if !i.Optional {
-				return errors.NotValidf("Missing input '%s'", i.Name)
+				return errors.BadRequestf("Missing input '%s'", i.Name)
 			}
 		} else {
 			if err := i.CheckValue(val); err != nil {

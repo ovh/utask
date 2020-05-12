@@ -15,10 +15,10 @@ import (
 // ValidString asserts that a string is within the minimum and maximum length configured for µtask
 func ValidString(field, value string) error {
 	if len(value) < utask.MinTextSize {
-		return errors.NotValidf("%s can't be shorter than %d characters", field, utask.MinTextSize)
+		return errors.BadRequestf("%s can't be shorter than %d characters", field, utask.MinTextSize)
 	}
 	if len(value) > utask.MaxTextSize {
-		return errors.NotValidf("%s can't be longer than %d characters", field, utask.MaxTextSize)
+		return errors.BadRequestf("%s can't be longer than %d characters", field, utask.MaxTextSize)
 	}
 	return nil
 }
@@ -26,10 +26,10 @@ func ValidString(field, value string) error {
 // ValidText asserts that a long text string is within the minimum and maximum length configured for µtask
 func ValidText(field, value string) error {
 	if len(value) < utask.MinTextSize {
-		return errors.NotValidf("%s can't be shorter than %d characters", field, utask.MinTextSize)
+		return errors.BadRequestf("%s can't be shorter than %d characters", field, utask.MinTextSize)
 	}
 	if len(value) > utask.MaxTextSizeLong {
-		return errors.NotValidf("%s can't be longer than %d characters", field, utask.MaxTextSizeLong)
+		return errors.BadRequestf("%s can't be longer than %d characters", field, utask.MaxTextSizeLong)
 	}
 	return nil
 }
