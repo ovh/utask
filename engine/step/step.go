@@ -394,7 +394,7 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	switch st.RetryPattern {
 	case "", RetrySeconds, RetryMinutes, RetryHours:
 	default:
-		return errors.NotValidf("Invalid retry pattern: %s Expecting(%s|%s|%s)", st.RetryPattern, RetrySeconds, RetryMinutes, RetryHours)
+		return errors.BadRequestf("Invalid retry pattern: %s Expecting(%s|%s|%s)", st.RetryPattern, RetrySeconds, RetryMinutes, RetryHours)
 	}
 
 	// valid custom states
@@ -427,24 +427,24 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 		depStep, depState := DependencyParts(d)
 		s, ok := steps[depStep]
 		if !ok {
-			return errors.NotValidf("Invalid dependency, no step with that name: %q", depStep)
+			return errors.BadRequestf("Invalid dependency, no step with that name: %q", depStep)
 		}
 		if _, ok := seenDependencies[depStep]; ok {
-			return errors.NotValidf("Invalid dependency, already defined dependency to: %q", depStep)
+			return errors.BadRequestf("Invalid dependency, already defined dependency to: %q", depStep)
 		}
 		if duplicated := utils.HasDupsArray(depState); duplicated {
-			return errors.NotValidf("Invalid dependency, duplicated state detected")
+			return errors.BadRequestf("Invalid dependency, duplicated state detected")
 		}
 		for _, state := range depState {
 			switch state {
 			case StateDone:
 			case StateAny:
 				if len(depState) != 1 {
-					return errors.NotValidf("Invalid dependency, no other state allowed if ANY is declared")
+					return errors.BadRequestf("Invalid dependency, no other state allowed if ANY is declared")
 				}
 			default:
 				if !utils.ListContainsString(s.CustomStates, state) {
-					return errors.NotValidf("Invalid dependency on step %s, step state not allowed: %q", depStep, state)
+					return errors.BadRequestf("Invalid dependency on step %s, step state not allowed: %q", depStep, state)
 				}
 			}
 		}
@@ -454,7 +454,7 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	// no circular dependencies,
 	sourceChain := dependenciesChain(steps, st.Dependencies)
 	if utils.ListContainsString(sourceChain, name) {
-		return errors.NotValidf("Invalid: circular dependency %v <-> %s", sourceChain, st.Name)
+		return errors.BadRequestf("Invalid: circular dependency %v <-> %s", sourceChain, st.Name)
 	}
 
 	return nil

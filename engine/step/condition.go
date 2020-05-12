@@ -120,7 +120,7 @@ func (a *Assert) Valid() error {
 				return err
 			}
 		default:
-			return errors.NotValidf("Unknown condition operator: %s", a.Operator)
+			return errors.BadRequestf("Unknown condition operator: %s", a.Operator)
 		}
 	}
 	return nil

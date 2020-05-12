@@ -187,7 +187,7 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 
 	if r.State != resolution.StatePaused {
 		dbp.Rollback()
-		return errors.NotValidf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
+		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
 	}
 
 	if err := auth.IsAdmin(c); err != nil {
@@ -296,7 +296,7 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 
 	if r.State != resolution.StateBlockedMaxRetries {
 		dbp.Rollback()
-		return errors.NotValidf("Cannot extend a resolution which is not in state '%s'", resolution.StateBlockedMaxRetries)
+		return errors.BadRequestf("Cannot extend a resolution which is not in state '%s'", resolution.StateBlockedMaxRetries)
 	}
 
 	if tt.RetryMax != nil {

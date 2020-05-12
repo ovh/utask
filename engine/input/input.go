@@ -44,10 +44,10 @@ func (i Input) Valid() error {
 	// check that input regex compiles
 	if i.Regex != nil {
 		if len(i.LegalValues) > 0 {
-			return errors.NotValidf("Invalid input '%s': both regex and legal value list configured", i.Name)
+			return errors.BadRequestf("Invalid input '%s': both regex and legal value list configured", i.Name)
 		}
 		if _, err := regexp.Compile(*i.Regex); err != nil {
-			return errors.NotValidf("Invalid regex for input '%s'", i.Name)
+			return errors.BadRequestf("Invalid regex for input '%s'", i.Name)
 		}
 	}
 	// check that input type is valid
@@ -55,7 +55,7 @@ func (i Input) Valid() error {
 		switch i.Type {
 		case InputTypeString, InputTypePassword, InputTypeBool, InputTypeNumber:
 		default:
-			return errors.NotValidf("Invalid input type '%s': must be either %v", i.Type, []string{InputTypeString, InputTypePassword, InputTypeBool, InputTypeNumber})
+			return errors.BadRequestf("Invalid input type '%s': must be either %v", i.Type, []string{InputTypeString, InputTypePassword, InputTypeBool, InputTypeNumber})
 		}
 	}
 	// check that legal values match the input type
@@ -80,7 +80,7 @@ func (i Input) CheckValue(val interface{}) error {
 		if i.Collection {
 			col, ok := val.([]interface{})
 			if !ok {
-				return errors.NotValidf("Input '%s' is expected to be an array", i.Name)
+				return errors.BadRequestf("Input '%s' is expected to be an array", i.Name)
 			}
 			for _, v := range col {
 				if err := i.checkSingleValue(v); err != nil {
@@ -105,7 +105,7 @@ func (i Input) checkSingleValue(val interface{}) error {
 	// check value
 	valStr := fmt.Sprintf("%v", val)
 	if len(valStr) > utask.MaxTextSizeLong {
-		return errors.NotValidf("Invalid input '%s': value can't be longer than %d", i.Name, utask.MaxTextSizeLong)
+		return errors.BadRequestf("Invalid input '%s': value can't be longer than %d", i.Name, utask.MaxTextSizeLong)
 	}
 	if len(i.LegalValues) > 0 {
 		matchVal := false
@@ -116,15 +116,15 @@ func (i Input) checkSingleValue(val interface{}) error {
 			}
 		}
 		if !matchVal {
-			return errors.NotValidf("Invalid input '%s': '%v' is not a legal value (%v)", i.Name, val, i.LegalValues)
+			return errors.BadRequestf("Invalid input '%s': '%v' is not a legal value (%v)", i.Name, val, i.LegalValues)
 		}
 	} else if i.Regex != nil {
 		if !regexp.MustCompile(*i.Regex).MatchString(valStr) {
-			return errors.NotValidf("Invalid input '%s': '%s' doesnt comply with regex '%s'", i.Name, valStr, *i.Regex)
+			return errors.BadRequestf("Invalid input '%s': '%s' doesnt comply with regex '%s'", i.Name, valStr, *i.Regex)
 		}
 	} else {
 		if strings.Contains(valStr, `"`) {
-			return errors.NotValidf("Invalid input '%s': cannot contain double quotes", i.Name)
+			return errors.BadRequestf("Invalid input '%s': cannot contain double quotes", i.Name)
 		}
 	}
 	return nil
@@ -135,16 +135,16 @@ func (i Input) checkValueType(val interface{}) error {
 		switch i.Type {
 		case InputTypeString, InputTypePassword, "": // string by default
 			if _, ok := val.(string); !ok {
-				return errors.NotValidf("Invalid value '%s': expected a string", i.Name)
+				return errors.BadRequestf("Invalid value '%s': expected a string", i.Name)
 			}
 		case InputTypeBool:
 			if _, ok := val.(bool); !ok {
-				return errors.NotValidf("Invalid value '%s': expected a boolean", i.Name)
+				return errors.BadRequestf("Invalid value '%s': expected a boolean", i.Name)
 			}
 		case InputTypeNumber:
 			if _, ok := val.(json.Number); !ok {
 				if _, ok = val.(float64); !ok {
-					return errors.NotValidf("Invalid value '%s': expected a number", i.Name)
+					return errors.BadRequestf("Invalid value '%s': expected a number", i.Name)
 				}
 			}
 		}
