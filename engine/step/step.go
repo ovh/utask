@@ -268,13 +268,17 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		default:
 			st.Output, st.Metadata, st.Tags, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
 			if baseOutput != nil {
+				var errmarshal error
 				if st.Output != nil {
-					marshaled, err := utils.JSONMarshal(st.Output)
-					if err == nil {
+					var marshaled []byte
+					marshaled, errmarshal = utils.JSONMarshal(st.Output)
+					if errmarshal == nil {
 						_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
 					}
 				}
-				st.Output = baseOutput
+				if errmarshal == nil {
+					st.Output = baseOutput
+				}
 			}
 			if err != nil {
 				if errors.IsBadRequest(err) {
@@ -288,6 +292,11 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 					st.Error = err.Error()
 					st.State = StateFatalError
 				}
+			}
+			if _, err := utils.JSONMarshal(st.Output); err != nil {
+				st.Error = "plugin output can't be json.Marshal: " + err.Error()
+				st.State = StateFatalError
+				st.Output = fmt.Sprint(st.Output)
 			}
 
 			if st.State == StateRunning {

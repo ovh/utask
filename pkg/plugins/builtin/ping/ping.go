@@ -3,6 +3,7 @@ package ping
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -85,6 +86,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	pinger.Run()
 
 	so := pinger.Statistics()
+	// ping library can return some invalid float64 values, let's prevent this.
+	if math.IsNaN(so.PacketLoss) || math.IsInf(so.PacketLoss, 0) {
+		so.PacketLoss = float64(0)
+	}
 
 	return &pingStats{
 		PacketsRecv: so.PacketsRecv,
