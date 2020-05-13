@@ -510,6 +510,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 	bkoff.InitialInterval = time.Second
 	bkoff.Multiplier = 2
 	bkoff.MaxInterval = 30 * time.Second
+	bkoff.MaxElapsedTime = 0
 
 	bkoff.Reset()
 
