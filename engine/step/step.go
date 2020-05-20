@@ -147,9 +147,9 @@ type execution struct {
 	ctx         interface{}
 }
 
-func generateExecution(st *Step, action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values) (*execution, error) {
+func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values) (*execution, error) {
 	var ret = execution{
-		config: st.Action.Configuration,
+		config: action.Configuration,
 	}
 	var err error
 
@@ -168,8 +168,8 @@ func generateExecution(st *Step, action executor.Executor, baseConfig map[string
 
 	for { // until we break because no more functions
 
-		if len(executor.BaseOutput) > 0 {
-			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
+		if len(action.BaseOutput) > 0 {
+			base, err := rawResolveObject(values, action.BaseOutput, st.Item, st.Name)
 
 			if err != nil {
 				return nil, errors.Annotate(err, "failed to template base output")
@@ -256,14 +256,42 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		return
 	}
 
-	// Generate the execution
-	execution, err := generateExecution(st, st.Action, baseConfig, values)
+	prehook, err := st.GetPreHook()
 	if err != nil {
 		st.State = StateFatalError
 		st.Error = err.Error()
 		go noopStep(st, stepChan)
 		return
 	}
+
+	if prehook != nil {
+		preHookExecution, err := st.generateExecution(*prehook, baseConfig, values)
+		if err != nil {
+			st.State = StateFatalError
+			st.Error = fmt.Sprintf("prehook: ", err)
+			go noopStep(st, stepChan)
+			return
+		}
+
+		output, metadata, _, err := preHookExecution.runner.Exec(st.Name, preHookExecution.baseCfgRaw, preHookExecution.config, preHookExecution.ctx)
+		if err != nil {
+			st.State = StateFatalError
+			st.Error = fmt.Sprintf("prehook: ", err)
+			go noopStep(st, stepChan)
+			return
+		}
+		values.SetPreHook(output, metadata)
+	}
+
+	// Generate the execution
+	execution, err := st.generateExecution(st.Action, baseConfig, values)
+	if err != nil {
+		st.State = StateFatalError
+		st.Error = err.Error()
+		go noopStep(st, stepChan)
+		return
+	}
+	values.CleanPreHook()
 
 	wg.Add(1)
 	go func() {

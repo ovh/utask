@@ -1,0 +1,11 @@
+name: echo::preHook
+pre_hook:
+  type: echo
+  configuration:
+    output:
+      value: '42'
+action:
+  type: echo
+  configuration:
+    output:
+      value: 'Hello {{ .pre_hook.output.value }} !'

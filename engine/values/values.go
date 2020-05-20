@@ -25,6 +25,7 @@ const (
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
 
 	StateKey    = "state"
+	PreHookKey  = "pre_hook"
 	OutputKey   = "output"
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
@@ -96,6 +97,19 @@ func (v *Values) GetOutput(stepName string) interface{} {
 // SetOutput stores a step's output in Values
 func (v *Values) SetOutput(stepName string, value interface{}) {
 	v.setStepData(stepName, OutputKey, value)
+}
+
+// SetPreHook stores a step's prehook in Values
+func (v *Values) SetPreHook(output, metadata interface{}) {
+	v.m[PreHookKey] = map[string]interface{}{
+		OutputKey:   output,
+		MetadataKey: metadata,
+	}
+}
+
+// CleanPreHook cleans the prehook values
+func (v *Values) CleanPreHook() {
+	delete(v.m, PreHookKey)
 }
 
 // UnsetOutput empties the output data of a named step

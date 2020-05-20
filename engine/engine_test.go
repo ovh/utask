@@ -226,6 +226,16 @@ func TestFunctionCustomState(t *testing.T) {
 	assert.Equal(t, []string{"STATE_HELLO"}, customStates)
 }
 
+func TestFunctionPreHook(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionPreHook.yaml", input, nil)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, res.Steps["stepOne"].Output, map[string]interface{}{
+		"value": "Hello 42 !",
+	})
+}
+
 func TestClientError(t *testing.T) {
 	res, err := runTask("clientError.yaml", map[string]interface{}{}, nil)
 
@@ -302,6 +312,7 @@ func TestLintingAndValidation(t *testing.T) {
 		"allowedStateImpact.yaml":     {false, true},
 		"functionEchoHelloWorld.yaml": {false, true},
 		"functionCustomState.yaml":    {false, true},
+		"functionPreHook.yaml":        {false, true},
 	}
 
 	for template, testCase := range expectedResult {
