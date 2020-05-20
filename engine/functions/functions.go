@@ -184,6 +184,7 @@ func LoadFromDir(directory string) error {
 		}
 
 		functionsImported[function.Name] = &function
+		logrus.Infof("Imported function %q", function.Name)
 	}
 
 	return nil

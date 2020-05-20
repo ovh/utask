@@ -1,0 +1,24 @@
+name: functionNested
+description: A template with a basic function
+title_format: "[test] Hello world function"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::hello::nested1
+            base_output:
+              base_output_template: foo
+            configuration:
+              name: foobar
+        custom_states: [CUSTOM_STATE1]
+        conditions:
+          - type: check
+            if:
+                - value: '{{.step.this.state}}'
+                  operator: EQ
+                  expected: 'NESTED1_STATE'
+            then:
+                this: CUSTOM_STATE1

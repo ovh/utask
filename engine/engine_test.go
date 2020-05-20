@@ -191,23 +191,38 @@ func TestFunction(t *testing.T) {
 	input := map[string]interface{}{}
 	res, err := runTask("functionEchoHelloWorld.yaml", input, nil)
 
-	assert.Equal(t, nil, err)
-	assert.Equal(t, res.Steps["stepOne"].Output, map[string]interface{}{
+	require.Nil(t, err)
+	assert.Equal(t, map[string]interface{}{
 		"value": "Hello toto !",
-	})
+	}, res.Steps["stepOne"].Output)
+}
+
+func TestFunctionBaseOutput(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionNested.yaml", input, nil)
+
+	require.Nilf(t, err, "%s", err)
+	assert.Equal(t, map[string]interface{}{
+		"value":                "Hello foobar !",
+		"nested1":              "foo",
+		"nested2":              "foo",
+		"base_nested":          "nested2",
+		"base_output_template": "foo",
+	}, res.Steps["stepOne"].Output)
+	assert.Equal(t, "CUSTOM_STATE1", res.Steps["stepOne"].State)
 }
 
 func TestFunctionCustomState(t *testing.T) {
 	input := map[string]interface{}{}
 	res, err := runTask("functionCustomState.yaml", input, nil)
 
-	assert.Equal(t, nil, err)
-	assert.Equal(t, res.Steps["stepOne"].Output, map[string]interface{}{
+	require.Nil(t, err)
+	assert.Equal(t, map[string]interface{}{
 		"value": "Hello world!",
-	})
+	}, res.Steps["stepOne"].Output)
 
 	customStates, err := res.Steps["stepOne"].GetCustomStates()
-	assert.Equal(t, nil, err)
+	require.Nil(t, err)
 	assert.Equal(t, []string{"STATE_HELLO"}, customStates)
 }
 
