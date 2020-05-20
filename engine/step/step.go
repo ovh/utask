@@ -78,7 +78,8 @@ type Step struct {
 	Description string `json:"description"`
 	Idempotent  bool   `json:"idempotent"`
 	// action
-	Action executor.Executor `json:"action"`
+	Action  executor.Executor  `json:"action"`
+	PreHook *executor.Executor `json:"pre_hook"`
 	// result
 	Schema         json.RawMessage         `json:"json_schema,omitempty"`
 	ResultValidate jsonschema.ValidateFunc `json:"-"`
@@ -138,6 +139,96 @@ func uniqueSortedList(s []string) []string {
 	return ret
 }
 
+type execution struct {
+	baseCfgRaw  json.RawMessage
+	baseOutputs []map[string]interface{}
+	config      json.RawMessage
+	runner      Runner
+	ctx         interface{}
+}
+
+func generateExecution(st *Step, action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values) (*execution, error) {
+	var ret = execution{
+		config: st.Action.Configuration,
+	}
+	var err error
+
+	if action.BaseConfiguration != "" {
+		base, ok := baseConfig[action.BaseConfiguration]
+		if !ok {
+			return nil, fmt.Errorf("could not find base configuration '%s'", action.BaseConfiguration)
+		}
+
+		resolvedBase, err := resolveObject(values, base, st.Item, st.Name)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to template base configuration")
+		}
+		ret.baseCfgRaw = resolvedBase
+	}
+
+	for { // until we break because no more functions
+
+		if len(executor.BaseOutput) > 0 {
+			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
+
+			if err != nil {
+				return nil, errors.Annotate(err, "failed to template base output")
+			}
+			if base != nil {
+				var ok bool
+				baseOutput, ok := base.(map[string]interface{})
+				if !ok {
+					return nil, errors.Annotate(errors.New("Base output not a map"), "failed to template base output")
+				}
+				// prepend the base outputs
+				ret.baseOutputs = append([]map[string]interface{}{baseOutput}, ret.baseOutputs...)
+			}
+		}
+
+		ret.config, err = resolveObject(values, ret.config, st.Item, st.Name)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed to template configuration")
+		}
+
+		ret.runner, err = getRunner(action.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if we have a function as runner or not. If not, we do not need to go further in the resolution
+		functionRunner, ok := ret.runner.(*functions.Function)
+		if !ok {
+			break
+		}
+		var functionInput map[string]interface{}
+		if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(ret.config), &functionInput); err != nil {
+			return nil, errors.Annotate(err, "failed to template configuration")
+		}
+
+		values.SetFunctionsArgs(functionInput)
+		ret.config = functionRunner.Action.Configuration
+		action = functionRunner.Action
+	}
+
+	ret.ctx = ret.runner.Context(st.Name)
+	if ret.ctx != nil {
+		ctxMarshal, err := utils.JSONMarshal(ret.ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal context: %s", err)
+		}
+		ctxTmpl, err := values.Apply(string(ctxMarshal), st.Item, st.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to template context: %s", err)
+		}
+		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ret.ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-marshal context: %s, err")
+		}
+	}
+
+	return &ret, nil
+}
+
 // Run carries out the action defined by a Step, by providing values to its configuration
 // - a stepChan channel is provided for committing the result back
 // - a stopRunningSteps channel is provided to interrupt execution in flight
@@ -165,120 +256,19 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		return
 	}
 
-	var baseCfgRaw json.RawMessage
-
-	if st.Action.BaseConfiguration != "" {
-		base, ok := baseConfig[st.Action.BaseConfiguration]
-		if !ok {
-			st.State = StateFatalError
-			st.Error = fmt.Sprintf("could not find base configuration '%s'", st.Action.BaseConfiguration)
-			go noopStep(st, stepChan)
-			return
-		}
-		resolvedBase, err := resolveObject(values, base, st.Item, st.Name)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = errors.Annotate(err, "failed to template base configuration").Error()
-			go noopStep(st, stepChan)
-			return
-		}
-		baseCfgRaw = resolvedBase
-	}
-
-	var baseOutputs []map[string]interface{}
-	var runner Runner
-	var err error
-	config := st.Action.Configuration
-	executor := st.Action
-
-	for { // until we break because no more functions
-
-		if len(executor.BaseOutput) > 0 {
-			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
-
-			if err != nil {
-				st.State = StateFatalError
-				st.Error = errors.Annotate(err, "failed to template base output").Error()
-				go noopStep(st, stepChan)
-				return
-			}
-			if base != nil {
-				var ok bool
-				baseOutput, ok := base.(map[string]interface{})
-				if !ok {
-					st.State = StateFatalError
-					st.Error = errors.Annotate(errors.New("Base output not a map"), "failed to template base output").Error()
-					go noopStep(st, stepChan)
-					return
-				}
-				// prepend the base outputs
-				baseOutputs = append([]map[string]interface{}{baseOutput}, baseOutputs...)
-			}
-		}
-
-		config, err = resolveObject(values, config, st.Item, st.Name)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = errors.Annotate(err, "failed to template configuration").Error()
-			go noopStep(st, stepChan)
-			return
-		}
-
-		runner, err = getRunner(executor.Type)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = err.Error()
-			go noopStep(st, stepChan)
-			return
-		}
-
-		// Check if we have a function as runner or not. If not, we do not need to go further in the resolution
-		functionRunner, ok := runner.(*functions.Function)
-		if !ok {
-			break
-		}
-		var functionInput map[string]interface{}
-		if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(config), &functionInput); err != nil {
-			st.State = StateFatalError
-			st.Error = errors.Annotate(err, "failed to template configuration").Error()
-			go noopStep(st, stepChan)
-			return
-		}
-
-		values.SetFunctionsArgs(functionInput)
-		config = functionRunner.Action.Configuration
-		executor = functionRunner.Action
-	}
-
-	ctx := runner.Context(st.Name)
-	if ctx != nil {
-		ctxMarshal, err := utils.JSONMarshal(ctx)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = fmt.Sprintf("failed to marshal context: %s", err.Error())
-			go noopStep(st, stepChan)
-			return
-		}
-		ctxTmpl, err := values.Apply(string(ctxMarshal), st.Item, st.Name)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = fmt.Sprintf("failed to template context: %s", err.Error())
-			go noopStep(st, stepChan)
-			return
-		}
-		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ctx)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = fmt.Sprintf("failed to re-marshal context: %s", err.Error())
-			go noopStep(st, stepChan)
-			return
-		}
+	// Generate the execution
+	execution, err := generateExecution(st, st.Action, baseConfig, values)
+	if err != nil {
+		st.State = StateFatalError
+		st.Error = err.Error()
+		go noopStep(st, stepChan)
+		return
 	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		resources := append(runner.Resources(baseCfgRaw, config), st.Resources...)
+		resources := append(execution.runner.Resources(execution.baseCfgRaw, execution.config), st.Resources...)
 		limits := uniqueSortedList(resources)
 		for _, limit := range limits {
 			utask.AcquireResource(limit)
@@ -288,10 +278,10 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		case <-stopRunningSteps:
 			st.State = StateToRetry
 		default:
-			st.Output, st.Metadata, st.Tags, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
+			st.Output, st.Metadata, st.Tags, err = execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
 
 			var errmarshal error
-			for _, baseOutput := range baseOutputs {
+			for _, baseOutput := range execution.baseOutputs {
 				if st.Output != nil {
 					var marshaled []byte
 					marshaled, errmarshal = utils.JSONMarshal(st.Output)
@@ -435,6 +425,16 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	if err := validExecutor(baseConfigs, st.Action); err != nil {
 		return errors.NewNotValid(err, "Invalid executor action")
 	}
+	preHook, err := st.GetPreHook()
+	if err != nil {
+		return errors.NewNotValid(err, "Invalid prehook action")
+	}
+	if preHook != nil {
+		if err := validExecutor(baseConfigs, *preHook); err != nil {
+			return errors.NewNotValid(err, "Invalid prehook action")
+		}
+	}
+
 	// valid retry pattern, accept empty
 	switch st.RetryPattern {
 	case "", RetrySeconds, RetryMinutes, RetryHours:
@@ -535,23 +535,32 @@ func (st *Step) ExecutorMetadata() json.RawMessage {
 	return runner.MetadataSchema()
 }
 
-// GetConditions returns the list of conditions of this step resolved (functions included)
-func (s *Step) GetConditions() ([]*condition.Condition, error) {
-	conditions := s.Conditions
-
+func (s *Step) walkThroughFunctions(f func(*functions.Function)) error {
 	var runnerName = s.Action.Type
 	for {
 		runner, err := getRunner(runnerName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		functionRunner, ok := runner.(*functions.Function)
 		if !ok {
 			break
 		}
-		conditions = append(functionRunner.Conditions, conditions...)
+		f(functionRunner)
 		runnerName = functionRunner.Action.Type
+	}
+	return nil
+}
+
+// GetConditions returns the list of conditions of this step resolved (functions included)
+func (s *Step) GetConditions() ([]*condition.Condition, error) {
+	conditions := s.Conditions
+
+	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
+		conditions = append(functionRunner.Conditions, conditions...)
+	}); err != nil {
+		return nil, err
 	}
 	return conditions, nil
 }
@@ -560,21 +569,27 @@ func (s *Step) GetConditions() ([]*condition.Condition, error) {
 func (s *Step) GetCustomStates() ([]string, error) {
 	states := s.CustomStates
 
-	var runnerName = s.Action.Type
-	for {
-		runner, err := getRunner(runnerName)
-		if err != nil {
-			return nil, err
-		}
-
-		functionRunner, ok := runner.(*functions.Function)
-		if !ok {
-			break
-		}
+	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
 		states = utils.AppendUniq(states, functionRunner.CustomStates...)
-		runnerName = functionRunner.Action.Type
+	}); err != nil {
+		return nil, err
 	}
 	return states, nil
+}
+
+// GetPreHook returns the prehook that need to be executed (function included)
+func (s *Step) GetPreHook() (*executor.Executor, error) {
+	preHook := s.PreHook
+
+	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
+		if functionRunner.PreHook != nil {
+			preHook = functionRunner.PreHook
+		}
+	}); err != nil {
+		return nil, err
+	}
+	return preHook, nil
+
 }
 
 func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor) error {

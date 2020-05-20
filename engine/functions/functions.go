@@ -31,6 +31,7 @@ var (
 type Function struct {
 	Name         string                 `json:"name"`
 	Action       executor.Executor      `json:"action"`
+	PreHook      *executor.Executor     `json:"pre_hook"`
 	Conditions   []*condition.Condition `json:"conditions,omitempty"`
 	CustomStates []string               `json:"custom_states,omitempty"`
 
