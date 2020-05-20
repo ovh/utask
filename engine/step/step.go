@@ -189,12 +189,12 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 	var runner Runner
 	var err error
 	config := st.Action.Configuration
-	runnerType := st.Action.Type
+	executor := st.Action
 
 	for { // until we break because no more functions
 
-		if len(st.Action.BaseOutput) > 0 {
-			base, err := rawResolveObject(values, st.Action.BaseOutput, st.Item, st.Name)
+		if len(executor.BaseOutput) > 0 {
+			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
 			if err != nil {
 				st.State = StateFatalError
 				st.Error = errors.Annotate(err, "failed to template base output").Error()
@@ -223,7 +223,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			return
 		}
 
-		runner, err = getRunner(runnerType)
+		runner, err = getRunner(executor.Type)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = err.Error()
@@ -246,7 +246,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 
 		values.SetFunctionsArgs(functionInput)
 		config = functionRunner.Action.Configuration
-		runnerType = functionRunner.Action.Type
+		executor = functionRunner.Action
 	}
 
 	ctx := runner.Context(st.Name)
@@ -549,7 +549,7 @@ func (s *Step) GetConditions() ([]*condition.Condition, error) {
 		if !ok {
 			break
 		}
-		conditions = append(conditions, functionRunner.Conditions...)
+		conditions = append(functionRunner.Conditions, conditions...)
 		runnerName = functionRunner.Action.Type
 	}
 	return conditions, nil
