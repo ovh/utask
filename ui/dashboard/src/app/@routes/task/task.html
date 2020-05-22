@@ -1,6 +1,6 @@
 <div>
-  <loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></loader>
-  <error-message [data]="errors.main" *ngIf="errors.main"></error-message>
+  <utask-loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></utask-loader>
+  <utask-error-message [data]="errors.main" *ngIf="errors.main"></utask-error-message>
 
   <div class="main" *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
     <header>
@@ -48,7 +48,7 @@
           </div>
         </header>
         <section *ngIf="display.result">
-          <editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult"></editor>
+          <utask-editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult"></utask-editor>
         </section>
       </div>
 
@@ -99,10 +99,10 @@
               <strong>{{task.template_name}}</strong>
             </a><strong *ngIf="!meta.user_is_admin">{{task.template_name}}</strong>'
             by {{task.requester_username}} <abbr
-              title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created | fromNow}}</em></abbr>
+              title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created | utaskFromNow}}</em></abbr>
             <span *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username"> and
               updated by {{task.resolver_username}} <abbr
-                title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity | fromNow}}</em></abbr></span>
+                title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity | utaskFromNow}}</em></abbr></span>
           </small>
         </section>
       </div>
@@ -154,7 +154,7 @@
 
             </div>
             <div class="col-8 steps-viewer">
-              <steps-viewer [item]="resolution" (select)="selectStepFromViewer($event)" done="true"></steps-viewer>
+              <utask-steps-viewer [item]="resolution" (select)="selectStepFromViewer($event)" done="true"></utask-steps-viewer>
             </div>
           </div>
           <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>
@@ -261,7 +261,7 @@
                   </div>
                 </div>
 
-                <error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask"></error-message>
+                <utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask"></utask-error-message>
 
                 <button type="submit" class="btn btn-success"
                   [disabled]="myForm.invalid || loaders.resolveTask">Resolve</button>
@@ -297,7 +297,7 @@
                   </label>
                 </div>
 
-                <error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></error-message>
+                <utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></utask-error-message>
 
                 <button type="submit" class="btn btn-danger"
                   [disabled]="rejectForm.invalid || loaders.rejectTask">Reject</button>
@@ -326,7 +326,7 @@
           <ul class="utask_comments" *ngIf="task.comments && task.comments.length">
             <li class="utask_comment" *ngFor="let comment of task.comments">
               <p>{{comment.content}}</p>
-              <small><em>{{comment.username}}</em>, {{comment.created | fromNow}}</small>
+              <small><em>{{comment.username}}</em>, {{comment.created | utaskFromNow}}</small>
             </li>
           </ul>
           <div *ngIf="!task.comments || task.comments.length === 0">
@@ -344,7 +344,7 @@
               <textarea name="comment" id="comment" class="form-control" [(ngModel)]="comment.content"></textarea>
             </div>
 
-            <error-message [data]="errors.addComment" *ngIf="errors.addComment"></error-message>
+            <utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></utask-error-message>
 
             <button type="submit" class="btn btn-success" [disabled]="myCommentForm.invalid || loaders.addComment">Add
               comment</button>

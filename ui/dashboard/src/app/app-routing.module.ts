@@ -12,12 +12,19 @@ import { TemplatesComponent } from './@routes/templates/templates.component';
 import { TemplateComponent } from './@routes/templates/template.component';
 import { StatsComponent } from './@routes/stats/stats.component';
 import { StatsResolve } from './@routes/stats/stats.resolve';
-
-
-// const routes: Routes = [
-//   { path: 'home', component: HomeComponent, resolve: { data: HomeResolve } },
-//   { path: '', redirectTo: '/home', pathMatch: 'full' }
-// ];
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { TagInputModule } from 'ngx-chips';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { ToastrModule } from 'ngx-toastr';
+import { UTaskModule } from 'src/utask-module/utask.module';
+import { UTaskLibModule } from 'utask-lib';
+import { environment } from 'src/environments/environment';
+import { FunctionsComponent } from './@routes/functions/functions.component';
+import { FunctionComponent } from './@routes/functions/function.component';
+import { FunctionsResolve } from './@resolves/functions.resolve';
 
 const routes: Routes = [
   {
@@ -31,7 +38,8 @@ const routes: Routes = [
     component: BaseComponent,
     resolve: {
       meta: MetaResolve,
-      templates: TemplatesResolve
+      templates: TemplatesResolve,
+      functions: FunctionsResolve,
     },
     children: [
       {
@@ -57,6 +65,7 @@ const routes: Routes = [
       {
         path: 'template/:templateName',
         component: TemplateComponent,
+        runGuardsAndResolvers: 'paramsOrQueryParamsChange',
         data: {
           title: {
             value: 'Template - {1}',
@@ -65,8 +74,30 @@ const routes: Routes = [
         },
       },
       {
+        path: 'functions',
+        component: FunctionsComponent,
+        data: {
+          title: {
+            value: 'Functions - {0}',
+            args: ['meta.application_name']
+          }
+        },
+      },
+      {
+        path: 'function/:functionName',
+        component: FunctionComponent,
+        runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+        data: {
+          title: {
+            value: 'Function - {1}',
+            args: ['meta.application_name']
+          }
+        },
+      },
+      {
         path: 'task/:id',
         component: TaskComponent,
+        runGuardsAndResolvers: 'paramsOrQueryParamsChange',
         data: {
           title: {
             value: 'Task - {0}',
@@ -102,7 +133,32 @@ const routes: Routes = [
 ];
 
 @NgModule({
+  declarations: [
+    HomeComponent,
+    BaseComponent,
+    ErrorComponent,
+    TemplatesComponent,
+    TemplateComponent,
+    FunctionComponent,
+    FunctionsComponent,
+    TaskComponent,
+    NewComponent,
+    StatsComponent,
+  ],
   imports: [
+    InfiniteScrollModule,
+    TagInputModule,
+    NgbModule,
+    BrowserAnimationsModule,
+    BrowserModule,
+    FormsModule,
+    ToastrModule.forRoot({
+      positionClass: 'toast-bottom-right',
+    }),
+    UTaskModule,
+    UTaskLibModule.forRoot({
+      apiBaseUrl: environment.apiBaseUrl
+    }),
     RouterModule.forRoot(
       routes,
       {
@@ -112,6 +168,6 @@ const routes: Routes = [
     )
   ],
   exports: [RouterModule],
-  providers: [MetaResolve, TemplatesResolve, StatsResolve]
+  providers: [MetaResolve, TemplatesResolve, StatsResolve, FunctionsResolve]
 })
 export class AppRoutingModule { }

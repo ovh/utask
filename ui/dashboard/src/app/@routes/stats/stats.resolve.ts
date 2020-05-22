@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Resolve, Router, ActivatedRouteSnapshot } from '@angular/router';
-import { ApiService } from 'src/app/@services/api.service';
-import { Stats } from 'src/app/@models/stats.model';
+import { ApiService } from 'utask-lib';
+import { Stats } from 'fs';
 
 @Injectable()
 export class StatsResolve implements Resolve<any> {
@@ -11,7 +11,7 @@ export class StatsResolve implements Resolve<any> {
     }
 
     resolve(route: ActivatedRouteSnapshot) {
-        return this.api.getStats().toPromise().then((res: any) => {
+        return this.api.stats.get().toPromise().then((res: any) => {
             return res as Stats;
         }).catch(() => {
             return {};

@@ -1,19 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
-import EditorConfig from 'src/app/@models/editorconfig.model';
-import { ApiService } from '../../@services/api.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ModalYamlPreviewComponent } from 'src/app/@modals/modal-yaml-preview/modal-yaml-preview.component';
-import Template from 'src/app/@models/template.model';
-import { ResolutionService } from 'src/app/@services/resolution.service';
-import { RequestService } from 'src/app/@services/request.service';
-import MetaUtask from 'src/app/@models/meta-utask.model';
-import Task, { Comment } from '../../@models/task.model';
-import { TaskService } from 'src/app/@services/task.service';
 import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
+import { ApiService, ModalYamlPreviewComponent } from 'utask-lib';
+import EditorConfig from 'utask-lib/@models/editorconfig.model';
+import { TaskService } from 'utask-lib';
+import Task, { Comment } from 'utask-lib/@models/task.model';
+import Meta from 'utask-lib/@models/meta.model';
+import { ResolutionService } from 'utask-lib';
+import { RequestService } from 'utask-lib';
+import Template from 'utask-lib/@models/template.model';
 
 @Component({
   templateUrl: './task.html',
@@ -41,7 +40,7 @@ export class TaskComponent implements OnInit, OnDestroy {
     maxLines: 25,
   };
   selectedStep = '';
-  meta: MetaUtask = null;
+  meta: Meta = null;
 
   JSON = JSON;
   template: Template;
@@ -64,6 +63,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.meta = this.route.parent.snapshot.data.meta;
     this.route.params.subscribe(params => {
+      this.errors.main = null;
       this.taskId = params.id;
       this.loadTask().then(() => {
         this.display.request = (!this.task.result && !this.resolution) || (!this.resolution && this.taskIsResolvable);
@@ -73,7 +73,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.display.resolution = !this.resolution && this.taskIsResolvable;
         this.display.comments = this.task.comments && this.task.comments.length > 0;
       }).catch((err) => {
-        if (!this.task) {
+        if (!this.task || this.task.id !== params.id) {
           this.errors.main = err;
         }
       });
@@ -81,7 +81,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
     this.refreshes.tasks = new ActiveInterval();
     this.refreshes.tasks.setInterval(() => {
-      if (!this.loaders.tasks && this.autorefresh.actif) {
+      if (!this.loaders.task && this.autorefresh.actif) {
         this.loadTask();
       }
     }, environment.refresh.task, false);
@@ -89,7 +89,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   addComment() {
     this.loaders.addComment = true;
-    this.api.addComment(this.task.id, this.comment.content).toPromise().then((comment: Comment) => {
+    this.api.task.comment.add(this.task.id, this.comment.content).toPromise().then((comment: Comment) => {
       this.task.comments = _.get(this.task, 'comments', []);
       this.task.comments.push(comment);
       this.errors.addComment = null;
@@ -107,6 +107,12 @@ export class TaskComponent implements OnInit, OnDestroy {
     });
     previewModal.componentInstance.value = obj;
     previewModal.componentInstance.title = title;
+    previewModal.componentInstance.close = () => {
+      previewModal.close();
+    };
+    previewModal.componentInstance.dismiss = () => {
+      previewModal.dismiss();
+    };
   }
 
   editRequest(task: Task) {
@@ -188,7 +194,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   rejectTask() {
     this.loaders.rejectTask = true;
-    this.api.rejectTask(this.task.id).toPromise().then((res: any) => {
+    this.api.task.reject(this.task.id).toPromise().then((res: any) => {
       this.errors.rejectTask = null;
       this.loadTask();
     }).catch((err) => {
@@ -200,7 +206,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   resolveTask() {
     this.loaders.resolveTask = true;
-    this.api.postResolution(this.item).toPromise().then((res: any) => {
+    this.api.resolution.add(this.item).toPromise().then((res: any) => {
       this.errors.resolveTask = null;
       this.loadTask();
     }).catch((err) => {
@@ -217,7 +223,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   loadTask() {
     return new Promise((resolve, reject) => {
       this.loaders.task = true;
-      this.api.task(this.taskId).subscribe((data: Task) => {
+      this.api.task.get(this.taskId).subscribe((data: Task) => {
         this.task = data;
         this.task.comments = _.orderBy(_.get(this.task, 'comments', []), ['created'], ['asc']);
         this.item.task_id = this.task.id;
@@ -270,7 +276,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   loadResolution(resolutionId: string) {
     return new Promise((resolve, reject) => {
       this.loaders.resolution = true;
-      this.api.resolution(resolutionId).subscribe((data) => {
+      this.api.resolution.get(resolutionId).subscribe((data) => {
         resolve(data);
       }, (err: any) => {
         reject(err);

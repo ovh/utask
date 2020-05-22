@@ -3,7 +3,7 @@ import { Observable, empty } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
 import { /*ActivatedRouteSnapshot, RouterStateSnapshot, */Resolve } from '@angular/router';
-import { ApiService } from '../@services/api.service';
+import { ApiService } from 'utask-lib';
 
 @Injectable()
 export class MetaResolve implements Resolve<any> {
@@ -13,11 +13,7 @@ export class MetaResolve implements Resolve<any> {
     }
 
     resolve() {
-        // route: ActivatedRouteSnapshot,
-        // state: RouterStateSnapshot
-        // ): Observable<any> | Promise<any> | any {
-        // // // // return this.homeObject.fetchTeam(route.params.id);
-        return this.api.getMeta().pipe(
+        return this.api.meta.get().pipe(
             catchError(err => {
                 this.router.navigate(['/error']);
                 return empty();

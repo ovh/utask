@@ -43,22 +43,22 @@
     <div class="utask_step-details" *ngIf="displayDetails[stepName]">
       <div *ngIf="steps[stepName].output">
         Output:
-        <editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></editor>
+        <utask-editor [value]="JSON.stringify(steps[stepName].output, null, 4)" [config]="editorConfigPayload"></utask-editor>
       </div>
 
       <div *ngIf="steps[stepName].children">
         Children:
-        <editor [value]="JSON.stringify(steps[stepName].children, null, 4)" [config]="editorConfigChildren"></editor>
+        <utask-editor [value]="JSON.stringify(steps[stepName].children, null, 4)" [config]="editorConfigChildren"></utask-editor>
       </div>
 
       <div *ngIf="steps[stepName].error">
         <span *ngIf="steps[stepName].state !== 'DONE'">Error:</span>
         <span *ngIf="steps[stepName].state === 'DONE'">Message:</span>
-        <editor [value]="JSON.stringify(steps[stepName].error, null, 4)" [config]="editorConfigError"></editor>
+        <utask-editor [value]="JSON.stringify(steps[stepName].error, null, 4)" [config]="editorConfigError"></utask-editor>
       </div>
 
       <small *ngIf="steps[stepName].last_run && steps[stepName].last_run != '0001-01-01T00:00:00Z'">
-        Last run: <strong>{{steps[stepName].last_run | fromNow}}</strong>
+        Last run: <strong>{{steps[stepName].last_run | utaskFromNow}}</strong>
       </small>
       <button type="button" class="btn btn-secondary btn-outline-primary" (click)="previewStepDetails(steps[stepName])">View</button>
     </div>

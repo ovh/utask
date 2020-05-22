@@ -1,14 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError } from 'rxjs/operators';
-import { /*ActivatedRouteSnapshot, RouterStateSnapshot, */Resolve } from '@angular/router';
+import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
-import { ApiService, ParamsListTemplates } from 'utask-lib';
-import Template from 'utask-lib/@models/template.model';
+import { ApiService, ParamsListFunctions } from 'utask-lib';
+import Function from 'utask-lib/@models/function.model';
 
 @Injectable()
-export class TemplatesResolve implements Resolve<any> {
+export class FunctionsResolve implements Resolve<any> {
     api: ApiService;
     constructor(api: ApiService, private router: Router) {
         this.api = api;
@@ -33,13 +31,13 @@ export class TemplatesResolve implements Resolve<any> {
 
     resolve() {
         return new Promise((resolve, reject) => {
-            const pagination: ParamsListTemplates = {
+            const pagination: ParamsListFunctions = {
                 page_size: 1000,
                 last: ''
             };
-            const load = (p: any, items: Template[] = []) => {
-                return this.api.template.list(pagination).toPromise().then((data) => {
-                    items = items.concat(data.body as Template[]);
+            const load = (p: any, items: Function[] = []) => {
+                return this.api.function.list(pagination).toPromise().then((data) => {
+                    items = items.concat(data.body as Function[]);
                     if (this.hasLast(data.headers, p)) {
                         return load(p, items);
                     } else {
@@ -49,8 +47,8 @@ export class TemplatesResolve implements Resolve<any> {
                     throw err;
                 });
             };
-            load(pagination).then((templates: Template[]) => {
-                resolve(templates);
+            load(pagination).then((functions: Function[]) => {
+                resolve(functions);
             }).catch((err) => {
                 this.router.navigate(['/error']);
                 reject(err);

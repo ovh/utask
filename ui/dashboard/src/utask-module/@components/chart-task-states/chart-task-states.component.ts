@@ -16,7 +16,9 @@ class VMTaskState {
     styleUrls: ['./chart-task-states.sass'],
 })
 export class ChartTaskStatesComponent implements AfterViewInit, OnChanges {
-    @ViewChild('chart') chart: ElementRef;
+    @ViewChild('chart', {
+        static: false
+    }) chart: ElementRef;
     @Input() data: VMTaskState[];
 
     ngAfterViewInit() {

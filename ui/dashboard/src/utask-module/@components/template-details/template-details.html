@@ -1,0 +1,13 @@
+<div>
+  <utask-loader *ngIf="loading"></utask-loader>
+  <utask-error-message [data]="error" *ngIf="error"></utask-error-message>
+
+  <div class="row" *ngIf="!loading && !error">
+    <div class="col-4">
+      <utask-editor [value]="text" [config]="config"></utask-editor>
+    </div>
+    <div class="col-8">
+      <utask-steps-viewer [item]="template" *ngIf="template" done="false"></utask-steps-viewer>
+    </div>
+  </div>
+</div>
