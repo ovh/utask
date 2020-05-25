@@ -51,6 +51,25 @@ func ListContainsString(list []string, item string) bool {
 	return false
 }
 
+// AppendUniq does the same thing than append but insure we have only 1 iteam of each
+func AppendUniq(list []string, items ...string) []string {
+	for _, item := range items {
+		shouldAdd := true
+		for _, v := range list {
+			if v == item {
+				shouldAdd = false
+				break
+			}
+		}
+
+		if shouldAdd {
+			list = append(list, item)
+		}
+	}
+
+	return list
+}
+
 // PrintJSON prints out an interface{} as an indented json string
 func PrintJSON(v interface{}) {
 	b, err := json.MarshalIndent(v, "", "   ")

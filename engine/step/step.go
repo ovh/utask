@@ -13,6 +13,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/engine/functions"
+	"github.com/ovh/utask/engine/step/condition"
+	"github.com/ovh/utask/engine/step/executor"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/utils"
@@ -75,7 +78,7 @@ type Step struct {
 	Description string `json:"description"`
 	Idempotent  bool   `json:"idempotent"`
 	// action
-	Action Executor `json:"action"`
+	Action executor.Executor `json:"action"`
 	// result
 	Schema         json.RawMessage         `json:"json_schema,omitempty"`
 	ResultValidate jsonschema.ValidateFunc `json:"-"`
@@ -92,9 +95,9 @@ type Step struct {
 	LastRun      time.Time `json:"last_run,omitempty"`
 
 	// flow control
-	Dependencies []string     `json:"dependencies,omitempty"`
-	CustomStates []string     `json:"custom_states,omitempty"`
-	Conditions   []*Condition `json:"conditions,omitempty"`
+	Dependencies []string               `json:"dependencies,omitempty"`
+	CustomStates []string               `json:"custom_states,omitempty"`
+	Conditions   []*condition.Condition `json:"conditions,omitempty"`
 	skipped      bool
 	// loop
 	ForEach         string          `json:"foreach,omitempty"`        // "parent" step: expression for list of items
@@ -105,14 +108,6 @@ type Step struct {
 	Resources []string `json:"resources"` // resource limits to enforce
 
 	Tags map[string]string `json:"tags"`
-}
-
-// Executor matches an executor type with its required configuration
-type Executor struct {
-	Type              string          `json:"type"`
-	BaseConfiguration string          `json:"base_configuration,omitempty"`
-	Configuration     json.RawMessage `json:"configuration"`
-	BaseOutput        json.RawMessage `json:"base_output"`
 }
 
 // Context provides a step with extra metadata about the task
@@ -170,36 +165,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		return
 	}
 
-	var baseOutput map[string]interface{}
-
-	if len(st.Action.BaseOutput) > 0 {
-		base, err := rawResolveObject(values, st.Action.BaseOutput, st.Item, st.Name)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = errors.Annotate(err, "failed to template base output").Error()
-			go noopStep(st, stepChan)
-			return
-		}
-		if base != nil {
-			var ok bool
-			baseOutput, ok = base.(map[string]interface{})
-			if !ok {
-				st.State = StateFatalError
-				st.Error = errors.Annotate(errors.New("Base output not a map"), "failed to template base output").Error()
-				go noopStep(st, stepChan)
-				return
-			}
-		}
-	}
-
-	config, err := resolveObject(values, st.Action.Configuration, st.Item, st.Name)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = errors.Annotate(err, "failed to template configuration").Error()
-		go noopStep(st, stepChan)
-		return
-	}
-
 	var baseCfgRaw json.RawMessage
 
 	if st.Action.BaseConfiguration != "" {
@@ -220,12 +185,68 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		baseCfgRaw = resolvedBase
 	}
 
-	runner, err := getRunner(st.Action.Type)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = err.Error()
-		go noopStep(st, stepChan)
-		return
+	var baseOutputs []map[string]interface{}
+	var runner Runner
+	var err error
+	config := st.Action.Configuration
+	executor := st.Action
+
+	for { // until we break because no more functions
+
+		if len(executor.BaseOutput) > 0 {
+			base, err := rawResolveObject(values, executor.BaseOutput, st.Item, st.Name)
+			if err != nil {
+				st.State = StateFatalError
+				st.Error = errors.Annotate(err, "failed to template base output").Error()
+				go noopStep(st, stepChan)
+				return
+			}
+			if base != nil {
+				var ok bool
+				baseOutput, ok := base.(map[string]interface{})
+				if !ok {
+					st.State = StateFatalError
+					st.Error = errors.Annotate(errors.New("Base output not a map"), "failed to template base output").Error()
+					go noopStep(st, stepChan)
+					return
+				}
+				// prepend the base outputs
+				baseOutputs = append([]map[string]interface{}{baseOutput}, baseOutputs...)
+			}
+		}
+
+		config, err = resolveObject(values, config, st.Item, st.Name)
+		if err != nil {
+			st.State = StateFatalError
+			st.Error = errors.Annotate(err, "failed to template configuration").Error()
+			go noopStep(st, stepChan)
+			return
+		}
+
+		runner, err = getRunner(executor.Type)
+		if err != nil {
+			st.State = StateFatalError
+			st.Error = err.Error()
+			go noopStep(st, stepChan)
+			return
+		}
+
+		// Check if we have a function as runner or not. If not, we do not need to go further in the resolution
+		functionRunner, ok := runner.(*functions.Function)
+		if !ok {
+			break
+		}
+		var functionInput map[string]interface{}
+		if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(config), &functionInput); err != nil {
+			st.State = StateFatalError
+			st.Error = errors.Annotate(err, "failed to template configuration").Error()
+			go noopStep(st, stepChan)
+			return
+		}
+
+		values.SetFunctionsArgs(functionInput)
+		config = functionRunner.Action.Configuration
+		executor = functionRunner.Action
 	}
 
 	ctx := runner.Context(st.Name)
@@ -267,8 +288,9 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			st.State = StateToRetry
 		default:
 			st.Output, st.Metadata, st.Tags, err = runner.Exec(st.Name, baseCfgRaw, config, ctx)
-			if baseOutput != nil {
-				var errmarshal error
+
+			var errmarshal error
+			for _, baseOutput := range baseOutputs {
 				if st.Output != nil {
 					var marshaled []byte
 					marshaled, errmarshal = utils.JSONMarshal(st.Output)
@@ -321,12 +343,18 @@ type StateSetter func(step, state, message string)
 // PreRun evaluates a step's "skip" conditions before the Step's action has been performed
 // and impacts the entire task's execution flow through the provided StateSetter
 func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[string]bool) {
-	for _, sc := range st.Conditions {
-		if sc.Type != SKIP {
+	conditions, err := st.GetConditions()
+	if err != nil {
+		ss(st.Name, StateServerError, err.Error())
+		return
+	}
+
+	for _, sc := range conditions {
+		if sc.Type != condition.SKIP {
 			continue
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
-			if _, ok := err.(ErrConditionNotMet); ok {
+			if _, ok := err.(condition.ErrConditionNotMet); ok {
 				logrus.Debugf("PreRun: Step [%s] condition eval: %s", st.Name, err)
 				continue
 			} else { // Templating / strconv errors
@@ -358,12 +386,19 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 	if st.skipped || st.State == StateServerError || st.State == StateFatalError || st.ForEach != "" {
 		return
 	}
-	for _, sc := range st.Conditions {
-		if sc.Type != CHECK {
+
+	conditions, err := st.GetConditions()
+	if err != nil {
+		ss(st.Name, StateServerError, err.Error())
+		return
+	}
+
+	for _, sc := range conditions {
+		if sc.Type != condition.CHECK {
 			continue
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
-			if _, ok := err.(ErrConditionNotMet); ok {
+			if _, ok := err.(condition.ErrConditionNotMet); ok {
 				logrus.Debugf("AfterRun: Step [%s] condition eval: %s", st.Name, err)
 				continue
 			} else { // Templating / strconv errors
@@ -417,7 +452,7 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 
 	// valid step conditions
 	for _, sc := range st.Conditions {
-		if err := sc.Valid(name, steps); err != nil {
+		if err := ValidCondition(sc, name, steps); err != nil {
 			return err
 		}
 	}
@@ -499,19 +534,89 @@ func (st *Step) ExecutorMetadata() json.RawMessage {
 	return runner.MetadataSchema()
 }
 
-func validExecutor(baseConfigs map[string]json.RawMessage, ex Executor) error {
-	r, err := getRunner(ex.Type)
-	if err != nil {
-		return err
-	}
+// GetConditions returns the list of conditions of this step resolved (functions included)
+func (s *Step) GetConditions() ([]*condition.Condition, error) {
+	conditions := s.Conditions
 
+	var runnerName = s.Action.Type
+	for {
+		runner, err := getRunner(runnerName)
+		if err != nil {
+			return nil, err
+		}
+
+		functionRunner, ok := runner.(*functions.Function)
+		if !ok {
+			break
+		}
+		conditions = append(functionRunner.Conditions, conditions...)
+		runnerName = functionRunner.Action.Type
+	}
+	return conditions, nil
+}
+
+// GetCustomStates returns the list of custom states of the Step (functions included)
+func (s *Step) GetCustomStates() ([]string, error) {
+	states := s.CustomStates
+
+	var runnerName = s.Action.Type
+	for {
+		runner, err := getRunner(runnerName)
+		if err != nil {
+			return nil, err
+		}
+
+		functionRunner, ok := runner.(*functions.Function)
+		if !ok {
+			break
+		}
+		states = utils.AppendUniq(states, functionRunner.CustomStates...)
+		runnerName = functionRunner.Action.Type
+	}
+	return states, nil
+}
+
+func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor) error {
 	if len(ex.BaseConfiguration) > 0 {
 		if _, ok := baseConfigs[ex.BaseConfiguration]; !ok {
 			return errors.New("BaseConfiguration key not found")
 		}
 	}
 
-	return r.ValidConfig(baseConfigs[ex.BaseConfiguration], ex.Configuration)
+	runnerType := ex.Type
+	configuration := ex.Configuration
+	var functionNames []string
+	for {
+		r, err := getRunner(runnerType)
+		if err != nil {
+			return err
+		}
+
+		err = r.ValidConfig(baseConfigs[ex.BaseConfiguration], configuration)
+		if err != nil {
+			for _, functionName := range functionNames {
+				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
+			}
+			return err
+		}
+
+		functionRunner, ok := r.(*functions.Function)
+		if !ok {
+			break
+		}
+		if utils.ListContainsString(functionNames, runnerType) {
+			err := fmt.Errorf("invalid cyclic import in function for %q", runnerType)
+			for _, functionName := range functionNames {
+				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
+			}
+			return err
+		}
+
+		functionNames = append(functionNames, runnerType)
+		runnerType, configuration = functionRunner.Action.Type, functionRunner.Action.Configuration
+	}
+
+	return nil
 }
 
 // DependencyParts de-composes a Step's dependency into its constituent parts: step name + step state

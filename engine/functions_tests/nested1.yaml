@@ -1,0 +1,20 @@
+name: echo::hello::nested1
+action:
+  type: echo::hello::nested2
+  base_output:
+    base_nested: nested1
+    nested1: foo
+  configuration:
+    name1: '{{ .function_args.name }}'
+custom_states: [NESTED1_STATE]
+conditions:
+  - type: check
+    if:
+        - value: '{{.step.this.output.value}}'
+          operator: EQ
+          expected: 'Hello foobar !'
+        - value: '{{.step.this.state}}'
+          operator: EQ
+          expected: 'NESTED2_STATE2'
+    then:
+        this: NESTED1_STATE

@@ -1,0 +1,13 @@
+name: functionHelloWorld
+description: A template with a basic function
+title_format: "[test] Hello world function"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::hello::world
+            configuration:
+              name: toto

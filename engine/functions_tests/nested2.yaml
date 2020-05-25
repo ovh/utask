@@ -1,0 +1,27 @@
+name: echo::hello::nested2
+action:
+  type: echo::hello::world
+  base_output:
+    base_nested: nested2
+    nested2: foo
+    value: test_override
+  configuration:
+    name: '{{ .function_args.name1 }}'
+
+custom_states: [NESTED2_STATE1,NESTED2_STATE2]
+conditions:
+  - type: check
+    if:
+        - value: '{{.step.this.output.value}}'
+          operator: EQ
+          expected: 'Hello foobar !'
+    then:
+        this: NESTED2_STATE1
+  - type: check
+    if:
+        - value: '{{.step.this.state}}'
+          operator: EQ
+          expected: 'NESTED2_STATE1'
+    then:
+        this: NESTED2_STATE2
+

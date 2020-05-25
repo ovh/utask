@@ -23,6 +23,8 @@ import (
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/engine"
+	"github.com/ovh/utask/engine/functions"
+	"github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/engine/step"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models/resolution"
@@ -34,7 +36,8 @@ import (
 )
 
 const (
-	testDir = "./templates_tests"
+	testDirTemplates = "./templates_tests"
+	testDirFunctions = "./functions_tests"
 )
 
 var (
@@ -55,6 +58,13 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	if err := functions.LoadFromDir(testDirFunctions); err != nil {
+		panic(err)
+	}
+	if err := functionrunner.Init(); err != nil {
+		panic(err)
+	}
+
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 
@@ -63,14 +73,14 @@ func TestMain(m *testing.M) {
 
 func loadTemplates() map[string][]byte {
 	templateList := map[string][]byte{}
-	files, err := ioutil.ReadDir(testDir)
+	files, err := ioutil.ReadDir(testDirTemplates)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, file := range files {
 		if file.Mode().IsRegular() {
-			bytes, err := ioutil.ReadFile(filepath.Join(testDir, file.Name()))
+			bytes, err := ioutil.ReadFile(filepath.Join(testDirTemplates, file.Name()))
 			if err != nil {
 				panic(err)
 			}
@@ -177,6 +187,45 @@ func TestSimpleTemplate(t *testing.T) {
 	assert.Equal(t, "FAIL!", res.Values.GetError("stepThree"))
 }
 
+func TestFunction(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionEchoHelloWorld.yaml", input, nil)
+
+	require.Nil(t, err)
+	assert.Equal(t, map[string]interface{}{
+		"value": "Hello toto !",
+	}, res.Steps["stepOne"].Output)
+}
+
+func TestFunctionBaseOutput(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionNested.yaml", input, nil)
+
+	require.Nilf(t, err, "%s", err)
+	assert.Equal(t, map[string]interface{}{
+		"value":                "Hello foobar !",
+		"nested1":              "foo",
+		"nested2":              "foo",
+		"base_nested":          "nested2",
+		"base_output_template": "foo",
+	}, res.Steps["stepOne"].Output)
+	assert.Equal(t, "CUSTOM_STATE1", res.Steps["stepOne"].State)
+}
+
+func TestFunctionCustomState(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionCustomState.yaml", input, nil)
+
+	require.Nil(t, err)
+	assert.Equal(t, map[string]interface{}{
+		"value": "Hello world!",
+	}, res.Steps["stepOne"].Output)
+
+	customStates, err := res.Steps["stepOne"].GetCustomStates()
+	require.Nil(t, err)
+	assert.Equal(t, []string{"STATE_HELLO"}, customStates)
+}
+
 func TestClientError(t *testing.T) {
 	res, err := runTask("clientError.yaml", map[string]interface{}{}, nil)
 
@@ -237,19 +286,22 @@ func TestStepMaxRetries(t *testing.T) {
 
 func TestLintingAndValidation(t *testing.T) {
 	expectedResult := map[string]lintingAndValidationTest{
-		"lintingError.yaml":            {true, false},
-		"lintingRootKey.yaml":          {true, false},
-		"lintingReservedStep.yaml":     {true, false},
-		"customStates.yaml":            {true, false},
-		"forbiddenStateImpact.yaml":    {true, false},
-		"stepDetailsLintingError.yaml": {true, false},
-		"circularDependencies.yaml":    {true, false},
-		"selfDependency.yaml":          {true, false},
-		"orphanDependencies.yaml":      {true, false},
+		"lintingError.yaml":                {true, false},
+		"lintingRootKey.yaml":              {true, false},
+		"lintingReservedStep.yaml":         {true, false},
+		"customStates.yaml":                {true, false},
+		"forbiddenStateImpact.yaml":        {true, false},
+		"stepDetailsLintingError.yaml":     {true, false},
+		"circularDependencies.yaml":        {true, false},
+		"selfDependency.yaml":              {true, false},
+		"orphanDependencies.yaml":          {true, false},
+		"functionEchoHelloWorldError.yaml": {true, false},
 
-		"lintingInfiniteOk.yaml":  {false, true},
-		"lintingObject.yaml":      {false, true},
-		"allowedStateImpact.yaml": {false, true},
+		"lintingInfiniteOk.yaml":      {false, true},
+		"lintingObject.yaml":          {false, true},
+		"allowedStateImpact.yaml":     {false, true},
+		"functionEchoHelloWorld.yaml": {false, true},
+		"functionCustomState.yaml":    {false, true},
 	}
 
 	for template, testCase := range expectedResult {
