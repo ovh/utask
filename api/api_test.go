@@ -363,45 +363,6 @@ func TestResolution(t *testing.T) {
 		tester := iffy.NewTester(t, hdl)
 		defer tester.Run()
 
-		var echoWithConditionTemplate = func() tasktemplate.TaskTemplate {
-			return tasktemplate.TaskTemplate{
-				Name:        "echo-with-condition-template",
-				Description: "echo with condition template",
-				TitleFormat: "this task does echo based on the resolver input",
-				ResolverInputs: []input.Input{
-					{
-						Name: "callback_status",
-					},
-				},
-				Steps: map[string]*step.Step{
-					"step": {
-						Action: step.Executor{
-							Type: "echo",
-							Configuration: json.RawMessage(`{
-								"output": {"foo":"bar"}
-							}`),
-						},
-						Conditions: []*step.Condition{
-							&step.Condition{
-								Type: "check",
-								If: []*step.Assert{
-									&step.Assert{
-										Value:    "{{.resolver_input.callback_status}}",
-										Operator: "NE",
-										Expected: "done",
-									},
-								},
-								Then: map[string]string{
-									"this": "TO_RETRY",
-								},
-								Message: "waiting for callback",
-							},
-						},
-					},
-				},
-			}
-		}
-
 		dbp, err := zesty.NewDBProvider(utask.DBName)
 		if err != nil {
 			t.Fatal(err)
@@ -695,6 +656,45 @@ func dummyTemplate() tasktemplate.TaskTemplate {
 					Configuration: json.RawMessage(`{
 						"output": {"foo":"bar"}
 					}`),
+				},
+			},
+		},
+	}
+}
+
+func echoWithConditionTemplate() tasktemplate.TaskTemplate {
+	return tasktemplate.TaskTemplate{
+		Name:        "echo-with-condition-template",
+		Description: "echo with condition template",
+		TitleFormat: "this task does echo based on the resolver input",
+		ResolverInputs: []input.Input{
+			{
+				Name: "callback_status",
+			},
+		},
+		Steps: map[string]*step.Step{
+			"step": {
+				Action: step.Executor{
+					Type: "echo",
+					Configuration: json.RawMessage(`{
+								"output": {"foo":"bar"}
+							}`),
+				},
+				Conditions: []*step.Condition{
+					&step.Condition{
+						Type: "check",
+						If: []*step.Assert{
+							&step.Assert{
+								Value:    "{{.resolver_input.callback_status}}",
+								Operator: "NE",
+								Expected: "done",
+							},
+						},
+						Then: map[string]string{
+							"this": "TO_RETRY",
+						},
+						Message: "waiting for callback",
+					},
 				},
 			},
 		},
