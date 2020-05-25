@@ -270,6 +270,179 @@ func TestPasswordInput(t *testing.T) {
 	tester.Run()
 }
 
+func TestResolution(t *testing.T) {
+	t.Run("simple run resolution workflow", func(t *testing.T) {
+		tester := iffy.NewTester(t, hdl)
+		defer tester.Run()
+
+		dbp, err := zesty.NewDBProvider(utask.DBName)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tmpl := templateWithPasswordInput()
+
+		_, err = tasktemplate.LoadFromName(dbp, tmpl.Name)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				t.Fatal(err)
+			}
+			if err := dbp.DB().Insert(&tmpl); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"input-password","input":{"verysecret":"abracadabra"}}`).
+			Headers(regularHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("createResolution", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}"}`).
+			Headers(adminHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("runResolution", http.MethodPost, "/resolution/{{.createResolution.id}}/run", "").
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(204),
+				waitChecker(time.Second),
+			)
+
+		tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(200),
+				iffy.ExpectJSONBranch("state", "DONE"),
+			)
+	})
+
+	t.Run("reinstitute resolution workflow", func(t *testing.T) {
+		tester := iffy.NewTester(t, hdl)
+		defer tester.Run()
+
+		dbp, err := zesty.NewDBProvider(utask.DBName)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tmpl := templateWithPasswordInput()
+
+		_, err = tasktemplate.LoadFromName(dbp, tmpl.Name)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				t.Fatal(err)
+			}
+			if err := dbp.DB().Insert(&tmpl); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"input-password","input":{"verysecret":"abracadabra"}}`).
+			Headers(regularHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("createResolution", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}"}`).
+			Headers(adminHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("reinstituteResolution", http.MethodPost, "/resolution/{{.createResolution.id}}/reinstitute", "").
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(204),
+				waitChecker(time.Second),
+			)
+
+		tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(200),
+				iffy.ExpectJSONBranch("state", "DONE"),
+			)
+	})
+
+	t.Run("reinstitute resolution with resolver input condition", func(t *testing.T) {
+		tester := iffy.NewTester(t, hdl)
+		defer tester.Run()
+
+		var echoWithConditionTemplate = func() tasktemplate.TaskTemplate {
+			return tasktemplate.TaskTemplate{
+				Name:        "echo-with-condition-template",
+				Description: "echo with condition template",
+				TitleFormat: "this task does echo based on the resolver input",
+				ResolverInputs: []input.Input{
+					{
+						Name: "callback_status",
+					},
+				},
+				Steps: map[string]*step.Step{
+					"step": {
+						Action: step.Executor{
+							Type: "echo",
+							Configuration: json.RawMessage(`{
+								"output": {"foo":"bar"}
+							}`),
+						},
+						Conditions: []*step.Condition{
+							&step.Condition{
+								Type: "check",
+								If: []*step.Assert{
+									&step.Assert{
+										Value:    "{{.resolver_input.callback_status}}",
+										Operator: "NE",
+										Expected: "done",
+									},
+								},
+								Then: map[string]string{
+									"this": "TO_RETRY",
+								},
+								Message: "waiting for callback",
+							},
+						},
+					},
+				},
+			}
+		}
+
+		dbp, err := zesty.NewDBProvider(utask.DBName)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tmpl := echoWithConditionTemplate()
+		_, err = tasktemplate.LoadFromName(dbp, tmpl.Name)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				t.Fatal(err)
+			}
+			if err := dbp.DB().Insert(&tmpl); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"echo-with-condition-template"}`).
+			Headers(regularHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("createResolution", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}", "resolver_inputs": {"callback_status": "pending"}}`).
+			Headers(adminHeaders).
+			Checkers(iffy.ExpectStatus(201))
+
+		tester.AddCall("reinstituteResolution", http.MethodPost,
+			"/resolution/{{.createResolution.id}}/reinstitute", `{"resolver_inputs": {"callback_status": "done"}}`).
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(204),
+				waitChecker(time.Second),
+			)
+
+		tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+			Headers(adminHeaders).
+			Checkers(
+				iffy.ExpectStatus(200),
+				iffy.ExpectJSONBranch("state", "DONE"),
+			)
+	})
+}
+
 func TestPagination(t *testing.T) {
 	tester := iffy.NewTester(t, hdl)
 

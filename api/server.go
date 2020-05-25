@@ -330,6 +330,12 @@ func (s *Server) build(ctx context.Context) {
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CancelResolution, 204))
+				resolutionRoutes.POST("/resolution/:id/reinstitute",
+					[]fizz.OperationOption{
+						fizz.Summary("Reinstitute a task"),
+						fizz.Description("This is a combination of pause + update + run."),
+					},
+					tonic.Handler(handler.ReinstituteResolution, 204))
 
 				//	resolutionRoutes.POST("/resolution/:id/rollback",
 				//		[]fizz.OperationOption{

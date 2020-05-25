@@ -459,3 +459,31 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 
 	return nil
 }
+
+type reinstituteResolutionIn struct {
+	PublicID       string                 `path:"id, required"`
+	Force          bool                   `query:"force"`
+	Steps          map[string]*step.Step  `json:"steps"` // persisted in encrypted blob
+	ResolverInputs map[string]interface{} `json:"resolver_inputs"`
+}
+
+func ReinstituteResolution(c *gin.Context, in *reinstituteResolutionIn) error {
+	if err := PauseResolution(c, &pauseResolutionIn{
+		PublicID: in.PublicID,
+		Force:    in.Force,
+	}); err != nil {
+		return err
+	}
+
+	if err := UpdateResolution(c, &updateResolutionIn{
+		PublicID:       in.PublicID,
+		Steps:          in.Steps,
+		ResolverInputs: in.ResolverInputs,
+	}); err != nil {
+		return err
+	}
+
+	return RunResolution(c, &runResolutionIn{
+		PublicID: in.PublicID,
+	})
+}
