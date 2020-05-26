@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"plugin"
+	"reflect"
 	"strings"
 
 	"github.com/ovh/configstore"
@@ -53,10 +54,15 @@ type InitializerPlugin interface {
 // InitializersFromFolder loads initialization plugins compiled as .so files
 // from a folder, runs them on a received pointer to a Service
 func InitializersFromFolder(path string, service *Service) error {
-	return loadPlugins(path, func(fileName string, p plugin.Symbol) error {
-		plug, ok := p.(InitializerPlugin)
+	return loadPlugins(path, func(fileName string, pluginSymbol plugin.Symbol) error {
+		reflectvalue := reflect.ValueOf(pluginSymbol)
+		if reflectvalue.Kind() != reflect.Ptr {
+			return fmt.Errorf("failed to load Plugin from %s: received a non-pointer object", fileName)
+		}
+		pluginInterface := reflectvalue.Elem().Interface()
+		plug, ok := pluginInterface.(InitializerPlugin)
 		if !ok {
-			return fmt.Errorf("failed to assert type of plugin '%s': expected InitializerPlugin got %T", fileName, p)
+			return fmt.Errorf("failed to assert type of plugin '%s': expected InitializerPlugin got %T", fileName, pluginInterface)
 		}
 		if err := plug.Init(service); err != nil {
 			return fmt.Errorf("failed to run initialization plugin: %s", err)
