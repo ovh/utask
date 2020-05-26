@@ -34,6 +34,14 @@ func rawResolveObject(val *values.Values, objson json.RawMessage, item interface
 	return obj, nil
 }
 
+func rawResolve(val *values.Values, obj interface{}, item interface{}, stepName string) (interface{}, error) {
+	v := reflect.ValueOf(obj)
+	if err := apply(val, v, item, stepName); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
 func apply(val *values.Values, v reflect.Value, item interface{}, stepName string) error {
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
 		v = v.Elem()

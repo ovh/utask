@@ -232,7 +232,8 @@ func TestFunctionPreHook(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.Equal(t, res.Steps["stepOne"].Output, map[string]interface{}{
-		"value": "Hello 42 !",
+		"value":    "Hello 42 !",
+		"coalesce": "Coalesce 42!",
 	})
 }
 

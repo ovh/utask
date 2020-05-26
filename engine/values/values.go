@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strings"
 	"text/template"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
 	"github.com/robertkrimen/otto"
+	"github.com/ybriffa/deepcopy"
 )
 
 // keys to store/retrieve data from a Values struct
@@ -30,12 +33,23 @@ const (
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
 	ErrorKey    = "error"
+
+	PreHookDelimLeft  = "{prehook{"
+	PreHookDelimRight = "}prehook}"
+	DefaultDelimLeft  = "{{"
+	DefaultDelimRight = "}}"
+)
+
+var (
+	preHookArgsMatcher  = regexp.MustCompile(`({{[^\}]+` + PreHookKey + `\.[^\}]+}})`)
+	preHookArgsReplacer = strings.NewReplacer("{{", PreHookDelimLeft, "}}", PreHookDelimRight)
 )
 
 // Values is a container for all the live data of a running task
 type Values struct {
 	m       map[string]interface{}
 	funcMap map[string]interface{}
+	delims  [2]string
 }
 
 // Variable holds a named variable, with either a JS expression to be evalued
@@ -61,11 +75,27 @@ func NewValues() *Values {
 			VarKey:           map[string]*Variable{},
 			IteratorKey:      nil,
 		},
+		delims: [2]string{DefaultDelimLeft, DefaultDelimRight},
 	}
 	v.funcMap = sprig.FuncMap()
 	v.funcMap["field"] = v.fieldTmpl
 	v.funcMap["eval"] = v.varEval
 	v.funcMap["evalCache"] = v.varEvalCache
+	return v
+}
+
+// Clone duplicates the values object
+func (v *Values) Clone() *Values {
+	n := NewValues()
+	for key, value := range v.m {
+		n.m[key] = deepcopy.Copy(value)
+	}
+	return n
+}
+
+// SetDelims changes the delimiter on which resolve the templates variables
+func (v *Values) SetDelims(left, right string) *Values {
+	v.delims[0], v.delims[1] = left, right
 	return v
 }
 
@@ -105,11 +135,6 @@ func (v *Values) SetPreHook(output, metadata interface{}) {
 		OutputKey:   output,
 		MetadataKey: metadata,
 	}
-}
-
-// CleanPreHook cleans the prehook values
-func (v *Values) CleanPreHook() {
-	delete(v.m, PreHookKey)
 }
 
 // UnsetOutput empties the output data of a named step
@@ -247,9 +272,20 @@ func (v *Values) GetSteps() map[string]interface{} {
 
 // Apply takes data from Values to replace templating placeholders in a string
 func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([]byte, error) {
+	templateStr = preHookArgsMatcher.ReplaceAllStringFunc(templateStr, preHookArgsReplacer.Replace)
+
+	delimLeft, delimRight := DefaultDelimLeft, DefaultDelimRight
+	if v.delims[0] != "" {
+		delimLeft = v.delims[0]
+	}
+	if v.delims[1] != "" {
+		delimRight = v.delims[1]
+	}
+
 	tmpl, err := template.
 		New("tmpl").
 		Funcs(v.funcMap).
+		Delims(delimLeft, delimRight).
 		Parse(templateStr)
 	if err != nil {
 		return nil, errors.NewBadRequest(err, "Templating error")

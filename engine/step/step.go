@@ -79,7 +79,7 @@ type Step struct {
 	Idempotent  bool   `json:"idempotent"`
 	// action
 	Action  executor.Executor  `json:"action"`
-	PreHook *executor.Executor `json:"pre_hook"`
+	PreHook *executor.Executor `json:"pre_hook,omitempty"`
 	// result
 	Schema         json.RawMessage         `json:"json_schema,omitempty"`
 	ResultValidate jsonschema.ValidateFunc `json:"-"`
@@ -140,16 +140,59 @@ func uniqueSortedList(s []string) []string {
 }
 
 type execution struct {
-	baseCfgRaw  json.RawMessage
-	baseOutputs []map[string]interface{}
-	config      json.RawMessage
-	runner      Runner
-	ctx         interface{}
+	baseCfgRaw       json.RawMessage
+	baseOutputs      []map[string]interface{}
+	config           json.RawMessage
+	runner           Runner
+	ctx              interface{}
+	stopRunningSteps <-chan struct{}
 }
 
-func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values) (*execution, error) {
+func (e *execution) applyValues(values *values.Values, item interface{}, name string) error {
+	var err error
+
+	if len(e.baseCfgRaw) > 0 {
+		if e.baseCfgRaw, err = resolveObject(values, e.baseCfgRaw, item, name); err != nil {
+			fmt.Println(err)
+			return err
+		}
+	}
+
+	for _, baseOutput := range e.baseOutputs {
+		for k, v := range baseOutput {
+			v, err := rawResolve(values, v, item, name)
+			if err != nil {
+				return err
+			}
+			baseOutput[k] = v
+		}
+	}
+
+	if e.ctx != nil {
+		ctxMarshal, err := utils.JSONMarshal(e.ctx)
+		if err != nil {
+			return fmt.Errorf("failed to marshal context: %s", err)
+		}
+		ctxTmpl, err := values.Apply(string(ctxMarshal), item, name)
+		if err != nil {
+			return fmt.Errorf("failed to template context: %s", err)
+		}
+		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &e.ctx)
+		if err != nil {
+			return fmt.Errorf("failed to re-marshal context: %s", err)
+		}
+	}
+
+	if e.config, err = resolveObject(values, e.config, item, name); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, stopRunningSteps <-chan struct{}) (*execution, error) {
 	var ret = execution{
-		config: action.Configuration,
+		config:           action.Configuration,
+		stopRunningSteps: stopRunningSteps,
 	}
 	var err error
 
@@ -222,18 +265,37 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 		}
 		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &ret.ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to re-marshal context: %s, err")
+			return nil, fmt.Errorf("failed to re-marshal context: %s", err)
 		}
 	}
 
 	return &ret, nil
 }
 
+func (st *Step) execute(execution *execution, callback func(interface{}, interface{}, map[string]string, error)) {
+
+	select {
+	case <-execution.stopRunningSteps:
+		st.State = StateToRetry
+		return
+	default:
+		break
+	}
+
+	resources := append(execution.runner.Resources(execution.baseCfgRaw, execution.config), st.Resources...)
+	limits := uniqueSortedList(resources)
+	utask.AcquireResources(limits)
+	defer utask.ReleaseResources(limits)
+
+	output, metadata, tags, err := execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
+	callback(output, metadata, tags, err)
+}
+
 // Run carries out the action defined by a Step, by providing values to its configuration
 // - a stepChan channel is provided for committing the result back
 // - a stopRunningSteps channel is provided to interrupt execution in flight
 // values IS NOT CONCURRENT SAFE, DO NOT SHARE WITH OTHER GOROUTINES
-func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values, stepChan chan<- *Step, wg *sync.WaitGroup, stopRunningSteps <-chan struct{}) {
+func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Values, stepChan chan<- *Step, wg *sync.WaitGroup, stopRunningSteps <-chan struct{}) {
 
 	// Step already ran, directly going to afterrun process
 	if st.State == StateAfterrunError {
@@ -264,49 +326,59 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 		return
 	}
 
+	preHookValues := values.NewValues().SetDelims(values.PreHookDelimLeft, values.PreHookDelimRight)
+	var preHookWg sync.WaitGroup
 	if prehook != nil {
-		preHookExecution, err := st.generateExecution(*prehook, baseConfig, values)
+		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, stopRunningSteps)
 		if err != nil {
 			st.State = StateFatalError
-			st.Error = fmt.Sprintf("prehook: ", err)
+			st.Error = fmt.Sprintf("prehook: %s", err)
 			go noopStep(st, stepChan)
 			return
 		}
 
-		output, metadata, _, err := preHookExecution.runner.Exec(st.Name, preHookExecution.baseCfgRaw, preHookExecution.config, preHookExecution.ctx)
-		if err != nil {
-			st.State = StateFatalError
-			st.Error = fmt.Sprintf("prehook: ", err)
-			go noopStep(st, stepChan)
-			return
-		}
-		values.SetPreHook(output, metadata)
+		preHookWg.Add(1)
+		go func() {
+			defer preHookWg.Done()
+
+			st.execute(preHookExecution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
+				if err != nil {
+					st.State = StateFatalError
+					st.Error = fmt.Sprintf("prehook: %s", err)
+					go noopStep(st, stepChan)
+					return
+				}
+				preHookValues.SetPreHook(output, metadata)
+			})
+		}()
 	}
 
 	// Generate the execution
-	execution, err := st.generateExecution(st.Action, baseConfig, values)
+	execution, err := st.generateExecution(st.Action, baseConfig, stepValues, stopRunningSteps)
 	if err != nil {
 		st.State = StateFatalError
 		st.Error = err.Error()
 		go noopStep(st, stepChan)
 		return
 	}
-	values.CleanPreHook()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		resources := append(execution.runner.Resources(execution.baseCfgRaw, execution.config), st.Resources...)
-		limits := uniqueSortedList(resources)
-		for _, limit := range limits {
-			utask.AcquireResource(limit)
+
+		if prehook != nil {
+			preHookWg.Wait()
+
+			if err := execution.applyValues(preHookValues, st.Item, st.Name); err != nil {
+				st.State = StateFatalError
+				st.Error = err.Error()
+				go noopStep(st, stepChan)
+				return
+			}
 		}
 
-		select {
-		case <-stopRunningSteps:
-			st.State = StateToRetry
-		default:
-			st.Output, st.Metadata, st.Tags, err = execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
+		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
+			st.Output, st.Metadata, st.Tags = output, metadata, tags
 
 			var errmarshal error
 			for _, baseOutput := range execution.baseOutputs {
@@ -346,11 +418,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, values *values.Values,
 			}
 
 			st.TryCount++
-		}
-
-		for _, limit := range limits {
-			utask.ReleaseResource(limit)
-		}
+		})
 
 		stepChan <- st
 	}()
