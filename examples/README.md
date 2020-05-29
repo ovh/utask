@@ -2,7 +2,7 @@
 
 ## Template
 
-You can find template examples under [template directory](templates/).
+You can find template examples under [templates directory](templates/).
 
 To begin, we introduce the [hello-world-now.yaml](templates/hello-world-now.yaml). Here's a (contrived) example of a task template, showcasing many of its capabilities. A description of each property is provided below.
 
@@ -10,4 +10,6 @@ The `hello-world-now` template takes in a `language` input parameter, which admi
 
 ## Plugin
 
-🚧 Under construction 🚧
+You can find plugin examples under [plugins directory](plugins/).
+
+- init: example plugin that will start at uTask boot, and will configure a custom authentication system.
