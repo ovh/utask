@@ -566,6 +566,9 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	}
 	m["last_activity"] = t.LastActivity
 	m["region"] = utask.FRegion
+	if t.Resolution != nil {
+		m["resolution_id"] = t.Resolution
+	}
 
 	values.SetTaskInfos(m)
 }

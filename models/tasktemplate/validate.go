@@ -31,7 +31,7 @@ func validTemplate(template string, inputs, resolverInputs []string, steps map[s
 	}
 
 	stepNames := stepNames(steps)
-	taskInfoKeys := []string{"resolver_username", "created", "requester_username", "task_id", "region"}
+	taskInfoKeys := []string{"resolver_username", "created", "requester_username", "task_id", "region", "resolution_id"}
 	for _, m := range matches {
 		parts := strings.Split(m[1], ".")
 		if len(parts) >= 3 {
