@@ -56,7 +56,7 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tjarratt/babble v0.0.0-20191126185718-ccc47f626248 // indirect
 	github.com/wI2L/fizz v0.13.4
-	github.com/ybriffa/deepcopy v0.0.0-20200601092101-d85c8fbd9cee
+	github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/net v0.0.0-20200528225125-3c3fba18258b // indirect

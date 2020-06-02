@@ -374,6 +374,8 @@ github.com/ybriffa/deepcopy v0.0.0-20190916121754-2fced6f2b9c0 h1:RNmeuwqTVlazJP
 github.com/ybriffa/deepcopy v0.0.0-20190916121754-2fced6f2b9c0/go.mod h1:SMxjudgXLmHFX1pP4suwVNURE3VHtRinVMii3OTJjGs=
 github.com/ybriffa/deepcopy v0.0.0-20200601092101-d85c8fbd9cee h1:eOTJwsRkSqGxzo40NmXduOMm5tfCom8FNaVXwkJNv8E=
 github.com/ybriffa/deepcopy v0.0.0-20200601092101-d85c8fbd9cee/go.mod h1:SMxjudgXLmHFX1pP4suwVNURE3VHtRinVMii3OTJjGs=
+github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d h1:CMtYkTYEOI9CmV8yfd7FMqJXdDpwu8NSxDwXtXMbY2o=
+github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d/go.mod h1:SMxjudgXLmHFX1pP4suwVNURE3VHtRinVMii3OTJjGs=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
