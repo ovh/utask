@@ -321,6 +321,8 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
+- `action`: the actual task the step executes
+- `pre_hook`: an action that can be executed before the actual action of the step
 - `dependencies`: a list of step names on which this step waits before running
 - `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
@@ -433,6 +435,24 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`email`**   | Send an email                                                                                                                                                                                                                                     | [Access plugin doc](./pkg/plugins/builtin/email/README.md)   |
 | **`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)    |
 | **`script`**  | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)  |
+
+#### PreHooks <a name="preHooks"></a>
+
+The `pre_hook` field of a step can be set to define an action that is executed before the step's action. This fields supports all the sames fields as the action. It aims to fetch data for the execution of the action that can change over time and needs to be fetched at every retry, such as OTPs. All the result values of the preHook are available under the templating variable `.pre_hook`
+
+```yaml
+doSomeAuthPost:
+  pre_hook:
+    type: http
+    method: "GET"
+    url: "https://myAwesomeApi/otp"
+  action:
+    type: http
+    method: "POST"
+    url: "https://myAwesomeApi/doSomePost"
+    headers:
+      X-Otp: "{{ .pre_hook.output }}"
+```
 
 #### Dependencies <a name="dependencies"></a>
 
