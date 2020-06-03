@@ -326,7 +326,16 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		return
 	}
 
-	preHookValues := values.NewValues().SetDelims(values.PreHookDelimLeft, values.PreHookDelimRight)
+	// Generate the execution
+	execution, err := st.generateExecution(st.Action, baseConfig, stepValues, stopRunningSteps)
+	if err != nil {
+		st.State = StateFatalError
+		st.Error = err.Error()
+		go noopStep(st, stepChan)
+		return
+	}
+
+	preHookValues := stepValues.Clone().SetDelims(values.PreHookDelimLeft, values.PreHookDelimRight)
 	var preHookWg sync.WaitGroup
 	if prehook != nil {
 		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, stopRunningSteps)
@@ -351,15 +360,6 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 				preHookValues.SetPreHook(output, metadata)
 			})
 		}()
-	}
-
-	// Generate the execution
-	execution, err := st.generateExecution(st.Action, baseConfig, stepValues, stopRunningSteps)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = err.Error()
-		go noopStep(st, stepChan)
-		return
 	}
 
 	wg.Add(1)
