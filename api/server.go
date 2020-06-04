@@ -201,6 +201,21 @@ func (s *Server) build(ctx context.Context) {
 					tonic.Handler(handler.GetTemplate, 200))
 			}
 
+			functionRoutes := authRoutes.Group("/", "05 - function", "Manage uTask task functions")
+			{
+				// public function listing
+				functionRoutes.GET("/function",
+					[]fizz.OperationOption{
+						fizz.Summary("List task functions"),
+					},
+					tonic.Handler(handler.ListFunctions, 200))
+				functionRoutes.GET("/function/:name",
+					[]fizz.OperationOption{
+						fizz.Summary("Get task function details"),
+					},
+					tonic.Handler(handler.GetFunction, 200))
+			}
+
 			// task
 			taskRoutes := authRoutes.Group("/", "01 - task", "Manage uTask tasks")
 			{

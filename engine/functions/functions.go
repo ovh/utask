@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -198,6 +199,7 @@ func List() []string {
 	for k := range functionsImported {
 		result = append(result, k)
 	}
+	sort.Strings(result)
 	return result
 }
 
