@@ -518,15 +518,19 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	}
 
 	// valid action executor
-	if err := validExecutor(baseConfigs, st.Action); err != nil {
+	if _, err := validExecutor(baseConfigs, st.Action, st.PreHook); err != nil {
 		return errors.NewNotValid(err, "Invalid executor action")
 	}
 	preHook, err := st.GetPreHook()
 	if err != nil {
-		return errors.NewNotValid(err, "Invalid prehook action")
+		return errors.NewNotValid(err, "Invalid  prehook action")
 	}
 	if preHook != nil {
-		if err := validExecutor(baseConfigs, *preHook); err != nil {
+		ph, err := validExecutor(baseConfigs, *preHook, nil)
+		if ph != nil {
+			return errors.NewNotValid(nil, "Invalid prehook on a prehook")
+		}
+		if err != nil {
 			return errors.NewNotValid(err, "Invalid prehook action")
 		}
 	}
@@ -688,10 +692,10 @@ func (s *Step) GetPreHook() (*executor.Executor, error) {
 
 }
 
-func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor) error {
+func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor, preHook *executor.Executor) (*executor.Executor, error) {
 	if len(ex.BaseConfiguration) > 0 {
 		if _, ok := baseConfigs[ex.BaseConfiguration]; !ok {
-			return errors.New("BaseConfiguration key not found")
+			return nil, errors.New("BaseConfiguration key not found")
 		}
 	}
 
@@ -701,7 +705,7 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor)
 	for {
 		r, err := getRunner(runnerType)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = r.ValidConfig(baseConfigs[ex.BaseConfiguration], configuration)
@@ -709,7 +713,7 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor)
 			for _, functionName := range functionNames {
 				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
 			}
-			return err
+			return nil, err
 		}
 
 		functionRunner, ok := r.(*functions.Function)
@@ -721,14 +725,24 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor)
 			for _, functionName := range functionNames {
 				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
 			}
-			return err
+			return nil, err
 		}
 
 		functionNames = append(functionNames, runnerType)
 		runnerType, configuration = functionRunner.Action.Type, functionRunner.Action.Configuration
+		if functionRunner.PreHook != nil {
+			if preHook != nil {
+				err := errors.New("pre_hook override")
+				for _, functionName := range functionNames {
+					err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
+				}
+				return functionRunner.PreHook, err
+			}
+			preHook = functionRunner.PreHook
+		}
 	}
 
-	return nil
+	return preHook, nil
 }
 
 // DependencyParts de-composes a Step's dependency into its constituent parts: step name + step state
