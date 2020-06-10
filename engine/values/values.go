@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"regexp"
-	"strings"
 	"text/template"
 	"time"
 
@@ -33,16 +31,6 @@ const (
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
 	ErrorKey    = "error"
-
-	PreHookDelimLeft  = "{prehook{"
-	PreHookDelimRight = "}prehook}"
-	DefaultDelimLeft  = "{{"
-	DefaultDelimRight = "}}"
-)
-
-var (
-	preHookArgsMatcher  = regexp.MustCompile(`({{[^\}]+` + PreHookKey + `\.[^\}]+}})`)
-	preHookArgsReplacer = strings.NewReplacer("{{", PreHookDelimLeft, "}}", PreHookDelimRight)
 )
 
 // Values is a container for all the live data of a running task
@@ -75,7 +63,6 @@ func NewValues() *Values {
 			VarKey:           map[string]*Variable{},
 			IteratorKey:      nil,
 		},
-		delims: [2]string{DefaultDelimLeft, DefaultDelimRight},
 	}
 	v.funcMap = sprig.FuncMap()
 	v.funcMap["field"] = v.fieldTmpl
@@ -272,20 +259,9 @@ func (v *Values) GetSteps() map[string]interface{} {
 
 // Apply takes data from Values to replace templating placeholders in a string
 func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([]byte, error) {
-	templateStr = preHookArgsMatcher.ReplaceAllStringFunc(templateStr, preHookArgsReplacer.Replace)
-
-	delimLeft, delimRight := DefaultDelimLeft, DefaultDelimRight
-	if v.delims[0] != "" {
-		delimLeft = v.delims[0]
-	}
-	if v.delims[1] != "" {
-		delimRight = v.delims[1]
-	}
-
 	tmpl, err := template.
 		New("tmpl").
 		Funcs(v.funcMap).
-		Delims(delimLeft, delimRight).
 		Parse(templateStr)
 	if err != nil {
 		return nil, errors.NewBadRequest(err, "Templating error")

@@ -326,16 +326,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		return
 	}
 
-	// Generate the execution
-	execution, err := st.generateExecution(st.Action, baseConfig, stepValues, stopRunningSteps)
-	if err != nil {
-		st.State = StateFatalError
-		st.Error = err.Error()
-		go noopStep(st, stepChan)
-		return
-	}
-
-	preHookValues := stepValues.Clone().SetDelims(values.PreHookDelimLeft, values.PreHookDelimRight)
+	preHookValues := stepValues.Clone()
 	var preHookWg sync.WaitGroup
 	if prehook != nil {
 		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, stopRunningSteps)
@@ -366,15 +357,16 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	go func() {
 		defer wg.Done()
 
-		if prehook != nil {
-			preHookWg.Wait()
+		// Wait the prehook execution is done
+		preHookWg.Wait()
 
-			if err := execution.applyValues(preHookValues, st.Item, st.Name); err != nil {
-				st.State = StateFatalError
-				st.Error = err.Error()
-				go noopStep(st, stepChan)
-				return
-			}
+		// Generate the execution
+		execution, err := st.generateExecution(st.Action, baseConfig, preHookValues, stopRunningSteps)
+		if err != nil {
+			st.State = StateFatalError
+			st.Error = err.Error()
+			go noopStep(st, stepChan)
+			return
 		}
 
 		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {

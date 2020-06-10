@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ovh/utask"
-	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
@@ -67,7 +66,7 @@ type authBasic struct {
 
 func validConfig(config interface{}) error {
 	cfg := config.(*HTTPConfig)
-	if !strings.HasPrefix(cfg.Method, values.DefaultDelimLeft) && !strings.HasSuffix(cfg.Method, values.DefaultDelimRight) {
+	if !strings.HasPrefix(cfg.Method, "{{") && !strings.HasSuffix(cfg.Method, "}}") {
 		switch cfg.Method {
 		case "GET", "POST", "PUT", "DELETE", "PATCH":
 		default:
