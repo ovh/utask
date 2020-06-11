@@ -148,47 +148,6 @@ type execution struct {
 	stopRunningSteps <-chan struct{}
 }
 
-func (e *execution) applyValues(values *values.Values, item interface{}, name string) error {
-	var err error
-
-	if len(e.baseCfgRaw) > 0 {
-		if e.baseCfgRaw, err = resolveObject(values, e.baseCfgRaw, item, name); err != nil {
-			fmt.Println(err)
-			return err
-		}
-	}
-
-	for _, baseOutput := range e.baseOutputs {
-		for k, v := range baseOutput {
-			v, err := rawResolve(values, v, item, name)
-			if err != nil {
-				return err
-			}
-			baseOutput[k] = v
-		}
-	}
-
-	if e.ctx != nil {
-		ctxMarshal, err := utils.JSONMarshal(e.ctx)
-		if err != nil {
-			return fmt.Errorf("failed to marshal context: %s", err)
-		}
-		ctxTmpl, err := values.Apply(string(ctxMarshal), item, name)
-		if err != nil {
-			return fmt.Errorf("failed to template context: %s", err)
-		}
-		err = utils.JSONnumberUnmarshal(bytes.NewReader(ctxTmpl), &e.ctx)
-		if err != nil {
-			return fmt.Errorf("failed to re-marshal context: %s", err)
-		}
-	}
-
-	if e.config, err = resolveObject(values, e.config, item, name); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, stopRunningSteps <-chan struct{}) (*execution, error) {
 	var ret = execution{
 		config:           action.Configuration,

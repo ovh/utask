@@ -37,7 +37,6 @@ const (
 type Values struct {
 	m       map[string]interface{}
 	funcMap map[string]interface{}
-	delims  [2]string
 }
 
 // Variable holds a named variable, with either a JS expression to be evalued
@@ -78,12 +77,6 @@ func (v *Values) Clone() *Values {
 		n.m[key] = deepcopy.Copy(value)
 	}
 	return n
-}
-
-// SetDelims changes the delimiter on which resolve the templates variables
-func (v *Values) SetDelims(left, right string) *Values {
-	v.delims[0], v.delims[1] = left, right
-	return v
 }
 
 // SetInput stores a task's inputs in Values
