@@ -1,0 +1,10 @@
+name: echo::templated::output
+action:
+  type: echo
+  configuration:
+    output:
+      value: 'Hello world!'
+      name: 'Doe'
+      firstname: 'John'
+  templated_output:
+    full_name: "{{ .step.this.output.firstname }} {{ .step.this.output.name }}"

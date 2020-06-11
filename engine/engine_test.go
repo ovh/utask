@@ -237,6 +237,16 @@ func TestFunctionPreHook(t *testing.T) {
 	})
 }
 
+func TestFunctionTemplatedOutput(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionEchoTemplatedOutput.yaml", input, nil)
+
+	require.Nilf(t, err, "%s", err)
+	assert.Equal(t, map[string]interface{}{
+		"full_name": "John Doe",
+	}, res.Steps["stepOne"].Output)
+}
+
 func TestClientError(t *testing.T) {
 	res, err := runTask("clientError.yaml", map[string]interface{}{}, nil)
 
@@ -307,13 +317,15 @@ func TestLintingAndValidation(t *testing.T) {
 		"selfDependency.yaml":              {true, false},
 		"orphanDependencies.yaml":          {true, false},
 		"functionEchoHelloWorldError.yaml": {true, false},
+		"templatedOutputError.yaml":        {true, false},
 
-		"lintingInfiniteOk.yaml":      {false, true},
-		"lintingObject.yaml":          {false, true},
-		"allowedStateImpact.yaml":     {false, true},
-		"functionEchoHelloWorld.yaml": {false, true},
-		"functionCustomState.yaml":    {false, true},
-		"functionPreHook.yaml":        {false, true},
+		"lintingInfiniteOk.yaml":           {false, true},
+		"lintingObject.yaml":               {false, true},
+		"allowedStateImpact.yaml":          {false, true},
+		"functionEchoHelloWorld.yaml":      {false, true},
+		"functionCustomState.yaml":         {false, true},
+		"functionPreHook.yaml":             {false, true},
+		"functionEchoTemplatedOutput.yaml": {false, true},
 	}
 
 	for template, testCase := range expectedResult {

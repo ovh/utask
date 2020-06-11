@@ -1,0 +1,17 @@
+name: templatedOutputError
+description: A template with a templated output and base output
+title_format: "[test] Templated Output Error"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo
+        configuration:
+            key: value
+        base_output:
+            configuration: someOutput
+        templated_output:
+            configuration: someOtherOutput

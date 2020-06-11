@@ -10,4 +10,5 @@ type Executor struct {
 	BaseConfiguration string          `json:"base_configuration,omitempty"`
 	Configuration     json.RawMessage `json:"configuration"`
 	BaseOutput        json.RawMessage `json:"base_output"`
+	TemplatedOutput   interface{}     `json:"templated_output"`
 }

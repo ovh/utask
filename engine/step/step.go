@@ -57,6 +57,8 @@ var (
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateFatalError, StateClientError}
 	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
+
+	errTemplatedAndBaseOutput = errors.New("templated_output and base_ouput cannot be both defined")
 )
 
 // Step describes one unit of work within a task, and its dependency to other steps
@@ -142,10 +144,46 @@ func uniqueSortedList(s []string) []string {
 type execution struct {
 	baseCfgRaw       json.RawMessage
 	baseOutputs      []map[string]interface{}
+	templatedOutputs []interface{}
 	config           json.RawMessage
 	runner           Runner
 	ctx              interface{}
 	stopRunningSteps <-chan struct{}
+}
+
+func (e *execution) generateOutput(st *Step, v *values.Values) error {
+	// First, check and handler the baseoutput if the generation relies on it
+	if len(e.baseOutputs) > 0 {
+		var err error
+		for _, baseOutput := range e.baseOutputs {
+			if st.Output != nil {
+				var marshaled []byte
+				marshaled, err = utils.JSONMarshal(st.Output)
+				if err == nil {
+					_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
+				}
+			}
+			if err == nil {
+				st.Output = baseOutput
+			}
+		}
+		return nil
+	}
+
+	// Otherwise generate the output according to the templated output
+	for _, template := range e.templatedOutputs {
+		jsonTemplate, err := json.Marshal(template)
+		if err != nil {
+			return err
+		}
+
+		v.SetOutput(st.Name, st.Output)
+		st.Output, err = rawResolveObject(v, jsonTemplate, st.Item, st.Name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, stopRunningSteps <-chan struct{}) (*execution, error) {
@@ -185,6 +223,10 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 				// prepend the base outputs
 				ret.baseOutputs = append([]map[string]interface{}{baseOutput}, ret.baseOutputs...)
 			}
+		}
+
+		if action.TemplatedOutput != nil {
+			ret.templatedOutputs = append([]interface{}{action.TemplatedOutput}, ret.templatedOutputs...)
 		}
 
 		ret.config, err = resolveObject(values, ret.config, st.Item, st.Name)
@@ -331,19 +373,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
 			st.Output, st.Metadata, st.Tags = output, metadata, tags
 
-			var errmarshal error
-			for _, baseOutput := range execution.baseOutputs {
-				if st.Output != nil {
-					var marshaled []byte
-					marshaled, errmarshal = utils.JSONMarshal(st.Output)
-					if errmarshal == nil {
-						_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
-					}
-				}
-				if errmarshal == nil {
-					st.Output = baseOutput
-				}
-			}
+			execution.generateOutput(st, preHookValues)
+
 			if err != nil {
 				if errors.IsBadRequest(err) {
 					st.State = StateClientError
@@ -643,11 +674,22 @@ func (s *Step) GetPreHook() (*executor.Executor, error) {
 
 }
 
+func annotateFunctions(functions []string, err error) error {
+	for _, function := range functions {
+		err = errors.Annotate(err, fmt.Sprintf("function %q", function))
+	}
+	return err
+}
+
 func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor, preHook *executor.Executor) (*executor.Executor, error) {
 	if len(ex.BaseConfiguration) > 0 {
 		if _, ok := baseConfigs[ex.BaseConfiguration]; !ok {
 			return nil, errors.New("BaseConfiguration key not found")
 		}
+	}
+
+	if ex.TemplatedOutput != nil && len(ex.BaseOutput) > 0 {
+		return nil, errTemplatedAndBaseOutput
 	}
 
 	runnerType := ex.Type
@@ -661,10 +703,7 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 
 		err = r.ValidConfig(baseConfigs[ex.BaseConfiguration], configuration)
 		if err != nil {
-			for _, functionName := range functionNames {
-				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-			}
-			return nil, err
+			return nil, annotateFunctions(functionNames, err)
 		}
 
 		functionRunner, ok := r.(*functions.Function)
@@ -672,22 +711,19 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 			break
 		}
 		if utils.ListContainsString(functionNames, runnerType) {
-			err := fmt.Errorf("invalid cyclic import in function for %q", runnerType)
-			for _, functionName := range functionNames {
-				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-			}
-			return nil, err
+			return nil, annotateFunctions(functionNames, fmt.Errorf("invalid cyclic import in function for %q", runnerType))
 		}
 
 		functionNames = append(functionNames, runnerType)
+
+		if len(functionRunner.Action.BaseOutput) > 0 && functionRunner.Action.TemplatedOutput != nil {
+			return nil, annotateFunctions(functionNames, errTemplatedAndBaseOutput)
+		}
+
 		runnerType, configuration = functionRunner.Action.Type, functionRunner.Action.Configuration
 		if functionRunner.PreHook != nil {
 			if preHook != nil {
-				err := errors.New("pre_hook override")
-				for _, functionName := range functionNames {
-					err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-				}
-				return functionRunner.PreHook, err
+				return functionRunner.PreHook, annotateFunctions(functionNames, errors.New("pre_hook override"))
 			}
 			preHook = functionRunner.PreHook
 		}
