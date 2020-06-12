@@ -25,6 +25,15 @@
                 "action"
             ],
             "properties": {
+                "name": {
+                    "type": "string",
+                    "title": "Step unique name",
+                    "description": "Will identify the step uniquely",
+                    "default": "",
+                    "examples": [
+                        "get_UTC_time"
+                    ]
+                },
                 "description": {
                     "type": "string",
                     "title": "Step description",
@@ -68,6 +77,13 @@
                         "type": "string"
                     }
                 },
+                "resources": {
+                    "type": "array",
+                    "description": "Declares resources that will be used during this step",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "foreach": {
                     "type": "string",
                     "description": "Elements on which the step will loop"
@@ -75,6 +91,10 @@
                 "json_schema": {
                     "type": "object",
                     "description": "Elements on which the step will loop"
+                },
+                "idempotent": {
+                    "type": "boolean",
+                    "description": "Indicates if this step is safe to be retried when uTask crashes"
                 }
             }
         },
@@ -105,6 +125,9 @@
                 },
                 {
                     "$ref": "#/definitions/ActionAPIOVH"
+                },
+                {
+                    "$ref": "#/definitions/ActionTag"
                 },
                 {
                     "type": "object",
@@ -430,6 +453,20 @@
                         },
                         "resolver_usernames": {
                             "type": "string"
+                        },
+                        "watcher_usernames": {
+                            "type": "string"
+                        },
+                        "delay": {
+                            "type": "string"
+                        },
+                        "tags": {
+                            "type": "object",
+                            "patternProperties": {
+                                ".*": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     }
                 },
@@ -443,6 +480,40 @@
             "title": "Subtask Action",
             "additionalProperties": false,
             "description": "Subtask action will spawn a subtask of the specified template, and wait for resolution"
+        },
+        "ActionTag": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "tag"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "tags"
+                    ],
+                    "properties": {
+                        "tags": {
+                            "type": "object",
+                            "patternProperties": {
+                                ".*": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "string"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Tag Action",
+            "additionalProperties": false,
+            "description": "Tag action will add some tags to the task"
         },
         "ActionPing": {
             "type": "object",
@@ -938,6 +1009,15 @@
             "patternProperties": {
                 ".*": {
                     "$ref": "#/definitions/Step"
+                }
+            }
+        },
+        "tags": {
+            "type": "object",
+            "description": "Defines this template tags",
+            "patternProperties": {
+                ".*": {
+                    "type": "string"
                 }
             }
         },

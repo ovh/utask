@@ -1,44 +1,59 @@
-name:             hello-world-now
-description:      Say hello to the world, now!
+name: hello-world-now
+description: Say hello to the world, now!
 long_description: This task prints out a greeting to the entire world, after retrieving the current UTC time from an external API
-doc_link:         https://en.wikipedia.org/wiki/%22Hello,_World!%22_program
+doc_link: https://en.wikipedia.org/wiki/%22Hello,_World!%22_program
 
-title_format:     Say hello in {{.input.language}}
+title_format: Say hello in {{.input.language}}
 result_format:
-  echo_message: '{{.step.sayHello.output.message}}'
-  echo_when:    '{{.step.sayHello.output.when}}'
+  echo_message: "{{.step.sayHello.output.message}}"
+  echo_when: "{{.step.sayHello.output.when}}"
 
-allowed_resolver_usernames:   []
+allowed_resolver_usernames: []
 allow_all_resolver_usernames: true
 auto_runnable: true
-blocked:       false
-hidden:        false
+blocked: false
+hidden: false
 
 variables:
-- name: english-message
-  value: Hello World!
-- name: spanish-message
-  expression: |-
-    // a short javascript snippet
-    var h = 'Hola';
-    var m = 'mundo';
-    h + ' ' + m + '!';
+  - name: english-message
+    value: Hello World!
+  - name: spanish-message
+    expression: |-
+      // a short javascript snippet
+      var h = 'Hola';
+      var m = 'mundo';
+      h + ' ' + m + '!';
 
 inputs:
-- name: language
-  description: The language in which you wish to greet the world
-  legal_values: [english, spanish]
-  optional: true
-  default: english
+  - name: language
+    description: The language in which you wish to greet the world
+    legal_values: [english, spanish]
+    optional: true
+    default: english
 
 steps:
   getTime:
     description: Get UTC time
+    idempotent: true
+    resources: ["worldclockapi"]
+    retry_pattern: minutes
     action:
       type: http
       configuration:
         url: http://worldclockapi.com/api/json/utc/now
         method: GET
+    json_schema:
+      "$schema": "http://json-schema.org/draft-07/schema#"
+      type: object
+      required: [currentDateTime, isDayLightSavingsTime, dayOfTheWeek]
+      properties:
+        currentDateTime:
+          type: string
+          pattern: '^\d+-\d+-\d+T\d+:\d+Z$'
+        isDayLightSavingsTime:
+          type: boolean
+        dayOfTheWeek:
+          type: string
   sayHello:
     description: Echo a greeting in your language of choice
     dependencies: [getTime]
@@ -49,5 +64,4 @@ steps:
           message: >-
             {{if (eq .input.language "english")}}{{eval "english-message"}}
             {{else if (eq .input.language "spanish")}}{{eval "spanish-message"}}{{end}}
-          when: '{{.step.getTime.output.currentDateTime}}'
-
+          when: "{{.step.getTime.output.currentDateTime}}"

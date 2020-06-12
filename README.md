@@ -203,6 +203,7 @@ The following templating functions are available:
 - `blocked`: boolean (default: false): no tasks can be created from this template
 - `hidden`: boolean (default: false): the template is not listed on the API, it is concealed to regular users
 - `retry_max`: int (default: 100): maximum amount of consecutive executions of a task based on this template, before being blocked for manual review
+- `tags`: templateable map, used to filter tasks (see [tags](#tags))
 
 ### Inputs
 
@@ -230,6 +231,25 @@ A template variable is a named holder of either:
 See the example template above to see variables in action. The expression in a variable can contain template handles to introduce values dynamically (from executed steps, for instance), like a step's configuration.
 
 The JavaScript evaluation is done using [otto](https://github.com/robertkrimen/otto).
+
+### Tags <a name="tags"></a>
+
+Tags are a map of strings property of a task. They will be used in the task listing to search for some tasks using filters. With tags, uTask can be used as a task backend by others APIs.
+
+Tags values are expected to be a `string`: it support all uTask templating on values. To remove a tag from a task, use the empty value `""`.
+
+```yaml
+  tags:
+      customer: "{{.input.customer_id}}"
+      type: "billing"
+```
+
+In this example, tag `customer` will be templated from the task inputs, and allow others APIs to search all the tasks for a given customer.
+
+Tags can be added to a task:
+- from the template definition of the task
+- while creating a task, requester can input custom tags
+- during the execution, using the [`tag` builtin plugin](./pkg/plugins/builtin/tag/README.md)
 
 ### Steps
 
@@ -321,7 +341,12 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
+- `action`: see [Action](#step-action)
+- `foreach`: see [Loops](#step-foreach)
 - `dependencies`: a list of step names on which this step waits before running
+- `idempotent`: a boolean indicating if this step is safe to be replayed in case of uTask instance crash
+- `json_schema`: a JSON-Schema object to validate the step output
+- `resources`: a list of resources that will be used by this step to apply some rate-limiting (see [resources](#resources))
 - `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
 
@@ -329,7 +354,7 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 <img src="./assets/img/utask_backoff.png" width="70%">
 </p>
 
-#### Action
+#### Action <a name="step-action"></a>
 
 The `action` field of a step defines the actual workload to be performed. It consists of at least a `type` chosen among the registered action plugins, and a `configuration` fitting that plugin. See below for a detailed description of builtin plugins. For information on how to develop your own action plugins, refer to [this section](#plugins).
 
@@ -433,6 +458,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`email`**   | Send an email                                                                                                                                                                                                                                     | [Access plugin doc](./pkg/plugins/builtin/email/README.md)   |
 | **`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)    |
 | **`script`**  | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)  |
+| **`tag`**     | Add tags to the current running task                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/tag/README.md)
 
 #### Dependencies <a name="dependencies"></a>
 
@@ -455,7 +481,7 @@ For example, `step2` can declare a dependency on `step1` in the following ways:
 - `step1:DONE,ALREADY_EXISTS`: wait for `step1` to be either in state `DONE` or `ALREADY_EXISTS`
 - `step1:ANY`: wait for `step1` to be in any "final" state, ie. it cannot keep running
 
-#### Loops
+#### Loops  <a name="step-foreach"></a>
 
 A step can be configured to take a json-formatted collection as input, in its `foreach` property. It will be executed once for each element in the collection, and its result will be a collection of each iteration. This scheme makes it possible to chain several steps with the `foreach` property.
 
@@ -487,6 +513,43 @@ This output can be then passed to another step in json format:
 ```yaml
 foreach: '{{.step.prefixStrings.children | toJson}}'
 ```
+
+### Resources <a name="resources"></a>
+
+Resources can be declared to throttle the number of parallel access to a 'resource'. Each resources are labels that can correspond to a physical or logical device/object that will be used inside an action, on which you want to limit the number of parallel accesses. Those labels can be very specific (example: an IP/port combination `172.17.0.1:5432`) or not (example: `all-databases`).
+
+Resources are configured in the `utask-cfg` configuration, indicating a name and a number of maximum parallel accesses.
+
+```json
+{
+    "resource_limits": {
+        "redis-foobar": 2,
+        "internet-gateway": 1000,
+        "database": 14
+    }
+}
+```
+
+Note: resources maximum parallel accesses are defined **per instances**. In this example, if you have 3 instances, then, `redis-foobar` can have up to 6 parallel accesses.
+
+Resources are available to be used inside steps, ensuring that the declared resources won't be accessed more than expected.
+
+```yaml
+steps:
+  getUser:
+    description: Get user
+    resources: ["redis-foobar", "internal-gateway"]
+    action:
+      type: http
+      configuration:
+        url: http://example.org/addToCache
+        method: POST
+        body: '{"cache_method":"redis", "data":"hello"}'
+```
+
+If a resource is already accessed at maximum capacity in others tasks/steps, the step execution will wait until a slot is available.
+
+If a resource declared in a step doesn't exist in the configuration of current uTask instance, then no restriction is applied and the resource can be accessed freely, without limitation.
 
 ### Task templates validation
 
