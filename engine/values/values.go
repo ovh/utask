@@ -11,6 +11,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
 	"github.com/robertkrimen/otto"
+	"github.com/ybriffa/deepcopy"
 )
 
 // keys to store/retrieve data from a Values struct
@@ -25,6 +26,7 @@ const (
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
 
 	StateKey    = "state"
+	PreHookKey  = "pre_hook"
 	OutputKey   = "output"
 	MetadataKey = "metadata"
 	ChildrenKey = "children"
@@ -68,6 +70,15 @@ func NewValues() *Values {
 	return v
 }
 
+// Clone duplicates the values object
+func (v *Values) Clone() *Values {
+	n := NewValues()
+	for key, value := range v.m {
+		n.m[key] = deepcopy.Copy(value)
+	}
+	return n
+}
+
 // SetInput stores a task's inputs in Values
 func (v *Values) SetInput(in map[string]interface{}) {
 	v.m[InputKey] = in
@@ -96,6 +107,14 @@ func (v *Values) GetOutput(stepName string) interface{} {
 // SetOutput stores a step's output in Values
 func (v *Values) SetOutput(stepName string, value interface{}) {
 	v.setStepData(stepName, OutputKey, value)
+}
+
+// SetPreHook stores a step's prehook in Values
+func (v *Values) SetPreHook(output, metadata interface{}) {
+	v.m[PreHookKey] = map[string]interface{}{
+		OutputKey:   output,
+		MetadataKey: metadata,
+	}
 }
 
 // UnsetOutput empties the output data of a named step

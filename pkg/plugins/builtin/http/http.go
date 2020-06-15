@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ovh/utask"
@@ -65,10 +66,12 @@ type authBasic struct {
 
 func validConfig(config interface{}) error {
 	cfg := config.(*HTTPConfig)
-	switch cfg.Method {
-	case "GET", "POST", "PUT", "DELETE", "PATCH":
-	default:
-		return fmt.Errorf("unknown method for HTTP runner: %s", cfg.Method)
+	if !strings.HasPrefix(cfg.Method, "{{") && !strings.HasSuffix(cfg.Method, "}}") {
+		switch cfg.Method {
+		case "GET", "POST", "PUT", "DELETE", "PATCH":
+		default:
+			return fmt.Errorf("unknown method for HTTP runner: %s", cfg.Method)
+		}
 	}
 
 	if cfg.URL != "" {

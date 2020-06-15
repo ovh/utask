@@ -45,6 +45,13 @@ func buildTemplateNextLink(pageSize uint64, last string) string {
 	return buildLink("next", "/template", values.Encode())
 }
 
+func buildFunctionNextLink(pageSize uint64, last string) string {
+	values := &url.Values{}
+	values.Add("page_size", strconv.FormatUint(pageSize, 10))
+	values.Add("last", last)
+	return buildLink("next", "/function", values.Encode())
+}
+
 func buildTaskNextLink(typ string, state, batch *string, pageSize uint64, last string) string {
 	values := &url.Values{}
 	values.Add("type", typ)

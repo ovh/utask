@@ -8,6 +8,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -31,6 +32,7 @@ var (
 type Function struct {
 	Name         string                 `json:"name"`
 	Action       executor.Executor      `json:"action"`
+	PreHook      *executor.Executor     `json:"pre_hook,omitempty"`
 	Conditions   []*condition.Condition `json:"conditions,omitempty"`
 	CustomStates []string               `json:"custom_states,omitempty"`
 
@@ -197,6 +199,7 @@ func List() []string {
 	for k := range functionsImported {
 		result = append(result, k)
 	}
+	sort.Strings(result)
 	return result
 }
 

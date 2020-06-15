@@ -1,0 +1,13 @@
+name: functionPreHook
+description: A template with a function having a pre-hook
+title_format: "[test] Pre Hook function"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::preHook
+            configuration:
+              name: toto

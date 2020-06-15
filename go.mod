@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Masterminds/sprig/v3 v3.1.0
-	github.com/Masterminds/squirrel v1.2.0
+	github.com/Masterminds/squirrel v1.4.0
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
@@ -13,26 +13,28 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/gin-gonic/gin v1.6.2
-	github.com/go-gorp/gorp v2.0.0+incompatible
+	github.com/gin-gonic/gin v1.6.3
+	github.com/go-acme/lego v2.7.2+incompatible // indirect
+	github.com/go-gorp/gorp v2.2.0+incompatible
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
-	github.com/gofrs/uuid v3.2.0+incompatible
+	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/golang/protobuf v1.4.0 // indirect
+	github.com/imdario/mergo v0.3.9 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.3.0 // indirect
 	github.com/jinzhu/now v1.0.1 // indirect
 	github.com/jpillora/backoff v1.0.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
-	github.com/lib/pq v1.4.0
-	github.com/loopfz/gadgeto v0.10.0
+	github.com/lib/pq v1.6.0
+	github.com/loopfz/gadgeto v0.10.1
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
-	github.com/mattn/go-sqlite3 v1.11.0 // indirect
-	github.com/miscreant/miscreant.go v0.0.0-20190615163012-4f5dc8c406f6 // indirect
+	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014
-	github.com/ovh/symmecrypt v0.4.2
+	github.com/ovh/symmecrypt v0.4.3
 	github.com/ovh/tat v5.2.5+incompatible
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/prometheus/client_golang v1.1.0
@@ -52,13 +54,15 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
 	github.com/tidwall/gjson v1.6.0
+	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/tjarratt/babble v0.0.0-20191126185718-ccc47f626248 // indirect
 	github.com/wI2L/fizz v0.13.4
+	github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d
 	github.com/ziutek/mymysql v1.5.4 // indirect
-	golang.org/x/crypto v0.0.0-20200422194213-44a606286825
-	golang.org/x/net v0.0.0-20190921015927-1a5e07d1ff72 // indirect
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/net v0.0.0-20200528225125-3c3fba18258b // indirect
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9 // indirect
+	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
 	google.golang.org/appengine v1.6.3 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect

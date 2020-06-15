@@ -133,6 +133,7 @@ All are optional and have a default value:
 - `init-path`: the directory from where initialization plugins (see "Developing plugins") are loaded in *.so form (default: `./init`)
 - `plugins-path`: the directory from where action plugins (see "Developing plugins") are loaded in *.so form (default: `./plugins`)
 - `templates-path`: the directory where yaml-formatted task templates are loaded from (default: `./templates`)
+- `functions-path`: the directory where yaml-formatted functions templates are loaded from (default: `./functions`)
 - `region`: an arbitrary identifier, to aggregate a running group of µTask instances (commonly containers), and differentiate them from another group, in a separate region (default: `default`)
 - `http-port`: the port on which the HTTP API listents (default: `8081`)
 - `debug`: a boolean flag to activate verbose logs (default: `false`)
@@ -175,6 +176,9 @@ A user can be allowed to resolve a task in three ways:
 - `.step.[STEP_NAME].state`: current state of the given step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
+- `.pre_hook.output.foo`: field `foo` from the output of the step's preHook (see `preHooks` below)
+- `.pre_hook.metadata.HTTPStatus`: field `HTTPStatus` from the metadata of the step's preHook (see `preHooks` below)
+- `.function_args.[ARG_NAME]`: argument that needs to be given in the conifguration section to the function (see `functions` below)
 
 The following templating functions are available:
 
@@ -321,6 +325,8 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 
 - `name`: a unique identifier
 - `description`: a human readable sentence to convey the step's intent
+- `action`: the actual task the step executes
+- `pre_hook`: an action that can be executed before the actual action of the step
 - `dependencies`: a list of step names on which this step waits before running
 - `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
@@ -433,6 +439,67 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`email`**   | Send an email                                                                                                                                                                                                                                     | [Access plugin doc](./pkg/plugins/builtin/email/README.md)   |
 | **`ping`**    | Send a ping to an hostname *Warn: This plugin will keep running until the count is done*                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/ping/README.md)    |
 | **`script`**  | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)  |
+
+#### PreHooks <a name="preHooks"></a>
+
+The `pre_hook` field of a step can be set to define an action that is executed before the step's action. This fields supports all the sames fields as the action. It aims to fetch data for the execution of the action that can change over time and needs to be fetched at every retry, such as OTPs. All the result values of the preHook are available under the templating variable `.pre_hook`
+
+```yaml
+doSomeAuthPost:
+  pre_hook:
+    type: http
+    method: "GET"
+    url: "https://myAwesomeApi/otp"
+  action:
+    type: http
+    method: "POST"
+    url: "https://myAwesomeApi/doSomePost"
+    headers:
+      X-Otp: "{{ .pre_hook.output }}"
+```
+
+#### Functions <a name="functions"></a>
+
+Functions are abstraction of the actions to define a behavior that can be re-used in templates. They act like a plugin but are fully declared in dedicated directory `functions`. They can have arguments that need to be given in the `configuration` section of the action and can be used in the declaration of the function by accessing the templating variables under `.function_args`.
+
+```yaml
+name: ovh::request
+description: Execute a call to the ovh API
+pre_hook:
+  type: http
+  configuration:
+    method: "GET"
+    url: https://api.ovh.com/1.0/auth/time
+action:
+  type: http
+  configuration:
+    headers:
+    - name: X-Ovh-Signature
+      value: '{{ printf "%s+%s+%s+%s%s+%s+%v" .config.apiovh.applicationSecret .config.apiovh.consumerKey .function_args.method .config.apiovh.basePath .function_args.path .function_args.body .pre_hook.output | sha1sum | printf "$1$%s"}}'
+    - name: X-Ovh-Timestamp
+      value: "{{ .pre_hook.output }}"
+    - name: X-Ovh-Consumer
+      value: "{{ .config.apiovh.consumerKey }}"
+    - name: X-Ovh-Application
+      value: "{{ .config.apiovh.applicationKey }}"
+    method: "{{ .function_args.method }}"
+    url: "{{.config.apiovh.basePath}}{{ .function_args.path }}"
+    body: "{{ .function_args.body }}"
+```
+
+This function can be used in a template like this:
+
+```yaml
+steps:
+  getService:
+    description: Get Service
+    action:
+      type: ovh::request
+      configuration:
+        path: "{{.input.path}}"
+        method: GET
+        body: ""
+```
 
 #### Dependencies <a name="dependencies"></a>
 

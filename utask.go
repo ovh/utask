@@ -185,6 +185,13 @@ func AcquireResource(name string) {
 	s.Acquire(context.Background(), 1)
 }
 
+// AcquireResources is an helper to call AcquireResource with an array
+func AcquireResources(names []string) {
+	for _, name := range names {
+		AcquireResource(name)
+	}
+}
+
 // ReleaseResource frees up a semaphore slot for a named resource
 func ReleaseResource(name string) {
 	if global == nil {
@@ -195,6 +202,13 @@ func ReleaseResource(name string) {
 		return
 	}
 	s.Release(1)
+}
+
+// ReleaseResources is an helper to call ReleaseResource with an array
+func ReleaseResources(names []string) {
+	for _, name := range names {
+		ReleaseResource(name)
+	}
 }
 
 // AcquireExecutionSlot takes a slot from a global semaphore
