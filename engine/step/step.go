@@ -57,8 +57,6 @@ var (
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateFatalError, StateClientError}
 	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
-
-	errTemplatedAndBaseOutput = errors.New("templated_output and base_ouput cannot be both defined")
 )
 
 // Step describes one unit of work within a task, and its dependency to other steps
@@ -143,8 +141,7 @@ func uniqueSortedList(s []string) []string {
 
 type execution struct {
 	baseCfgRaw       json.RawMessage
-	baseOutputs      []map[string]interface{}
-	templatedOutputs []interface{}
+	outputs          []*executor.Output
 	config           json.RawMessage
 	runner           Runner
 	ctx              interface{}
@@ -152,35 +149,37 @@ type execution struct {
 }
 
 func (e *execution) generateOutput(st *Step, v *values.Values) error {
-	// First, check and handler the baseoutput if the generation relies on it
-	if len(e.baseOutputs) > 0 {
-		var err error
-		for _, baseOutput := range e.baseOutputs {
-			if st.Output != nil {
-				var marshaled []byte
-				marshaled, err = utils.JSONMarshal(st.Output)
-				if err == nil {
-					_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
-				}
+	for _, output := range e.outputs {
+		switch output.Strategy {
+		case executor.OutputStrategymerge:
+
+			outputMap, ok := output.Format.(map[string]interface{})
+			if !ok {
+				st.Output = output.Format
+				return errors.New("invalid output merge data format")
 			}
+
+			if st.Output == nil {
+				st.Output = output.Format
+			}
+
+			marshaled, err := utils.JSONMarshal(st.Output)
 			if err == nil {
-				st.Output = baseOutput
+				_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &outputMap)
+				st.Output = outputMap
 			}
-		}
-		return nil
-	}
 
-	// Otherwise generate the output according to the templated output
-	for _, template := range e.templatedOutputs {
-		jsonTemplate, err := json.Marshal(template)
-		if err != nil {
-			return err
-		}
+		case executor.OutputStrategytemplate:
+			jsonOutput, err := utils.JSONMarshal(output.Format)
+			if err != nil {
+				return err
+			}
 
-		v.SetOutput(st.Name, st.Output)
-		st.Output, err = rawResolveObject(v, jsonTemplate, st.Item, st.Name)
-		if err != nil {
-			return err
+			v.SetOutput(st.Name, st.Output)
+			st.Output, err = rawResolveObject(v, jsonOutput, st.Item, st.Name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -208,25 +207,39 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 
 	for { // until we break because no more functions
 
-		if len(action.BaseOutput) > 0 {
-			base, err := rawResolveObject(values, action.BaseOutput, st.Item, st.Name)
+		if action.Output != nil && action.Output.Strategy != executor.OutputStrategynone {
+			var skipAdd bool
 
-			if err != nil {
-				return nil, errors.Annotate(err, "failed to template base output")
-			}
-			if base != nil {
-				var ok bool
-				baseOutput, ok := base.(map[string]interface{})
+			if action.Output.Strategy == executor.OutputStrategymerge {
+				// XXX: Backward compatibility
+				content, ok := action.Output.Format.(json.RawMessage)
+
 				if !ok {
-					return nil, errors.Annotate(errors.New("Base output not a map"), "failed to template base output")
+					content, err = utils.JSONMarshal(action.Output.Format)
+					if err != nil {
+						return nil, err
+					}
 				}
-				// prepend the base outputs
-				ret.baseOutputs = append([]map[string]interface{}{baseOutput}, ret.baseOutputs...)
-			}
-		}
 
-		if action.TemplatedOutput != nil {
-			ret.templatedOutputs = append([]interface{}{action.TemplatedOutput}, ret.templatedOutputs...)
+				output, err := rawResolveObject(values, content, st.Item, st.Name)
+				if err != nil {
+					return nil, errors.Annotate(err, "failed to template base output")
+				}
+				if output != nil {
+					var ok bool
+					outputMap, ok := output.(map[string]interface{})
+					if !ok {
+						return nil, errors.Annotate(errors.New("merge output not a map"), "failed to template merge output")
+					}
+					action.Output.Format = outputMap
+				} else {
+					skipAdd = true
+				}
+			}
+
+			if !skipAdd {
+				ret.outputs = append([]*executor.Output{action.Output}, ret.outputs...)
+			}
 		}
 
 		ret.config, err = resolveObject(values, ret.config, st.Item, st.Name)
@@ -688,10 +701,6 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 		}
 	}
 
-	if ex.TemplatedOutput != nil && len(ex.BaseOutput) > 0 {
-		return nil, errTemplatedAndBaseOutput
-	}
-
 	runnerType := ex.Type
 	configuration := ex.Configuration
 	var functionNames []string
@@ -715,10 +724,6 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 		}
 
 		functionNames = append(functionNames, runnerType)
-
-		if len(functionRunner.Action.BaseOutput) > 0 && functionRunner.Action.TemplatedOutput != nil {
-			return nil, annotateFunctions(functionNames, errTemplatedAndBaseOutput)
-		}
 
 		runnerType, configuration = functionRunner.Action.Type, functionRunner.Action.Configuration
 		if functionRunner.PreHook != nil {
