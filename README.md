@@ -392,7 +392,7 @@ steps:
         url: http://message.board/new
 ```
 
-The output of an action can be enriched by means of a `base_output`. For example, in a template with an input field named `id`, value `1234` and a call to a service which returns the following payload:
+The output of an action can be enriched by means of an `output`. For example, in a template with an input field named `id`, value `1234` and a call to a service which returns the following payload:
 
 ```js
 {
@@ -408,14 +408,16 @@ steps:
     description: Prefix an ID received as input, return both
     action:
       type: http
-      base_output:
-        id: "{{.input.id}}"
+      output:
+        strategy: merge
+        format:
+          id: "{{.input.id}}"
       configuration:
         method: GET
         url: http://directory/user/{{.input.id}}
 ```
 
-Will render the following output, a combination of the action's raw output and the base_output:
+Will render the following output, a combination of the action's raw output and the output:
 
 ```js
 {
@@ -423,6 +425,10 @@ Will render the following output, a combination of the action's raw output and t
   "name": "username"
 }
 ```
+
+All the strategies available are:
+- `merge`: data in `format` must be a dict and will be merged with the output of the action (e.g. ahead)
+- `template`: the action will return exactly the data in `format` that can be templated (see Value Templating)
 
 #### Builtin actions
 
