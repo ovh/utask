@@ -136,6 +136,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 	// title can be computed if input values are valid
 	v := values.NewValues()
 	v.SetInput(input)
+	v.SetVariables(tt.Variables)
 	t.ExportTaskInfos(v) // make task-specific info available for title
 	title, err := v.Apply(tt.TitleFormat, nil, "")
 	if err != nil {
