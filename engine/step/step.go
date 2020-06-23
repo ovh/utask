@@ -161,6 +161,7 @@ func (e *execution) generateOutput(st *Step, v *values.Values) error {
 
 			if st.Output == nil {
 				st.Output = output.Format
+				continue
 			}
 
 			marshaled, err := utils.JSONMarshal(st.Output)
