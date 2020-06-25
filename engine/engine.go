@@ -585,7 +585,18 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 					contractStep(s, res)
 					res.SetStepState(s.Name, step.StateDone)
 				default:
-					continue
+					// if the ForEach task is in another state, we do nothing, but need to return the step in the stepChan
+					// otherwise the task will wait infinitely for this step
+				}
+
+				// after expanding or contracting, need to check if step didn't turned into a bad state (FatalError, ServerError, ...) during the operation
+				// in that case, it should be discarded from being looked-up during next runAvailableSteps (as we did expanded++)
+				switch s.State {
+				case step.StateTODO, step.StateToRetry, step.StateExpanded:
+					// thoses states could be lead the step to be reconsidered on the next runAvailableSteps if the childrens runs fast enough (and not waiting for the next resolution.Run)
+				default:
+					// others states are errors, we should stop considering this step as eligible during this run
+					executedSteps[s.Name] = true
 				}
 				// rebuild step dependency tree to include generated loop steps
 				res.BuildStepTree()
