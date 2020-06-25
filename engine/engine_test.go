@@ -586,7 +586,7 @@ func TestForeach(t *testing.T) {
 	assert.Equal(t, 2, len(generateList))
 
 	concatList := res.Steps["concatItems"].Children
-	assert.Equal(t, 1, len(concatList))
+	require.Equal(t, 1, len(concatList))
 
 	firstItem := concatList[0].(map[string]interface{})
 	firstItemOutput := firstItem[values.OutputKey].(map[string]interface{})
@@ -610,6 +610,22 @@ func TestForeachWithPreRun(t *testing.T) {
 	for _, st := range []string{"stepDep", "stepDep2"} {
 		assert.Equal(t, step.StatePrune, res.Steps[st].State)
 	}
+}
+
+func TestForeachWithErrors(t *testing.T) {
+	res, err := createResolution("foreach.yaml", map[string]interface{}{
+		"list": []interface{}{"a", "b", "c"},
+	}, nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	res.Steps["generateItems"].State = step.StateFatalError
+	updateResolution(res)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
 }
 
 func TestVariables(t *testing.T) {
@@ -672,6 +688,7 @@ func TestJSONNumberTemplating(t *testing.T) {
 	assert.Equal(t, resolution.StateDone, res.State)
 
 	output := res.Steps["loopStep"].Children
+	require.Greater(t, len(output), 0)
 	child := output[0].(map[string]interface{})
 	assert.Equal(t, "/id/1619464078", child[values.OutputKey].(string))
 }
