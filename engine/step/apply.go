@@ -58,11 +58,12 @@ func applyMap(val *values.Values, v reflect.Value, item interface{}, stepName st
 			mv = mv.Elem()
 		}
 
+		var err error
 		switch mv.Kind() {
 		case reflect.Map:
-			applyMap(val, mv, item, stepName)
+			err = applyMap(val, mv, item, stepName)
 		case reflect.Slice:
-			applySlice(val, mv, item, stepName)
+			err = applySlice(val, mv, item, stepName)
 		case reflect.String:
 			newValue, err := applyString(val, mv, item, stepName)
 			switch err {
@@ -74,6 +75,9 @@ func applyMap(val *values.Values, v reflect.Value, item interface{}, stepName st
 			default:
 				return err
 			}
+		}
+		if err != nil {
+			return err
 		}
 	}
 
