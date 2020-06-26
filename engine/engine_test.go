@@ -317,7 +317,6 @@ func TestLintingAndValidation(t *testing.T) {
 		"selfDependency.yaml":              {true, false},
 		"orphanDependencies.yaml":          {true, false},
 		"functionEchoHelloWorldError.yaml": {true, false},
-		"templatedOutputError.yaml":        {true, false},
 
 		"lintingInfiniteOk.yaml":           {false, true},
 		"lintingObject.yaml":               {false, true},
