@@ -1,0 +1,11 @@
+name: functionTemplatedOutput
+description: A template with a templated output function
+title_format: "[test] Templated Output function"
+auto_runnable: true
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo::templated::output

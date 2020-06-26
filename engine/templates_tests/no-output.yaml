@@ -9,5 +9,8 @@ steps:
         retry_pattern: seconds
         action:
             type: echo
-            base_output: {foobar: "buzz"}
+            output:
+                strategy: merge
+                format:
+                    foobar: "buzz"
             configuration: {}

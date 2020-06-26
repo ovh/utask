@@ -237,6 +237,16 @@ func TestFunctionPreHook(t *testing.T) {
 	})
 }
 
+func TestFunctionTemplatedOutput(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionEchoTemplatedOutput.yaml", input, nil)
+
+	require.Nilf(t, err, "%s", err)
+	assert.Equal(t, map[string]interface{}{
+		"full_name": "John Doe",
+	}, res.Steps["stepOne"].Output)
+}
+
 func TestClientError(t *testing.T) {
 	res, err := runTask("clientError.yaml", map[string]interface{}{}, nil)
 
@@ -308,12 +318,13 @@ func TestLintingAndValidation(t *testing.T) {
 		"orphanDependencies.yaml":          {true, false},
 		"functionEchoHelloWorldError.yaml": {true, false},
 
-		"lintingInfiniteOk.yaml":      {false, true},
-		"lintingObject.yaml":          {false, true},
-		"allowedStateImpact.yaml":     {false, true},
-		"functionEchoHelloWorld.yaml": {false, true},
-		"functionCustomState.yaml":    {false, true},
-		"functionPreHook.yaml":        {false, true},
+		"lintingInfiniteOk.yaml":           {false, true},
+		"lintingObject.yaml":               {false, true},
+		"allowedStateImpact.yaml":          {false, true},
+		"functionEchoHelloWorld.yaml":      {false, true},
+		"functionCustomState.yaml":         {false, true},
+		"functionPreHook.yaml":             {false, true},
+		"functionEchoTemplatedOutput.yaml": {false, true},
 	}
 
 	for template, testCase := range expectedResult {
@@ -747,6 +758,23 @@ func TestEmptyStringInput(t *testing.T) {
 func TestBaseOutputNoOutput(t *testing.T) {
 	input := map[string]interface{}{}
 	res, err := createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateDone, res.State)
+	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
+
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "buzz", output["foobar"])
+}
+
+func TestBaseOutputNoOutputBackwardCompatibility(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := createResolution("no-output-backward.yaml", input, nil)
 	require.NotNil(t, res)
 	require.Nil(t, err)
 

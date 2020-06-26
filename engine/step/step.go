@@ -141,11 +141,49 @@ func uniqueSortedList(s []string) []string {
 
 type execution struct {
 	baseCfgRaw       json.RawMessage
-	baseOutputs      []map[string]interface{}
+	outputs          []*executor.Output
 	config           json.RawMessage
 	runner           Runner
 	ctx              interface{}
 	stopRunningSteps <-chan struct{}
+}
+
+func (e *execution) generateOutput(st *Step, v *values.Values) error {
+	for _, output := range e.outputs {
+		switch output.Strategy {
+		case executor.OutputStrategymerge:
+
+			outputMap, ok := output.Format.(map[string]interface{})
+			if !ok {
+				st.Output = output.Format
+				return errors.New("invalid output merge data format")
+			}
+
+			if st.Output == nil {
+				st.Output = output.Format
+				continue
+			}
+
+			marshaled, err := utils.JSONMarshal(st.Output)
+			if err == nil {
+				_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &outputMap)
+				st.Output = outputMap
+			}
+
+		case executor.OutputStrategytemplate:
+			jsonOutput, err := utils.JSONMarshal(output.Format)
+			if err != nil {
+				return err
+			}
+
+			v.SetOutput(st.Name, st.Output)
+			st.Output, err = rawResolveObject(v, jsonOutput, st.Item, st.Name)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, stopRunningSteps <-chan struct{}) (*execution, error) {
@@ -170,20 +208,38 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 
 	for { // until we break because no more functions
 
-		if len(action.BaseOutput) > 0 {
-			base, err := rawResolveObject(values, action.BaseOutput, st.Item, st.Name)
+		if action.Output != nil && action.Output.Strategy != executor.OutputStrategynone {
+			var skipAdd bool
 
-			if err != nil {
-				return nil, errors.Annotate(err, "failed to template base output")
-			}
-			if base != nil {
-				var ok bool
-				baseOutput, ok := base.(map[string]interface{})
+			if action.Output.Strategy == executor.OutputStrategymerge {
+				// XXX: Backward compatibility
+				content, ok := action.Output.Format.(json.RawMessage)
+
 				if !ok {
-					return nil, errors.Annotate(errors.New("Base output not a map"), "failed to template base output")
+					content, err = utils.JSONMarshal(action.Output.Format)
+					if err != nil {
+						return nil, err
+					}
 				}
-				// prepend the base outputs
-				ret.baseOutputs = append([]map[string]interface{}{baseOutput}, ret.baseOutputs...)
+
+				output, err := rawResolveObject(values, content, st.Item, st.Name)
+				if err != nil {
+					return nil, errors.Annotate(err, "failed to template base output")
+				}
+				if output != nil {
+					var ok bool
+					outputMap, ok := output.(map[string]interface{})
+					if !ok {
+						return nil, errors.Annotate(errors.New("merge output not a map"), "failed to template merge output")
+					}
+					action.Output.Format = outputMap
+				} else {
+					skipAdd = true
+				}
+			}
+
+			if !skipAdd {
+				ret.outputs = append([]*executor.Output{action.Output}, ret.outputs...)
 			}
 		}
 
@@ -331,19 +387,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
 			st.Output, st.Metadata, st.Tags = output, metadata, tags
 
-			var errmarshal error
-			for _, baseOutput := range execution.baseOutputs {
-				if st.Output != nil {
-					var marshaled []byte
-					marshaled, errmarshal = utils.JSONMarshal(st.Output)
-					if errmarshal == nil {
-						_ = utils.JSONnumberUnmarshal(bytes.NewReader(marshaled), &baseOutput)
-					}
-				}
-				if errmarshal == nil {
-					st.Output = baseOutput
-				}
-			}
+			execution.generateOutput(st, preHookValues)
+
 			if err != nil {
 				if errors.IsBadRequest(err) {
 					st.State = StateClientError
@@ -643,6 +688,13 @@ func (s *Step) GetPreHook() (*executor.Executor, error) {
 
 }
 
+func annotateFunctions(functions []string, err error) error {
+	for _, function := range functions {
+		err = errors.Annotate(err, fmt.Sprintf("function %q", function))
+	}
+	return err
+}
+
 func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor, preHook *executor.Executor) (*executor.Executor, error) {
 	if len(ex.BaseConfiguration) > 0 {
 		if _, ok := baseConfigs[ex.BaseConfiguration]; !ok {
@@ -661,10 +713,7 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 
 		err = r.ValidConfig(baseConfigs[ex.BaseConfiguration], configuration)
 		if err != nil {
-			for _, functionName := range functionNames {
-				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-			}
-			return nil, err
+			return nil, annotateFunctions(functionNames, err)
 		}
 
 		functionRunner, ok := r.(*functions.Function)
@@ -672,22 +721,15 @@ func validExecutor(baseConfigs map[string]json.RawMessage, ex executor.Executor,
 			break
 		}
 		if utils.ListContainsString(functionNames, runnerType) {
-			err := fmt.Errorf("invalid cyclic import in function for %q", runnerType)
-			for _, functionName := range functionNames {
-				err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-			}
-			return nil, err
+			return nil, annotateFunctions(functionNames, fmt.Errorf("invalid cyclic import in function for %q", runnerType))
 		}
 
 		functionNames = append(functionNames, runnerType)
+
 		runnerType, configuration = functionRunner.Action.Type, functionRunner.Action.Configuration
 		if functionRunner.PreHook != nil {
 			if preHook != nil {
-				err := errors.New("pre_hook override")
-				for _, functionName := range functionNames {
-					err = errors.Annotate(err, fmt.Sprintf("function %q", functionName))
-				}
-				return functionRunner.PreHook, err
+				return functionRunner.PreHook, annotateFunctions(functionNames, errors.New("pre_hook override"))
 			}
 			preHook = functionRunner.PreHook
 		}
