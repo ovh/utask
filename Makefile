@@ -3,7 +3,7 @@ BINARY			= utask
 MAIN_LOCATION	= ./cmd
 
 TEST_LOCATION	= ./...
-# timeout for go test is here to prevent test running infinitely if one runResolution lead to a step that never recovers (missing push on a stepChan)
+# timeout for go test is here to prevent tests running infinitely if one runResolution leads to a step that never recovers (e.g. missing push on a stepChan)
 # 15 seconds per unit tests should be enough
 TEST_CMD		= go test -count=1 -timeout 15s -v -cover -p 1 ${TEST_LOCATION}
 TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
