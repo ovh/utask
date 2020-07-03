@@ -2,19 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { ApiService } from 'utask-lib';
-import { Template } from '@angular/compiler/src/render3/r3_ast';
+import Function from 'utask-lib/@models/function.model';
 
 @Component({
-  templateUrl: './templates.html',
+  templateUrl: './functions.html',
 })
-export class TemplatesComponent implements OnInit {
-  templates: Template[];
+export class FunctionsComponent implements OnInit {
+  functions: Function[];
   display: { [key: string]: boolean } = {};
+  JSON = JSON;
 
   constructor(private api: ApiService, private route: ActivatedRoute, private router: Router) {
   }
 
   ngOnInit() {
-    this.templates = this.route.parent.snapshot.data.templates;
+    this.functions = this.route.parent.snapshot.data.functions;
   }
 }

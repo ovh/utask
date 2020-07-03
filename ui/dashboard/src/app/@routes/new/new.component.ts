@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
-import { ApiService } from '../../@services/api.service';
 import { HttpHeaders } from '@angular/common/http';
-import Template from 'src/app/@models/template.model';
+import { ApiService } from 'utask-lib';
+import Template from 'utask-lib/@models/template.model';
 
 @Component({
   templateUrl: './new.html'
@@ -46,7 +46,7 @@ export class NewComponent implements OnInit {
   submit() {
     this.loaders.submit = true;
 
-    return this.api.postTask(this.item).toPromise().then((data: any) => {
+    return this.api.task.add(this.item).toPromise().then((data: any) => {
       this.errors.submit = null;
       this.router.navigate([`/task/${data.id}`]);
     }).catch((err) => {

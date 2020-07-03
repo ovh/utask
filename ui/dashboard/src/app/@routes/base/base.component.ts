@@ -1,13 +1,13 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router, NavigationStart, NavigationEnd, NavigationError, Event } from '@angular/router';
-import { Subscription, observable } from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, NavigationEnd, Event } from '@angular/router';
 import * as _ from 'lodash';
+import Meta from 'utask-lib/@models/meta.model';
 
 @Component({
   templateUrl: './base.html',
 })
 export class BaseComponent implements OnInit {
-  meta: any;
+  meta: Meta;
   constructor(private activedRoute: ActivatedRoute, private router: Router) {
     this.router.events.subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {

@@ -1,0 +1,38 @@
+<div class="main">
+  <header>
+    <h1>Functions</h1>
+  </header>
+  <section>
+    <div class="table-responsive table-striped table-condensed">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" width="40px"></th>
+            <th scope="col">Name</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <ng-template ngFor let-function [ngForOf]="functions">
+            <tr (click)="display[function.name] = !display[function.name];">
+              <td>
+                <span *ngIf="!display[function.name];"><span class="fas fa-caret-down"></span></span>
+                <span *ngIf="display[function.name];"><span class="fas fa-caret-up"></span></span>
+              </td>
+              <th scope="row" class="nowrap" style="max-width: 20vw;">
+                {{function.name}}
+              </th>
+            </tr>
+            <tr *ngIf="display[function.name]">
+              <td>
+              </td>
+              <td colspan="1">
+                <utask-editor [value]="JSON.stringify(function, null, 4)" [config]="{readonly: true}"></utask-editor>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

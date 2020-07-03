@@ -4,7 +4,8 @@
       <h1>
         Tasks -
         <div class="form-inline" style="display:inline-block;">
-          <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type" (change)="search();">
+          <select class="form-control" id="filter_type" name="filter_type" [(ngModel)]="pagination.type"
+            (change)="search();">
             <option value="all" *ngIf="meta.user_is_admin">All</option>
             <option value="own">As a requester</option>
             <option value="resolvable">As a resolver</option>
@@ -21,152 +22,15 @@
             <option value="WONTFIX">WONTFIX</option>
           </select>
           &nbsp;
-          <app-input-tags class="form-control" (update)="inputTagsChanged($event);" [value]="pagination.tag" [placeholder]="'Search tags...'"></app-input-tags>
+          <utask-input-tags class="form-control" (update)="inputTagsChanged($event);" [value]="pagination.tag"
+            [placeholder]="'Search tags...'" [rawTags]="tags"></utask-input-tags>
         </div>
       </h1>
     </header>
 
-    <loader *ngIf="loaders.tasks"></loader>
-    <error-message [data]="errors.tasks" *ngIf="errors.tasks && !loaders.tasks"></error-message>
-
-    <section *ngIf="!loaders.tasks && !errors.tasks">
-      <div class="utask_bloc">
-        <header>
-          <div class="utask_bloc_header_title" style="width:100%">
-            Tasks
-            <div style="float:right;width: calc(100% - 100px);text-align:right;">
-              <div style="margin-left: 4px;display:inline-block;" class="btn-group" ngbDropdown>
-                <div class="btn-group" role="group">
-                  <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle
-                    *ngIf="bulkActions.enable">
-                    Actions (bulk)
-                  </button>
-                </div>
-                <div class="dropdown-menu" ngbDropdownMenu>
-                  <button type="button" ngbDropdownItem (click)="runAll()" [disabled]="!bulkActions.actions['run']">
-                    Run
-                  </button>
-                  <button type="button" ngbDropdownItem (click)="cancelAll()"
-                    [disabled]="!bulkActions.actions['cancel']">
-                    Cancel
-                  </button>
-                  <button type="button" ngbDropdownItem (click)="pauseAll()"
-                    [disabled]="!bulkActions.actions['pause']">
-                    Pause
-                  </button>
-                  <button type="button" ngbDropdownItem (click)="extendAll()"
-                    [disabled]="!bulkActions.actions['extend']">
-                    Extend
-                  </button>
-                  <button type="button" ngbDropdownItem (click)="deleteAll()"
-                    [disabled]="!bulkActions.actions['delete']">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-        <section>
-          <div *ngIf="display.newTasks" class="alert alert-info">
-            <strong>New tasks</strong> have been added. <button type="button" class="btn btn-info"
-              (click)="displayNewTasks();">Refresh</button>
-          </div>
-
-          <div class="table-striped table-condensed" infiniteScroll (scrolled)="next()">
-            <table class="table home_tasks">
-              <thead>
-                <tr>
-                  <th scope="col">
-                    <input type="checkbox" [(ngModel)]="bulkActions.all" title="Select all" *ngIf="bulkActions.all"
-                      (change)="bulkActions.selection = {};checkActions();" />
-                    <input type="checkbox" [(ngModel)]="bulkActions.all" title="Unselect all" *ngIf="!bulkActions.all"
-                      (change)="selectAll();checkActions();" />
-                  </th>
-                  <th scope="col">Title</th>
-                  <th scope="col">Status</th>
-                  <th scope="col" class="d-none d-md-table-cell">Requester</th>
-                  <th scope="col" class="d-none d-lg-table-cell">Resolver</th>
-                  <th scope="col" class="d-none d-xl-table-cell">Last activity</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <ng-template ngFor let-item [ngForOf]="tasks">
-                  <tr *ngIf="!hide[item.id]">
-                    <th style="padding-top: 8px;">
-                      <input type="checkbox" name="selection-{{item.id}}" [(ngModel)]='bulkActions.selection[item.id]' (change)="checkActions()" />
-                    </th>
-                    <th scope="row">
-                      <p class="task_title"><a [routerLink]="'/task/'+item.id" title="{{item.title}}" class="nowrap"
-                          style="display:block">{{item.title}}</a></p>
-                      <p class="task_id nowrap"><small>{{item.id}}</small></p>
-                    </th>
-                    <td class="utask_state_steps nowrap">
-                      <div class="utask_state_steps-state utask_state_steps-state__{{item.state}}">
-                        {{item.state}}
-                      </div>
-                      <div class="utask_state_steps-steps" *ngIf="item.state !== 'DONE'">
-                        <div class="utask_state_steps-steps-progressbar" [ngStyle]="{
-                          'width': percentages[item.id] + '%'
-                        }">
-                        </div>
-                        <div class="utask_state_steps-steps-text">{{percentages[item.id]}} %</div>
-                      </div>
-                    </td>
-                    <td class="nowrap d-none d-md-table-cell">
-                      <p class="task_title"
-                        [ngClass]="{'utask_username_me': item.requester_username === meta.username}">
-                        {{item.requester_username}}
-                      </p>
-                      <p class="task_id nowrap"><small>{{item.created | fromNow}}</small></p>
-                    </td>
-                    <td class="nowrap d-none d-lg-table-cell"><span
-                        [ngClass]="{'utask_username_me': item.resolver_username === meta.username}">{{item.resolver_username}}</span>
-                    </td>
-                    <td class="nowrap d-none d-xl-table-cell">{{item.last_activity | fromNow}}</td>
-                    <td class="task_actions">
-                      <div class="btn-group utask_bloc_header_dropdown" ngbDropdown>
-                        <div class="btn-group" role="group">
-                          <button type="button" class="btn btn-sm btn-primary" title="Run"
-                            (click)="runResolution(item.resolution, item.id); $event.stopPropagation();"
-                            [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')">
-                            <i class="fas fa-play"></i>
-                          </button>
-                          <button type="button" class="btn btn-sm btn-primary" title="Cancel"
-                            (click)="cancelResolution(item.resolution, item.id); $event.stopPropagation();"
-                            [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')">
-                            <i class="fas fa-ban"></i>
-                          </button>
-                          <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle [disabled]="(!item.resolution || item.state === 'DONE' || item.state === 'CANCELLED') && (!meta.user_is_admin || item.state === 'BLOCKED')">
-                            More
-                          </button>
-                        </div>
-                        <div class="dropdown-menu" ngbDropdownMenu>
-                          <button type="button" ngbDropdownItem
-                          [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')"
-                            (click)="pauseResolution(item.resolution, item.id); $event.stopPropagation();">Pause</button>
-                          <button type="button" ngbDropdownItem
-                          [disabled]="!(item.resolution && item.state !== 'DONE' && item.state !== 'CANCELLED')"
-                            (click)="extendResolution(item.resolution, item.id); $event.stopPropagation();">Extend</button>
-                          <button type="button" ngbDropdownItem
-                            (click)="deleteTask(item.id);$event.stopPropagation();"
-                            [disabled]="item.state === 'BLOCKED' || !meta.user_is_admin">Delete</button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </ng-template>
-              </tbody>
-            </table>
-          </div>
-
-          <div style="text-align:center;">
-            <button type="button" class="btn btn-outline-primary btn-secondary" (click)="next(!hasMore)"
-              *ngIf="tasks.length && hasMore" [disabled]="loaders.next">Show more</button>
-          </div>
-        </section>
-      </div>
+    <section>
+      <utask-tasks-list [meta]="meta" [params]="params" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)"
+        (toastError)="toastError($event)"></utask-tasks-list>
     </section>
   </div>
 </div>

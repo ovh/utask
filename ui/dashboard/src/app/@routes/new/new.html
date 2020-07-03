@@ -134,14 +134,14 @@
           </tag-input>
         </div>
 
-        <error-message [data]="errors.submit" *ngIf="errors.submit"></error-message>
+        <utask-error-message [data]="errors.submit" *ngIf="errors.submit"></utask-error-message>
 
         <button type="submit" class="btn btn-success float-right" [disabled]="myForm.invalid">Submit</button>
       </form>
     </section>
   </div>
 
-  <loader *ngIf="loaders.templates"></loader>
+  <utask-loader *ngIf="loaders.templates"></utask-loader>
 
-  <error-message [data]="errors.templates" *ngIf="errors.templates"></error-message>
+  <utask-error-message [data]="errors.templates" *ngIf="errors.templates"></utask-error-message>
 </div>

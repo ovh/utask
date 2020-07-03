@@ -1,11 +1,8 @@
 import { Component, Input, Output, OnChanges, SimpleChanges, EventEmitter } from '@angular/core';
 import * as _ from 'lodash';
-import EditorConfig from 'src/app/@models/editorconfig.model';
-import WorkflowHelper from '../../@services/workflowhelper.service';
-
-import { ModalYamlPreviewComponent } from '../../@modals/modal-yaml-preview/modal-yaml-preview.component';
-
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ModalYamlPreviewComponent, WorkflowService } from 'utask-lib';
+import EditorConfig from 'utask-lib/@models/editorconfig.model';
 
 @Component({
     selector: 'steps-list',
@@ -14,7 +11,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 export class StepsListComponent implements OnChanges {
     @Input() steps: any[];
     @Input() selectedStep: string;
-    // @Output() public select: EventEmitter<any> = new EventEmitter();
     displayDetails: { [key: string]: boolean } = {};
     filter: any = {
         tags: []
@@ -35,10 +31,11 @@ export class StepsListComponent implements OnChanges {
     states: any = null;
     JSON = JSON;
     presentStates: string[] = [];
-    defaultState = WorkflowHelper.defaultState;
+    defaultState;
 
-    constructor(private modalService: NgbModal) {
-        this.states = WorkflowHelper.getMapStates();
+    constructor(private modalService: NgbModal, private workflowService: WorkflowService) {
+        this.defaultState = this.workflowService.defaultState;
+        this.states = this.workflowService.getMapStates();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -59,14 +56,20 @@ export class StepsListComponent implements OnChanges {
     }
 
     previewStepDetails(step: any) {
-      const previewModal = this.modalService.open(ModalYamlPreviewComponent, {
-        size: 'xl'
-      });
-      previewModal.componentInstance.value = step;
-      previewModal.componentInstance.title = `Step - ${step.name}`;
-      previewModal.result.catch((err) => {
-        console.log(err);
-      });
+        const modal = this.modalService.open(ModalYamlPreviewComponent, {
+            size: 'xl'
+        });
+        modal.componentInstance.value = step;
+        modal.componentInstance.title = `Step - ${step.name}`;
+        modal.componentInstance.close = () => {
+            modal.close();
+        };
+        modal.componentInstance.dismiss = () => {
+            modal.dismiss();
+        };
+        modal.result.catch((err) => {
+            console.log(err);
+        });
     }
 
     setPresentStates() {
@@ -78,7 +81,7 @@ export class StepsListComponent implements OnChanges {
     }
 
     getIcon(state: string) {
-        return WorkflowHelper.getState(state).icon;
+        return this.workflowService.getState(state).icon;
     }
 
     filterSteps() {
