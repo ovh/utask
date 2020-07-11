@@ -6,7 +6,7 @@ auto_runnable: true
 variables:
   - name: rawJSON
     expression: >
-      var o = {"a":"utask", "b":666};
+      var o = {"a":"utask","b":666,"c":{"k":"v"},"d":["1","2","3"]};
       JSON.stringify(o);
 
 steps:
@@ -18,3 +18,5 @@ steps:
         output:
           a: '{{(eval `rawJSON` | fromJson).a}}'
           b: '{{(eval `rawJSON` | mustFromJson).b}}'
+          c: '{{(eval `rawJSON` | mustFromJson).c}}'
+          d: '{{(eval `rawJSON` | fromJson).d}}'

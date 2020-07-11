@@ -716,7 +716,9 @@ func TestJSONParsing(t *testing.T) {
 
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, "utask", output["a"])
-	assert.Equal(t, 666, output["b"])
+	assert.Equal(t, "666", output["b"])
+	assert.Equal(t, "map[k:v]", output["c"])
+	assert.Equal(t, "[1 2 3]", output["d"])
 }
 
 func TestRetryLoop(t *testing.T) {
