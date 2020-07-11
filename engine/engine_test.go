@@ -704,6 +704,21 @@ func TestJSONNumberTemplating(t *testing.T) {
 	assert.Equal(t, "/id/1619464078", child[values.OutputKey].(string))
 }
 
+func TestJSONParsing(t *testing.T) {
+	res, err := createResolution("jsonParsing.yaml", nil, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, resolution.StateDone, res.State)
+
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "utask", output["a"])
+	assert.Equal(t, 666, output["b"])
+}
+
 func TestRetryLoop(t *testing.T) {
 	res, err := createResolution("retryloop.yaml", nil, nil)
 	assert.NotNil(t, res)

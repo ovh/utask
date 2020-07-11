@@ -2,6 +2,7 @@ package values
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"text/template"
@@ -67,6 +68,9 @@ func NewValues() *Values {
 	v.funcMap["field"] = v.fieldTmpl
 	v.funcMap["eval"] = v.varEval
 	v.funcMap["evalCache"] = v.varEvalCache
+	v.funcMap["fromJson"] = v.fromJSON
+	v.funcMap["mustFromJson"] = v.mustFromJSON
+
 	return v
 }
 
@@ -372,6 +376,19 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 	}
 
 	return res.String(), nil
+}
+
+// fromJSON decodes JSON into a structured value, ignoring errors.
+func (v *Values) fromJSON(s string) (interface{}, error) {
+	output, _ := v.mustFromJSON(s)
+	return output, nil
+}
+
+// mustFromJSON decodes JSON into a structured value, returning errors.
+func (v *Values) mustFromJSON(s string) (interface{}, error) {
+	var output interface{}
+	err := json.Unmarshal([]byte(s), &output)
+	return output, err
 }
 
 var errTimedOut = errors.New("Timed out variable evaluation")
