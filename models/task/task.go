@@ -383,6 +383,7 @@ func (t *Task) Update(dbp zesty.DBProvider, skipValidation, recordLastActivity b
 		// re-template task title in case inputs were updated
 		v := values.NewValues()
 		v.SetInput(t.Input)
+		v.SetVariables(tt.Variables)
 		t.ExportTaskInfos(v)
 		title, err := v.Apply(tt.TitleFormat, nil, "")
 		if err != nil {
