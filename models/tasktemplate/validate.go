@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	tmplRegex = regexp.MustCompile(`{{[^}\.]*(\.[A-Za-z_\.]+)[^{]*}}`)
+	tmplRegex = regexp.MustCompile(`{{[^}\.]*(\.[A-Za-z0-9_\.]+)[^{]*}}`)
 )
 
 func validTemplate(template string, inputs, resolverInputs []string, steps map[string]*step.Step) error {
