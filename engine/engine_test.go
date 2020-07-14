@@ -24,7 +24,7 @@ import (
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/functions"
-	"github.com/ovh/utask/engine/functions/runner"
+	functionrunner "github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/engine/step"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models/resolution"
@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
+	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
 )
 
 const (
@@ -67,6 +68,7 @@ func TestMain(m *testing.M) {
 
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
+	step.RegisterRunner(pluginsubtask.Plugin.PluginName(), pluginsubtask.Plugin)
 
 	os.Exit(m.Run())
 }
@@ -858,4 +860,73 @@ func TestBaseBaseConfiguration(t *testing.T) {
 	assert.Equal(t, bCfg.Output, outputOne)
 
 	assert.NotEqual(t, res.Steps["stepOne"].Error, res.Steps["stepTwo"].Error)
+}
+
+func TestResolveSubTask(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	require.Nil(t, err)
+
+	tt, err := templateFromYAML(dbp, "variables.yaml")
+	require.Nil(t, err)
+	tt.Normalize()
+	assert.Equal(t, "variableeval", tt.Name)
+	require.Nil(t, tt.Valid())
+
+	err = dbp.DB().Insert(tt)
+	require.Nil(t, err)
+
+	res, err := createResolution("subtask.yaml", map[string]interface{}{}, nil)
+	require.Nil(t, err, "failed to create resolution: %s", err)
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateError, res.State)
+
+	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
+	subtaskPublicID := subtaskCreationOutput["id"].(string)
+
+	subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateTODO, subtask.State)
+
+	subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
+	require.Nil(t, err)
+
+	subtaskResolution, err = runResolution(subtaskResolution)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateDone, subtaskResolution.State)
+	for k, v := range subtaskResolution.Steps {
+		assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
+	}
+
+	// checking if the parent task is picked up after that the subtask is resolved.
+	// need to sleep a bit because the parent task is resumed asynchronously
+	ti := time.Second
+	i := time.Duration(0)
+	for i < ti {
+		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+		require.Nil(t, err)
+		if res.State != resolution.StateError {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 10)
+		i += time.Millisecond * 10
+	}
+
+	ti = time.Second
+	i = time.Duration(0)
+	for i < ti {
+		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+		require.Nil(t, err)
+		if res.State != resolution.StateRunning {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 10)
+		i += time.Millisecond * 10
+
+	}
+	assert.Equal(t, resolution.StateDone, res.State)
 }

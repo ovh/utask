@@ -1,0 +1,19 @@
+name: subtaskTemplate
+description: Template that spawns a subtask
+title_format: "[test] subtask template test"
+steps:
+    subtaskCreation:
+        description: creating a subtask
+        action:
+            type: subtask
+            configuration:
+                template: variableeval
+    echoOK:
+        description: everything is OK
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: OK
+result_format:
+    foo: "{{.step.echoOK.output.foo}}"

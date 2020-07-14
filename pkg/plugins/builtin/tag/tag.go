@@ -2,6 +2,7 @@ package plugintag
 
 import (
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
+	"github.com/ovh/utask/pkg/utils"
 )
 
 // The tag plugin allow to update the tags of a task.
@@ -17,7 +18,13 @@ type Config struct {
 	Tags map[string]string `json:"tags"`
 }
 
-func validConfig(_ interface{}) error {
+func validConfig(config interface{}) error {
+	cfg := config.(*Config)
+
+	if err := utils.ValidateTags(cfg.Tags); err != nil {
+		return err
+	}
+
 	return nil
 }
 

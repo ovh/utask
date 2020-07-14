@@ -308,6 +308,10 @@ func (tt *TaskTemplate) Valid() (err error) {
 		}
 	}
 
+	if err := utils.ValidateTags(tt.Tags); err != nil {
+		return err
+	}
+
 	if tt.LongDescription != nil {
 		if err := utils.ValidText("template long description", *tt.LongDescription); err != nil {
 			return err

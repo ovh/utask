@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/taskutils"
+	"github.com/ovh/utask/pkg/utils"
 )
 
 type createTaskIn struct {
@@ -48,6 +49,10 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 	}
 
 	if err := dbp.Tx(); err != nil {
+		return nil, err
+	}
+
+	if err := utils.ValidateTags(in.Tags); err != nil {
 		return nil, err
 	}
 
@@ -264,6 +269,10 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 
 	t.SetInput(clearInput)
 	t.SetWatcherUsernames(in.WatcherUsernames)
+
+	if err := utils.ValidateTags(in.Tags); err != nil {
+		return nil, err
+	}
 	t.SetTags(in.Tags, nil)
 
 	if err := t.Update(dbp,

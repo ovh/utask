@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/taskutils"
+	"github.com/ovh/utask/pkg/utils"
 )
 
 type createBatchIn struct {
@@ -31,6 +32,10 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 
 	tt, err := tasktemplate.LoadFromName(dbp, in.TemplateName)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := utils.ValidateTags(in.Tags); err != nil {
 		return nil, err
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/templateimport"
@@ -39,12 +40,14 @@ type SubtaskConfig struct {
 
 // SubtaskContext is the metadata inherited from the "parent" task"
 type SubtaskContext struct {
+	ParentTaskID      string `json:"parent_task_id"`
 	TaskID            string `json:"task_id"`
 	RequesterUsername string `json:"requester_username"`
 }
 
 func ctx(stepName string) interface{} {
 	return &SubtaskContext{
+		ParentTaskID:      "{{ .task.task_id }}",
 		TaskID:            fmt.Sprintf("{{ if (index .step `%s` ) }}{{ if (index .step `%s` `output`) }}{{ index .step `%s` `output` `id` }}{{ end }}{{ end }}", stepName, stepName, stepName),
 		RequesterUsername: "{{.task.requester_username}}",
 	}
@@ -53,16 +56,24 @@ func ctx(stepName string) interface{} {
 func validConfig(config interface{}) error {
 	cfg := config.(*SubtaskConfig)
 
+	if err := utils.ValidateTags(cfg.Tags); err != nil {
+		return err
+	}
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return fmt.Errorf("can't retrieve connexion to DB: %s", err)
 	}
 
 	_, err = tasktemplate.LoadFromName(dbp, cfg.Template)
-	if err != nil && !errors.IsNotFound(err) {
+	if err == nil {
+		return nil
+	}
+	if !errors.IsNotFound(err) {
 		return fmt.Errorf("can't load template from name: %s", err)
 	}
 
+	// searching into currently imported templates
 	templates := templateimport.GetTemplates()
 	for _, template := range templates {
 		if template == cfg.Template {
@@ -117,6 +128,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
+		if cfg.Tags == nil {
+			cfg.Tags = map[string]string{}
+		}
+		cfg.Tags[constants.SubtaskTagParentTaskID] = stepContext.ParentTaskID
 		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask", cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()

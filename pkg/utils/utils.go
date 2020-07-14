@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/pkg/constants"
 
 	"github.com/juju/errors"
 )
@@ -37,6 +38,18 @@ func ValidText(field, value string) error {
 // NormalizeName trims leading and trailing spaces on a string, and converts its characters to lowercase
 func NormalizeName(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
+}
+
+func ValidateTags(tags map[string]string) error {
+	if tags == nil {
+		return nil
+	}
+	for k := range tags {
+		if k == constants.SubtaskTagParentTaskID {
+			return errors.BadRequestf("tag name %q not allowed", k)
+		}
+	}
+	return nil
 }
 
 // ListContainsString asserts that a string slice contains a given string
