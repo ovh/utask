@@ -1,9 +1,7 @@
-import { of } from 'rxjs';
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { ToastrService } from 'ngx-toastr';
-
 import { ApiService, ParamsListTasks } from 'utask-lib';
 import Meta from 'utask-lib/@models/meta.model';
 import { TaskService } from 'utask-lib';

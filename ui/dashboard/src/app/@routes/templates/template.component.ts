@@ -9,7 +9,7 @@ import * as _ from 'lodash';
         <h1>Template - {{templateName}}</h1>
       </header>
       <section>
-        <template-details *ngIf="templateName" [templateName]="templateName"></template-details>
+        <utask-template-details *ngIf="templateName" [templateName]="templateName"></utask-template-details>
       </section>
     </div>
   `,
