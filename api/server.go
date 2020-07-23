@@ -58,7 +58,7 @@ func (s *Server) WithAuth(authProvider func(*http.Request) (string, error)) {
 // WithCustomMiddlewares sets an array of customized gin middlewares.
 // It helps for init plugins to include these customized middlewares in the api server
 func (s *Server) WithCustomMiddlewares(customMiddlewares ...gin.HandlerFunc) {
-	s.customMiddlewares = customMiddlewares
+	s.customMiddlewares = append(s.customerMiddlewares, customMiddlewares...)
 }
 
 // SetDashboardPathPrefix configures the custom path prefix for dashboard static files hosting.
