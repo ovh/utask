@@ -70,6 +70,7 @@ func TestMain(m *testing.M) {
 
 	srv := api.NewServer()
 	srv.WithAuth(dumbIdentityProvider)
+	srv.WithCustomMiddlewares(dummyCustomMiddleware)
 	srv.SetDashboardPathPrefix("")
 	srv.SetDashboardAPIPathPrefix("")
 	srv.SetDashboardSentryDSN("")
@@ -85,6 +86,10 @@ func TestMain(m *testing.M) {
 	hdl = srv.Handler(ctx)
 
 	os.Exit(m.Run())
+}
+
+func dummyCustomMiddleware(c *gin.Context) {
+	c.Next()
 }
 
 func dumbIdentityProvider(r *http.Request) (string, error) {

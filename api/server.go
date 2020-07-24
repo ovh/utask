@@ -36,6 +36,7 @@ type Server struct {
 	dashboardSentryDSN     string
 	editorPathPrefix       string
 	maxBodyBytes           int64
+	customMiddlewares      []gin.HandlerFunc
 }
 
 // NewServer returns a new Server
@@ -52,6 +53,12 @@ func (s *Server) WithAuth(authProvider func(*http.Request) (string, error)) {
 	if authProvider != nil {
 		s.authMiddleware = authMiddleware(authProvider)
 	}
+}
+
+// WithCustomMiddlewares sets an array of customized gin middlewares.
+// It helps for init plugins to include these customized middlewares in the api server
+func (s *Server) WithCustomMiddlewares(customMiddlewares ...gin.HandlerFunc) {
+	s.customMiddlewares = append(s.customMiddlewares, customMiddlewares...)
 }
 
 // SetDashboardPathPrefix configures the custom path prefix for dashboard static files hosting.
@@ -178,6 +185,7 @@ func (s *Server) build(ctx context.Context) {
 			},
 		})
 
+		router.Use(s.customMiddlewares...)
 		router.Use(ajaxHeadersMiddleware, errorLogMiddleware)
 
 		tonic.SetErrorHook(jujerr.ErrHook)
