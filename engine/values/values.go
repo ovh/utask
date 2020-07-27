@@ -379,16 +379,16 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 }
 
 // fromJSON decodes JSON into a structured value, ignoring errors.
-func (v *Values) fromJSON(s string) (interface{}, error) {
+func (v *Values) fromJSON(s string) (reflect.Value, error) {
 	output, _ := v.mustFromJSON(s)
 	return output, nil
 }
 
 // mustFromJSON decodes JSON into a structured value, returning errors.
-func (v *Values) mustFromJSON(s string) (interface{}, error) {
+func (v *Values) mustFromJSON(s string) (reflect.Value, error) {
 	var output interface{}
 	err := json.Unmarshal([]byte(s), &output)
-	return output, err
+	return reflect.ValueOf(output), err
 }
 
 var errTimedOut = errors.New("Timed out variable evaluation")
