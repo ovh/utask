@@ -41,14 +41,6 @@ type Config struct {
 func validConfig(config interface{}) error {
 	cfg := config.(*Config)
 
-	if cfg.SMTPUsername == "" {
-		return errors.New("smtp_username is missing")
-	}
-
-	if cfg.SMTPPassword == "" {
-		return errors.New("smtp_password is missing")
-	}
-
 	if cfg.SMTPPort == "" {
 		return errors.New("smtp_port is missing")
 	}

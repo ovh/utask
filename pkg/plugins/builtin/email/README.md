@@ -4,18 +4,18 @@ This plugin send an email.
 
 ## Configuration
 
-|Fields|Description
-|---|---
-| `smtp_username` | username of SMTP server
-| `smtp_password` | password of SMTP server
-| `smtp_port` | port of SMTP server
-| `smtp_hostname` | hostname of SMTP server
-| `smtp_skip_tls_verif` | Skip or not TLS insecure verify
-| `from_address` | from which email you want to send the message
-| `from_name` | from which name you want to send the message
-| `to` | receiver(s) of your email
-| `subject` | subject of your email
-| `body` | content of your email
+| Fields                | Description                                   |
+| --------------------- | --------------------------------------------- |
+| `smtp_username`       | username of SMTP server                       |
+| `smtp_password`       | password of SMTP server                       |
+| `smtp_port`           | port of SMTP server                           |
+| `smtp_hostname`       | hostname of SMTP server                       |
+| `smtp_skip_tls_verif` | Skip or not TLS insecure verify               |
+| `from_address`        | from which email you want to send the message |
+| `from_name`           | from which name you want to send the message  |
+| `to`                  | receiver(s) of your email                     |
+| `subject`             | subject of your email                         |
+| `body`                | content of your email                         |
 
 ## Example
 
@@ -25,9 +25,9 @@ An action of type `email` requires the following kind of configuration:
 action:
   type: email
   configuration:
-    # mandatory, string
+    # optional, string, leave empty for no auth
     smtp_username: {{.config.smtp.username}}
-    # mandatory, string
+    # optional, string, leave empty for no auth
     smtp_password: {{.config.smtp.password}}
     # mandatory, string as uint
     smtp_port: {{.config.smtp.port}}
