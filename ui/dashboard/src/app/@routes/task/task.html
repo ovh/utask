@@ -20,8 +20,10 @@
       </div>
       <div class="actions">
         <div class="btn-group" role="group">
-          <button type="button" class="btn btn-secondary btn-outline-primary" (click)="autorefresh.actif = !autorefresh.actif;autorefresh.hasChanged = true;" [disabled]="!autorefresh.enable">
-            <input type="checkbox" [(ngModel)]="autorefresh.actif" readonly="readonly"/>
+          <button type="button" class="btn btn-secondary btn-outline-primary"
+            (click)="autorefresh.actif = !autorefresh.actif;autorefresh.hasChanged = true;"
+            [disabled]="!autorefresh.enable">
+            <input type="checkbox" [(ngModel)]="autorefresh.actif" readonly="readonly" />
             &nbsp;Autorefresh (5s)
           </button>
           <button class="btn btn-primary control-inline" (click)="loadTask();" title="Refresh tasks"
@@ -154,7 +156,8 @@
 
             </div>
             <div class="col-8 steps-viewer">
-              <utask-steps-viewer [item]="resolution" (select)="selectStepFromViewer($event)" done="true"></utask-steps-viewer>
+              <utask-steps-viewer [item]="resolution" (select)="selectStepFromViewer($event)" done="true">
+              </utask-steps-viewer>
             </div>
           </div>
           <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>
@@ -196,6 +199,16 @@
                     <label for="input_{{input.name}}">
                       {{input.description || input.name}}
                       <i class="fas fa-question-circle" *ngIf="input.regex" title="{{input.regex}}"></i>
+                      <button type="button" class="btn btn-secondary" *ngIf="input.type!='number'"
+                        title="{{textarea[input.name] ? 'Click to disable multi line' : 'Click to enable multi line'}}"
+                        (click)="textarea[input.name] = !textarea[input.name]">
+                        <span *ngIf="textarea[input.name]">
+                          <i class="fas fa-ban"
+                            style="color: Tomato;position: absolute;margin-left: -3px;font-size: 21px;"></i>
+                        </span>
+                        <span>
+                          <i class="fas fa-align-justify fa-1x"></i></span>
+                      </button>
                     </label>
 
                     <input type="number" [(ngModel)]="item.resolver_inputs[input.name]" *ngIf="input.type=='number'"
@@ -203,15 +216,21 @@
                       placeholder="{{input.default}}" class="form-control"
                       [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
-                    <input type="password" [(ngModel)]="item.resolver_inputs[input.name]" *ngIf="input.type=='password'"
-                      [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}"
-                      class="form-control"
+                    <input type="password" [(ngModel)]="item.resolver_inputs[input.name]"
+                      *ngIf="input.type=='password' && !textarea[input.name]" [required]="!input.optional"
+                      name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
                       [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
                     <input type="text" [(ngModel)]="item.resolver_inputs[input.name]"
-                      *ngIf="input.type!='number' && input.type!='password'" [required]="!input.optional"
-                      name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}" class="form-control"
+                      *ngIf="input.type!='number' && input.type!='password' && !textarea[input.name]"
+                      [required]="!input.optional" name="input_{{input.name}}" [pattern]="input.regex"
+                      id="input_{{input.name}}" class="form-control"
                       [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
+
+                    <textarea [(ngModel)]="item.resolver_inputs[input.name]" 
+                      *ngIf="input.type!='number' && textarea[input.name]" [required]="!input.optional"
+                      name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}" class="form-control"
+                      [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}"></textarea>
                   </div>
 
                   <div *ngIf="input.legal_values && input.collection" class="form-group">

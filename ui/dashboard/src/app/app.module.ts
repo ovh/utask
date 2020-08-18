@@ -1,7 +1,7 @@
 import { NgModule, ErrorHandler } from '@angular/core';
-import { faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp } from '@fortawesome/fontawesome-free-solid';
+import { faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp, faAlignJustify } from '@fortawesome/fontawesome-free-solid';
 import fontawesome from '@fortawesome/fontawesome';
-fontawesome.library.add(faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp);
+fontawesome.library.add(faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp, faAlignJustify);
 import { AppRoutingModule } from './app-routing.module';
 import { TagInputModule } from 'ngx-chips';
 TagInputModule.withDefaults({
@@ -12,7 +12,6 @@ TagInputModule.withDefaults({
 });
 import { AppComponent } from './app.component';
 import { MyErrorHandler } from './handlers/error.handler';
-import { UTaskModule } from 'src/utask-module/utask.module';
 
 const pages = [
   AppComponent,

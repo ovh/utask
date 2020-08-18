@@ -41,6 +41,15 @@
               <label for="input_{{input.name}}">
                 {{input.description || input.name}}
                 <i class="fas fa-question-circle" *ngIf="input.regex" title="{{input.regex}}"></i>
+                <button type="button" class="btn btn-secondary" *ngIf="input.type!='number'"
+                  title="{{textarea[input.name] ? 'Click to disable multi line' : 'Click to enable multi line'}}" (click)="textarea[input.name] = !textarea[input.name]">
+                  <span *ngIf="textarea[input.name]">
+                    <i class="fas fa-ban"
+                      style="color: Tomato;position: absolute;margin-left: -3px;font-size: 21px;"></i>
+                  </span>
+                  <span>
+                    <i class="fas fa-align-justify fa-1x"></i></span>
+                </button>
               </label>
 
               <input type="number" [(ngModel)]="item.input[input.name]" (change)="saveFormInQueryParams()"
@@ -48,14 +57,21 @@
                 id="input_{{input.name}}" placeholder="{{input.default}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
-              <input type="password" [(ngModel)]="item.input[input.name]" *ngIf="input.type=='password'"
+              <input type="password" [(ngModel)]="item.input[input.name]" *ngIf="input.type=='password' && !textarea[input.name]"
                 [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
 
               <input type="text" [(ngModel)]="item.input[input.name]" (change)="saveFormInQueryParams()"
-                *ngIf="input.type!='number' && input.type!='password'" [required]="!input.optional"
-                name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}" class="form-control"
+                *ngIf="input.type!='number' && input.type!='password' && !textarea[input.name]"
+                [required]="!input.optional" name="input_{{input.name}}" [pattern]="input.regex"
+                id="input_{{input.name}}" class="form-control"
                 [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
+
+              <textarea [(ngModel)]="item.input[input.name]" (change)="saveFormInQueryParams()"
+                *ngIf="input.type!='number' && textarea[input.name]"
+                [required]="!input.optional" name="input_{{input.name}}" [pattern]="input.regex"
+                id="input_{{input.name}}" class="form-control"
+                [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}"></textarea>
             </div>
 
             <!-- <label for="input_{{input.name}}">
@@ -109,11 +125,12 @@
 
             <div *ngIf="input.type=='bool'" class="form-group">
               <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
-                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()" style="float: left;margin-top: 5px;width: 30px;"/>
+                [(ngModel)]='item.input[input.name]' (change)="saveFormInQueryParams()"
+                style="float: left;margin-top: 5px;width: 30px;" />
               <label for="input_{{input.name}}" style="float: right;width: calc(100% - 30px);">
                 {{input.description || input.name}}
               </label>
-              <br clear="all"/>
+              <br clear="all" />
             </div>
           </div>
         </div>
