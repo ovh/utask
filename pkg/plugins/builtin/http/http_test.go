@@ -147,7 +147,7 @@ func Test_exec(t *testing.T) {
 	cfgJSON, err := json.Marshal(cfg)
 	assert.NoError(t, err)
 
-	output, metadata, _, err := Plugin.Exec("test", json.RawMessage(""), json.RawMessage(cfgJSON), nil)
+	output, metadata, _, _, err := Plugin.Exec("test", json.RawMessage(""), json.RawMessage(cfgJSON), nil)
 	require.NoError(t, err)
 
 	assert.NoError(t, err)

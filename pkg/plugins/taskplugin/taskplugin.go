@@ -29,6 +29,7 @@ type PluginExecutor struct {
 	contextFactory func(string) interface{}
 	metadataSchema json.RawMessage
 	tagsFunc       tagsFunc
+	watchersFunc   watchersFunc
 }
 
 // Context generates a context payload to pass to Exec()
@@ -84,7 +85,7 @@ func (r PluginExecutor) ValidConfig(baseConfig json.RawMessage, config json.RawM
 }
 
 // Exec performs the action implemented by the executor
-func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error) {
+func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, []string, error) {
 	var cfg interface{}
 
 	if r.configFactory != nil {
@@ -92,12 +93,12 @@ func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config
 		if len(baseConfig) > 0 {
 			err := utils.JSONnumberUnmarshal(bytes.NewReader(baseConfig), cfg)
 			if err != nil {
-				return nil, nil, nil, errors.Annotate(err, "failed to unmarshal base configuration")
+				return nil, nil, nil, nil, errors.Annotate(err, "failed to unmarshal base configuration")
 			}
 		}
 		err := utils.JSONnumberUnmarshal(bytes.NewReader(config), cfg)
 		if err != nil {
-			return nil, nil, nil, errors.Annotate(err, "failed to unmarshal configuration")
+			return nil, nil, nil, nil, errors.Annotate(err, "failed to unmarshal configuration")
 		}
 	}
 	output, metadata, err := r.execfunc(stepName, cfg, ctx)
@@ -106,7 +107,11 @@ func (r PluginExecutor) Exec(stepName string, baseConfig json.RawMessage, config
 	if r.tagsFunc != nil {
 		tags = r.tagsFunc(cfg, ctx, output, metadata, err)
 	}
-	return output, metadata, tags, err
+	var watchers []string
+	if r.watchersFunc != nil {
+		watchers = r.watchersFunc(cfg, ctx, output, metadata, err)
+	}
+	return output, metadata, tags, watchers, err
 }
 
 // PluginName returns a plugin's name
@@ -125,6 +130,7 @@ func (r PluginExecutor) MetadataSchema() json.RawMessage {
 }
 
 type tagsFunc func(config, ctx, output, metadata interface{}, err error) map[string]string
+type watchersFunc func(config, ctx, output, metadata interface{}, err error) []string
 
 // PluginOpt is a helper struct to customize an action executor
 type PluginOpt struct {
@@ -135,6 +141,7 @@ type PluginOpt struct {
 	resourcesFunc   func(interface{}) []string
 	metadataFunc    func() string
 	tagsFunc        tagsFunc
+	watchersFunc    watchersFunc
 }
 
 // WithConfig defines the configuration struct and validation function
@@ -171,6 +178,13 @@ func WithExecutorMetadata(metadataFunc func() string) func(*PluginOpt) {
 func WithTags(fn tagsFunc) func(*PluginOpt) {
 	return func(o *PluginOpt) {
 		o.tagsFunc = fn
+	}
+}
+
+// WithWatchers defines a function to manipulate the watcher usernames of a task.
+func WithWatchers(fn watchersFunc) func(*PluginOpt) {
+	return func(o *PluginOpt) {
+		o.watchersFunc = fn
 	}
 }
 
@@ -255,5 +269,6 @@ func New(pluginName string, pluginVersion string, execfunc ExecFunc, opts ...fun
 		contextFactory: contextFactory,
 		metadataSchema: schema,
 		tagsFunc:       pOpt.tagsFunc,
+		watchersFunc:   pOpt.watchersFunc,
 	}
 }

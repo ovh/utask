@@ -374,6 +374,17 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 					t.Tags[k] = v
 				}
 			}
+			// Merge task's watcher usernames with the usernames returned in the step
+			// ignoring duplicate usernames already present.
+		loop:
+			for _, u := range s.WatcherUsernames {
+				for _, e := range t.WatcherUsernames {
+					if e == u {
+						continue loop
+					}
+				}
+				t.WatcherUsernames = append(t.WatcherUsernames, u)
+			}
 
 			// "commit" step back into resolution
 			res.SetStep(s.Name, s)
