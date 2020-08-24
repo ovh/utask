@@ -25,6 +25,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   display: { [key: string]: boolean } = {};
   confirm: { [key: string]: boolean } = {};
   refreshes: { [key: string]: any } = {};
+  textarea: { [key: string]: boolean } = {};
   item: any = {
     resolver_inputs: {},
     task_id: null

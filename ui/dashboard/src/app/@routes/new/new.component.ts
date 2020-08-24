@@ -11,6 +11,7 @@ import Template from 'utask-lib/@models/template.model';
 export class NewComponent implements OnInit {
   loaders: { [key: string]: boolean } = {};
   display: { [key: string]: boolean } = {};
+  textarea: { [key: string]: boolean } = {};
   errors: { [key: string]: any } = {};
   templates: Template[] = [];
   item: any = {};
