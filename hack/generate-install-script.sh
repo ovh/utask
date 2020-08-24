@@ -25,7 +25,8 @@ cat <<EOF >$dst
 
 set -e
 
-mkdir -p templates sql plugins init
+mkdir -p templates functions sql plugins init
+touch functions/.gitkeep
 
 ### DOCKER
 EOF
