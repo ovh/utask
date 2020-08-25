@@ -1,0 +1,22 @@
+name: jsonParsing
+description: Ensure that JSON can be parsed and used as value in template
+title_format: "[test] correct json parsing"
+auto_runnable: true
+
+variables:
+  - name: rawJSON
+    expression: >
+      var o = {"a":"utask","b":666,"c":{"k":"v"},"d":["1","2","3"]};
+      JSON.stringify(o);
+
+steps:
+  stepOne:
+    description: first step
+    action:
+      type: echo
+      configuration:
+        output:
+          a: '{{(eval `rawJSON` | fromJson).a}}'
+          b: '{{(eval `rawJSON` | mustFromJson).b}}'
+          c: '{{(eval `rawJSON` | mustFromJson).c}}'
+          d: '{{(eval `rawJSON` | fromJson).d}}'
