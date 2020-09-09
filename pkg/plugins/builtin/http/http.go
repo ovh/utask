@@ -205,12 +205,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, fmt.Errorf("failed to parse insecure_skip_verify: %s", err)
 		}
 	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureSkipVerify}
 	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{
 		Timeout:        td,
 		FollowRedirect: fr,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-		},
+		Transport:      transport,
 	})
 
 	resp, err := httpClient.Do(req)
