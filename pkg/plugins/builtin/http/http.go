@@ -2,6 +2,7 @@ package pluginhttp
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
+	"golang.org/x/net/http2"
 )
 
 // the HTTP plugin performs an HTTP call
@@ -26,6 +28,15 @@ var (
 	)
 )
 
+var defaultUnsecureTransport http.RoundTripper
+
+func init() {
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	_ = http2.ConfigureTransport(tr)
+	defaultUnsecureTransport = tr
+}
+
 const (
 	// TimeoutDefault represents the default value that will be used for HTTP call, if not defined in configuration
 	TimeoutDefault = "30s"
@@ -33,17 +44,18 @@ const (
 
 // HTTPConfig is the configuration needed to perform an HTTP call
 type HTTPConfig struct {
-	URL             string      `json:"url"`
-	Host            string      `json:"host"`
-	Path            string      `json:"path"`
-	Method          string      `json:"method"`
-	Body            string      `json:"body,omitempty"`
-	Headers         []parameter `json:"headers,omitempty"`
-	Timeout         string      `json:"timeout,omitempty"`
-	Auth            auth        `json:"auth,omitempty"`
-	FollowRedirect  string      `json:"follow_redirect,omitempty"`
-	QueryParameters []parameter `json:"query_parameters,omitempty"`
-	TrimPrefix      string      `json:"trim_prefix,omitempty"`
+	URL                string      `json:"url"`
+	Host               string      `json:"host"`
+	Path               string      `json:"path"`
+	Method             string      `json:"method"`
+	Body               string      `json:"body,omitempty"`
+	Headers            []parameter `json:"headers,omitempty"`
+	Timeout            string      `json:"timeout,omitempty"`
+	Auth               auth        `json:"auth,omitempty"`
+	FollowRedirect     string      `json:"follow_redirect,omitempty"`
+	QueryParameters    []parameter `json:"query_parameters,omitempty"`
+	TrimPrefix         string      `json:"trim_prefix,omitempty"`
+	InsecureSkipVerify string      `json:"insecure_skip_verify,omitempty"`
 }
 
 // parameter represents either headers, query parameters, ...
@@ -193,10 +205,24 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	if cfg.FollowRedirect != "" {
 		fr, err = strconv.ParseBool(cfg.FollowRedirect)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
+			return nil, nil, fmt.Errorf("failed to parse follow_redirect: %s", err)
 		}
 	}
-	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{Timeout: td, FollowRedirect: fr})
+	var insecureSkipVerify bool
+	if cfg.InsecureSkipVerify != "" {
+		insecureSkipVerify, err = strconv.ParseBool(cfg.InsecureSkipVerify)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse insecure_skip_verify: %s", err)
+		}
+	}
+	httpClientConfig := httputil.HTTPClientConfig{
+		Timeout:        td,
+		FollowRedirect: fr,
+	}
+	if insecureSkipVerify {
+		httpClientConfig.Transport = defaultUnsecureTransport
+	}
+	httpClient := httputil.NewHTTPClient(httpClientConfig)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
