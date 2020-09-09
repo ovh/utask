@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
+	"golang.org/x/net/http2"
 )
 
 // the HTTP plugin performs an HTTP call
@@ -26,6 +27,15 @@ var (
 		taskplugin.WithResources(resourceshttp),
 	)
 )
+
+var defaultUnsecureTransport http.RoundTripper
+
+func init() {
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	_ = http2.ConfigureTransport(tr)
+	defaultUnsecureTransport = tr
+}
 
 const (
 	// TimeoutDefault represents the default value that will be used for HTTP call, if not defined in configuration
@@ -205,13 +215,14 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, fmt.Errorf("failed to parse insecure_skip_verify: %s", err)
 		}
 	}
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureSkipVerify}
-	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{
+	httpClientConfig := httputil.HTTPClientConfig{
 		Timeout:        td,
 		FollowRedirect: fr,
-		Transport:      transport,
-	})
+	}
+	if insecureSkipVerify {
+		httpClientConfig.Transport = defaultUnsecureTransport
+	}
+	httpClient := httputil.NewHTTPClient(httpClientConfig)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
