@@ -17,7 +17,7 @@ This plugin permorms an HTTP request.
 | `follow_redirect`      | if `true` (string) the plugin will follow up to 10 redirects (302, ...)                                                                                                                                                                                          |
 | `query_parameters`     | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2` |
 | `trim_prefix`          | prefix in the response that must be removed before unmarshalling (optional)                                                                                                                                                                                      |
-| `insecure_skip_verify` | If `true`, disables server's certificate chain and host verification. name                                                                                                                                                                                       |
+| `insecure_skip_verify` | If `true` (string), disables server's certificate chain and host verification.                                                                                                                                                                                   |
 
 ## Example
 

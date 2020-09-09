@@ -45,7 +45,7 @@ type HTTPConfig struct {
 	FollowRedirect     string      `json:"follow_redirect,omitempty"`
 	QueryParameters    []parameter `json:"query_parameters,omitempty"`
 	TrimPrefix         string      `json:"trim_prefix,omitempty"`
-	InsecureSkipVerify bool        `json:"insecure_skip_verify"`
+	InsecureSkipVerify string      `json:"insecure_skip_verify,omitempty"`
 }
 
 // parameter represents either headers, query parameters, ...
@@ -195,14 +195,21 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	if cfg.FollowRedirect != "" {
 		fr, err = strconv.ParseBool(cfg.FollowRedirect)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
+			return nil, nil, fmt.Errorf("failed to parse follow_redirect: %s", err)
+		}
+	}
+	var insecureSkipVerify bool
+	if cfg.InsecureSkipVerify != "" {
+		insecureSkipVerify, err = strconv.ParseBool(cfg.InsecureSkipVerify)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse insecure_skip_verify: %s", err)
 		}
 	}
 	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{
 		Timeout:        td,
 		FollowRedirect: fr,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.InsecureSkipVerify},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
 		},
 	})
 
