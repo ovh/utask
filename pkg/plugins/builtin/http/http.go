@@ -2,6 +2,7 @@ package pluginhttp
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -33,17 +34,18 @@ const (
 
 // HTTPConfig is the configuration needed to perform an HTTP call
 type HTTPConfig struct {
-	URL             string      `json:"url"`
-	Host            string      `json:"host"`
-	Path            string      `json:"path"`
-	Method          string      `json:"method"`
-	Body            string      `json:"body,omitempty"`
-	Headers         []parameter `json:"headers,omitempty"`
-	Timeout         string      `json:"timeout,omitempty"`
-	Auth            auth        `json:"auth,omitempty"`
-	FollowRedirect  string      `json:"follow_redirect,omitempty"`
-	QueryParameters []parameter `json:"query_parameters,omitempty"`
-	TrimPrefix      string      `json:"trim_prefix,omitempty"`
+	URL                string      `json:"url"`
+	Host               string      `json:"host"`
+	Path               string      `json:"path"`
+	Method             string      `json:"method"`
+	Body               string      `json:"body,omitempty"`
+	Headers            []parameter `json:"headers,omitempty"`
+	Timeout            string      `json:"timeout,omitempty"`
+	Auth               auth        `json:"auth,omitempty"`
+	FollowRedirect     string      `json:"follow_redirect,omitempty"`
+	QueryParameters    []parameter `json:"query_parameters,omitempty"`
+	TrimPrefix         string      `json:"trim_prefix,omitempty"`
+	InsecureSkipVerify bool        `json:"insecure_skip_verify"`
 }
 
 // parameter represents either headers, query parameters, ...
@@ -196,7 +198,13 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, fmt.Errorf("failed to parse allow redirect: %s", err)
 		}
 	}
-	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{Timeout: td, FollowRedirect: fr})
+	httpClient := httputil.NewHTTPClient(httputil.HTTPClientConfig{
+		Timeout:        td,
+		FollowRedirect: fr,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.InsecureSkipVerify},
+		},
+	})
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

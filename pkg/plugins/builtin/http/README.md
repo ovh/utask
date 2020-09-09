@@ -4,19 +4,20 @@ This plugin permorms an HTTP request.
 
 ## Configuration
 
-|Fields|Description
-|---|---
-| `url` | destination for the http call, including host, path and query params; this all-in-one field conflicts with `host` and `path`
-| `host` |  destination host for the http call; this field conflicts with the all-in-one field `url`
-| `path` | path for the http call; to use jointly with the `host` field; this field conflicts with the all-in-one field `url`
-| `method` | http method (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)
-| `body` | a string representing the payload to be sent with the request
-| `headers` | a list of headers, represented as (`name`, `value`) pairs
-| `timeout` | timeout expressed as a duration (e.g. `30s`)
-| `auth` | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization
-| `follow_redirect` | if `true` (string) the plugin will follow up to 10 redirects (302, ...)
-| `query_parameters` | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2`
-| `trim_prefix`| prefix in the response that must be removed before unmarshalling (optional)
+| Fields                 | Description                                                                                                                                                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`                  | destination for the http call, including host, path and query params; this all-in-one field conflicts with `host` and `path`                                                                                                                                     |
+| `host`                 | destination host for the http call; this field conflicts with the all-in-one field `url`                                                                                                                                                                         |
+| `path`                 | path for the http call; to use jointly with the `host` field; this field conflicts with the all-in-one field `url`                                                                                                                                               |
+| `method`               | http method (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)                                                                                                                                                                                                            |
+| `body`                 | a string representing the payload to be sent with the request                                                                                                                                                                                                    |
+| `headers`              | a list of headers, represented as (`name`, `value`) pairs                                                                                                                                                                                                        |
+| `timeout`              | timeout expressed as a duration (e.g. `30s`)                                                                                                                                                                                                                     |
+| `auth`                 | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization                                                                                          |
+| `follow_redirect`      | if `true` (string) the plugin will follow up to 10 redirects (302, ...)                                                                                                                                                                                          |
+| `query_parameters`     | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2` |
+| `trim_prefix`          | prefix in the response that must be removed before unmarshalling (optional)                                                                                                                                                                                      |
+| `insecure_skip_verify` | If `true`, disables server's certificate chain and host verification. name                                                                                                                                                                                       |
 
 ## Example
 
