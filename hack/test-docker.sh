@@ -5,12 +5,11 @@ export PG_PASSWORD="test"
 export PG_PORT="5432"
 export PG_DATABASENAME="postgres"
 
-PG_DOCKER_ID=$(docker run -e POSTGRES_USER=$PG_USER -e POSTGRES_PASSWORD=$PG_PASSWORD -d postgres:9.5.3)
+PG_DOCKER_ID=$(docker run -v $PWD/sql/schema.sql:/docker-entrypoint-initdb.d/v0001.sql:ro -e POSTGRES_USER=$PG_USER -e POSTGRES_PASSWORD=$PG_PASSWORD -e POSTGRES_DBNAME=$PG_DATABASENAME -d postgres:9.6-alpine)
 
 echo "Spawned Postgres docker: $PG_DOCKER_ID"
 
 export PG_HOST=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' $PG_DOCKER_ID)
-export PSQL_BIN="docker exec -i $PG_DOCKER_ID su postgres -c psql"
 
 echo "Wait for database init..."
 hack/wait-for-it/wait-for-it.sh -t 120 ${PG_HOST}:${PG_PORT}

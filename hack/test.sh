@@ -21,7 +21,7 @@ require_exec() {
     done
 }
 
-require PG_USER PG_PASSWORD PG_HOST PG_PORT PG_DATABASENAME PSQL_BIN
+require PG_USER PG_PASSWORD PG_HOST PG_PORT PG_DATABASENAME
 
 export CFG_DATABASE="postgres://$PG_USER:$PG_PASSWORD@$PG_HOST:$PG_PORT/$PG_DATABASENAME?connect_timeout=5&sslmode=disable"
 
@@ -45,9 +45,11 @@ EOF
 
 echo "Initializing DB..."
 
-$PSQL_BIN <<EOF
+if [[ -n "$PSQL_BIN" ]]; then
+    $PSQL_BIN <<EOF
 $(cat $PWD/sql/schema.sql)
 EOF
+fi
 
 echo "Running commands..."
 
