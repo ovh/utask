@@ -392,6 +392,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 			if err != nil {
 				if errors.IsBadRequest(err) {
 					st.State = StateClientError
+				} else if errors.IsNotProvisioned(err) {
+					st.State = StateToRetry
 				} else {
 					st.State = StateServerError
 				}
