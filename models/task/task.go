@@ -49,7 +49,7 @@ type StepError struct {
 type Task struct {
 	DBModel
 	TemplateName     string                 `json:"template_name" db:"template_name"`
-	Input            map[string]interface{} `json:"input,omitempty" db:"-"`
+	Input            map[string]interface{} `json:"input" db:"-"`
 	Result           map[string]interface{} `json:"result,omitempty" db:"-"`
 	ResultStr        string                 `json:"-" db:"-"`
 	Resolution       *string                `json:"resolution,omitempty" db:"resolution_public_id"`
