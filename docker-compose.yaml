@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:9.5.3
+    image: postgres:9.6-alpine
     environment:
       POSTGRES_USER:     user
       POSTGRES_PASSWORD: pass
