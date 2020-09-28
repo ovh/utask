@@ -151,10 +151,18 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	case task.StateCancelled, task.StateWontfix, task.StateBlocked:
 		// Stop retrying the subtask.
 		stepError = errors.BadRequestf("Task '%s' changed state: %s", t.PublicID, strings.ToLower(t.State))
+	case task.StateTODO:
+		if t.Resolution == nil {
+			stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q is waiting for human validation", t.PublicID), "")
+		} else {
+			stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q will start shortly", t.PublicID), "")
+		}
+	case task.StateRunning:
+		stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q is currently RUNNING", t.PublicID), "")
 	default:
 		// keep step running while subtask is not done
 		// FIXME, use proper error type
-		stepError = fmt.Errorf("Task '%s' not done yet", t.PublicID)
+		stepError = fmt.Errorf("Task %q not done yet (current state is %s)", t.PublicID, t.State)
 	}
 	return map[string]interface{}{
 		"id":                 t.PublicID,
