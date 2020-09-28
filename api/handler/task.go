@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -270,9 +271,13 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	t.SetInput(clearInput)
 	t.SetWatcherUsernames(in.WatcherUsernames)
 
-	if err := utils.ValidateTags(in.Tags); err != nil {
-		return nil, err
+	// validate read-only tags
+	v, readOnlyTagUpdated := in.Tags[constants.SubtaskTagParentTaskID]
+	oldValue, readOnlyTagInTask := t.Tags[constants.SubtaskTagParentTaskID]
+	if (readOnlyTagUpdated && (!readOnlyTagInTask || oldValue != v)) || (!readOnlyTagUpdated && readOnlyTagInTask) {
+		return nil, errors.BadRequestf("tag %s is read-only and cannot be modified", constants.SubtaskTagParentTaskID)
 	}
+
 	t.SetTags(in.Tags, nil)
 
 	if err := t.Update(dbp,
