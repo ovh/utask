@@ -10,21 +10,32 @@
             "title": "A µTask template step",
             "default": {},
             "additionalProperties": false,
-            "examples": [{
-                "description": "Get UTC time",
-                "action": {
-                    "type": "http",
-                    "configuration": {
-                        "method": "GET",
-                        "url": "http://worldclockapi.com/api/json/utc/now"
+            "examples": [
+                {
+                    "description": "Get UTC time",
+                    "action": {
+                        "type": "http",
+                        "configuration": {
+                            "method": "GET",
+                            "url": "http://worldclockapi.com/api/json/utc/now"
+                        }
                     }
                 }
-            }],
+            ],
             "required": [
                 "description",
                 "action"
             ],
             "properties": {
+                "name": {
+                    "type": "string",
+                    "title": "Step unique name",
+                    "description": "Will identify the step uniquely",
+                    "default": "",
+                    "examples": [
+                        "get_UTC_time"
+                    ]
+                },
                 "description": {
                     "type": "string",
                     "title": "Step description",
@@ -43,6 +54,11 @@
                     ],
                     "title": "Retry pattern of the step",
                     "description": "Define on what temporal order of magnitude the re-runs of this step should be spread."
+                },
+                "max_retries": {
+                    "type": "number",
+                    "title": "Maximum number of retries for the step",
+                    "description": "Define the maximum number of retries for the given step."
                 },
                 "dependencies": {
                     "type": "array",
@@ -75,11 +91,23 @@
                 "json_schema": {
                     "type": "object",
                     "description": "Elements on which the step will loop"
+                },
+                "idempotent": {
+                    "type": "boolean",
+                    "description": "Indicate if the step can be retried safely if the uTask instance dies during the step execution"
+                },
+                "resources": {
+                    "type": "array",
+                    "description": "Resources that will be used during the execution of the step",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
         "Action": {
-            "oneOf": [{
+            "oneOf": [
+                {
                     "$ref": "#/definitions/ActionHTTP"
                 },
                 {
@@ -105,6 +133,9 @@
                 },
                 {
                     "$ref": "#/definitions/ActionAPIOVH"
+                },
+                {
+                    "$ref": "#/definitions/ActionTag"
                 },
                 {
                     "type": "object",
@@ -151,11 +182,16 @@
                     "type": "object",
                     "additionalProperties": false,
                     "required": [
-                        "url",
                         "method"
                     ],
                     "properties": {
                         "url": {
+                            "type": "string"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "path": {
                             "type": "string"
                         },
                         "method": {
@@ -164,6 +200,7 @@
                                 "GET",
                                 "POST",
                                 "PUT",
+                                "PATCH",
                                 "DELETE"
                             ]
                         },
@@ -185,9 +222,8 @@
                                 }
                             }
                         },
-                        "timeout_seconds": {
-                            "type": "string",
-                            "pattern": "^\\d+$"
+                        "timeout": {
+                            "type": "string"
                         },
                         "auth": {
                             "type": "object",
@@ -208,17 +244,17 @@
                                 }
                             }
                         },
-                        "deny_redirects": {
+                        "follow_redirect": {
                             "type": "string",
                             "pattern": "^(true|false)$"
                         },
-                        "parameters": {
+                        "query_parameters": {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "additionalProperties": false,
                                 "properties": {
-                                    "key": {
+                                    "name": {
                                         "type": "string"
                                     },
                                     "value": {
@@ -229,6 +265,12 @@
                         },
                         "trim_prefix": {
                             "type": "string"
+                        },
+                        "insecure_skip_verify": {
+                            "type": [
+                                "string",
+                                "boolean"
+                            ]
                         }
                     }
                 },
@@ -264,10 +306,17 @@
                             "type": "string"
                         },
                         "output": {
-                            "type": "object"
+                            "type": [
+                                "object",
+                                "string",
+                                "null"
+                            ]
                         },
                         "metadata": {
                             "type": "object"
+                        },
+                        "unmarshal": {
+                            "type": "boolean"
                         }
                     }
                 },
@@ -428,7 +477,16 @@
                         "input": {
                             "type": "object"
                         },
+                        "tags": {
+                            "$ref": "#/definitions/Tags"
+                        },
                         "resolver_usernames": {
+                            "type": "string"
+                        },
+                        "watcher_usernames": {
+                            "type": "string"
+                        },
+                        "delay": {
                             "type": "string"
                         }
                     }
@@ -443,6 +501,35 @@
             "title": "Subtask Action",
             "additionalProperties": false,
             "description": "Subtask action will spawn a subtask of the specified template, and wait for resolution"
+        },
+        "ActionTag": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "tag"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "tags"
+                    ],
+                    "properties": {
+                        "tags": {
+                            "$ref": "#/definitions/Tags"
+                        }
+                    }
+                },
+                "base_configuration": {
+                    "type": "string"
+                },
+                "base_output": {
+                    "type": "object"
+                }
+            },
+            "title": "Tag Action",
+            "additionalProperties": false,
+            "description": "Tag action will add some tags to the task"
         },
         "ActionPing": {
             "type": "object",
@@ -533,6 +620,9 @@
                         "body"
                     ],
                     "properties": {
+                        "smtp_hostname": {
+                            "type": "string"
+                        },
                         "smtp_username": {
                             "type": "string"
                         },
@@ -563,7 +653,7 @@
                             }
                         },
                         "body": {
-                            "type": "object"
+                            "type": "string"
                         }
                     }
                 },
@@ -608,7 +698,7 @@
                             "type": "string"
                         },
                         "body": {
-                            "type": "object"
+                            "type": "string"
                         }
                     }
                 },
@@ -671,7 +761,11 @@
                                 ]
                             },
                             "expected": {
-                                "type": "string",
+                                "type": [
+                                    "string",
+                                    "boolean",
+                                    "number"
+                                ],
                                 "description": "Expected value for the condition to be true"
                             },
                             "message": {
@@ -694,16 +788,18 @@
         "Input": {
             "type": "object",
             "additionalProperties": false,
-            "examples": [{
-                "name": "language",
-                "default": "english",
-                "optional": true,
-                "description": "The language in which you wish to greet the world",
-                "legal_values": [
-                    "english",
-                    "spanish"
-                ]
-            }],
+            "examples": [
+                {
+                    "name": "language",
+                    "default": "english",
+                    "optional": true,
+                    "description": "The language in which you wish to greet the world",
+                    "legal_values": [
+                        "english",
+                        "spanish"
+                    ]
+                }
+            ],
             "required": [
                 "name",
                 "description"
@@ -739,7 +835,8 @@
                     "enum": [
                         "string",
                         "number",
-                        "bool"
+                        "bool",
+                        "password"
                     ],
                     "examples": [
                         "bool"
@@ -774,7 +871,8 @@
         "Variable": {
             "type": "object",
             "additionalProperties": false,
-            "examples": [{
+            "examples": [
+                {
                     "name": "english-message",
                     "value": "Hello World!"
                 },
@@ -808,13 +906,20 @@
                     "description": "Javascript expression that will be evaluated (can be templated)"
                 }
             }
+        },
+        "Tags": {
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "string"
+                }
+            }
         }
     },
     "required": [
         "name",
         "description",
-        "title_format",
-        "steps"
+        "title_format"
     ],
     "properties": {
         "name": {
@@ -861,10 +966,12 @@
             "type": "object",
             "description": "Describes the object format that will be saved as task result",
             "default": {},
-            "examples": [{
-                "echo_message": "{{.step.sayHello.output.message}}",
-                "echo_when": "{{.step.sayHello.output.when}}"
-            }]
+            "examples": [
+                {
+                    "echo_message": "{{.step.sayHello.output.message}}",
+                    "echo_when": "{{.step.sayHello.output.when}}"
+                }
+            ]
         },
         "allowed_resolver_usernames": {
             "type": "array",
@@ -931,6 +1038,14 @@
                 "$ref": "#/definitions/Input"
             }
         },
+        "resolver_inputs": {
+            "type": "array",
+            "description": "Inputs that should be provided when resolving a task based on this template",
+            "default": [],
+            "items": {
+                "$ref": "#/definitions/Input"
+            }
+        },
         "steps": {
             "type": "object",
             "description": "Steps that will be executed when a task based on this template is created",
@@ -944,6 +1059,10 @@
         "base_configurations": {
             "type": "object",
             "description": "Global configurations that will be used as base for steps inside this template"
+        },
+        "tags": {
+            "description": "Global tags that will be applied to all tasks created with this template",
+            "$ref": "#/definitions/Tags"
         }
     }
 }
