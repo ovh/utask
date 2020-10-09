@@ -821,6 +821,16 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 			candidateSteps[s] = struct{}{}
 		}
 	}
+
+	// force IN_LOOP steps to be evaluated again
+	for name, ok := range executedSteps {
+		// second check is necessary when dealing with Foreach children
+		if ok && res.Steps[name] != nil && res.Steps[name].State == step.StateInLoop {
+			candidateSteps[name] = struct{}{}
+			delete(executedSteps, name)
+		}
+	}
+
 	// looping on just created steps from an EXPANDED step, to verify if they are eligible
 	// (in case we had modifiedSteps at the same time)
 	for _, s := range expandedSteps {

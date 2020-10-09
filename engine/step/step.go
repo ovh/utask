@@ -32,6 +32,7 @@ const (
 const (
 	StateAny           = "ANY" // wildcard
 	StateTODO          = "TODO"
+	StateInLoop        = "IN_LOOP"
 	StateRunning       = "RUNNING"
 	StateDone          = "DONE"
 	StateClientError   = "CLIENT_ERROR"
@@ -53,9 +54,9 @@ const (
 )
 
 var (
-	builtinStates            = []string{StateTODO, StateRunning, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateAfterrunError, StateAny, StateExpanded}
+	builtinStates            = []string{StateTODO, StateRunning, StateInLoop, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateAfterrunError, StateAny, StateExpanded}
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateFatalError, StateClientError}
-	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
+	runnableStates           = []string{StateTODO, StateInLoop, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
 )
 
@@ -72,6 +73,7 @@ var (
 // A step can be configured to evaluate "conditions" before and after the action is performed:
 // - a "skip" condition will be run before and might determine that the step's action can be skipped entirely
 // - a "check" condition will be run after the action, and can control execution flow by examining
+// - a "loop" condition will cause the step to run again
 //   the step's result and modifying step states through the entire task's resolution
 type Step struct {
 	Name        string `json:"name"`
@@ -465,7 +467,7 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 	}
 }
 
-// AfterRun evaluates a step's "check" conditions after the Step's action has been performed
+// AfterRun evaluates a step's "check" and "loop" conditions after the Step's action has been performed
 // and impacts the entire task's execution flow through the provided StateSetter
 func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 	if st.skipped || st.State == StateServerError || st.State == StateFatalError || st.ForEach != "" {
@@ -479,7 +481,7 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 	}
 
 	for _, sc := range conditions {
-		if sc.Type != condition.CHECK {
+		if sc.Type != condition.CHECK && sc.Type != condition.LOOP {
 			continue
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
@@ -493,11 +495,16 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 				break
 			}
 		}
-		for step, state := range sc.Then {
-			if step == stepRefThis {
-				step = st.Name
+		switch sc.Type {
+		case condition.LOOP:
+			ss(st.Name, StateInLoop, sc.Message)
+		case condition.CHECK:
+			for step, state := range sc.Then {
+				if step == stepRefThis {
+					step = st.Name
+				}
+				ss(step, state, sc.Message)
 			}
-			ss(step, state, sc.Message)
 		}
 	}
 }
