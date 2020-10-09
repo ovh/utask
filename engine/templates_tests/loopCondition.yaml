@@ -1,0 +1,48 @@
+name: loopCondition
+description: generate and format a list of the first N fibonacci numbers
+title_format: "[test] loop condition"
+
+inputs:
+    - name: 'N'
+      description: how many numbers to generate
+      type: number
+      regex: '\d+'
+    - name: separator
+      description: what to put between the numbers
+      type: string
+      default: ', '
+
+steps:
+    fibonacci:
+        description: generate the list
+        conditions:
+            - type: loop
+              if:
+                - value: '{{ len (fromJson .step.this.output.list) }}'
+                  operator: LE
+                  expected: '{{ .input.N }}'
+        action:
+            type: echo
+            configuration:
+                output:
+                    tail0: '{{ default "0" .step.this.output.tail1 }}'
+                    tail1: '{{ default "1" (add .step.this.output.tail0 .step.this.output.tail1) }}'
+                    list: '{{ append (fromJson (default "[]" .step.this.output.list)) (default "0" .step.this.output.tail1) | toJson }}'
+
+    join:
+        description: join the numbers using the separator
+        dependencies:
+            - fibonacci
+        conditions:
+            - type: loop
+              if:
+                - value: '{{ len (fromJson .step.this.output.list) }}'
+                  operator: GT
+                  expected: 1
+
+        action:
+            type: echo
+            configuration:
+                output:
+                    list: '{{ default .step.fibonacci.output.list .step.this.output.list | fromJson | rest | toJson }}'
+                    str: '{{ default (.step.fibonacci.output.list | fromJson | first) .step.this.output.str }}{{ .input.separator }}{{ default .step.fibonacci.output.list .step.this.output.list | fromJson | rest | first }}'

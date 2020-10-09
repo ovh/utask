@@ -578,6 +578,27 @@ func TestMetadata(t *testing.T) {
 	assert.Equal(t, "NOTFOUND", notfoundState)
 }
 
+func TestLoop(t *testing.T) {
+	expectedResult := "0 sep 1 sep 1 sep 2 sep 3 sep 5 sep 8 sep 13 sep 21 sep 34 sep 55 sep 89 sep 144"
+	res, err := createResolution("loopCondition.yaml", map[string]interface{}{
+		"N":         12.0,
+		"separator": " sep ",
+	}, nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, resolution.StateDone, res.State)
+
+	assert.Equal(t, step.StateDone, res.Steps["fibonacci"].State)
+	assert.Equal(t, step.StateDone, res.Steps["join"].State)
+
+	output := res.Steps["join"].Output.(map[string]interface{})
+	assert.Equal(t, expectedResult, output["str"])
+}
+
 func TestForeach(t *testing.T) {
 	res, err := createResolution("foreach.yaml", map[string]interface{}{
 		"list": []interface{}{"a", "b", "c"},
