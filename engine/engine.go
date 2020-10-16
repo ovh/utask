@@ -825,7 +825,7 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 	// force IN_LOOP steps to be evaluated again
 	for name, ok := range executedSteps {
 		// second check is necessary when dealing with Foreach children
-		if ok && res.Steps[name] != nil && res.Steps[name].State == step.StateInLoop {
+		if ok && res.Steps[name] != nil && strings.HasPrefix(res.Steps[name].State, step.StateLooping) {
 			candidateSteps[name] = struct{}{}
 			delete(executedSteps, name)
 		}

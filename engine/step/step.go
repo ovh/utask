@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/utask/engine/morejson"
+
 	"github.com/juju/errors"
 	"github.com/sirupsen/logrus"
 
@@ -32,7 +34,7 @@ const (
 const (
 	StateAny           = "ANY" // wildcard
 	StateTODO          = "TODO"
-	StateInLoop        = "IN_LOOP"
+	StateLooping       = "LOOPING$" // this state is always followed by a number
 	StateRunning       = "RUNNING"
 	StateDone          = "DONE"
 	StateClientError   = "CLIENT_ERROR"
@@ -54,9 +56,9 @@ const (
 )
 
 var (
-	builtinStates            = []string{StateTODO, StateRunning, StateInLoop, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateAfterrunError, StateAny, StateExpanded}
+	builtinStates            = []string{StateTODO, StateRunning, StateLooping, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateAfterrunError, StateAny, StateExpanded}
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateFatalError, StateClientError}
-	runnableStates           = []string{StateTODO, StateInLoop, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
+	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
 )
 
@@ -73,8 +75,9 @@ var (
 // A step can be configured to evaluate "conditions" before and after the action is performed:
 // - a "skip" condition will be run before and might determine that the step's action can be skipped entirely
 // - a "check" condition will be run after the action, and can control execution flow by examining
-// - a "loop" condition will cause the step to run again
 //   the step's result and modifying step states through the entire task's resolution
+// - a "loop" condition will force the step to run again if every condition is true and if the step
+//   is in the "DONE" state
 type Step struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -92,10 +95,11 @@ type Step struct {
 	State          string                  `json:"state,omitempty"`
 	// hints about ETA latency, async, for retrier to define strategy
 	// how often VS how many times
-	RetryPattern string    `json:"retry_pattern,omitempty"` // seconds, minutes, hours
-	TryCount     int       `json:"try_count,omitempty"`
-	MaxRetries   int       `json:"max_retries,omitempty"`
-	LastRun      time.Time `json:"last_run,omitempty"`
+	RetryPattern string                    `json:"retry_pattern,omitempty"` // seconds, minutes, hours
+	TryCount     int                       `json:"try_count,omitempty"`
+	MaxRetries   int                       `json:"max_retries,omitempty"`
+	LastRun      time.Time                 `json:"last_run,omitempty"`
+	LoopDelay    morejson.PositiveDuration `json:"loop_delay,omitempty"`
 
 	// flow control
 	Dependencies []string               `json:"dependencies,omitempty"`
@@ -323,7 +327,9 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	if st.MaxRetries == 0 {
 		st.MaxRetries = defaultMaxRetries
 	}
-	if st.TryCount > st.MaxRetries {
+	// we can set "max_retries" to a negative number to have full control
+	// over the repetition of a step with a loop condition
+	if st.MaxRetries > 0 && st.TryCount > st.MaxRetries {
 		st.State = StateFatalError
 		st.Error = fmt.Sprintf("Step reached max retries %d: %s", st.MaxRetries, st.Error)
 		go noopStep(st, stepChan)
@@ -497,7 +503,13 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 		}
 		switch sc.Type {
 		case condition.LOOP:
-			ss(st.Name, StateInLoop, sc.Message)
+			if st.MaxRetries < 0 || st.TryCount <= st.MaxRetries {
+				state := fmt.Sprintf("%s%d", StateLooping, st.TryCount)
+				ss(st.Name, state, "")
+			} else {
+				ss(st.Name, StateDone, "")
+				logrus.Debugf("AfterRun: Step [%s] loop condition: max_retries (%d) exceeded", st.Name, st.MaxRetries)
+			}
 		case condition.CHECK:
 			for step, state := range sc.Then {
 				if step == stepRefThis {
@@ -506,6 +518,12 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 				ss(step, state, sc.Message)
 			}
 		}
+	}
+
+	// check the status after the conditions’ evaluation in case a "check"
+	// condition changed the status
+	if strings.HasPrefix(st.State, StateLooping) {
+		time.Sleep(st.LoopDelay.Duration)
 	}
 }
 
@@ -612,7 +630,7 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 
 // IsRunnable asserts that Step is in a runnable state
 func (st *Step) IsRunnable() bool {
-	return utils.ListContainsString(runnableStates, st.State)
+	return utils.ListContainsString(runnableStates, st.State) || strings.HasPrefix(st.State, StateLooping)
 }
 
 // IsRetriable asserts that Step is eligible for retry

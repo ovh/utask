@@ -599,6 +599,24 @@ func TestLoop(t *testing.T) {
 	assert.Equal(t, expectedResult, output["str"])
 }
 
+func TestLoopMaxRetry(t *testing.T) {
+	expected := "42"
+	res, err := createResolution("loopConditionMaxRetry.yaml", map[string]interface{}{}, nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, resolution.StateDone, res.State)
+
+	assert.Equal(t, step.StateDone, res.Steps["answer"].State)
+	assert.Equal(t, step.StateDone, res.Steps["infinite"].State)
+	assert.Equal(t, res.Steps["infinite"].TryCount, res.Steps["infinite"].MaxRetries+1)
+
+	assert.Equal(t, expected, res.Steps["infinite"].Output)
+}
+
 func TestForeach(t *testing.T) {
 	res, err := createResolution("foreach.yaml", map[string]interface{}{
 		"list": []interface{}{"a", "b", "c"},
