@@ -32,7 +32,9 @@ export class NewComponent implements OnInit {
           this.newTask(template);
         }
         _.get(template, 'inputs', []).forEach((input) => {
-          if (input.type === 'number' && _.get(values, input.name)) {
+          if (input.collection && !_.isArray(values[input.name])) {
+            this.item.input[input.name] = values[input.name] ? [values[input.name]] : [];
+          } else if (input.type === 'number' && _.get(values, input.name)) {
             this.item.input[input.name] = +values[input.name];
           } else if (input.type === 'bool') {
             this.item.input[input.name] = values[input.name] === 'true';
