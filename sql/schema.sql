@@ -83,6 +83,7 @@ CREATE TABLE "resolution" (
     resolver_username TEXT,
     state TEXT NOT NULL,
     instance_id BIGINT,
+    created TIMESTAMP with time zone DEFAULT now() NOT NULL,
     last_start TIMESTAMP with time zone,
     last_stop TIMESTAMP with time zone,
     next_retry TIMESTAMP with time zone,
