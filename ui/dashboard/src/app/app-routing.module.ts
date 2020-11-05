@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule, Router } from '@angular/router';
-
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
 import { MetaResolve } from './@resolves/meta.resolve';
 import { HomeComponent } from './@routes/home/home.component';
 import { TaskComponent } from './@routes/task/task.component';
@@ -152,6 +154,9 @@ const routes: Routes = [
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
+    MatButtonToggleModule,
+    MatCheckboxModule,
+    MatButtonModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
     }),
