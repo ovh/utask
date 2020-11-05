@@ -1,3 +1,5 @@
+@import "~src/styles/colors.sass"
+
 header
     .title
         float: left
@@ -10,3 +12,45 @@ header
             pointer-events: none
 .steps-viewer
     overflow: auto
+
+.utask_comments
+  padding: 0
+  .utask_comment
+    list-style: none
+    margin-top: 1rem
+    margin-bottom: 1rem
+    background: #fafafa
+    padding: 12px 16px 16px
+    border: 1px solid #dadce0
+    -webkit-box-shadow: 0 4px 6px rgba(0,0,0,.06)
+    box-shadow: 0 4px 6px rgba(0,0,0,.06)
+    -webkit-transition-property: background-color
+    transition-property: background-color
+    -webkit-transition-duration: .2s
+    transition-duration: .2s
+
+.bloc_status
+  display: inline-block
+  padding: 2px 8px
+  text-align: center
+  color: $color-text
+  background: #F0F0F0
+  border-radius: 4px
+  
+.task_state
+  &_WONTFIX,
+  &_CANCELLED
+    background: $color-warning
+    color: white
+
+  &_BLOCKED
+    background: $color-danger
+    color: white
+
+  &_DONE
+    background: $color-success
+    color: white
+
+  &_TODO, &_RUNNING
+    background: $color-primary
+    color: white

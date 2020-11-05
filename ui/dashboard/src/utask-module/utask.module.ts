@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { ToastrModule } from 'ngx-toastr';
-import { StepsListComponent } from './@components/stepslist/stepslist.component';
 import { TemplateDetailsComponent } from './@components/template-details/template-details.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
 import { AutofocusDirective } from './@directives/autofocus.directive';
@@ -15,11 +14,12 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 import { UTaskLibModule } from 'utask-lib';
 import { environment } from 'src/environments/environment';
+import { BoxComponent } from './@components/box/box.component';
 
 const components: any[] = [
-  StepsListComponent,
   TemplateDetailsComponent,
   ChartTaskStatesComponent,
+  BoxComponent,
 
   FullHeightDirective,
   AutofocusDirective,

@@ -4,6 +4,7 @@ import fontawesome from '@fortawesome/fontawesome';
 fontawesome.library.add(faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp, faAlignJustify);
 import { AppRoutingModule } from './app-routing.module';
 import { TagInputModule } from 'ngx-chips';
+
 TagInputModule.withDefaults({
   tagInput: {
     placeholder: 'Add filter',

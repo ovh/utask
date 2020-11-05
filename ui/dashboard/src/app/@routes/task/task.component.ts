@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
-import { ApiService, ModalYamlPreviewComponent } from 'utask-lib';
+import { ApiService, ModalApiYamlComponent } from 'utask-lib';
 import EditorConfig from 'utask-lib/@models/editorconfig.model';
 import { TaskService } from 'utask-lib';
 import Task, { Comment } from 'utask-lib/@models/task.model';
@@ -21,6 +21,7 @@ import Template from 'utask-lib/@models/template.model';
 export class TaskComponent implements OnInit, OnDestroy {
   objectKeys = Object.keys;
   loaders: { [key: string]: boolean } = {};
+  haveAtLeastOneChilTask: boolean = false;
   errors: { [key: string]: any } = {};
   display: { [key: string]: boolean } = {};
   confirm: { [key: string]: boolean } = {};
@@ -74,6 +75,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.display.resolution = !this.resolution && this.taskIsResolvable;
         this.display.comments = this.task.comments && this.task.comments.length > 0;
       }).catch((err) => {
+        console.log(err);
         if (!this.task || this.task.id !== params.id) {
           this.errors.main = err;
         }
@@ -102,18 +104,20 @@ export class TaskComponent implements OnInit, OnDestroy {
     });
   }
 
-  previewDetails(obj: any, title: string) {
-    const previewModal = this.modalService.open(ModalYamlPreviewComponent, {
+  previewTask() {
+    const previewModal = this.modalService.open(ModalApiYamlComponent, {
       size: 'xl'
     });
-    previewModal.componentInstance.value = obj;
-    previewModal.componentInstance.title = title;
-    previewModal.componentInstance.close = () => {
-      previewModal.close();
-    };
-    previewModal.componentInstance.dismiss = () => {
-      previewModal.dismiss();
-    };
+    previewModal.componentInstance.title = 'Request preview';
+    previewModal.componentInstance.apiCall = () => this.api.task.getAsYaml(this.taskId).toPromise();
+  }
+
+  previewResolution() {
+    const previewModal = this.modalService.open(ModalApiYamlComponent, {
+      size: 'xl'
+    });
+    previewModal.componentInstance.title = 'Resolution preview';
+    previewModal.componentInstance.apiCall = () => this.api.resolution.getAsYaml(this.resolution.id).toPromise();
   }
 
   editRequest(task: Task) {
@@ -224,8 +228,16 @@ export class TaskComponent implements OnInit, OnDestroy {
   loadTask() {
     return new Promise((resolve, reject) => {
       this.loaders.task = true;
-      this.api.task.get(this.taskId).subscribe((data: Task) => {
-        this.task = data;
+      Promise.all([
+        this.api.task.get(this.taskId).toPromise(),
+        this.api.task.list({
+          page_size: 10,
+          type: this.meta.user_is_admin ? 'all' : 'own',
+          tag: '_utask_parent_task_id=' + this.taskId
+        } as any).toPromise(),
+      ]).then((data: any[]) => {
+        this.task = data[0];
+        this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = _.orderBy(_.get(this.task, 'comments', []), ['created'], ['asc']);
         this.item.task_id = this.task.id;
         this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
@@ -266,9 +278,10 @@ export class TaskComponent implements OnInit, OnDestroy {
           this.resolution = null;
           resolve();
         }
-      }, (err: any) => {
+      }).catch((err: any) => {
+        console.log(err);
         reject(err);
-      }, () => {
+      }).finally(() => {
         this.loaders.task = false;
       });
     });
@@ -283,5 +296,9 @@ export class TaskComponent implements OnInit, OnDestroy {
         reject(err);
       });
     });
+  }
+
+  eventUtask(event: any) {
+    this.toastr[event.type](event.message);
   }
 }
