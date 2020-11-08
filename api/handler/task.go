@@ -235,13 +235,19 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
+	if err := dbp.Tx(); err != nil {
+		return nil, err
+	}
+
 	t, err := task.LoadFromPublicID(dbp, in.PublicID)
 	if err != nil {
+		dbp.Rollback()
 		return nil, err
 	}
 
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
+		dbp.Rollback()
 		return nil, err
 	}
 
@@ -250,6 +256,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	templateOwner := auth.IsTemplateOwner(c, tt) == nil
 
 	if !admin && !requester && !templateOwner {
+		dbp.Rollback()
 		return nil, errors.Forbiddenf("Can't update task")
 	}
 
@@ -257,10 +264,12 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	if t.Resolution != nil {
 		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
 		if err != nil {
+			dbp.Rollback()
 			return nil, err
 		}
 
 		if res.State != resolution.StatePaused {
+			dbp.Rollback()
 			return nil, errors.BadRequestf("Cannot update a task which resolution is not in state '%s'", resolution.StatePaused)
 		}
 	}
@@ -275,6 +284,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	v, readOnlyTagUpdated := in.Tags[constants.SubtaskTagParentTaskID]
 	oldValue, readOnlyTagInTask := t.Tags[constants.SubtaskTagParentTaskID]
 	if (readOnlyTagUpdated && (!readOnlyTagInTask || oldValue != v)) || (!readOnlyTagUpdated && readOnlyTagInTask) {
+		dbp.Rollback()
 		return nil, errors.BadRequestf("tag %s is read-only and cannot be modified", constants.SubtaskTagParentTaskID)
 	}
 
@@ -284,6 +294,19 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		false, // do validate task contents
 		true,  // change last activity value, bring task bask to top of the list
 	); err != nil {
+		dbp.Rollback()
+		return nil, err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually edited task")
+	if err != nil {
+		dbp.Rollback()
+		return nil, err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
 		return nil, err
 	}
 
@@ -329,17 +352,24 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 		return err
 	}
 
+	if err := dbp.Tx(); err != nil {
+		return err
+	}
+
 	t, err := task.LoadFromPublicID(dbp, in.PublicID)
 	if err != nil {
+		dbp.Rollback()
 		return err
 	}
 
 	if t.State != task.StateTODO {
+		dbp.Rollback()
 		return errors.BadRequestf("Can't set task's state to %s: task is in state %s", task.StateWontfix, t.State)
 	}
 
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
+		dbp.Rollback()
 		return err
 	}
 
@@ -348,13 +378,32 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
 
 	if !admin && !requester && !resolutionManager {
+		dbp.Rollback()
 		return errors.Forbiddenf("Can't set task's state to %s", task.StateWontfix)
 	}
 
 	t.SetState(task.StateWontfix)
 
-	return t.Update(dbp,
+	err = t.Update(dbp,
 		false, // skip validation of task contents, task is dead anyway
 		true,  // do record mark change with last activity timestamp
 	)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "changed task state to WONTFIX")
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	return nil
 }

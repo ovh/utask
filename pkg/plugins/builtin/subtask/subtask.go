@@ -132,7 +132,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			cfg.Tags = map[string]string{}
 		}
 		cfg.Tags[constants.SubtaskTagParentTaskID] = stepContext.ParentTaskID
-		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask", cfg.Delay, cfg.Tags)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err

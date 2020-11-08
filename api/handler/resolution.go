@@ -185,6 +185,12 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		return err
 	}
 
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
 	if r.State != resolution.StatePaused {
 		dbp.Rollback()
 		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
@@ -206,6 +212,13 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler UpdateResolution: manual update of resolution %s", r.PublicID)
 
 	if err := r.Update(dbp); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually updated resolution")
+	if err != nil {
 		dbp.Rollback()
 		return err
 	}
@@ -248,6 +261,12 @@ func RunResolution(c *gin.Context, in *runResolutionIn) error {
 
 	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
 		return errors.Forbiddenf("You are not allowed to resolve this task")
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually ran resolution")
+	if err != nil {
+		return err
 	}
 
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler RunResolution: manual resolve %s", r.PublicID)
@@ -297,6 +316,13 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 	if r.State != resolution.StateBlockedMaxRetries {
 		dbp.Rollback()
 		return errors.BadRequestf("Cannot extend a resolution which is not in state '%s'", resolution.StateBlockedMaxRetries)
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually extended resolution")
+	if err != nil {
+		dbp.Rollback()
+		return err
 	}
 
 	if tt.RetryMax != nil {
@@ -380,6 +406,13 @@ func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
 		return err
 	}
 
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "cancelled resolution")
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
 	if err := dbp.Commit(); err != nil {
 		dbp.Rollback()
 		return err
@@ -448,6 +481,13 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler PauseResolution: pause of resolution %s", r.PublicID)
 
 	if err := r.Update(dbp); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually paused resolution")
+	if err != nil {
 		dbp.Rollback()
 		return err
 	}
