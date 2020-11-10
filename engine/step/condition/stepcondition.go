@@ -11,7 +11,6 @@ import (
 const (
 	SKIP  = "skip"
 	CHECK = "check"
-	LOOP  = "loop"
 )
 
 // Condition defines a condition to be evaluated before or after a step's action

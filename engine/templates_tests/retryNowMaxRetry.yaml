@@ -9,11 +9,13 @@ steps:
         description: counts to infinity
         max_retries: 41
         conditions:
-        - type: loop
+        - type: check
           if:
           - value: 0
             operator: EQ
             expected: 0
+          then:
+            this: RETRY_NOW
         action:
             type: echo
             configuration:

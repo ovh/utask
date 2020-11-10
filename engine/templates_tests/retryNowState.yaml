@@ -1,6 +1,6 @@
-name: loopCondition
+name: retryNowState
 description: generate and format a list of the first N fibonacci numbers
-title_format: "[test] loop condition"
+title_format: "[test] RETRY_NOW state"
 
 inputs:
     - name: 'N'
@@ -17,11 +17,13 @@ steps:
         description: generate the list
         max_retries: -1
         conditions:
-        - type: loop
+        - type: check
           if:
           - value: '{{ len (fromJson .step.this.output.list) }}'
             operator: LE
             expected: '{{ .input.N }}'
+          then:
+            this: RETRY_NOW
         action:
             type: echo
             configuration:
@@ -35,12 +37,13 @@ steps:
         dependencies:
         - fibonacci
         conditions:
-        - type: loop
+        - type: check
           if:
           - value: '{{ len (fromJson .step.this.output.list) }}'
             operator: GT
             expected: 1
-
+          then:
+            this: RETRY_NOW
         action:
             type: echo
             configuration:

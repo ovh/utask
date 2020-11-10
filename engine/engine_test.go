@@ -578,9 +578,9 @@ func TestMetadata(t *testing.T) {
 	assert.Equal(t, "NOTFOUND", notfoundState)
 }
 
-func TestLoop(t *testing.T) {
+func TestRetryNow(t *testing.T) {
 	expectedResult := "0 sep 1 sep 1 sep 2 sep 3 sep 5 sep 8 sep 13 sep 21 sep 34 sep 55 sep 89 sep 144"
-	res, err := createResolution("loopCondition.yaml", map[string]interface{}{
+	res, err := createResolution("retryNowState.yaml", map[string]interface{}{
 		"N":         12.0,
 		"separator": " sep ",
 	}, nil)
@@ -599,9 +599,9 @@ func TestLoop(t *testing.T) {
 	assert.Equal(t, expectedResult, output["str"])
 }
 
-func TestLoopMaxRetry(t *testing.T) {
+func TestRetryNowMaxRetry(t *testing.T) {
 	expected := "42"
-	res, err := createResolution("loopConditionMaxRetry.yaml", map[string]interface{}{}, nil)
+	res, err := createResolution("retryNowMaxRetry.yaml", map[string]interface{}{}, nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
