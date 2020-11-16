@@ -3,6 +3,7 @@ package utask
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -78,6 +79,8 @@ const (
 	// MinTextSize is the minimum number of characters accepted in any string-type field
 	MinTextSize = 3
 
+	defaultResourceAcquireTimeout = time.Minute
+
 	// This is the key used in Values for a step to refer to itself
 	This = "this"
 
@@ -95,6 +98,8 @@ type Cfg struct {
 	DatabaseConfig                             *DatabaseConfig          `json:"database_config"`
 	ConcealedSecrets                           []string                 `json:"concealed_secrets"`
 	ResourceLimits                             map[string]uint          `json:"resource_limits"`
+	ResourceAcquireTimeout                     string                   `json:"resource_acquire_timeout"`
+	resourceAcquireTimeoutDuration             time.Duration            `json:"-"`
 	MaxConcurrentExecutions                    *int                     `json:"max_concurrent_executions"`
 	MaxConcurrentExecutionsFromCrashed         *int                     `json:"max_concurrent_executions_from_crashed"`
 	MaxConcurrentExecutionsFromCrashedComputed int                      `json:"-"`
@@ -108,6 +113,7 @@ type Cfg struct {
 
 	resourceSemaphores map[string]*semaphore.Weighted
 	executionSemaphore *semaphore.Weighted
+	deadResources      map[string]struct{}
 }
 
 // ServerOpt holds the configuration for the http server
@@ -165,39 +171,100 @@ type DatabaseConfig struct {
 
 func (c *Cfg) buildLimits() {
 	c.resourceSemaphores = make(map[string]*semaphore.Weighted)
+	c.deadResources = make(map[string]struct{})
 
 	for k, v := range c.ResourceLimits {
-		c.resourceSemaphores[k] = semaphore.NewWeighted(int64(v))
+		if v <= 0 {
+			c.deadResources[k] = struct{}{}
+		} else {
+			c.resourceSemaphores[k] = semaphore.NewWeighted(int64(v))
+		}
 	}
 
-	maxConcurrentExecutions := defaultMaxConcurrentExecutions
-	if c.MaxConcurrentExecutions != nil {
-		maxConcurrentExecutions = *c.MaxConcurrentExecutions
-	}
-
-	if maxConcurrentExecutions >= 0 {
+	if maxConcurrentExecutions := c.getMaxConcurrentExecutions(); maxConcurrentExecutions >= 0 {
 		c.executionSemaphore = semaphore.NewWeighted(int64(maxConcurrentExecutions))
 	}
 }
 
+func (c *Cfg) getMaxConcurrentExecutions() int {
+	if c.MaxConcurrentExecutions != nil {
+		return *c.MaxConcurrentExecutions
+	}
+	return defaultMaxConcurrentExecutions
+}
+
+var (
+	// ErrDeadResource is returned when a resource will never be available, as the max concurrent execution is set to 0, and there is no reason to wait
+	ErrDeadResource = errors.New("resource is not available, as configured with 0 concurrent execution")
+	// ErrFailedAcquireResource is returned when tried to acquire a resource, but the resource is not available
+	ErrFailedAcquireResource = errors.New("failed to acquire the requested resource")
+)
+
 // AcquireResource takes a semaphore slot for a named resource
 // limiting the amount of concurrent actions runnable on said resource
-func AcquireResource(name string) {
+func AcquireResource(ctx context.Context, name string) error {
 	if global == nil {
-		return
+		return nil
 	}
+	if _, ok := global.deadResources[name]; ok {
+		return ErrDeadResource
+	}
+
 	s := global.resourceSemaphores[name]
 	if s == nil {
-		return
+		return nil
 	}
-	s.Acquire(context.Background(), 1)
+
+	semaphoreCtx := ctx
+	if global.resourceAcquireTimeoutDuration != 0 {
+		ctx, cancelFunc := context.WithTimeout(ctx, global.resourceAcquireTimeoutDuration)
+		defer cancelFunc()
+		semaphoreCtx = ctx
+	}
+	return s.Acquire(semaphoreCtx, 1)
+}
+
+// TryAcquireResource takes a semaphore slot for a named resource
+// limiting the amount of concurrent actions runnable on said resource
+func TryAcquireResource(name string) error {
+	if global == nil {
+		return nil
+	}
+	if _, ok := global.deadResources[name]; ok {
+		return ErrDeadResource
+	}
+
+	s := global.resourceSemaphores[name]
+	if s == nil {
+		return nil
+	}
+
+	if s.TryAcquire(1) {
+		return nil
+	}
+
+	return ErrFailedAcquireResource
 }
 
 // AcquireResources is an helper to call AcquireResource with an array
-func AcquireResources(names []string) {
+// If failed to acquire a resource, because context is in error, already
+// acquired resources will be released, and error will be returned.
+func AcquireResources(ctx context.Context, names []string) error {
+	acquiredList := []string{}
+	var globalerr error
 	for _, name := range names {
-		AcquireResource(name)
+		if err := AcquireResource(ctx, name); err != nil {
+			globalerr = err
+			break
+		}
+		acquiredList = append(acquiredList, name)
 	}
+	if globalerr != nil {
+		for _, name := range names {
+			ReleaseResource(name)
+		}
+	}
+	return globalerr
 }
 
 // ReleaseResource frees up a semaphore slot for a named resource
@@ -221,14 +288,14 @@ func ReleaseResources(names []string) {
 
 // AcquireExecutionSlot takes a slot from a global semaphore
 // putting a cap on the total amount of concurrent task executions
-func AcquireExecutionSlot() {
+func AcquireExecutionSlot(ctx context.Context) error {
 	if global == nil {
-		return
+		return nil
 	}
 	if global.executionSemaphore == nil {
-		return
+		return nil
 	}
-	global.executionSemaphore.Acquire(context.Background(), 1)
+	return global.executionSemaphore.Acquire(ctx, 1)
 }
 
 // ReleaseExecutionSlot frees up a slot on the global execution semaphore
@@ -272,9 +339,22 @@ func Config(store *configstore.Store) (*Cfg, error) {
 			global.MaxConcurrentExecutionsFromCrashedComputed = *global.MaxConcurrentExecutionsFromCrashed
 		}
 
+		if global.ResourceAcquireTimeout != "" {
+			global.resourceAcquireTimeoutDuration, err = time.ParseDuration(global.ResourceAcquireTimeout)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse \"resource_acquire_timeout\": %s", err)
+			}
+		} else {
+			global.resourceAcquireTimeoutDuration = defaultResourceAcquireTimeout
+		}
+
 		App = global.ApplicationName
 
 		global.buildLimits()
+
+		if global.MaxConcurrentExecutionsFromCrashedComputed > global.getMaxConcurrentExecutions() {
+			return nil, errors.New("max_concurrent_executions_from_crashed can't be greater than max_concurrent_executions")
+		}
 	}
 
 	return global, nil

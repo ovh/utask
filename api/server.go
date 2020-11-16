@@ -106,7 +106,7 @@ func (s *Server) ListenAndServe() error {
 		logrus.Info("Shutting down...")
 		cancel()
 
-		if err := srv.Shutdown(ctx); err != nil {
+		if err := srv.Shutdown(context.Background()); err != nil {
 			logrus.Fatal(err)
 		}
 	}()
