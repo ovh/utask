@@ -33,11 +33,11 @@ func RegisterValidationTime(templateName string, taskCreation time.Time) {
 
 // RegisterTaskTime computes the execution duration and the complete duration
 // (from creation to completion) of a task. These metrics are then pushed to Prometheus.
-func RegisterTaskTime(templateName string, tackCreation, resCreation time.Time) {
+func RegisterTaskTime(templateName string, taskCreation, resCreation time.Time) {
 	currentTime := now.Get()
 
 	// Time taken since task creation
-	completeTime := currentTime.Sub(tackCreation).Seconds()
+	completeTime := currentTime.Sub(taskCreation).Seconds()
 	completionTimes.WithLabelValues(templateName).Observe(completeTime)
 
 	// Time taken since resolution was created
