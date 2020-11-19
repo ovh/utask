@@ -1,12 +1,13 @@
-import { of } from 'rxjs';
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
+import compact from 'lodash-es/compact';
+import clone from 'lodash-es/clone';
+import isString from 'lodash-es/isString';
+import isNumber from 'lodash-es/isNumber';
 import { ToastrService } from 'ngx-toastr';
-
-import { ApiService, ParamsListTasks } from 'utask-lib';
-import Meta from 'utask-lib/@models/meta.model';
-import { TaskService } from 'utask-lib';
+import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
+import { ApiService, ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
+import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 
 @Component({
   templateUrl: './home.html',
@@ -18,11 +19,17 @@ export class HomeComponent implements OnInit, OnDestroy {
   pagination: ParamsListTasks;
   params: ParamsListTasks;
 
-  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router, private taskService: TaskService, private zone: NgZone, private toastr: ToastrService) {
-  }
+  constructor(
+    private api: ApiService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private taskService: TaskService,
+    private zone: NgZone,
+    private toastr: ToastrService
+  ) { }
 
   ngOnInit() {
-    this.tags = _.clone(this.taskService.tagsRaw);
+    this.tags = clone(this.taskService.tagsRaw);
     this.taskService.tags.asObservable().subscribe((tags: string[]) => {
       this.tags = tags;
     });
@@ -47,7 +54,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   inputTagsChanged(text: string) {
-    this.pagination.tag = _.compact(text.split(' '));
+    this.pagination.tag = compact(text.split(' '));
     this.search();
   }
 
@@ -56,7 +63,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   search() {
     this.zone.run(() => {
-      this.params = _.clone(this.pagination);
+      this.params = clone(this.pagination);
     });
 
     this.router.navigate([], {
@@ -66,12 +73,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   queryToSearchTask(p?: any): ParamsListTasks {
-    const params = _.clone(p || this.router.routerState.snapshot.root.queryParams);
-    if (params.tag && _.isString(params.tag)) {
+    const params = clone(p || this.router.routerState.snapshot.root.queryParams);
+    if (params.tag && isString(params.tag)) {
       params.tag = [params.tag];
     }
     const item = new ParamsListTasks();
-    if (params.itemPerPage && _.isNumber(+params.itemPerPage) && +params.itemPerPage <= 1000 && +params.itemPerPage >= 10) {
+    if (params.itemPerPage && isNumber(+params.itemPerPage) && +params.itemPerPage <= 1000 && +params.itemPerPage >= 10) {
       item.page_size = +params.itemPerPage;
     } else {
       item.page_size = 20;

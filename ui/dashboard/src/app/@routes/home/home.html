@@ -22,15 +22,15 @@
             <option value="WONTFIX">WONTFIX</option>
           </select>
           &nbsp;
-          <utask-input-tags class="form-control" (update)="inputTagsChanged($event);" [value]="pagination.tag"
-            [placeholder]="'Search tags...'" [rawTags]="tags"></utask-input-tags>
+          <lib-utask-input-tags class="form-control" (update)="inputTagsChanged($event);" [value]="pagination.tag"
+            [placeholder]="'Search tags...'" [rawTags]="tags"></lib-utask-input-tags>
         </div>
       </h1>
     </header>
 
     <section>
-      <utask-tasks-list [meta]="meta" [params]="params" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)"
-        (toastError)="toastError($event)"></utask-tasks-list>
+      <lib-utask-tasks-list [meta]="meta" [params]="params" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)"
+        (toastError)="toastError($event)"></lib-utask-tasks-list>
     </section>
   </div>
 </div>

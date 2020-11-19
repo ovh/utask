@@ -1,12 +1,11 @@
-import { Component, OnInit, Input, Output, OnChanges, SimpleChanges, EventEmitter, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import * as _ from 'lodash';
+import { Component, OnInit, Input } from '@angular/core';
 import JSToYaml from 'convert-yaml';
-import { ApiService } from 'utask-lib';
-import EditorConfig from 'utask-lib/@models/editorconfig.model';
-import Template from 'utask-lib/@models/template.model';
+import EditorConfig from 'projects/utask-lib/src/lib/@models/editorconfig.model';
+import Template from 'projects/utask-lib/src/lib/@models/template.model';
+import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 
 @Component({
-    selector: 'template-details',
+    selector: 'app-template-details',
     templateUrl: 'template-details.html',
 })
 export class TemplateDetailsComponent implements OnInit {
@@ -24,8 +23,9 @@ export class TemplateDetailsComponent implements OnInit {
         maxLines: 50,
     };
 
-    constructor(private api: ApiService) {
-    }
+    constructor(
+        private api: ApiService
+    ) { }
 
     ngOnInit() {
         this.loading = true;

@@ -1,0 +1,34 @@
+{
+  "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
+  "dest": "../../dist/utask-lib",
+  "lib": {
+    "entryFile": "src/public-api.ts",
+    "umdModuleIds": {
+      "@ng-bootstrap/ng-bootstrap": "@ng-bootstrap/ng-bootstrap",
+      "chart.js": "chart.js",
+      "convert-yaml": "convert-yaml",
+      "brace": "brace",
+      "active-interval": "active-interval",
+      "bluebird": "bluebird",
+      "moment": "moment",
+      "q": "q",
+      "tippy.js": "tippy.js",
+      "d3": "d3",
+      "dagre-d3": "dagre-d3",
+      "ngx-infinite-scroll": "ngx-infinite-scroll",
+      "ngx-chips": "ngx-chips",
+      "lodash-es/isString": "lodash-es/isString",
+      "lodash-es/remove": "lodash-es/remove",
+      "lodash-es/map": "lodash-es/map",
+      "lodash-es/uniq": "lodash-es/uniq",
+      "lodash-es/compact": "lodash-es/compact",
+      "lodash-es/last": "lodash-es/last",
+      "lodash-es/reverse": "lodash-es/reverse",
+      "lodash-es/maxBy": "lodash-es/maxBy",
+      "lodash-es/clone": "lodash-es/clone",
+      "lodash-es/keys": "lodash-es/keys",
+      "lodash-es/difference": "lodash-es/difference",
+      "lodash-es/get": "lodash-es/get"
+    }
+  }
+}

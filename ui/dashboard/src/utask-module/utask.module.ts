@@ -11,9 +11,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TagInputModule } from 'ngx-chips';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-
-import { UTaskLibModule } from 'utask-lib';
 import { environment } from 'src/environments/environment';
+import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
 import { BoxComponent } from './@components/box/box.component';
 
 const components: any[] = [

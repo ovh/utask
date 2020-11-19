@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import * as _ from 'lodash';
 
 class VMTaskState {
   label: string;
@@ -15,11 +14,12 @@ class VMTaskState {
 export class StatsComponent implements OnInit {
   taskStates: VMTaskState[];
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
-    this.taskStates = _.orderBy([
+    this.taskStates = [
       {
         color: '#dc3545',
         key: 'BLOCKED',
@@ -56,6 +56,6 @@ export class StatsComponent implements OnInit {
         label: 'wontfix',
         value: this.route.snapshot.data.stats.task_states['WONTFIX'] || 0
       },
-    ], ['value'], ['desc']);
+    ].sort((a, b) => a.value < b.value ? 1 : -1);
   }
 }

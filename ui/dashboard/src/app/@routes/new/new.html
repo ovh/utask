@@ -151,7 +151,7 @@
           </tag-input>
         </div>
 
-        <utask-error-message [data]="errors.submit" *ngIf="errors.submit"></utask-error-message>
+        <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit"></lib-utask-error-message>
 
         <button type="submit" class="btn btn-success float-right" [disabled]="myForm.invalid">Submit</button>
       </form>
@@ -160,5 +160,5 @@
 
   <utask-loader *ngIf="loaders.templates"></utask-loader>
 
-  <utask-error-message [data]="errors.templates" *ngIf="errors.templates"></utask-error-message>
+  <lib-utask-error-message [data]="errors.templates" *ngIf="errors.templates"></lib-utask-error-message>
 </div>

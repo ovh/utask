@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import * as _ from 'lodash';
+import get from 'lodash-es/get';
+import lodashMin from 'lodash-es/min';
+import max from 'lodash-es/max';
+import isObjectLike from 'lodash-es/isObjectLike';
 
 import * as brace from 'brace';
 import 'brace/mode/yaml';
@@ -26,7 +29,9 @@ export class EditorComponent implements OnInit {
   objectKeys = Object.keys;
   types: any = StepsConfig.types;
 
-  constructor(private TemplateYamlHelper: TemplateYamlHelper) {
+  constructor(
+    private TemplateYamlHelper: TemplateYamlHelper
+  ) {
     JSToYaml.spacing = ' '.repeat(4);
     JSToYaml.spacingStart = '';
     this.editor = {
@@ -91,7 +96,7 @@ export class EditorComponent implements OnInit {
         const countSpacing = currentText.match(/^\s*/)[0].length;
         if (path === 'steps' || countSpacing <= (this.editor.minimumSpacing + this.editor.spacing)) {
           Object.keys(stepsConfig.types).forEach((key: string) => {
-            JSToYaml.spacingStart = ' '.repeat(_.max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]));
+            JSToYaml.spacingStart = ' '.repeat(max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]));
             const snippet = {
               name: `Add '${key}' step`,
               score: 499,
@@ -140,7 +145,7 @@ export class EditorComponent implements OnInit {
     document.body.appendChild(element);
     element.click();
     element.onchange = (event) => {
-      const file = _.get(event, 'target.files[0]');
+      const file = get(event, 'target.files[0]');
       if (file) {
         const reader = new FileReader();
         reader.readAsText(file, 'UTF-8');
@@ -170,7 +175,7 @@ export class EditorComponent implements OnInit {
   }
 
   getMinimumSpacing(text: string) {
-    const min = _.min(text.split('\n').map((line: string) => {
+    const min = lodashMin(text.split('\n').map((line: string) => {
       if (line.trim() === '') {
         return null;
       }
@@ -196,7 +201,7 @@ export class EditorComponent implements OnInit {
   }
 
   getSpacing(text: string, minSpacing: number): number {
-    const spacing = _.min(text.split('\n').map((item) => {
+    const spacing = lodashMin(text.split('\n').map((item) => {
       if (item.trim() === '') {
         return null;
       }
@@ -237,10 +242,10 @@ export class EditorComponent implements OnInit {
   generateSteps() {
     const steps = [];
     if (
-      _.get(this, 'editor.value.steps', null) &&
-      _.isObjectLike(this.editor.value.steps)
+      get(this, 'editor.value.steps', null) &&
+      isObjectLike(this.editor.value.steps)
     ) {
-      _.each(this.editor.value.steps, (data: any, key: string) => {
+      this.editor.value.steps.forEach((data: any, key: string) => {
         steps.push({ key, data });
       });
       this.steps = steps;

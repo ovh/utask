@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
-import Function from 'utask-lib/@models/function.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   template: `
@@ -10,7 +8,7 @@ import Function from 'utask-lib/@models/function.model';
         <h1>Function - {{functionName}}</h1>
       </header>
       <section>
-        <utask-editor [value]="JSON.stringify(function, null, 4)" [config]="{readonly: true}"></utask-editor>
+        <lib-utask-editor [value]="JSON.stringify(function, null, 4)" [config]="{readonly: true}"></lib-utask-editor>
       </section>
     </div>
   `,
@@ -26,7 +24,7 @@ export class FunctionComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.functionName = params.functionName;
-      this.function = _.find(this.route.parent.snapshot.data.functions, { name: this.functionName });
+      this.function = this.route.parent.snapshot.data.functions.find(f => f.name === this.functionName);
     });
   }
 }

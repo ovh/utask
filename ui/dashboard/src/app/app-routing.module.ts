@@ -22,11 +22,11 @@ import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
 import { UTaskModule } from 'src/utask-module/utask.module';
-import { UTaskLibModule } from 'utask-lib';
 import { environment } from 'src/environments/environment';
 import { FunctionsComponent } from './@routes/functions/functions.component';
 import { FunctionComponent } from './@routes/functions/function.component';
 import { FunctionsResolve } from './@resolves/functions.resolve';
+import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
 
 const routes: Routes = [
   {

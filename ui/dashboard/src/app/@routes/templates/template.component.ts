@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   template: `
@@ -9,7 +8,7 @@ import * as _ from 'lodash';
         <h1>Template - {{templateName}}</h1>
       </header>
       <section>
-        <template-details *ngIf="templateName" [templateName]="templateName"></template-details>
+        <app-template-details *ngIf="templateName" [templateName]="templateName"></app-template-details>
       </section>
     </div>
   `,
@@ -17,8 +16,9 @@ import * as _ from 'lodash';
 export class TemplateComponent implements OnInit {
   templateName: string;
 
-  constructor(private route: ActivatedRoute, private router: Router) {
-  }
+  constructor(
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
