@@ -3,6 +3,7 @@ import get from 'lodash-es/get';
 import lodashMin from 'lodash-es/min';
 import max from 'lodash-es/max';
 import isObjectLike from 'lodash-es/isObjectLike';
+import forEach from 'lodash-es/forEach';
 
 import * as brace from 'brace';
 import 'brace/mode/yaml';
@@ -245,7 +246,7 @@ export class EditorComponent implements OnInit {
       get(this, 'editor.value.steps', null) &&
       isObjectLike(this.editor.value.steps)
     ) {
-      this.editor.value.steps.forEach((data: any, key: string) => {
+      forEach(this.editor.value.steps, (data: any, key: string) => {
         steps.push({ key, data });
       });
       this.steps = steps;

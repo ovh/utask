@@ -1,8 +1,7 @@
-import { NgModule, Injectable } from '@angular/core';
-// import { Observable } from 'rxjs';
-import { Routes, RouterModule/*, ActivatedRouteSnapshot, RouterStateSnapshot, Resolve */} from '@angular/router';
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
 
-import {EditorComponent} from './editor/editor.component';
+import { EditorComponent } from './editor/editor.component';
 
 import { HomeObject, HomeResolve } from './resolve/home.resolve';
 
@@ -14,8 +13,8 @@ const routes: Routes = [
 @NgModule({
   imports: [
     RouterModule.forRoot(
-    routes,
-    { /*enableTracing: true, */useHash: true }
+      routes,
+      { useHash: true }
     )
   ],
   exports: [RouterModule],
