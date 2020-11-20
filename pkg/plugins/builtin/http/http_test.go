@@ -14,14 +14,14 @@ import (
 )
 
 func Test_validConfig(t *testing.T) {
+	bearerToken := "my_token"
 	cfg := HTTPConfig{
 		URL:            "http://lolcat.host/stuff",
 		Method:         "GET",
 		Timeout:        "10s",
 		FollowRedirect: "false",
 		Auth: auth{
-			Bearer: "my_token",
-			Basic: authBasic{
+			Basic: &authBasic{
 				User:     "foo",
 				Password: "bar",
 			},
@@ -73,6 +73,43 @@ func Test_validConfig(t *testing.T) {
 			Value: "foo",
 		},
 	}
+
+	// wrong auth: exclusive auth added
+	cfg.Auth.Bearer = &bearerToken
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "basic auth and bearer auth are mutually exclusive")
+	cfg.Auth.Bearer = nil
+
+	// wrong auth: invalid basic auth
+	cfg.Auth.Basic.Password = ""
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "missing either user or password for basic auth")
+	cfg.Auth.Basic.Password = "bar"
+
+	// wrong auth: invalid bearer auth
+	cfg.Auth.Basic = nil
+	empty := ""
+	cfg.Auth.Bearer = &empty
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "missing bearer token value")
+	cfg.Auth.Basic = &authBasic{
+		User:     "foo",
+		Password: "bar",
+	}
+	cfg.Auth.Bearer = nil
+
+	// wrong auth: invalid mTLS auth
+	cfg.Auth.MutualTLS = &mTLS{
+		ClientCert: "foo",
+		ClientKey:  "",
+	}
+	cfgJSON, err = json.Marshal(cfg)
+	assert.NoError(t, err)
+	assert.Errorf(t, Plugin.ValidConfig(json.RawMessage(""), json.RawMessage(cfgJSON)), "missing either client_cert or client_key for mTLS")
+	cfg.Auth.MutualTLS = nil
 
 	// no URL
 	cfg.URL = ""
@@ -128,6 +165,7 @@ func Test_exec(t *testing.T) {
 		}
 	}
 
+	bearerToken := "my_token"
 	cfg := HTTPConfig{
 		URL:    "http://lolcat.host/stuff",
 		Method: "GET",
@@ -140,7 +178,7 @@ func Test_exec(t *testing.T) {
 		Timeout:        "10s",
 		FollowRedirect: "false",
 		Auth: auth{
-			Bearer: "my_token",
+			Bearer: &bearerToken,
 		},
 	}
 

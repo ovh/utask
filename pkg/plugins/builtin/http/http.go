@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
-	"golang.org/x/net/http2"
 )
 
 // the HTTP plugin performs an HTTP call
@@ -27,15 +26,6 @@ var (
 		taskplugin.WithResources(resourceshttp),
 	)
 )
-
-var defaultUnsecureTransport http.RoundTripper
-
-func init() {
-	tr := http.DefaultTransport.(*http.Transport).Clone()
-	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	_ = http2.ConfigureTransport(tr)
-	defaultUnsecureTransport = tr
-}
 
 const (
 	// TimeoutDefault represents the default value that will be used for HTTP call, if not defined in configuration
@@ -56,6 +46,7 @@ type HTTPConfig struct {
 	QueryParameters    []parameter `json:"query_parameters,omitempty"`
 	TrimPrefix         string      `json:"trim_prefix,omitempty"`
 	InsecureSkipVerify string      `json:"insecure_skip_verify,omitempty"`
+	RootCA             string      `json:"root_ca,omitempty"`
 }
 
 // parameter represents either headers, query parameters, ...
@@ -66,14 +57,20 @@ type parameter struct {
 
 // auth represents HTTP authentication
 type auth struct {
-	Basic  authBasic `json:"basic"`
-	Bearer string    `json:"bearer"`
+	Basic     *authBasic `json:"basic"`
+	Bearer    *string    `json:"bearer"`
+	MutualTLS *mTLS      `json:"mutual_tls"`
 }
 
 // authBasic represents the embedded basic auth inside Auth struct
 type authBasic struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
+}
+
+type mTLS struct {
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
 }
 
 func validConfig(config interface{}) error {
@@ -107,6 +104,26 @@ func validConfig(config interface{}) error {
 	for _, p := range cfg.QueryParameters {
 		if p.Name == "" {
 			return fmt.Errorf("missing query parameter name (with value '%s')", p.Value)
+		}
+	}
+
+	if cfg.Auth.Basic != nil && cfg.Auth.Bearer != nil {
+		return fmt.Errorf("basic auth and bearer auth are mutually exclusive")
+	}
+
+	if cfg.Auth.Basic != nil {
+		if cfg.Auth.Basic.User == "" || cfg.Auth.Basic.Password == "" {
+			return fmt.Errorf("missing either user or password for basic auth")
+		}
+	}
+
+	if cfg.Auth.Bearer != nil && *cfg.Auth.Bearer == "" {
+		return fmt.Errorf("missing bearer token value")
+	}
+
+	if cfg.Auth.MutualTLS != nil {
+		if cfg.Auth.MutualTLS.ClientCert == "" || cfg.Auth.MutualTLS.ClientKey == "" {
+			return fmt.Errorf("missing either client_cert or client_key for mTLS")
 		}
 	}
 
@@ -170,10 +187,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 	req.URL.RawQuery = q.Encode()
 
-	if cfg.Auth.Bearer != "" {
-		var bearer = "Bearer " + cfg.Auth.Bearer
+	if cfg.Auth.Bearer != nil {
+		var bearer = "Bearer " + *cfg.Auth.Bearer
 		req.Header.Add("Authorization", bearer)
-	} else if cfg.Auth.Basic.User != "" && cfg.Auth.Basic.Password != "" {
+	} else if cfg.Auth.Basic != nil {
 		req.SetBasicAuth(cfg.Auth.Basic.User, cfg.Auth.Basic.Password)
 	}
 
@@ -219,9 +236,30 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Timeout:        td,
 		FollowRedirect: fr,
 	}
+	opts := []func(*http.Transport) error{}
 	if insecureSkipVerify {
-		httpClientConfig.Transport = defaultUnsecureTransport
+		opts = append(opts, httputil.WithTLSInsecureSkipVerify(true))
 	}
+
+	if cfg.Auth.MutualTLS != nil {
+		cert, err := tls.X509KeyPair([]byte(cfg.Auth.MutualTLS.ClientCert), []byte(cfg.Auth.MutualTLS.ClientKey))
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse x509 mTLS certificate or key: %s", err)
+		}
+		opts = append(opts, httputil.WithTLSClientAuth(cert))
+	}
+
+	if cfg.RootCA != "" {
+		opts = append(opts, httputil.WithTLSRootCA([]byte(cfg.RootCA)))
+	}
+
+	if len(opts) > 0 {
+		httpClientConfig.Transport, err = httputil.GetTransport(opts...)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to craft a new http transport: %s", err)
+		}
+	}
+
 	httpClient := httputil.NewHTTPClient(httpClientConfig)
 
 	resp, err := httpClient.Do(req)
