@@ -13,7 +13,7 @@ This plugin permorms an HTTP request.
 | `body`                 | a string representing the payload to be sent with the request                                                                                                                                                                                                    |
 | `headers`              | a list of headers, represented as (`name`, `value`) pairs                                                                                                                                                                                                        |
 | `timeout`              | timeout expressed as a duration (e.g. `30s`)                                                                                                                                                                                                                     |
-| `auth`                 | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or `bearer` field to enable Bearer Token Authorization                                                                                          |
+| `auth`                 | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or a `bearer` field to enable Bearer Token Authorization, or a `mutual_tls` object to enable Mutual TLS authentication                          |
 | `follow_redirect`      | if `true` (string) the plugin will follow up to 10 redirects (302, ...)                                                                                                                                                                                          |
 | `query_parameters`     | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2` |
 | `trim_prefix`          | prefix in the response that must be removed before unmarshalling (optional)                                                                                                                                                                                      |
@@ -39,8 +39,17 @@ action:
         user: {{.config.basicAuth.user}}
         password: {{.config.basicAuth.password}}
       bearer: {{.config.auth.token}}
+      mutual_tls:
+        # a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates
+        client_cert: {{.config.mtls.clientCert}}
+        # private key corresponding to the certificate
+        client_key: {{.config.mtls.clientKey}}
     # optional, string as boolean
     follow_redirect: "true"
+    # optional, defines additional root CAs to perform the call. can contains multiple CAs concatained together
+    root_ca: {{.config.mtls.rootca}}
+    # optional, string as boolean. indicates if server certificate must be validated or not.
+    insecure_skip_verify: "false"
     # optional, array of name and value fields
     query_parameters:
     - name: foo
