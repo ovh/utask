@@ -608,10 +608,9 @@ func TestRetryNowMaxRetry(t *testing.T) {
 	res, err = runResolution(res)
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
-	assert.Equal(t, resolution.StateDone, res.State)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
 
-	assert.Equal(t, step.StateDone, res.Steps["answer"].State)
-	assert.Equal(t, step.StateDone, res.Steps["infinite"].State)
+	assert.Equal(t, step.StateFatalError, res.Steps["infinite"].State)
 	assert.Equal(t, res.Steps["infinite"].TryCount, res.Steps["infinite"].MaxRetries+1)
 
 	assert.Equal(t, expected, res.Steps["infinite"].Output)

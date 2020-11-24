@@ -325,8 +325,9 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	if st.MaxRetries == 0 {
 		st.MaxRetries = defaultMaxRetries
 	}
+
 	// we can set "max_retries" to a negative number to have full control
-	// over the repetition of a step with a loop condition
+	// over the repetition of a step with a check condition using RETRY_NOW
 	if st.MaxRetries > 0 && st.TryCount > st.MaxRetries {
 		st.State = StateFatalError
 		st.Error = fmt.Sprintf("Step reached max retries %d: %s", st.MaxRetries, st.Error)
@@ -505,12 +506,7 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 			if step == stepRefThis {
 				step = st.Name
 			}
-			if state == StateRetryNow && st.MaxRetries >= 0 && st.TryCount > st.MaxRetries {
-				ss(st.Name, StateDone, "")
-				logrus.Debugf("AfterRun: Step [%s]: ignoring RETRY_NOW, max_retries (%d) exceeded", st.Name, st.MaxRetries)
-			} else {
-				ss(step, state, sc.Message)
-			}
+			ss(step, state, sc.Message)
 		}
 	}
 }

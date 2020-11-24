@@ -20,12 +20,3 @@ steps:
             type: echo
             configuration:
                 output: '{{ add (default 0 .step.this.output) 1 }}'
-
-    answer:
-        description: should be 42
-        dependencies:
-        - infinite
-        action:
-            type: echo
-            configuration:
-                output: '{{ .step.infinite.output }}'
