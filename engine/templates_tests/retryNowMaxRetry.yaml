@@ -1,0 +1,22 @@
+name: loopConditionMaxRetry
+description: stop an infinite loop using max_retry
+title_format: "[test] infinite loop condition with max_retry"
+
+auto_runnable: true
+
+steps:
+    infinite:
+        description: counts to infinity
+        max_retries: 41
+        conditions:
+        - type: check
+          if:
+          - value: 0
+            operator: EQ
+            expected: 0
+          then:
+            this: RETRY_NOW
+        action:
+            type: echo
+            configuration:
+                output: '{{ add (default 0 .step.this.output) 1 }}'

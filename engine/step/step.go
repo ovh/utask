@@ -40,6 +40,7 @@ const (
 	StateCrashed       = "CRASHED"
 	StatePrune         = "PRUNE"
 	StateToRetry       = "TO_RETRY"
+	StateRetryNow      = "RETRY_NOW"
 	StateAfterrunError = "AFTERRUN_ERROR"
 
 	// steps that carry a foreach list of arguments
@@ -50,12 +51,14 @@ const (
 	stepRefThis = utask.This
 
 	defaultMaxRetries = 10000
+
+	maxExecutionDelay = time.Duration(20) * time.Second
 )
 
 var (
-	builtinStates            = []string{StateTODO, StateRunning, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateAfterrunError, StateAny, StateExpanded}
-	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateFatalError, StateClientError}
-	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
+	builtinStates            = []string{StateTODO, StateRunning, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateRetryNow, StateAfterrunError, StateAny, StateExpanded}
+	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateRetryNow, StateFatalError, StateClientError}
+	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateRetryNow, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
 )
 
@@ -90,10 +93,11 @@ type Step struct {
 	State          string                  `json:"state,omitempty"`
 	// hints about ETA latency, async, for retrier to define strategy
 	// how often VS how many times
-	RetryPattern string    `json:"retry_pattern,omitempty"` // seconds, minutes, hours
-	TryCount     int       `json:"try_count,omitempty"`
-	MaxRetries   int       `json:"max_retries,omitempty"`
-	LastRun      time.Time `json:"last_run,omitempty"`
+	RetryPattern   string        `json:"retry_pattern,omitempty"` // seconds, minutes, hours
+	TryCount       int           `json:"try_count,omitempty"`
+	MaxRetries     int           `json:"max_retries,omitempty"`
+	LastRun        time.Time     `json:"last_run,omitempty"`
+	ExecutionDelay time.Duration `json:"execution_delay,omitempty"`
 
 	// flow control
 	Dependencies []string               `json:"dependencies,omitempty"`
@@ -321,7 +325,10 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	if st.MaxRetries == 0 {
 		st.MaxRetries = defaultMaxRetries
 	}
-	if st.TryCount > st.MaxRetries {
+
+	// we can set "max_retries" to a negative number to have full control
+	// over the repetition of a step with a check condition using RETRY_NOW
+	if st.MaxRetries > 0 && st.TryCount > st.MaxRetries {
 		st.State = StateFatalError
 		st.Error = fmt.Sprintf("Step reached max retries %d: %s", st.MaxRetries, st.Error)
 		go noopStep(st, stepChan)
@@ -371,6 +378,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		time.Sleep(st.ExecutionDelay)
 
 		// Wait the prehook execution is done
 		preHookWg.Wait()
@@ -531,6 +540,13 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 		if err != nil {
 			return errors.NewNotValid(err, "Invalid prehook action")
 		}
+	}
+
+	// valid execution delay
+	if st.ExecutionDelay < 0 || st.ExecutionDelay > maxExecutionDelay {
+		return errors.NewNotValid(nil,
+			fmt.Sprintf("execution_delay: expected %s to be a duration between 0s and %s",
+				st.ExecutionDelay, maxExecutionDelay))
 	}
 
 	// valid retry pattern, accept empty
