@@ -6,6 +6,13 @@ We will list in this document any breaking changes between versions, that requir
 
 ## Breaking changes
 
+### v1.9.0
+#### SQL
+- `005_resolution_creation_timestamp.sql` migration file should be applied while upgrading. It adds a column `created` in the `resolution` table to keep track of the resolution creation timestamp.
+
+#### Prometheus metrics
+- The Prometheus gauges used to record the number of tasks by state haven been moved to a single `GaugeVec` named `utask_task_state`.
+
 ### v1.5.0 (2020-04-09)
 ##### Templating
 - `jsonmarshal` function has been __deleted__. It was obsolete since the `sprig` package used by utask provides many JSON related functions (e.g. `toJson`).
