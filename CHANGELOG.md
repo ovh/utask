@@ -6,7 +6,7 @@ We will list in this document any breaking changes between versions, that requir
 
 ## Breaking changes
 
-### v1.9.0
+### v1.10.0
 #### SQL
 - `005_resolution_creation_timestamp.sql` migration file should be applied while upgrading. It adds a column `created` in the `resolution` table to keep track of the resolution creation timestamp.
 
