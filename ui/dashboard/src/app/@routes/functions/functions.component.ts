@@ -1,8 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
-import { ApiService } from 'utask-lib';
-import Function from 'utask-lib/@models/function.model';
+import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 
 @Component({
   templateUrl: './functions.html',

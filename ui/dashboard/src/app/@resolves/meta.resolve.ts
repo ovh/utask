@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, empty } from 'rxjs';
+import { empty } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
-import { /*ActivatedRouteSnapshot, RouterStateSnapshot, */Resolve } from '@angular/router';
-import { ApiService } from 'utask-lib';
+import { Resolve } from '@angular/router';
+import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 
 @Injectable()
 export class MetaResolve implements Resolve<any> {

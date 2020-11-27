@@ -1,18 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as _ from 'lodash';
+import get from 'lodash-es/get';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
-import { ApiService, ModalApiYamlComponent } from 'utask-lib';
-import EditorConfig from 'utask-lib/@models/editorconfig.model';
-import { TaskService } from 'utask-lib';
-import Task, { Comment } from 'utask-lib/@models/task.model';
-import Meta from 'utask-lib/@models/meta.model';
-import { ResolutionService } from 'utask-lib';
-import { RequestService } from 'utask-lib';
-import Template from 'utask-lib/@models/template.model';
+import EditorConfig from 'projects/utask-lib/src/lib/@models/editorconfig.model';
+import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
+import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
+import { RequestService } from 'projects/utask-lib/src/lib/@services/request.service';
+import { ResolutionService } from 'projects/utask-lib/src/lib/@services/resolution.service';
+import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
+import Template from 'projects/utask-lib/src/lib/@models/template.model';
+import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
+import { ModalApiYamlComponent } from 'projects/utask-lib/src/lib/@modals/modal-api-yaml/modal-api-yaml.component';
 
 @Component({
   templateUrl: './task.html',
@@ -55,8 +56,16 @@ export class TaskComponent implements OnInit, OnDestroy {
     actif: false
   };
 
-  constructor(private modalService: NgbModal, private api: ApiService, private route: ActivatedRoute, private resolutionService: ResolutionService, private requestService: RequestService, private taskService: TaskService, private router: Router, private toastr: ToastrService) {
-  }
+  constructor(
+    private modalService: NgbModal,
+    private api: ApiService,
+    private route: ActivatedRoute,
+    private resolutionService: ResolutionService,
+    private requestService: RequestService,
+    private taskService: TaskService,
+    private router: Router,
+    private toastr: ToastrService
+  ) { }
 
   ngOnDestroy() {
     this.refreshes.tasks.stopInterval();
@@ -93,7 +102,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   addComment() {
     this.loaders.addComment = true;
     this.api.task.comment.add(this.task.id, this.comment.content).toPromise().then((comment: Comment) => {
-      this.task.comments = _.get(this.task, 'comments', []);
+      this.task.comments = get(this.task, 'comments', []);
       this.task.comments.push(comment);
       this.errors.addComment = null;
       this.comment.content = '';
@@ -126,7 +135,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The request has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -137,7 +146,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The resolution has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -148,7 +157,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The resolution has been run.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -159,7 +168,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The resolution has been paused.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -170,7 +179,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The resolution has been cancelled.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -181,7 +190,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The resolution has been extended.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -192,7 +201,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       this.toastr.info('The task has been deleted.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(_.get(err, 'error.error', 'An error just occured, please retry'));
+        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -238,9 +247,9 @@ export class TaskComponent implements OnInit, OnDestroy {
       ]).then((data: any[]) => {
         this.task = data[0];
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
-        this.task.comments = _.orderBy(_.get(this.task, 'comments', []), ['created'], ['asc']);
+        this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
         this.item.task_id = this.task.id;
-        this.template = _.find(this.route.parent.snapshot.data.templates, { name: this.task.template_name });
+        this.template = this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name);
         const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;
@@ -252,7 +261,7 @@ export class TaskComponent implements OnInit, OnDestroy {
           }
         }
         if (!this.taskIsResolvable && resolvable) {
-          _.get(this.template, 'resolver_inputs', []).forEach((field: any) => {
+          get(this.template, 'resolver_inputs', []).forEach((field: any) => {
             if (field.type === 'bool' && field.default === null) {
               this.item.resolver_inputs[field.name] = false;
             } else {

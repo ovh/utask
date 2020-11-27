@@ -1,6 +1,6 @@
 <div>
   <utask-loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></utask-loader>
-  <utask-error-message [data]="errors.main" *ngIf="errors.main"></utask-error-message>
+  <lib-utask-error-message [data]="errors.main" *ngIf="errors.main"></lib-utask-error-message>
 
   <div class="main" *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
     <header class="clear-after">
@@ -47,7 +47,7 @@
             Result
           </div>
           <div app-box-content>
-            <utask-editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult"></utask-editor>
+            <lib-utask-editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult"></lib-utask-editor>
           </div>
         </app-box>
 
@@ -134,8 +134,8 @@
               <div class="col-4">
                 <h3>Steps</h3>
                 <div *ngIf="resolution.steps">
-                  <utask-steps-list [resolution]="resolution" [selectedStep]="selectedStep">
-                  </utask-steps-list>
+                  <lib-utask-steps-list [resolution]="resolution" [selectedStep]="selectedStep">
+                  </lib-utask-steps-list>
                 </div>
 
               </div>
@@ -257,7 +257,7 @@
                     </div>
                   </div>
 
-                  <utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask"></utask-error-message>
+                  <lib-utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask"></lib-utask-error-message>
 
                   <button type="submit" class="btn btn-success"
                     [disabled]="myForm.invalid || loaders.resolveTask">Resolve</button>
@@ -284,7 +284,7 @@
                     </label>
                   </div>
 
-                  <utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></utask-error-message>
+                  <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></lib-utask-error-message>
 
                   <button type="submit" class="btn btn-danger"
                     [disabled]="rejectForm.invalid || loaders.rejectTask">Reject</button>
@@ -301,12 +301,12 @@
             Sub Tasks
           </div>
           <div app-box-content>
-            <utask-tasks-list [meta]="meta" [params]="{
+            <lib-utask-tasks-list [meta]="meta" [params]="{
             page_size: 10,
             type: meta.user_is_admin ? 'all' : 'own',
             tag: '_utask_parent_task_id=' + taskId
           }" (event)="eventUtask($event)">
-            </utask-tasks-list>
+            </lib-utask-tasks-list>
           </div>
         </app-box>
 
@@ -336,7 +336,7 @@
                 <textarea name="comment" id="comment" class="form-control" [(ngModel)]="comment.content"></textarea>
               </div>
 
-              <utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></utask-error-message>
+              <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
 
               <button type="submit" mat-raised-button color="primary"
                 [disabled]="myCommentForm.invalid || loaders.addComment">Add

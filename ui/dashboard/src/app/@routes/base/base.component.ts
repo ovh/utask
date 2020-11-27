@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, NavigationEnd, Event } from '@angular/router';
-import * as _ from 'lodash';
-import Meta from 'utask-lib/@models/meta.model';
+import get from 'lodash-es/get';
+import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 
 @Component({
   templateUrl: './base.html',
@@ -24,7 +24,7 @@ export class BaseComponent implements OnInit {
           } else if (values.title) {
             let title = '';
             const args = values.title.args.map((s: string) => {
-              return _.get(values, s);
+              return get(values, s);
             });
             title = this.format(values.title.value, ...args);
             document.title = title;

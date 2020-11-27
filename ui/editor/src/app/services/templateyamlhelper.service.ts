@@ -1,5 +1,5 @@
-import * as _ from 'lodash';
 import { Injectable } from '@angular/core';
+import reverse from 'lodash-es/reverse';
 
 @Injectable()
 export class TemplateYamlHelper {
@@ -114,7 +114,7 @@ export class TemplateYamlHelper {
                 maxStep = (textArr[i].match(/^(\s*)/g)[0].length - this.minimumSpacing) / this.spacing - 1;
             }
         }
-        return _.reverse(rep);
+        return reverse(rep);
     }
 
     getKey(text: string, spacingStep: number = Infinity) {

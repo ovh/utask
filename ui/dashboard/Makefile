@@ -30,7 +30,7 @@ install:
 
 dev:
 	$(NODE) scripts/prebuild-env-dev.js
-	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF) --verbose=true
+	$(NG) serve --open --port $(PORT) --base-href $(BASEHREF) --verbose=false
 
 build: install
 	$(NODE) scripts/prebuild-env-dev.js

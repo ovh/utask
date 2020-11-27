@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError } from 'rxjs/operators';
-import { /*ActivatedRouteSnapshot, RouterStateSnapshot, */Resolve } from '@angular/router';
+import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
-import { ApiService, ParamsListTemplates } from 'utask-lib';
-import Template from 'utask-lib/@models/template.model';
+import { ApiService, ParamsListTemplates } from 'projects/utask-lib/src/lib/@services/api.service';
+import Template from 'projects/utask-lib/src/lib/@models/template.model';
 
 @Injectable()
 export class TemplatesResolve implements Resolve<any> {

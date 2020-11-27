@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as _ from 'lodash';
 
 @Injectable()
 export class WorkflowHelper {
@@ -244,8 +243,11 @@ export class WorkflowHelper {
     }
 
     getState(key: string) {
-        let state = _.find(this.states, { key });
-        return state || _.merge({}, this.defaultState, { key });
+        let state = this.states.find(s => s.key === key);
+        return state || {
+            ...this.defaultState,
+            key
+        };
     }
 
     getArrayStates() {

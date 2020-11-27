@@ -1,10 +1,12 @@
-import { Component, OnInit, Input, Output, OnChanges, SimpleChanges, EventEmitter } from '@angular/core';
-import * as _ from 'lodash';
+import { Component, Input, Output, OnChanges, SimpleChanges, EventEmitter } from '@angular/core';
+import uniq from 'lodash-es/uniq';
+import isArray from 'lodash-es/isArray';
+import replace from 'lodash-es/replace';
+import get from 'lodash-es/get';
 
-import {WorkflowHelper} from '../services/workflowhelper.service';
+import { WorkflowHelper } from '../services/workflowhelper.service';
 
 const d3 = require('d3');
-// import d3 from 'd3';
 import dagreD3 from 'dagre-d3';
 import $ from 'jquery';
 
@@ -17,9 +19,9 @@ export class StepsViewerComponent implements OnChanges {
     @Output() public select: EventEmitter<any> = new EventEmitter();
     @Input() selectParam;
 
-    constructor(private WorkflowHelper: WorkflowHelper) {
-
-    }
+    constructor(
+        private WorkflowHelper: WorkflowHelper
+    ) { }
 
     error: any = null;
     graph: any = {
@@ -119,19 +121,19 @@ export class StepsViewerComponent implements OnChanges {
     checkData() {
         let response = true;
         const keys = this.steps.map((s: any) => s.key);
-        if (!_.isArray(this.steps)) {
+        if (!isArray(this.steps)) {
             this.error = 'The steps list is not an array';
             return false;
         } else if (this.steps.length === 0) {
             this.error = 'The steps list is empty or invalid';
             return false;
-        } else if (_.uniq(keys).length !== this.steps.length) {
+        } else if (uniq(keys).length !== this.steps.length) {
             this.error = 'Duplicate steps name';
             return false;
         }
 
         this.steps.forEach((step: any) => {
-            const dependencies = _.get(step.data, 'dependencies', []);
+            const dependencies = get(step.data, 'dependencies', []);
             if (dependencies && dependencies.length) {
                 dependencies.forEach((dep: any) => {
                     let d = dep.split(':')[0];
@@ -151,15 +153,13 @@ export class StepsViewerComponent implements OnChanges {
                 shape: step.data.state
                     ? this.WorkflowHelper.getState(step.data.state).shape
                     : 'shape_black',
-                label: _.replace(step.key, /[A-Z]{1,}/g, s => ` ${s}`),
+                label: replace(step.key, /[A-Z]{1,}/g, s => ` ${s}`),
                 // labelType: 'html',
                 labelStyle: `
-                        font-size:18px;font-weight:400;text-transform:capitalize;fill:${
-                    this.WorkflowHelper.getState(step.data.state).fontColor
+                        font-size:18px;font-weight:400;text-transform:capitalize;fill:${this.WorkflowHelper.getState(step.data.state).fontColor
                     };`,
                 tooltip: `
-                        <h4 class='cp_h4'>${step.key}${
-                    step.data.state ? ' : ' : ''
+                        <h4 class='cp_h4'>${step.key}${step.data.state ? ' : ' : ''
                     }${step.data.state ? step.data.state : ''}</h4>
                         <p>${step.data.description}</p>
                         `
@@ -249,7 +249,7 @@ export class StepsViewerComponent implements OnChanges {
     }
 
     getStateFromStepname(stepName: any) {
-        return _.get(_.find(this.steps, { key: stepName }), 'data.state');
+        return get(this.steps.find(s => s.key === stepName), 'data.state');
     }
 
     applyShapes(render: any) {
