@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { TaskType, TaskState, ResolutionStep } from '../@models/task.model';
+import Task, { TaskType, TaskState, ResolutionStep } from '../@models/task.model';
+import { Observable } from 'rxjs';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 
 export class ParamsListTasks {
     page_size?: number;
@@ -41,15 +42,19 @@ export class ApiServiceComment {
 
 export class ApiServiceTask {
     public comment: ApiServiceComment;
-    constructor(private http: HttpClient, private base: string) {
+
+    constructor(
+        private http: HttpClient,
+        private base: string
+    ) {
         this.comment = new ApiServiceComment(this.http, `${this.base}task/`);
     }
 
-    list(params: ParamsListTasks) {
-        return this.http.get(`${this.base}task`, {
+    list(params: ParamsListTasks): Observable<HttpResponse<Array<Task>>> {
+        return this.http.get<Array<Task>>(`${this.base}task`, {
             params: params as any,
-            observe: 'response',
-        });
+            observe: 'response'
+        })
     }
 
     add(body: NewTask) {

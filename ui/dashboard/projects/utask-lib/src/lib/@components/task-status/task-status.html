@@ -1,0 +1,9 @@
+<div class="wrapper {{task.state}}" *ngIf="task">
+  <div class="status">
+    <div class="text">{{task.state}}</div>
+  </div>
+  <div class="progress" *ngIf="percentage < 100 && percentage > 0">
+    <div class="bar" [ngStyle]="{ 'width': percentage + '%' }"></div>
+    <div class="text">{{percentage}}%</div>
+  </div>
+</div>

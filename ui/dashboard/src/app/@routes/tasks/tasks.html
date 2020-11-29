@@ -1,0 +1,20 @@
+<div>
+  <nz-select ngModel="pagination.type">
+    <nz-option *ngIf="meta.user_is_admin" nzValue="all" nzLabel="All"></nz-option>
+    <nz-option nzValue="own" nzLabel="As a requester"></nz-option>
+    <nz-option nzValue="resolvable" nzLabel="As a resolver"></nz-option>
+  </nz-select>
+  <nz-select ngModel="pagination.state">
+    <nz-option nzValue="" nzLabel="All"></nz-option>
+    <nz-option nzValue="BLOCKED" nzLabel="Blocked"></nz-option>
+    <nz-option nzValue="CANCELLED" nzLabel="Cancelled"></nz-option>
+    <nz-option nzValue="DONE" nzLabel="Done"></nz-option>
+    <nz-option nzValue="RUNNING" nzLabel="Running"></nz-option>
+    <nz-option nzValue="TODO" nzLabel="Todo"></nz-option>
+    <nz-option nzValue="WONTFIX" nzLabel="Wontfix"></nz-option>
+  </nz-select>
+  <lib-utask-input-tags (update)="inputTagsChanged($event);" [value]="pagination.tag" [placeholder]="'Search tags...'"
+    [rawTags]="tags"></lib-utask-input-tags>
+</div>
+<lib-utask-tasks-list [meta]="meta" [params]="params" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)"
+  (toastError)="toastError($event)"></lib-utask-tasks-list>

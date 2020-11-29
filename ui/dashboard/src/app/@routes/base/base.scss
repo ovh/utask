@@ -1,0 +1,72 @@
+nz-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.logo {
+  margin: 16px 24px 16px 0;
+}
+
+[nz-menu] {
+  flex: 1;
+  line-height: 64px;
+  display: inline-block;
+}
+
+.crown-badge {
+  color: #ffffff;
+  background: #f5222d;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 23px;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+}
+
+nz-breadcrumb {
+  margin: 16px 0;
+}
+
+nz-content {
+  padding: 0 25px;
+}
+
+nz-footer {
+  text-align: center;
+}
+
+.content-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  .inner-content {
+    flex: 1;
+    padding: 24px;
+    background: #fff;
+    overflow: hidden;
+  }
+}
+
+:host {
+  display: flex;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-layout {
+  height: 100vh;
+}
+
+.logo {
+  width: 120px;
+  height: 31px;
+  margin: 16px 28px;
+  float: left;
+  color: #fff;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 30px;
+}

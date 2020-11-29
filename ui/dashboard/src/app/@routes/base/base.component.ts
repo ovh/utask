@@ -5,15 +5,20 @@ import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 
 @Component({
   templateUrl: './base.html',
+  styleUrls: ['./base.scss'],
 })
 export class BaseComponent implements OnInit {
   meta: Meta;
-  constructor(private activedRoute: ActivatedRoute, private router: Router) {
+
+  constructor(
+    private _activatedRoute: ActivatedRoute,
+    private router: Router
+  ) {
     this.router.events.subscribe((event: Event) => {
       if (event instanceof NavigationEnd) {
         window.scroll(0, 0);
         // Navigation Service - Title & history
-        let route = this.activedRoute;
+        let route = this._activatedRoute;
         while (route.firstChild) {
           route = route.firstChild;
         }
@@ -35,7 +40,7 @@ export class BaseComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.meta = this.activedRoute.snapshot.data.meta;
+    this.meta = this._activatedRoute.snapshot.data.meta;
   }
 
   private format(str: string, ...args) {

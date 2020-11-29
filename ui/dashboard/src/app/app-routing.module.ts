@@ -4,7 +4,6 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MetaResolve } from './@resolves/meta.resolve';
-import { HomeComponent } from './@routes/home/home.component';
 import { TaskComponent } from './@routes/task/task.component';
 import { BaseComponent } from './@routes/base/base.component';
 import { ErrorComponent } from './@routes/error/error.component';
@@ -27,13 +26,22 @@ import { FunctionsComponent } from './@routes/functions/functions.component';
 import { FunctionComponent } from './@routes/functions/function.component';
 import { FunctionsResolve } from './@resolves/functions.resolve';
 import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
+import { TasksComponent } from './@routes/tasks/tasks.component';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzLayoutModule } from 'ng-zorro-antd/layout';
+import { IconsProviderModule } from './icons-provider.module';
+import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 const routes: Routes = [
   {
     path: 'error', component: ErrorComponent
   },
   {
-    path: '', redirectTo: '/home', pathMatch: 'full'
+    path: '', redirectTo: '/tasks', pathMatch: 'full'
   },
   {
     path: '',
@@ -45,8 +53,8 @@ const routes: Routes = [
     },
     children: [
       {
-        path: 'home',
-        component: HomeComponent,
+        path: 'tasks',
+        component: TasksComponent,
         data: {
           title: {
             value: '{0}',
@@ -136,7 +144,7 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    HomeComponent,
+    TasksComponent,
     BaseComponent,
     ErrorComponent,
     TemplatesComponent,
@@ -148,6 +156,14 @@ const routes: Routes = [
     StatsComponent,
   ],
   imports: [
+    IconsProviderModule,
+    NzLayoutModule,
+    NzMenuModule,
+    NzButtonModule,
+    NzBreadCrumbModule,
+    NzSelectModule,
+    NzAvatarModule,
+    NzBadgeModule,
     InfiniteScrollModule,
     TagInputModule,
     NgbModule,

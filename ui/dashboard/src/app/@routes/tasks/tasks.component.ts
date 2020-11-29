@@ -10,10 +10,10 @@ import { ApiService, ParamsListTasks } from 'projects/utask-lib/src/lib/@service
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 
 @Component({
-  templateUrl: './home.html',
-  styleUrls: ['./home.sass'],
+  templateUrl: './tasks.html',
+  styleUrls: ['./tasks.sass'],
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class TasksComponent implements OnInit, OnDestroy {
   tags: string[] = [];
   meta: Meta = null;
   pagination: ParamsListTasks;
@@ -81,7 +81,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (params.itemPerPage && isNumber(+params.itemPerPage) && +params.itemPerPage <= 1000 && +params.itemPerPage >= 10) {
       item.page_size = +params.itemPerPage;
     } else {
-      item.page_size = 20;
+      item.page_size = 10;
     }
     const defaultType = this.meta.user_is_admin ? 'all' : 'own';
     item.type = params.type || defaultType;

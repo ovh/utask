@@ -26,6 +26,15 @@ import { ModalApiYamlEditComponent } from './@modals/modal-api-yaml-edit/modal-a
 import { ModalApiYamlComponent } from './@modals/modal-api-yaml/modal-api-yaml.component';
 import { StepsViewerComponent } from './@components/steps-viewer/steps-viewer.component';
 import { StepNodeComponent } from './@components/step-node/step-node.component';
+import { TaskStatusComponent } from './@components/task-status/task-status.component';
+import { NsAutoHeightTableDirective } from './@directives/ns-auto-height-table.directive';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { NzInputModule } from 'ng-zorro-antd/input';
 
 const components: any[] = [
   LoaderComponent,
@@ -43,7 +52,9 @@ const components: any[] = [
   ModalApiYamlComponent,
   ModalApiYamlEditComponent,
 
-  FromNowPipe
+  FromNowPipe,
+  TaskStatusComponent,
+  NsAutoHeightTableDirective
 ];
 
 interface UtaskLibConfiguration {
@@ -61,6 +72,12 @@ interface UtaskLibConfiguration {
     TagInputModule,
     NgbModule,
     InfiniteScrollModule,
+    NzTableModule,
+    NzButtonModule,
+    NzIconModule,
+    NzDividerModule,
+    NzDropDownModule,
+    NzInputModule
   ],
   exports: components,
   bootstrap: [],
@@ -83,6 +100,7 @@ export class UTaskLibModule {
         TaskService,
         RequestService,
         WorkflowService,
+        { provide: NZ_I18N, useValue: en_US }
       ]
     }
   }

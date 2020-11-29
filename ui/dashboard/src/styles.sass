@@ -1,24 +1,27 @@
+@import "../node_modules/ng-zorro-antd/ng-zorro-antd.min.css"
+  
 @import "styles/colors.sass"
 
 @import 'tippy.js/dist/tippy.css'
 @import 'tippy.js/animations/scale.css'
 
-@import "../node_modules/bootstrap/scss/bootstrap.scss"
-
-@import '../node_modules/@angular/material/theming'
-@include mat-core()
-$my-app-primary: mat-palette($mat-blue)
-$my-app-accent:  mat-palette($mat-green)
-$my-app-warn:    mat-palette($mat-orange)
-$my-app-theme: mat-light-theme($my-app-primary, $my-app-accent, $my-app-warn)
-@include angular-material-theme($my-app-theme)
+// FIXME to remove when refactor ant ended
+//@import "../node_modules/bootstrap/scss/bootstrap.scss"
+//@import '../node_modules/@angular/material/theming'
+//@include mat-core()
+//$my-app-primary: mat-palette($mat-blue)
+//$my-app-accent:  mat-palette($mat-green)
+//$my-app-warn:    mat-palette($mat-orange)
+//$my-app-theme: mat-light-theme($my-app-primary, $my-app-accent, $my-app-warn)
+//@include angular-material-theme($my-app-theme)
 
 @import "styles/editor.sass"
 @import "styles/comment.sass"
 
-@import '~ngx-toastr/toastr'
-@import '~ngx-toastr/toastr-bs4-alert'
-@import '~ngx-toastr/toastr-bs4-alert'
+// FIXME to remove when refactor ant ended
+//@import '~ngx-toastr/toastr'
+//@import '~ngx-toastr/toastr-bs4-alert'
+//@import '~ngx-toastr/toastr-bs4-alert'
 
 .toast-error
   background-color: #f8d7da

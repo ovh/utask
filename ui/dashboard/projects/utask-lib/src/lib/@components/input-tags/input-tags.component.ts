@@ -14,17 +14,7 @@ class Suggestion {
 
 @Component({
     selector: 'lib-utask-input-tags',
-    template: `
-    <span #span>
-        <input type="text" #inputPlaceholder class="placeholder" value="" readonly="" autocomplete="off" spellcheck="false" tabindex="-1"/>
-        <input type="text" #inputMain class="main" [placeholder]="displayPlaceholder ? placeholder : ''"/>
-        <ul class="suggestions" *ngIf="suggestions.length && !suggestionsHide">
-            <li *ngFor="let item of suggestions; let index = index;"  [ngClass]="{'selected': suggestionIndex !== -1 && item.word === suggestions[suggestionIndex].word}" (click)="select(index);">
-                {{item.word}}
-            </li>
-        </ul>
-    </span>
-    `,
+    templateUrl: './input-tags.html',
     styleUrls: ['./input-tags.sass'],
 })
 export class InputTagsComponent implements OnChanges, AfterViewInit {
@@ -72,7 +62,7 @@ export class InputTagsComponent implements OnChanges, AfterViewInit {
             this.lastValueUpdated = this.inputMain.nativeElement.value;
         }
     }
-
+    
     ngAfterViewInit() {
         this.inputMain.nativeElement.addEventListener('input', e => {
             setTimeout(() => {
