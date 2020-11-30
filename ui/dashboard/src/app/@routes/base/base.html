@@ -9,6 +9,8 @@
 			<li nz-menu-item nzMatchRouter routerLink="/functions">Functions</li>
 			<li nz-menu-item nzMatchRouter routerLink="/stats">Stats</li>
 		</ul>
+		<nz-switch [ngModel]="darkThemeActive" (ngModelChange)="switchDarkTheme($event)" nzCheckedChildren="☾"
+			nzUnCheckedChildren="☾"></nz-switch>
 		<nz-badge [nzCount]="iconTemplate" [nzShowZero]="true" style="margin-right: 24px;">
 			<nz-avatar [nzText]="meta?.username[0].toUpperCase()" title="{{meta?.username}}" [nzShape]="'square'"></nz-avatar>
 		</nz-badge>

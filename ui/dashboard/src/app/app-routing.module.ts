@@ -36,6 +36,8 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { ThemeService } from './@services/theme.service';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -122,6 +124,7 @@ const routes: Routes = [
     NzAvatarModule,
     NzBadgeModule,
     NzFormModule,
+    NzSwitchModule,
     InfiniteScrollModule,
     TagInputModule,
     NgbModule,
@@ -147,7 +150,8 @@ const routes: Routes = [
     MetaResolve,
     TemplatesResolve,
     StatsResolve,
-    FunctionsResolve
+    FunctionsResolve,
+    ThemeService
   ]
 })
 export class AppRoutingModule { }

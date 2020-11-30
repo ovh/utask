@@ -32,6 +32,11 @@
                 "glob": "**/*",
                 "input": "./node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
+              },
+              {
+                "glob": "**/*.min.css",
+                "input": "./node_modules/ng-zorro-antd",
+                "output": "/assets/"
               }
             ],
             "styles": [

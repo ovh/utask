@@ -1,18 +1,27 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Utask UI</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="assets/favicon.ico" />
-  </head>
-  <body>
-    <app-root>
-      <h1 style="text-align: center;margin-top:64px;">
-        Loading UTask...
-      </h1>
-      <div class="lds-grid">
-      </div>
-    </app-root>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <title>Utask UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="assets/favicon.ico" />
+</head>
+
+<body>
+  <app-root>
+    <h1 style="text-align: center;margin-top:64px;">
+      Loading UTask...
+    </h1>
+    <div class="lds-grid">
+    </div>
+  </app-root>
+  <script>
+    var theme = localStorage.getItem('utask-theme');
+    if (theme) {
+      document.body.className = theme;
+    }
+  </script>
+</body>
+
 </html>

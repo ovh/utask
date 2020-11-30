@@ -3,6 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 import { filter, map, mergeMap } from 'rxjs/operators';
+import { ThemeService } from 'src/app/@services/theme.service';
 
 @Component({
   templateUrl: './base.html',
@@ -10,21 +11,23 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 })
 export class BaseComponent implements OnInit {
   meta: Meta;
+  darkThemeActive: boolean;
 
   constructor(
     private _activatedRoute: ActivatedRoute,
     private _router: Router,
-    private _titleService: Title
+    private _titleService: Title,
+    private _themeService: ThemeService
   ) {
     this._router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .pipe(map(() => this._activatedRoute))
       .pipe(map((route) => {
         while (route.firstChild) {
-            route = route.firstChild;
+          route = route.firstChild;
         }
         return route;
-    }))
+      }))
       .pipe(filter(route => route.outlet === 'primary'))
       .pipe(mergeMap(route => route.data))
       .subscribe((routeData) => {
@@ -34,5 +37,15 @@ export class BaseComponent implements OnInit {
 
   ngOnInit() {
     this.meta = this._activatedRoute.snapshot.data.meta;
+    const theme = this._themeService.getTheme();
+    this.darkThemeActive = theme && theme === 'dark';
+  }
+
+  switchDarkTheme(active: boolean): void {
+    if (active) {
+      this._themeService.changeTheme('dark');
+    } else {
+      this._themeService.changeTheme('default');
+    }
   }
 }

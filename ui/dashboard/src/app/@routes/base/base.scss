@@ -14,6 +14,10 @@ nz-header {
   display: inline-block;
 }
 
+nz-switch {
+  margin: 0 40px;
+}
+
 .crown-badge {
   color: #ffffff;
   background: #f5222d;
@@ -37,7 +41,10 @@ nz-content {
   .inner-content {
     flex: 1;
     padding: 24px;
-    background: #fff;
+    background-color: #ffffff;
+    :host-context(.dark) & {
+      background-color: #141414;
+    }
     overflow: hidden;
   }
 }
