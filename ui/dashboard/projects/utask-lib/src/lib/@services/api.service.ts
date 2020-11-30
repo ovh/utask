@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@angular/core';
-import Task, { TaskType, TaskState, ResolutionStep } from '../@models/task.model';
+import Task, { TaskType, TaskState, ResolutionStep, Comment } from '../@models/task.model';
 import Function from '../@models/function.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';

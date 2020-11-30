@@ -35,6 +35,7 @@ import { IconsProviderModule } from './icons-provider.module';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzFormModule } from 'ng-zorro-antd/form';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -120,6 +121,7 @@ const routes: Routes = [
     NzSelectModule,
     NzAvatarModule,
     NzBadgeModule,
+    NzFormModule,
     InfiniteScrollModule,
     TagInputModule,
     NgbModule,

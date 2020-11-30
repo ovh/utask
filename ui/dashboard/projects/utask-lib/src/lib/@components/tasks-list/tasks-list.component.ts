@@ -167,7 +167,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         this.loadTasks()
             .pipe(catchError((err, tasks) => {
                 this.errors.tasks = err;
-                return tasks;
+                return [];
             }))
             .pipe(finalize(() => {
                 this.loaders.tasks = false;
@@ -276,7 +276,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         this.loadTasks(last(this.tasks).id)
             .pipe(catchError((err, tasks) => {
                 this.errors.next = err;
-                return tasks;
+                return [];
             }))
             .pipe(finalize(() => {
                 this.loaders.next = false;
@@ -297,7 +297,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         this.loadTasks()
             .pipe(catchError((err, tasks) => {
                 this.errors.tasks = err;
-                return tasks;
+                return [];
             }))
             .pipe(finalize(() => {
                 this.loaders.tasks = false;

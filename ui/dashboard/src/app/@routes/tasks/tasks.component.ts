@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import compact from 'lodash-es/compact';
 import isString from 'lodash-es/isString';
 import isArray from 'lodash-es/isArray';
 import { ToastrService } from 'ngx-toastr';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 import { ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
+import { TaskState, TaskType } from 'projects/utask-lib/src/lib/@models/task.model';
 
 @Component({
   templateUrl: './tasks.html',
@@ -15,7 +15,7 @@ import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 export class TasksComponent implements OnInit {
   tags: string[] = [];
   meta: Meta = null;
-  pagination: ParamsListTasks;
+  pagination: ParamsListTasks = new ParamsListTasks();
 
   constructor(
     private _activateRoute: ActivatedRoute,
@@ -32,7 +32,7 @@ export class TasksComponent implements OnInit {
     this.meta = this._activateRoute.snapshot.data.meta as Meta;
     this._activateRoute.queryParams.subscribe(params => {
       this.pagination = this.queryToSearchTask(params);
-      this.search();
+      this.search(true);
     });
   }
 
@@ -48,12 +48,7 @@ export class TasksComponent implements OnInit {
     this.toastr.info(message);
   }
 
-  inputTagsChanged(text: string) {
-    this.pagination.tag = compact(text.split(' '));
-    this.search();
-  }
-
-  search() {
+  search(replaceUrl: boolean = false) {
     let cleanParams = {};
     Object.keys(this.pagination).filter(key => {
       if (isArray(this.pagination[key])) {
@@ -65,23 +60,34 @@ export class TasksComponent implements OnInit {
     });
     this.router.navigate([], {
       queryParams: cleanParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true // Useful to prevent adding a new entry in router history and keep the back/next navigation working
+      replaceUrl, // Useful to prevent adding a new entry in router history and keep the back/next navigation working
     });
   }
 
-  queryToSearchTask(params): ParamsListTasks {
-    const item = new ParamsListTasks();
-    const pageSize = parseInt(params.page_size, 10)
-    item.page_size = pageSize && 10 <= pageSize && pageSize <= 1000 ? pageSize : 10;
+  queryToSearchTask(queryParams): ParamsListTasks {
+    const params = new ParamsListTasks();
+    const pageSize = parseInt(queryParams.page_size, 10)
+    params.page_size = pageSize && 10 <= pageSize && pageSize <= 1000 ? pageSize : 10;
     const defaultType = this.meta.user_is_admin ? 'all' : 'own';
-    item.type = params.type || defaultType;
-    item.last = '';
-    item.state = params.state || '';
-    if (params.tag && isString(params.tag)) {
-      params.tag = [params.tag];
-    }
-    item.tag = params.tag || [];
-    return item;
+    params.type = queryParams.type || defaultType;
+    params.last = '';
+    params.state = queryParams.state || '';
+    params.tag = queryParams.tag ? (isString(queryParams.tag) ? [queryParams.tag] : queryParams.tag) : [];
+    return params;
+  }
+
+  paginationTypeChange(type: TaskType) {
+    this.pagination.type = type;
+    this.search();
+  }
+
+  paginationStateChange(state: TaskState) {
+    this.pagination.state = state;
+    this.search();
+  }
+
+  inputTagsChanged(tags: Array<string>) {
+    this.pagination.tag = tags;
+    this.search();
   }
 }
