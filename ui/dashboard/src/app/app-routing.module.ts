@@ -141,6 +141,11 @@ const routes: Routes = [
     )
   ],
   exports: [RouterModule],
-  providers: [MetaResolve, TemplatesResolve, StatsResolve, FunctionsResolve]
+  providers: [
+    MetaResolve,
+    TemplatesResolve,
+    StatsResolve,
+    FunctionsResolve
+  ]
 })
 export class AppRoutingModule { }

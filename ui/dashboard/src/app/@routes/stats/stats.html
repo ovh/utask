@@ -10,7 +10,7 @@
                 <td [ngStyle]="{'background':state.color, 'color': 'white', 'width.px': 30}"></td>
                 <td>{{state.label}}</td>
                 <td>{{state.value}}</td>
-                <td><a [routerLink]="['/home']" [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i
+                <td><a [routerLink]="['/tasks']" [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i
                             class="fas fa-link"></i></a></td>
             </tr>
         </table>

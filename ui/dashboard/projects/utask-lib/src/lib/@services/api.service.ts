@@ -1,7 +1,11 @@
 import { Injectable, Inject } from '@angular/core';
 import Task, { TaskType, TaskState, ResolutionStep } from '../@models/task.model';
+import Function from '../@models/function.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import Meta from '../@models/meta.model';
+import Template from '../@models/template.model';
+import { Stats } from 'fs';
 
 export class ParamsListTasks {
     page_size?: number;
@@ -27,16 +31,15 @@ export class UpdatedTask {
 }
 
 export class ApiServiceComment {
-    constructor(private http: HttpClient, private base: string) {
-    }
+    constructor(
+        private _http: HttpClient,
+        private _base: string
+    ) { }
 
-    add(taskId: string, content: string) {
-        return this.http.post(
-            `${this.base}${taskId}/comment`,
-            {
-                content
-            }
-        );
+    add(taskId: string, content: string): Observable<Comment> {
+        return this._http.post<Comment>(`${this._base}${taskId}/comment`, {
+            content
+        });
     }
 }
 
@@ -119,21 +122,20 @@ export class ParamsListTemplates {
 }
 
 export class ApiServiceTemplate {
-    constructor(private http: HttpClient, private base: string) {
+    constructor(
+        private _http: HttpClient,
+        private _base: string
+    ) { }
+
+    list(params: ParamsListTemplates): Observable<HttpResponse<Array<Template>>> {
+        return this._http.get<Array<Template>>(`${this._base}template`, {
+            params: params as any,
+            observe: 'response',
+        });
     }
 
-    list(params: ParamsListTemplates) {
-        return this.http.get(`${this.base}template`,
-            {
-                params: params as any,
-                observe: 'response',
-            });
-    }
-
-    get(name: string) {
-        return this.http.get(
-            `${this.base}template/${name}`
-        );
+    get(name: string): Observable<Template> {
+        return this._http.get<Template>(`${this._base}template/${name}`);
     }
 }
 
@@ -143,39 +145,42 @@ export class ParamsListFunctions {
 }
 
 export class ApiServiceFunction {
-    constructor(private http: HttpClient, private base: string) {
+    constructor(
+        private _http: HttpClient,
+        private _base: string
+    ) { }
+
+    list(params: ParamsListFunctions): Observable<HttpResponse<Array<Function>>> {
+        return this._http.get<Array<Function>>(`${this._base}function`, {
+            params: params as any,
+            observe: 'response',
+        });
     }
 
-    list(params: ParamsListFunctions) {
-        return this.http.get(`${this.base}function`,
-            {
-                params: params as any,
-                observe: 'response',
-            });
-    }
-
-    get(name: string) {
-        return this.http.get(
-            `${this.base}function/${name}`
-        );
+    get(name: string): Observable<Function> {
+        return this._http.get<Function>(`${this._base}function/${name}`);
     }
 }
 
 export class ApiServiceMeta {
-    constructor(private http: HttpClient, private base: string) {
-    }
+    constructor(
+        private _http: HttpClient,
+        private _base: string
+    ) { }
 
-    get() {
-        return this.http.get(`${this.base}meta`);
+    get(): Observable<Meta> {
+        return this._http.get<Meta>(`${this._base}meta`);
     }
 }
 
 export class ApiServiceStats {
-    constructor(private http: HttpClient, private base: string) {
-    }
+    constructor(
+        private _http: HttpClient,
+        private _base: string
+    ) { }
 
-    get() {
-        return this.http.get(`${this.base}unsecured/stats`);
+    get(): Observable<Stats> {
+        return this._http.get<Stats>(`${this._base}unsecured/stats`);
     }
 }
 
@@ -244,7 +249,6 @@ export class ApiServiceResolution {
         );
     }
 
-
     add(resolution: NewResolution) {
         return this.http.post(
             `${this.base}resolution`,
@@ -259,9 +263,7 @@ export class ApiServiceResolution {
 export class ApiServiceOptions {
     constructor(
         @Inject('apiBaseUrl') public apiBaseUrl: string,
-    ) {
-
-    }
+    ) { }
 }
 
 @Injectable({
@@ -277,15 +279,15 @@ export class ApiService {
     private apiBaseUrl: string;
 
     constructor(
-        private http: HttpClient,
-        private options: ApiServiceOptions,
+        private _http: HttpClient,
+        private _options: ApiServiceOptions,
     ) {
-        this.apiBaseUrl = this.options.apiBaseUrl;
-        this.meta = new ApiServiceMeta(this.http, this.apiBaseUrl);
-        this.task = new ApiServiceTask(this.http, this.apiBaseUrl);
-        this.resolution = new ApiServiceResolution(this.http, this.apiBaseUrl);
-        this.stats = new ApiServiceStats(this.http, this.apiBaseUrl);
-        this.template = new ApiServiceTemplate(this.http, this.apiBaseUrl);
-        this.function = new ApiServiceFunction(this.http, this.apiBaseUrl);
+        this.apiBaseUrl = this._options.apiBaseUrl;
+        this.meta = new ApiServiceMeta(this._http, this.apiBaseUrl);
+        this.task = new ApiServiceTask(this._http, this.apiBaseUrl);
+        this.resolution = new ApiServiceResolution(this._http, this.apiBaseUrl);
+        this.stats = new ApiServiceStats(this._http, this.apiBaseUrl);
+        this.template = new ApiServiceTemplate(this._http, this.apiBaseUrl);
+        this.function = new ApiServiceFunction(this._http, this.apiBaseUrl);
     }
 }

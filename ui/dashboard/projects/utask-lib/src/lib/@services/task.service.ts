@@ -7,14 +7,23 @@ import { allSettled } from 'q';
 import { Subject } from 'rxjs';
 import Task from '../@models/task.model';
 import environment from '../@services/config';
+import { clone } from 'lodash-es';
 
 @Injectable()
 export class TaskService {
   private localStorageTags = `${environment.localStorage}tags`;
-  public tagsRaw: string[] = localStorage.getItem(this.localStorageTags) ? JSON.parse(localStorage.getItem(this.localStorageTags)) : [];
+  private tagsRaw: string[] = [];
   public tags = new Subject<string[]>();
 
-  constructor(private modalService: NgbModal, private api: ApiService) {
+  constructor(
+    private modalService: NgbModal,
+    private api: ApiService
+  ) {
+    this.tagsRaw = localStorage.getItem(this.localStorageTags) ? JSON.parse(localStorage.getItem(this.localStorageTags)) : [];
+  }
+
+  getTagsRaw(): Array<string> {
+    return clone(this.tagsRaw);
   }
 
   registerTags(task: Task): any {

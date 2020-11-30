@@ -1,41 +1,36 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import compact from 'lodash-es/compact';
-import clone from 'lodash-es/clone';
 import isString from 'lodash-es/isString';
-import isNumber from 'lodash-es/isNumber';
+import isArray from 'lodash-es/isArray';
 import { ToastrService } from 'ngx-toastr';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
-import { ApiService, ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
+import { ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 
 @Component({
   templateUrl: './tasks.html',
   styleUrls: ['./tasks.sass'],
 })
-export class TasksComponent implements OnInit, OnDestroy {
+export class TasksComponent implements OnInit {
   tags: string[] = [];
   meta: Meta = null;
   pagination: ParamsListTasks;
-  params: ParamsListTasks;
 
   constructor(
-    private api: ApiService,
-    private route: ActivatedRoute,
+    private _activateRoute: ActivatedRoute,
     private router: Router,
     private taskService: TaskService,
-    private zone: NgZone,
     private toastr: ToastrService
   ) { }
 
   ngOnInit() {
-    this.tags = clone(this.taskService.tagsRaw);
+    this.tags = this.taskService.getTagsRaw();
     this.taskService.tags.asObservable().subscribe((tags: string[]) => {
       this.tags = tags;
     });
-
-    this.meta = this.route.parent.snapshot.data.meta as Meta;
-    this.route.queryParams.subscribe(params => {
+    this.meta = this._activateRoute.snapshot.data.meta as Meta;
+    this._activateRoute.queryParams.subscribe(params => {
       this.pagination = this.queryToSearchTask(params);
       this.search();
     });
@@ -58,35 +53,34 @@ export class TasksComponent implements OnInit, OnDestroy {
     this.search();
   }
 
-  ngOnDestroy() {
-  }
-
   search() {
-    this.zone.run(() => {
-      this.params = clone(this.pagination);
+    let cleanParams = {};
+    Object.keys(this.pagination).filter(key => {
+      if (isArray(this.pagination[key])) {
+        return this.pagination[key].length > 0;
+      }
+      return !!this.pagination[key];
+    }).forEach(key => {
+      cleanParams[key] = this.pagination[key];
     });
-
     this.router.navigate([], {
-      queryParams: this.pagination,
-      queryParamsHandling: 'merge'
+      queryParams: cleanParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true // Useful to prevent adding a new entry in router history and keep the back/next navigation working
     });
   }
 
-  queryToSearchTask(p?: any): ParamsListTasks {
-    const params = clone(p || this.router.routerState.snapshot.root.queryParams);
-    if (params.tag && isString(params.tag)) {
-      params.tag = [params.tag];
-    }
+  queryToSearchTask(params): ParamsListTasks {
     const item = new ParamsListTasks();
-    if (params.itemPerPage && isNumber(+params.itemPerPage) && +params.itemPerPage <= 1000 && +params.itemPerPage >= 10) {
-      item.page_size = +params.itemPerPage;
-    } else {
-      item.page_size = 10;
-    }
+    const pageSize = parseInt(params.page_size, 10)
+    item.page_size = pageSize && 10 <= pageSize && pageSize <= 1000 ? pageSize : 10;
     const defaultType = this.meta.user_is_admin ? 'all' : 'own';
     item.type = params.type || defaultType;
     item.last = '';
     item.state = params.state || '';
+    if (params.tag && isString(params.tag)) {
+      params.tag = [params.tag];
+    }
     item.tag = params.tag || [];
     return item;
   }

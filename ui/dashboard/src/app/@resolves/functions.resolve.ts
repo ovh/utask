@@ -3,55 +3,51 @@ import { Router } from '@angular/router';
 import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
 import { ApiService, ParamsListFunctions } from 'projects/utask-lib/src/lib/@services/api.service';
+import Function from 'projects/utask-lib/src/lib/@models/function.model';
 
 @Injectable()
 export class FunctionsResolve implements Resolve<any> {
-    api: ApiService;
-    constructor(api: ApiService, private router: Router) {
-        this.api = api;
-    }
+    constructor(
+        private _api: ApiService,
+        private _router: Router
+    ) { }
 
-    hasLast(headers: HttpHeaders, pagination: any) {
+    hasLast(headers: HttpHeaders): string {
         const link = headers.get('link');
-        if (link) {
-            const match = link.match(/last=([^&;\s>]+)/);
-            if (match) {
-                pagination.last = match[1];
-                return true;
-            } else {
-                pagination.last = '';
-                return false;
-            }
-        } else {
-            pagination.last = '';
-            return false;
+        if (!link) {
+            return null;
         }
+        const match = link.match(/last=([^&;\s>]+)/);
+        if (!match) {
+            return null;
+        }
+        return match[1];
     }
 
-    resolve() {
-        return new Promise((resolve, reject) => {
-            const pagination: ParamsListFunctions = {
-                page_size: 1000,
-                last: ''
-            };
-            const load = (p: any, items: Function[] = []) => {
-                return this.api.function.list(pagination).toPromise().then((data) => {
-                    items = items.concat(data.body as Function[]);
-                    if (this.hasLast(data.headers, p)) {
-                        return load(p, items);
-                    } else {
-                        return items;
-                    }
-                }).catch((err) => {
-                    throw err;
-                });
-            };
-            load(pagination).then((functions: Function[]) => {
-                resolve(functions);
-            }).catch((err) => {
-                this.router.navigate(['/error']);
-                reject(err);
-            });
+    async resolve() {
+        const pagination: ParamsListFunctions = {
+            page_size: 1000
+        };
+
+        // Load first page
+        let items: Array<Function>;
+        let res = await this._api.function.list(pagination).toPromise().catch((err) => {
+            this._router.navigate(['/error']);
+            throw err;
         });
+        pagination.last = this.hasLast(res.headers);
+        items = res.body;
+
+        // Load more page if needed
+        while (pagination.last) {
+            res = await this._api.function.list(pagination).toPromise().catch((err) => {
+                this._router.navigate(['/error']);
+                throw err;
+            });
+            pagination.last = this.hasLast(res.headers);
+            items.push(...res.body);
+        }
+
+        return items;
     }
 }
