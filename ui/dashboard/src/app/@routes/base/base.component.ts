@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, NavigationEnd, Event } from '@angular/router';
-import get from 'lodash-es/get';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
+import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   templateUrl: './base.html',
@@ -12,43 +13,26 @@ export class BaseComponent implements OnInit {
 
   constructor(
     private _activatedRoute: ActivatedRoute,
-    private router: Router
+    private _router: Router,
+    private _titleService: Title
   ) {
-    this.router.events.subscribe((event: Event) => {
-      if (event instanceof NavigationEnd) {
-        window.scroll(0, 0);
-        // Navigation Service - Title & history
-        let route = this._activatedRoute;
+    this._router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(map(() => this._activatedRoute))
+      .pipe(map((route) => {
         while (route.firstChild) {
-          route = route.firstChild;
+            route = route.firstChild;
         }
-        route.data.subscribe((values) => {
-          // Title
-          if (typeof values.title === 'string') {
-            document.title = values.title;
-          } else if (values.title) {
-            let title = '';
-            const args = values.title.args.map((s: string) => {
-              return get(values, s);
-            });
-            title = this.format(values.title.value, ...args);
-            document.title = title;
-          }
-        });
-      }
-    });
+        return route;
+    }))
+      .pipe(filter(route => route.outlet === 'primary'))
+      .pipe(mergeMap(route => route.data))
+      .subscribe((routeData) => {
+        this._titleService.setTitle((routeData.title ? routeData.title + ' - ' : '') + routeData.meta.application_name);
+      });
   }
 
   ngOnInit() {
     this.meta = this._activatedRoute.snapshot.data.meta;
-  }
-
-  private format(str: string, ...args) {
-    return str.replace(/{(\d+)}/g, function (match, number) {
-      return typeof args[number] != 'undefined'
-        ? args[number]
-        : match
-        ;
-    });
   }
 }

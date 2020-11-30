@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule, Router } from '@angular/router';
+import { Routes, RouterModule } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,12 +37,8 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 const routes: Routes = [
-  {
-    path: 'error', component: ErrorComponent
-  },
-  {
-    path: '', redirectTo: '/tasks', pathMatch: 'full'
-  },
+  { path: 'error', component: ErrorComponent },
+  { path: '', redirectTo: '/tasks', pathMatch: 'full' },
   {
     path: '',
     component: BaseComponent,
@@ -55,85 +51,45 @@ const routes: Routes = [
       {
         path: 'tasks',
         component: TasksComponent,
-        data: {
-          title: {
-            value: '{0}',
-            args: ['meta.application_name']
-          }
-        }
+        data: { title: 'Tasks' }
       },
       {
         path: 'templates',
         component: TemplatesComponent,
-        data: {
-          title: {
-            value: 'Templates - {0}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Templates' },
       },
       {
         path: 'template/:templateName',
         component: TemplateComponent,
         runGuardsAndResolvers: 'paramsOrQueryParamsChange',
-        data: {
-          title: {
-            value: 'Template - {1}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Template' }
       },
       {
         path: 'functions',
         component: FunctionsComponent,
-        data: {
-          title: {
-            value: 'Functions - {0}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Functions' },
       },
       {
         path: 'function/:functionName',
         component: FunctionComponent,
         runGuardsAndResolvers: 'paramsOrQueryParamsChange',
-        data: {
-          title: {
-            value: 'Function - {1}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Function' },
       },
       {
         path: 'task/:id',
         component: TaskComponent,
         runGuardsAndResolvers: 'paramsOrQueryParamsChange',
-        data: {
-          title: {
-            value: 'Task - {0}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Task' }
       },
       {
         path: 'new',
         component: NewComponent,
-        data: {
-          title: {
-            value: 'New task - {0}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'New task' },
       },
       {
         path: 'stats',
         component: StatsComponent,
-        data: {
-          title: {
-            value: 'Stats - {0}',
-            args: ['meta.application_name']
-          }
-        },
+        data: { title: 'Stats' },
         resolve: {
           stats: StatsResolve
         }
@@ -173,13 +129,9 @@ const routes: Routes = [
     MatButtonToggleModule,
     MatCheckboxModule,
     MatButtonModule,
-    ToastrModule.forRoot({
-      positionClass: 'toast-bottom-right',
-    }),
+    ToastrModule.forRoot({ positionClass: 'toast-bottom-right', }),
     UTaskModule,
-    UTaskLibModule.forRoot({
-      apiBaseUrl: environment.apiBaseUrl
-    }),
+    UTaskLibModule.forRoot({ apiBaseUrl: environment.apiBaseUrl }),
     RouterModule.forRoot(
       routes,
       {
