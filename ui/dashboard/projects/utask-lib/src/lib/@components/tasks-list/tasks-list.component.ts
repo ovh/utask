@@ -1,10 +1,35 @@
-import { Component, OnDestroy, OnInit, Input, NgZone, OnChanges, Output, EventEmitter, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, of, Subscription } from 'rxjs';
-import { catchError, delay, finalize, map, repeat, startWith } from 'rxjs/operators';
+import {
+    Component,
+    OnDestroy,
+    OnInit,
+    Input,
+    NgZone,
+    Output,
+    EventEmitter,
+    ViewChild,
+    ChangeDetectorRef,
+    ChangeDetectionStrategy
+} from '@angular/core';
+import {
+    interval,
+    Observable,
+    of,
+    Subscription,
+    throwError
+} from 'rxjs';
+import {
+    catchError,
+    delay,
+    filter,
+    finalize,
+    first,
+    map,
+    repeat,
+    startWith
+} from 'rxjs/operators';
 import { ActiveInterval } from 'active-interval';
 import remove from 'lodash-es/remove';
 import get from 'lodash-es/get';
-import last from 'lodash-es/last';
 import reverse from 'lodash-es/reverse';
 import maxBy from 'lodash-es/maxBy';
 import * as moment_ from 'moment';
@@ -66,7 +91,7 @@ export class TasksListComponentOptions {
     styleUrls: ['./tasks-list.sass'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
+export class TasksListComponent implements OnInit, OnDestroy {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
 
     @Input() params: ParamsListTasks;
@@ -98,18 +123,15 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         private _cd: ChangeDetectorRef
     ) { }
 
-    ngOnInit() { this.initLoad(); }
-
-    ngOnDestroy() {
-        this.cancelRefresh();
-        this.interval.stopInterval();
+    ngOnInit() {
+        this.registerInfiniteScroll();
+        this.initRefreshTask();
     }
 
-    ngOnChanges() {
-        if (!this.firstLoad) {
-            this.search();
-        }
-        this.firstLoad = false;
+    ngOnDestroy() {
+        if (this.scrollSub) { this.scrollSub.unsubscribe() };
+        this.cancelRefresh();
+        this.interval.stopInterval();
     }
 
 
@@ -143,17 +165,67 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
 
     // Manage infinite scroll
-    // TODO infinite scroll should load new tzdk
 
-    registerScroll(): void {
-        if (this.scrollSub) { this.scrollSub.unsubscribe() }
-        this.scrollSub = this.nzTableComponent?.cdkVirtualScrollViewport?.scrolledIndexChange.subscribe((data: number) => {
-            console.log('scroll index to', data);
+    trackByIndex(n: number, data: Task): number { return n; }
+
+    async registerInfiniteScroll() {
+        // Wait for the table to be rendered
+        await interval(1000)
+            .pipe(map(() => {
+                const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+                return !!scrollComponent;
+            }))
+            .pipe(filter(exists => exists))
+            .pipe(first())
+            .toPromise()
+
+        // Handle first load usecase to call load tasks until the table is not full and there is more tasks available
+        const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+        const tableHeight = parseInt(this.nzTableComponent.nzScroll.y.split('px')[0], 10);
+        let contentHeight = 0;
+        while (this.firstLoad || (tableHeight >= contentHeight && this.hasMore)) {
+            this.firstLoad = false;
+            await this.loadMore();
+            this._cd.detectChanges();
+            contentHeight = scrollComponent.cdkVirtualScrollViewport.measureRenderedContentSize();
+        }
+
+        // Subscribe changes on scroll, when we reach the end of the table try to load more tasks
+        this.scrollSub = scrollComponent.cdkVirtualScrollViewport.scrolledIndexChange.subscribe(() => {
+            const offset = scrollComponent.cdkVirtualScrollViewport.measureScrollOffset('bottom');
+            if (offset < 100 && this.hasMore) {
+                this.loadMore();
+            }
         });
     }
 
-    trackByIndex(n: number, data: Task): number {
-        return n;
+    async loadMore() {
+        if (this.loaders.next) { return; }
+
+        const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
+
+        this.loaders.next = true;
+        const tasks = await this.loadTasks(paramLast)
+            .pipe(catchError(err => {
+                this.errors.next = err;
+                return throwError(err);
+            }))
+            .pipe(finalize(() => {
+                this.loaders.next = false;
+                this._cd.markForCheck();
+            })).toPromise();
+
+        this.errors.next = null;
+        this.tasks = this.tasks.concat(tasks);
+        tasks.forEach(t => this.taskService.registerTags(t));
+        this.hasMore = tasks.length === this.params.page_size;
+    }
+
+    loadTasks(paramLast: string = ''): Observable<Array<Task>> {
+        return this.api.task.list({
+            ...this.params,
+            last: paramLast
+        }).pipe(map(res => res.body));
     }
 
 
@@ -161,24 +233,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     // TODO subscribe for new task and refresh edited tasks
     // search params should not be listed in browser url if empty
 
-    initLoad() {
-        this.loaders.tasks = true;
-        this._cd.markForCheck();
-        this.loadTasks()
-            .pipe(catchError((err, tasks) => {
-                this.errors.tasks = err;
-                return [];
-            }))
-            .pipe(finalize(() => {
-                this.loaders.tasks = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.tasks = null;
-                this.tasks = tasks.map(t => this.taskService.registerTags(t));
-                this.hasMore = tasks.length === this.params.page_size;
-            });
-
+    initRefreshTask() {
         this.interval = new ActiveInterval();
         this.interval.setInterval(() => {
             if (this.tasks.length > 0 && !this.loaders.tasks) {
@@ -204,6 +259,12 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         }, this.options.refreshTasks, false);
     }
 
+    cancelRefresh() {
+        if (this.refresh.lastActivities) {
+            this.refresh.lastActivities = null;
+        }
+    }
+
     mergeTask(task: Task) {
         const i = this.tasks.findIndex(ta => ta.id === task.id);
         if (i < 0) {
@@ -225,12 +286,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             .pipe(map((tasks) => {
                 return reverse(tasks.filter(t => moment(t.last_activity).toDate() > lastActivity));
             }));
-    }
-
-    cancelRefresh() {
-        if (this.refresh.lastActivities) {
-            this.refresh.lastActivities = null;
-        }
     }
 
     refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
@@ -260,35 +315,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    loadTasks(paramLast: string = ''): Observable<Array<Task>> {
-        return this.api.task.list({
-            ...this.params,
-            last: paramLast
-        }).pipe(map(res => res.body));
-    }
-
-    next(force: boolean = false) {
-        if (this.loaders.next || (!this.hasMore && !force)) {
-            return;
-        }
-
-        this.loaders.next = true;
-        this.loadTasks(last(this.tasks).id)
-            .pipe(catchError((err, tasks) => {
-                this.errors.next = err;
-                return [];
-            }))
-            .pipe(finalize(() => {
-                this.loaders.next = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.next = null;
-                this.tasks = this.tasks.concat(tasks);
-                this.hasMore = (tasks as any[]).length === this.params.page_size;
-            });
-    }
-
     search() {
         this.clickCheckAll(false);
         this.cancelRefresh();
@@ -301,7 +327,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             }))
             .pipe(finalize(() => {
                 this.loaders.tasks = false;
-                this._cd.markForCheck();
+                this._cd.detectChanges();
+                this.registerInfiniteScroll();
             }))
             .subscribe((tasks: Task[]) => {
                 this.errors.tasks = null;

@@ -26,7 +26,7 @@ export class TaskService {
     return clone(this.tagsRaw);
   }
 
-  registerTags(task: Task): any {
+  registerTags(task: Task): void {
     let hasNewTags = false;
     const tags = Object.keys(get(task, 'tags', {}));
     tags.forEach((t: string) => {
@@ -39,7 +39,6 @@ export class TaskService {
       this.tags.next(this.tagsRaw);
       localStorage.setItem(this.localStorageTags, JSON.stringify(this.tagsRaw));
     }
-    return task;
   }
 
   delete(taskId: string) {
