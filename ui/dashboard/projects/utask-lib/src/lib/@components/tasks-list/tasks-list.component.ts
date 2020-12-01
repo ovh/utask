@@ -8,7 +8,8 @@ import {
     EventEmitter,
     ViewChild,
     ChangeDetectorRef,
-    ChangeDetectionStrategy
+    ChangeDetectionStrategy,
+    OnChanges
 } from '@angular/core';
 import {
     interval,
@@ -91,7 +92,7 @@ export class TasksListComponentOptions {
     styleUrls: ['./tasks-list.sass'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TasksListComponent implements OnInit, OnDestroy {
+export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
 
     @Input() params: ParamsListTasks;
@@ -100,8 +101,8 @@ export class TasksListComponent implements OnInit, OnDestroy {
     @Output() public event: EventEmitter<any> = new EventEmitter();
 
     tasks: Task[] = [];
-    hasMore = true;
-    firstLoad = true;
+    hasMore: boolean;
+    firstLoad: boolean;
     interval: ActiveInterval;
     refresh: { [key: string]: Subscription } = {};
     display: { [key: string]: boolean } = {};
@@ -124,16 +125,18 @@ export class TasksListComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit() {
-        this.registerInfiniteScroll();
         this.initRefreshTask();
     }
 
     ngOnDestroy() {
-        if (this.scrollSub) { this.scrollSub.unsubscribe() };
+        this.cancelScrollSub();
         this.cancelRefresh();
         this.interval.stopInterval();
     }
 
+    ngOnChanges(): void {
+        this.registerInfiniteScroll();
+    }
 
     // Manage task selection
 
@@ -169,8 +172,13 @@ export class TasksListComponent implements OnInit, OnDestroy {
     trackByIndex(n: number, data: Task): number { return n; }
 
     async registerInfiniteScroll() {
+        this.cancelScrollSub();
+        this.tasks = [];
+        this.firstLoad = true;
+        this.hasMore = true;
+
         // Wait for the table to be rendered
-        await interval(1000)
+        await interval(10)
             .pipe(map(() => {
                 const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
                 return !!scrollComponent;
@@ -186,7 +194,7 @@ export class TasksListComponent implements OnInit, OnDestroy {
         while (this.firstLoad || (tableHeight >= contentHeight && this.hasMore)) {
             this.firstLoad = false;
             await this.loadMore();
-            this._cd.detectChanges();
+            this._cd.detectChanges(); // force detect change to render the table and get its new size
             contentHeight = scrollComponent.cdkVirtualScrollViewport.measureRenderedContentSize();
         }
 
@@ -199,19 +207,24 @@ export class TasksListComponent implements OnInit, OnDestroy {
         });
     }
 
+    cancelScrollSub(): void {
+        if (this.scrollSub) { this.scrollSub.unsubscribe() };
+    }
+
     async loadMore() {
-        if (this.loaders.next) { return; }
+        if (this.loaders.tasks) { return; }
 
         const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
 
-        this.loaders.next = true;
+        this.loaders.tasks = true;
+        this._cd.markForCheck();
         const tasks = await this.loadTasks(paramLast)
             .pipe(catchError(err => {
                 this.errors.next = err;
                 return throwError(err);
             }))
             .pipe(finalize(() => {
-                this.loaders.next = false;
+                this.loaders.tasks = false;
                 this._cd.markForCheck();
             })).toPromise();
 
@@ -327,8 +340,7 @@ export class TasksListComponent implements OnInit, OnDestroy {
             }))
             .pipe(finalize(() => {
                 this.loaders.tasks = false;
-                this._cd.detectChanges();
-                this.registerInfiniteScroll();
+                this._cd.markForCheck();
             }))
             .subscribe((tasks: Task[]) => {
                 this.errors.tasks = null;

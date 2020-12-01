@@ -20,7 +20,8 @@
 </div>
 
 <nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="20"
-    [nzVirtualForTrackBy]="trackByIndex" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small">
+    [nzVirtualForTrackBy]="trackByIndex" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small"
+    [nzLoading]="loaders.tasks && tasks.length === 0">
     <thead>
         <tr>
             <th nzWidth="50px" [nzChecked]="!!bulkAllSelected" (nzCheckedChange)="clickCheckAll($event)">
