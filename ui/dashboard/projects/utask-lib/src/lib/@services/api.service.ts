@@ -105,8 +105,8 @@ export class ApiServiceTask {
         );
     }
 
-    get(id: string) {
-        return this.http.get(`${this.base}task/${id}`);
+    get(id: string): Observable<Task> {
+        return this.http.get<Task>(`${this.base}task/${id}`);
     }
 
     getAsYaml(id: string) {

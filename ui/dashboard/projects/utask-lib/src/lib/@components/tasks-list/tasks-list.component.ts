@@ -3,19 +3,16 @@ import {
     OnDestroy,
     OnInit,
     Input,
-    NgZone,
     Output,
     EventEmitter,
     ViewChild,
     ChangeDetectorRef,
     ChangeDetectionStrategy,
-    OnChanges,
-    SimpleChange
+    OnChanges
 } from '@angular/core';
 import {
     interval,
     Observable,
-    of,
     Subject,
     Subscription,
     throwError
@@ -23,20 +20,15 @@ import {
 import {
     catchError,
     concatMap,
-    delay,
     filter,
     finalize,
     first,
     map,
-    repeat,
-    startWith,
     tap
 } from 'rxjs/operators';
 import { ActiveInterval } from 'active-interval';
 import remove from 'lodash-es/remove';
 import get from 'lodash-es/get';
-import reverse from 'lodash-es/reverse';
-import maxBy from 'lodash-es/maxBy';
 import * as moment_ from 'moment';
 const moment = moment_;
 import Task from '../../@models/task.model';
@@ -45,7 +37,6 @@ import Meta from '../../@models/meta.model';
 import { ResolutionService } from '../../@services/resolution.service';
 import { TaskService } from '../../@services/task.service';
 import { NzTableComponent } from 'ng-zorro-antd/table';
-import { isEqual } from 'lodash-es';
 
 export class TaskActions {
     delete: boolean;
@@ -53,13 +44,15 @@ export class TaskActions {
     run: boolean;
     pause: boolean;
     extend: boolean;
+    more: boolean;
 
     constructor(t: Task, m: Meta) {
-        this.delete = m.user_is_admin && t.state !== 'BLOCKED';
-        this.cancel = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.run = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.pause = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.extend = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
+        this.run = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.cancel = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.pause = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.extend = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.delete = !(t.state === 'BLOCKED' || !m.user_is_admin);
+        this.more = this.pause || this.extend || this.delete;
     }
 
     public static mergeTaskActions(tas: Array<TaskActions>): TaskActions {
@@ -75,8 +68,8 @@ export class TaskActions {
                 cancel: res.cancel && ta.cancel,
                 run: res.run && ta.run,
                 pause: res.pause && ta.pause,
-                extend: res.extend && ta.extend
-            }
+                extend: res.extend && ta.extend,
+            } as TaskActions
         });
     }
 }
@@ -102,33 +95,32 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
     @Input() set params(data: ParamsListTasks) { this.registrerScroll.next(data); }
     get params() { return this._params; }
+    _params = new ParamsListTasks();
     @Input() meta: Meta;
     @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
     @Output() public event: EventEmitter<any> = new EventEmitter();
 
     tasks: Task[] = [];
-    hasMore: boolean;
+    loadingTasks: boolean;
     firstLoad: boolean;
-    interval: ActiveInterval;
-    refresh: { [key: string]: Subscription } = {};
-    display: { [key: string]: boolean } = {};
-    _params = new ParamsListTasks();
+    hasMore: boolean;
+    intervalLoadNewTasks: ActiveInterval;
+    newTasks: Task[] = [];
+    intervalRefreshTasks: Subscription;
+    tasksToRefresh: { [key: string]: number } = {};
 
     bulkAllSelected: boolean;
     bulkSelection: { [key: string]: boolean } = {};
     bulkActions: TaskActions;
 
-    loaders: { [key: string]: boolean } = {};
     errors: { [key: string]: any } = {};
-    iterableDiffer: any;
     scrollSub: Subscription;
     registrerScroll = new Subject<ParamsListTasks>();
 
     constructor(
-        private api: ApiService,
-        private resolutionService: ResolutionService,
-        private taskService: TaskService,
-        private zone: NgZone,
+        private _api: ApiService,
+        private _resolutionService: ResolutionService,
+        private _taskService: TaskService,
         private _cd: ChangeDetectorRef
     ) {
         this.registrerScroll
@@ -139,14 +131,15 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     ngOnInit() {
-        this.initRefreshTask();
+        this.initLoadNewTasks();
+        this.initRefreshTasks();
     }
 
     ngOnDestroy() {
         this.registrerScroll.complete();
         this.cancelScrollSub();
-        this.cancelRefresh();
-        if (this.interval) { this.interval.stopInterval(); }
+        this.cancelLoadNewTasks();
+        this.cancelRefreshTasks();
     }
 
     ngOnChanges(): void {
@@ -184,7 +177,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
     // Manage infinite scroll
 
-    trackByIndex(n: number, data: Task): number { return n; }
+    trackByTaskID(n: number, data: Task): string { return data.id + data.last_activity; }
 
     async registerInfiniteScroll() {
         this.cancelScrollSub();
@@ -194,10 +187,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
         // Wait for the table to be rendered
         await interval(10)
-            .pipe(map(() => {
-                const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
-                return !!scrollComponent;
-            }))
+            .pipe(map(() => !!this.nzTableComponent.nzTableInnerScrollComponent))
             .pipe(filter(exists => exists))
             .pipe(first())
             .toPromise()
@@ -227,30 +217,30 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     async loadMore() {
-        if (this.loaders.tasks) { return; }
+        if (this.loadingTasks) { return; }
 
         const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
 
-        this.loaders.tasks = true;
+        this.loadingTasks = true;
+        this.errors.loadMore = null;
         this._cd.markForCheck();
         const tasks = await this.loadTasks(paramLast)
             .pipe(catchError(err => {
-                this.errors.next = err;
+                this.errors.loadMore = err;
                 return throwError(err);
             }))
             .pipe(finalize(() => {
-                this.loaders.tasks = false;
+                this.loadingTasks = false;
                 this._cd.markForCheck();
             })).toPromise();
 
-        this.errors.next = null;
         this.tasks = this.tasks.concat(tasks);
-        tasks.forEach(t => this.taskService.registerTags(t));
+        tasks.forEach(t => this._taskService.registerTags(t));
         this.hasMore = tasks.length === this.params.page_size;
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
-        return this.api.task.list({
+        return this._api.task.list({
             ...this.params,
             last: paramLast
         }).pipe(map(res => res.body));
@@ -258,97 +248,111 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
 
     // Manage fetch task
-    // TODO subscribe for new task and refresh edited tasks
     // search params should not be listed in browser url if empty
 
-    initRefreshTask() {
-        this.interval = new ActiveInterval();
-        this.interval.setInterval(() => {
-            if (this.tasks.length > 0 && !this.loaders.tasks) {
-                const lastActivity = moment(maxBy(this.tasks, t => t.last_activity).last_activity).toDate();
-                this.refresh.lastActivities = this.fetchLastActivities(lastActivity)
-                    .subscribe((tasks: Task[]) => {
-                        tasks.forEach((task: Task) => {
-                            const t = this.tasks.find(ta => ta.id === task.id);
-                            if (t) {
-                                this.zone.run(() => {
-                                    this.mergeTask(t);
-                                });
-                                this.refreshTask(t.id, 4, this.options.refreshTask);
-                            } else {
-                                this.zone.run(() => {
-                                    this.tasks.unshift(task);
-                                });
-                                this.refreshTask(task.id, 4, this.options.refreshTask);
-                            }
-                        });
-                    });
+    initLoadNewTasks() {
+        this.intervalLoadNewTasks = new ActiveInterval();
+        this.intervalLoadNewTasks.setInterval(() => {
+            if (this.tasks.length === 0) {
+                return;
             }
+            const taskLastChanged = this.tasks.sort((a, b) => a.last_activity > b.last_activity ? -1 : 1)[0];
+            const lastActivity = moment(taskLastChanged.last_activity).toDate();
+            this.fetchNewTasks(lastActivity);
         }, this.options.refreshTasks, false);
     }
 
-    cancelRefresh() {
-        if (this.refresh.lastActivities) {
-            this.refresh.lastActivities = null;
-        }
-    }
+    async fetchNewTasks(lastActivity: Date) {
+        this.errors.fetchNewTasks = null;
+        this._cd.markForCheck();
+        const newTasks = await this.loadTasks()
+            .pipe(catchError(err => {
+                this.errors.fetchNewTasks = err;
+                this._cd.markForCheck();
+                return throwError(err);
+            }))
+            .toPromise();
 
-    mergeTask(task: Task) {
-        const i = this.tasks.findIndex(ta => ta.id === task.id);
-        if (i < 0) {
-            return;
-        }
-        this.tasks[i].title = task.title;
-        this.tasks[i].state = task.state;
-        this.tasks[i].steps_done = task.steps_done;
-        this.tasks[i].steps_total = task.steps_total;
-        this.tasks[i].last_activity = task.last_activity;
-        this.tasks[i].resolution = task.resolution;
-        this.tasks[i].last_start = task.last_start;
-        this.tasks[i].last_stop = task.last_stop;
-        this.tasks[i].resolver_username = task.resolver_username;
-    }
+        // Last tasks will be added to new tasks list waiting for the user to display it
+        this.newTasks = newTasks
+            .filter(t => moment(t.last_activity).toDate() > lastActivity)
+            .filter(t => !this.tasks.find(ta => ta.id === t.id))
+            .sort((a, b) => a.last_activity > b.last_activity ? -1 : 1);
 
-    fetchLastActivities(lastActivity: Date, allTasks: Task[] = [], last: string = ''): Observable<Array<Task>> {
-        return this.loadTasks(last)
-            .pipe(map((tasks) => {
-                return reverse(tasks.filter(t => moment(t.last_activity).toDate() > lastActivity));
-            }));
-    }
-
-    refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
-        if (this.loaders[`task${id}`]) {
-            return;
-        }
-        const sub = of(id).pipe(delay(delayMillisecond)).pipe(repeat(times - 1)).pipe(startWith(id)).subscribe((id: string) => {
-            this.zone.run(() => {
-                this.loaders[`task${id}`] = true;
-            });
-            this.api.task.get(id).toPromise().then((task: Task) => {
-                this.zone.run(() => {
-                    this.mergeTask(task);
-                });
-                if (['DONE', 'CANCELLED'].indexOf(task.state) > -1) {
-                    sub.unsubscribe();
-                }
-            });
-        }, (err) => {
-            if (err.status === 404) {
-                remove(this.tasks, { id });
-            }
-        }, () => {
-            this.zone.run(() => {
-                this.loaders[`task${id}`] = false;
-            });
+        // Also we update the tasks that are already visible
+        // We don't refresh all the tasks in the table but the only the one returns when searching for new tasks
+        this.tasks = this.tasks.map(t => {
+            const updatedTask = newTasks.find(ta => ta.id === t.id);
+            return updatedTask ? updatedTask : t;
         });
+
+        this._cd.markForCheck();
     }
 
+    cancelLoadNewTasks() {
+        if (this.intervalLoadNewTasks) { this.intervalLoadNewTasks.stopInterval(); }
+    }
+
+    clickShowNewTasks() {
+        this.tasks = this.newTasks.concat(this.tasks);
+        this.newTasks = [];
+        this._cd.markForCheck();
+    }
+
+    initRefreshTasks() {
+        this.intervalRefreshTasks = interval(this.options.refreshTask)
+            .pipe(concatMap(() => this.refreshTasks()))
+            .subscribe(() => { });
+    }
+
+    cancelRefreshTasks() {
+        if (this.intervalRefreshTasks) { this.intervalRefreshTasks.unsubscribe(); }
+    }
+
+    async refreshTasks() {
+        const taskIDs = Object.keys(this.tasksToRefresh)
+            .filter(k => this.tasksToRefresh[k] > 0);
+
+        if (taskIDs.length === 0) {
+            return;
+        }
+
+        this.errors.refreshTasks = null;
+        this._cd.markForCheck();
+
+        let tasks: Array<Task>;
+        try {
+            tasks = await Promise.all(taskIDs.map(k => this._api.task.get(k).toPromise()))
+        } catch (e) {
+            this.errors.refreshTasks = e;
+            this._cd.markForCheck();
+            return;
+        }
+
+        this.tasks = this.tasks.map(t => {
+            const updatedTask = tasks.find(ta => ta.id === t.id);
+            return updatedTask ? updatedTask : t;
+        });
+
+        // Decrement or stop task refresh
+        tasks.forEach(t => {
+            if (['DONE', 'CANCELLED'].indexOf(t.state) > -1) {
+                this.tasksToRefresh[t.id] = 0;
+            } else {
+                this.tasksToRefresh[t.id]--;
+            }
+        });
+
+        this._cd.markForCheck();
+    }
+
+    getTaskActions(t: Task) { return new TaskActions(t, this.meta); }
 
     // Manage actions on task
 
     cancelResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.cancel(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 1, this.options.refreshTask);
+        this._resolutionService.cancel(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 1;
             this.event.emit({ type: 'info', message: 'The resolution has been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -361,12 +365,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.cancelAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            // taskIds.forEach((id) => {
-            //     this.refreshTask(id, 4, this.options.refreshTask);
-            // });
+        this._resolutionService.cancelAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -378,8 +378,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     pauseResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.pause(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.pause(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been paused.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -391,11 +391,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
 
-        this.resolutionService.pauseAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.pauseAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been paused.' });
         }).catch((err) => {
             if (err === 'close') {
@@ -407,8 +404,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     extendResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.extend(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.extend(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been extended.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -419,12 +416,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.extendAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.extendAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been extended.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -436,7 +429,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     deleteTask(id: string) {
-        this.taskService.delete(id).then((data: any) => {
+        this._taskService.delete(id).then((data: any) => {
             remove(this.tasks, { id });
             this.event.emit({ type: 'info', message: 'The task has been deleted.' });
         }).catch((err) => {
@@ -448,29 +441,22 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
     deleteAll() {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
-
-        this.taskService.deleteAll(selectedTaskIDs).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id: string) => {
-            //    remove(this.tasks, { id });
-            //})
+        this._taskService.deleteAll(selectedTaskIDs).then(() => {
+            selectedTaskIDs.forEach(id => { remove(this.tasks, { id }); });
+            this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 1);
-            //});
         }).finally(() => {
             this.clickCheckAll(false);
         });
     }
 
     runResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.run(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.run(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been run.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -481,12 +467,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.runAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.runAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been run.' });
         }).catch((err) => {
             if (err !== 'close') {
