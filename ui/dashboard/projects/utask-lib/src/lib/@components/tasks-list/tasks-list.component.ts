@@ -8,7 +8,8 @@ import {
     ViewChild,
     ChangeDetectorRef,
     ChangeDetectionStrategy,
-    OnChanges
+    OnChanges,
+    NgZone
 } from '@angular/core';
 import {
     interval,
@@ -26,7 +27,6 @@ import {
     map,
     tap
 } from 'rxjs/operators';
-import { ActiveInterval } from 'active-interval';
 import remove from 'lodash-es/remove';
 import get from 'lodash-es/get';
 import * as moment_ from 'moment';
@@ -104,7 +104,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     loadingTasks: boolean;
     firstLoad: boolean;
     hasMore: boolean;
-    intervalLoadNewTasks: ActiveInterval;
+    intervalLoadNewTasks: Subscription;
     newTasks: Task[] = [];
     intervalRefreshTasks: Subscription;
     tasksToRefresh: { [key: string]: number } = {};
@@ -121,7 +121,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         private _api: ApiService,
         private _resolutionService: ResolutionService,
         private _taskService: TaskService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _zone: NgZone
     ) {
         this.registrerScroll
             .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
@@ -174,7 +175,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         this._cd.markForCheck();
     }
 
-
     // Manage infinite scroll
 
     trackByTaskID(n: number, data: Task): string { return data.id + data.last_activity; }
@@ -203,12 +203,14 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             contentHeight = scrollComponent.cdkVirtualScrollViewport.measureRenderedContentSize();
         }
 
-        // Subscribe changes on scroll, when we reach the end of the table try to load more tasks
-        this.scrollSub = scrollComponent.cdkVirtualScrollViewport.scrolledIndexChange.subscribe(() => {
-            const offset = scrollComponent.cdkVirtualScrollViewport.measureScrollOffset('bottom');
-            if (offset < 100 && this.hasMore) {
-                this.loadMore();
-            }
+        this._zone.runOutsideAngular(() => {
+            // Subscribe changes on scroll, when we reach the end of the table try to load more tasks
+            this.scrollSub = scrollComponent.cdkVirtualScrollViewport.scrolledIndexChange.subscribe(() => {
+                const offset = scrollComponent.cdkVirtualScrollViewport.measureScrollOffset('bottom');
+                if (offset < 100 && this.hasMore) {
+                    this.loadMore();
+                }
+            });
         });
     }
 
@@ -221,22 +223,29 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
         const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
 
-        this.loadingTasks = true;
-        this.errors.loadMore = null;
+        this._zone.run(() => {
+            this.loadingTasks = true;
+            this.errors.loadMore = null;
+        });
         this._cd.markForCheck();
         const tasks = await this.loadTasks(paramLast)
             .pipe(catchError(err => {
-                this.errors.loadMore = err;
+                this._zone.run(() => { this.errors.loadMore = err; });
                 return throwError(err);
             }))
             .pipe(finalize(() => {
-                this.loadingTasks = false;
-                this._cd.markForCheck();
+                this._zone.run(() => {
+                    this.loadingTasks = false;
+                    this._cd.markForCheck();
+                });
             })).toPromise();
 
-        this.tasks = this.tasks.concat(tasks);
-        tasks.forEach(t => this._taskService.registerTags(t));
-        this.hasMore = tasks.length === this.params.page_size;
+        this._zone.run(() => {
+            this.tasks = this.tasks.concat(tasks);
+            tasks.forEach(t => this._taskService.registerTags(t));
+            this.hasMore = tasks.length === this.params.page_size;
+            this._cd.markForCheck();
+        });
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
@@ -246,51 +255,57 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         }).pipe(map(res => res.body));
     }
 
-
     // Manage fetch task
     // search params should not be listed in browser url if empty
 
     initLoadNewTasks() {
-        this.intervalLoadNewTasks = new ActiveInterval();
-        this.intervalLoadNewTasks.setInterval(() => {
-            if (this.tasks.length === 0) {
-                return;
-            }
-            const taskLastChanged = this.tasks.sort((a, b) => a.last_activity > b.last_activity ? -1 : 1)[0];
-            const lastActivity = moment(taskLastChanged.last_activity).toDate();
-            this.fetchNewTasks(lastActivity);
-        }, this.options.refreshTasks, false);
+        this._zone.runOutsideAngular(() => {
+            this.intervalLoadNewTasks = interval(this.options.refreshTasks)
+                .pipe(filter(() => this.tasks.length > 0))
+                .pipe(map(() => {
+                    const taskLastChanged = this.tasks.sort((a, b) => a.last_activity > b.last_activity ? -1 : 1)[0];
+                    return moment(taskLastChanged.last_activity).toDate();
+                }))
+                .pipe(concatMap((lastActivity) => this.fetchNewTasks(lastActivity)))
+                .subscribe(() => { });
+        });
     }
 
     async fetchNewTasks(lastActivity: Date) {
-        this.errors.fetchNewTasks = null;
-        this._cd.markForCheck();
+        this._zone.run(() => {
+            this.errors.fetchNewTasks = null;
+            this._cd.markForCheck();
+        });
         const newTasks = await this.loadTasks()
             .pipe(catchError(err => {
-                this.errors.fetchNewTasks = err;
-                this._cd.markForCheck();
+                this._zone.run(() => {
+                    this.errors.fetchNewTasks = err;
+                    this._cd.markForCheck();
+                });
                 return throwError(err);
             }))
             .toPromise();
 
-        // Last tasks will be added to new tasks list waiting for the user to display it
-        this.newTasks = newTasks
-            .filter(t => moment(t.last_activity).toDate() > lastActivity)
-            .filter(t => !this.tasks.find(ta => ta.id === t.id))
-            .sort((a, b) => a.last_activity > b.last_activity ? -1 : 1);
+        this._zone.run(() => {
+            // Last tasks will be added to new tasks list waiting for the user to display it
+            this.newTasks = newTasks
+                .filter(t => moment(t.last_activity).toDate() > lastActivity)
+                .filter(t => !this.tasks.find(ta => ta.id === t.id))
+                .sort((a, b) => a.last_activity > b.last_activity ? -1 : 1);
 
-        // Also we update the tasks that are already visible
-        // We don't refresh all the tasks in the table but the only the one returns when searching for new tasks
-        this.tasks = this.tasks.map(t => {
-            const updatedTask = newTasks.find(ta => ta.id === t.id);
-            return updatedTask ? updatedTask : t;
+            // Also we update the tasks that are already visible
+            // We don't refresh all the tasks in the table but the only the one returns when searching for new tasks
+            this.tasks = this.tasks.map(t => {
+                const updatedTask = newTasks.find(ta => ta.id === t.id);
+                return updatedTask ? updatedTask : t;
+            });
+
+            this._cd.markForCheck();
         });
-
-        this._cd.markForCheck();
     }
 
     cancelLoadNewTasks() {
-        if (this.intervalLoadNewTasks) { this.intervalLoadNewTasks.stopInterval(); }
+        if (this.intervalLoadNewTasks) { this.intervalLoadNewTasks.unsubscribe(); }
     }
 
     clickShowNewTasks() {
@@ -430,7 +445,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
     deleteTask(id: string) {
         this._taskService.delete(id).then((data: any) => {
-            remove(this.tasks, { id });
+            this.tasks = this.tasks.filter(t => t.id !== id);
+            this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The task has been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -442,7 +458,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     deleteAll() {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         this._taskService.deleteAll(selectedTaskIDs).then(() => {
-            selectedTaskIDs.forEach(id => { remove(this.tasks, { id }); });
+            this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(ta => ta.id === t.id));
             this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {

@@ -18,7 +18,7 @@
     </nz-dropdown-menu>
 </div>
 
-<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="20"
+<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="1"
     [nzVirtualForTrackBy]="trackByTaskID" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small"
     [nzLoading]="loadingTasks && tasks.length === 0">
     <thead>
