@@ -9,24 +9,28 @@ import {
     ViewChild,
     ChangeDetectorRef,
     ChangeDetectionStrategy,
-    OnChanges
+    OnChanges,
+    SimpleChange
 } from '@angular/core';
 import {
     interval,
     Observable,
     of,
+    Subject,
     Subscription,
     throwError
 } from 'rxjs';
 import {
     catchError,
+    concatMap,
     delay,
     filter,
     finalize,
     first,
     map,
     repeat,
-    startWith
+    startWith,
+    tap
 } from 'rxjs/operators';
 import { ActiveInterval } from 'active-interval';
 import remove from 'lodash-es/remove';
@@ -41,6 +45,7 @@ import Meta from '../../@models/meta.model';
 import { ResolutionService } from '../../@services/resolution.service';
 import { TaskService } from '../../@services/task.service';
 import { NzTableComponent } from 'ng-zorro-antd/table';
+import { isEqual } from 'lodash-es';
 
 export class TaskActions {
     delete: boolean;
@@ -95,7 +100,8 @@ export class TasksListComponentOptions {
 export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
 
-    @Input() params: ParamsListTasks;
+    @Input() set params(data: ParamsListTasks) { this.registrerScroll.next(data); }
+    get params() { return this._params; }
     @Input() meta: Meta;
     @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
     @Output() public event: EventEmitter<any> = new EventEmitter();
@@ -106,6 +112,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     interval: ActiveInterval;
     refresh: { [key: string]: Subscription } = {};
     display: { [key: string]: boolean } = {};
+    _params = new ParamsListTasks();
 
     bulkAllSelected: boolean;
     bulkSelection: { [key: string]: boolean } = {};
@@ -115,6 +122,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     errors: { [key: string]: any } = {};
     iterableDiffer: any;
     scrollSub: Subscription;
+    registrerScroll = new Subject<ParamsListTasks>();
 
     constructor(
         private api: ApiService,
@@ -122,20 +130,27 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         private taskService: TaskService,
         private zone: NgZone,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        this.registrerScroll
+            .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
+            .pipe(tap(data => this._params = { ...data }))
+            .pipe(concatMap(() => this.registerInfiniteScroll()))
+            .subscribe(() => { });
+    }
 
     ngOnInit() {
         this.initRefreshTask();
     }
 
     ngOnDestroy() {
+        this.registrerScroll.complete();
         this.cancelScrollSub();
         this.cancelRefresh();
-        this.interval.stopInterval();
+        if (this.interval) { this.interval.stopInterval(); }
     }
 
     ngOnChanges(): void {
-        this.registerInfiniteScroll();
+        this.clickCheckAll(false);
     }
 
     // Manage task selection
@@ -328,27 +343,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    search() {
-        this.clickCheckAll(false);
-        this.cancelRefresh();
-
-        this.loaders.tasks = true;
-        this.loadTasks()
-            .pipe(catchError((err, tasks) => {
-                this.errors.tasks = err;
-                return [];
-            }))
-            .pipe(finalize(() => {
-                this.loaders.tasks = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.tasks = null;
-                this.tasks = tasks;
-                this.hasMore = (tasks as any[]).length === this.params.page_size;
-            });
-    }
-
 
     // Manage actions on task
 
@@ -376,7 +370,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             this.event.emit({ type: 'info', message: 'The tasks have been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -405,8 +398,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             //});
             this.event.emit({ type: 'info', message: 'The tasks have been paused.' });
         }).catch((err) => {
-            if (err !== 'close') {
-                this.search();
+            if (err === 'close') {
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -436,7 +428,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             this.event.emit({ type: 'info', message: 'The tasks have been extended.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -466,7 +457,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
             // TODO fix refresh tasks
@@ -500,7 +490,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             this.event.emit({ type: 'info', message: 'The tasks have been run.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => { this.clickCheckAll(false); });

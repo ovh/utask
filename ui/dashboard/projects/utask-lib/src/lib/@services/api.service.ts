@@ -13,6 +13,10 @@ export class ParamsListTasks {
     type: TaskType;
     last?: string;
     state?: TaskState;
+
+    public static equals(a: ParamsListTasks, b: ParamsListTasks): boolean {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
 }
 
 export class NewTask {
