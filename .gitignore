@@ -44,5 +44,5 @@ scripts/*
 dist/
 
 # Templates & functions
-templates
-functions
+/templates
+/functions
