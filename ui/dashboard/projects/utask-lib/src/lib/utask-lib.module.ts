@@ -38,6 +38,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 
 const components: any[] = [
   LoaderComponent,
@@ -83,6 +84,7 @@ interface UtaskLibConfiguration {
     NzInputModule,
     NzSelectModule,
     NzAutocompleteModule,
+    NzModalModule,
     NzGridModule,
   ],
   exports: components,

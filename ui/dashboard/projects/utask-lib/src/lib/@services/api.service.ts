@@ -13,6 +13,10 @@ export class ParamsListTasks {
     type: TaskType;
     last?: string;
     state?: TaskState;
+
+    public static equals(a: ParamsListTasks, b: ParamsListTasks): boolean {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
 }
 
 export class NewTask {
@@ -101,8 +105,8 @@ export class ApiServiceTask {
         );
     }
 
-    get(id: string) {
-        return this.http.get(`${this.base}task/${id}`);
+    get(id: string): Observable<Task> {
+        return this.http.get<Task>(`${this.base}task/${id}`);
     }
 
     getAsYaml(id: string) {

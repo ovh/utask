@@ -40,6 +40,7 @@ export class InputTagsComponent implements AfterViewInit {
 
     addItem(): void {
         this.values.push(this.currentTag);
+        this.currentTag = '';
         this._cd.markForCheck();
         this.emitValuesChanged();
     }
@@ -81,6 +82,9 @@ export class InputTagsComponent implements AfterViewInit {
                 e.preventDefault();
                 if (this.inputTagValid) {
                     this.addItem();
+                } else if (this.currentTag && this.currentTag.indexOf('=') === -1) {
+                    this.currentTag += '=';
+                    this._cd.markForCheck();
                 }
                 break;
         }

@@ -1,12 +1,34 @@
-import { Component, OnDestroy, OnInit, Input, NgZone, OnChanges, Output, EventEmitter, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, of, Subscription } from 'rxjs';
-import { catchError, delay, finalize, map, repeat, startWith } from 'rxjs/operators';
-import { ActiveInterval } from 'active-interval';
+import {
+    Component,
+    OnDestroy,
+    OnInit,
+    Input,
+    Output,
+    EventEmitter,
+    ViewChild,
+    ChangeDetectorRef,
+    ChangeDetectionStrategy,
+    OnChanges,
+    NgZone
+} from '@angular/core';
+import {
+    interval,
+    Observable,
+    Subject,
+    Subscription,
+    throwError
+} from 'rxjs';
+import {
+    catchError,
+    concatMap,
+    filter,
+    finalize,
+    first,
+    map,
+    tap
+} from 'rxjs/operators';
 import remove from 'lodash-es/remove';
 import get from 'lodash-es/get';
-import last from 'lodash-es/last';
-import reverse from 'lodash-es/reverse';
-import maxBy from 'lodash-es/maxBy';
 import * as moment_ from 'moment';
 const moment = moment_;
 import Task from '../../@models/task.model';
@@ -22,13 +44,15 @@ export class TaskActions {
     run: boolean;
     pause: boolean;
     extend: boolean;
+    more: boolean;
 
     constructor(t: Task, m: Meta) {
-        this.delete = m.user_is_admin && t.state !== 'BLOCKED';
-        this.cancel = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.run = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.pause = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
-        this.extend = !(!t.resolution || t.state === 'DONE' || t.state === 'CANCELLED');
+        this.run = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.cancel = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.pause = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.extend = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.delete = !(t.state === 'BLOCKED' || !m.user_is_admin);
+        this.more = this.pause || this.extend || this.delete;
     }
 
     public static mergeTaskActions(tas: Array<TaskActions>): TaskActions {
@@ -44,8 +68,8 @@ export class TaskActions {
                 cancel: res.cancel && ta.cancel,
                 run: res.run && ta.run,
                 pause: res.pause && ta.pause,
-                extend: res.extend && ta.extend
-            }
+                extend: res.extend && ta.extend,
+            } as TaskActions
         });
     }
 }
@@ -69,49 +93,59 @@ export class TasksListComponentOptions {
 export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
 
-    @Input() params: ParamsListTasks;
+    @Input() set params(data: ParamsListTasks) { this.registrerScroll.next(data); }
+    get params() { return this._params; }
+    _params = new ParamsListTasks();
     @Input() meta: Meta;
     @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
     @Output() public event: EventEmitter<any> = new EventEmitter();
 
     tasks: Task[] = [];
-    hasMore = true;
-    firstLoad = true;
-    interval: ActiveInterval;
-    refresh: { [key: string]: Subscription } = {};
-    display: { [key: string]: boolean } = {};
+    loadingTasks: boolean;
+    firstLoad: boolean;
+    hasMore: boolean;
+    intervalLoadNewTasks: Subscription;
+    newTasks: Task[] = [];
+    intervalRefreshTasks: Subscription;
+    tasksToRefresh: { [key: string]: number } = {};
 
     bulkAllSelected: boolean;
     bulkSelection: { [key: string]: boolean } = {};
     bulkActions: TaskActions;
 
-    loaders: { [key: string]: boolean } = {};
     errors: { [key: string]: any } = {};
-    iterableDiffer: any;
     scrollSub: Subscription;
+    registrerScroll = new Subject<ParamsListTasks>();
 
     constructor(
-        private api: ApiService,
-        private resolutionService: ResolutionService,
-        private taskService: TaskService,
-        private zone: NgZone,
-        private _cd: ChangeDetectorRef
-    ) { }
+        private _api: ApiService,
+        private _resolutionService: ResolutionService,
+        private _taskService: TaskService,
+        private _cd: ChangeDetectorRef,
+        private _zone: NgZone
+    ) {
+        this.registrerScroll
+            .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
+            .pipe(tap(data => this._params = { ...data }))
+            .pipe(concatMap(() => this.registerInfiniteScroll()))
+            .subscribe(() => { });
+    }
 
-    ngOnInit() { this.initLoad(); }
+    ngOnInit() {
+        this.initLoadNewTasks();
+        this.initRefreshTasks();
+    }
 
     ngOnDestroy() {
-        this.cancelRefresh();
-        this.interval.stopInterval();
+        this.registrerScroll.complete();
+        this.cancelScrollSub();
+        this.cancelLoadNewTasks();
+        this.cancelRefreshTasks();
     }
 
-    ngOnChanges() {
-        if (!this.firstLoad) {
-            this.search();
-        }
-        this.firstLoad = false;
+    ngOnChanges(): void {
+        this.clickCheckAll(false);
     }
-
 
     // Manage task selection
 
@@ -141,181 +175,199 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         this._cd.markForCheck();
     }
 
-
     // Manage infinite scroll
-    // TODO infinite scroll should load new tzdk
 
-    registerScroll(): void {
-        if (this.scrollSub) { this.scrollSub.unsubscribe() }
-        this.scrollSub = this.nzTableComponent?.cdkVirtualScrollViewport?.scrolledIndexChange.subscribe((data: number) => {
-            console.log('scroll index to', data);
+    trackByTaskID(n: number, data: Task): string { return data.id + data.last_activity; }
+
+    async registerInfiniteScroll() {
+        this.cancelScrollSub();
+        this.tasks = [];
+        this.firstLoad = true;
+        this.hasMore = true;
+
+        // Wait for the table to be rendered
+        await interval(10)
+            .pipe(map(() => !!this.nzTableComponent.nzTableInnerScrollComponent))
+            .pipe(filter(exists => exists))
+            .pipe(first())
+            .toPromise()
+
+        // Handle first load usecase to call load tasks until the table is not full and there is more tasks available
+        const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+        const tableHeight = parseInt(this.nzTableComponent.nzScroll.y.split('px')[0], 10);
+        let contentHeight = 0;
+        while (this.firstLoad || (tableHeight >= contentHeight && this.hasMore)) {
+            this.firstLoad = false;
+            await this.loadMore();
+            this._cd.detectChanges(); // force detect change to render the table and get its new size
+            contentHeight = scrollComponent.cdkVirtualScrollViewport.measureRenderedContentSize();
+        }
+
+        this._zone.runOutsideAngular(() => {
+            // Subscribe changes on scroll, when we reach the end of the table try to load more tasks
+            this.scrollSub = scrollComponent.cdkVirtualScrollViewport.scrolledIndexChange.subscribe(() => {
+                const offset = scrollComponent.cdkVirtualScrollViewport.measureScrollOffset('bottom');
+                if (offset < 100 && this.hasMore) {
+                    this.loadMore();
+                }
+            });
         });
     }
 
-    trackByIndex(n: number, data: Task): number {
-        return n;
+    cancelScrollSub(): void {
+        if (this.scrollSub) { this.scrollSub.unsubscribe() };
     }
 
+    async loadMore() {
+        if (this.loadingTasks) { return; }
 
-    // Manage fetch task
-    // TODO subscribe for new task and refresh edited tasks
-    // search params should not be listed in browser url if empty
+        const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
 
-    initLoad() {
-        this.loaders.tasks = true;
+        this._zone.run(() => {
+            this.loadingTasks = true;
+            this.errors.loadMore = null;
+        });
         this._cd.markForCheck();
-        this.loadTasks()
-            .pipe(catchError((err, tasks) => {
-                this.errors.tasks = err;
-                return [];
+        const tasks = await this.loadTasks(paramLast)
+            .pipe(catchError(err => {
+                this._zone.run(() => { this.errors.loadMore = err; });
+                return throwError(err);
             }))
             .pipe(finalize(() => {
-                this.loaders.tasks = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.tasks = null;
-                this.tasks = tasks.map(t => this.taskService.registerTags(t));
-                this.hasMore = tasks.length === this.params.page_size;
-            });
-
-        this.interval = new ActiveInterval();
-        this.interval.setInterval(() => {
-            if (this.tasks.length > 0 && !this.loaders.tasks) {
-                const lastActivity = moment(maxBy(this.tasks, t => t.last_activity).last_activity).toDate();
-                this.refresh.lastActivities = this.fetchLastActivities(lastActivity)
-                    .subscribe((tasks: Task[]) => {
-                        tasks.forEach((task: Task) => {
-                            const t = this.tasks.find(ta => ta.id === task.id);
-                            if (t) {
-                                this.zone.run(() => {
-                                    this.mergeTask(t);
-                                });
-                                this.refreshTask(t.id, 4, this.options.refreshTask);
-                            } else {
-                                this.zone.run(() => {
-                                    this.tasks.unshift(task);
-                                });
-                                this.refreshTask(task.id, 4, this.options.refreshTask);
-                            }
-                        });
-                    });
-            }
-        }, this.options.refreshTasks, false);
-    }
-
-    mergeTask(task: Task) {
-        const i = this.tasks.findIndex(ta => ta.id === task.id);
-        if (i < 0) {
-            return;
-        }
-        this.tasks[i].title = task.title;
-        this.tasks[i].state = task.state;
-        this.tasks[i].steps_done = task.steps_done;
-        this.tasks[i].steps_total = task.steps_total;
-        this.tasks[i].last_activity = task.last_activity;
-        this.tasks[i].resolution = task.resolution;
-        this.tasks[i].last_start = task.last_start;
-        this.tasks[i].last_stop = task.last_stop;
-        this.tasks[i].resolver_username = task.resolver_username;
-    }
-
-    fetchLastActivities(lastActivity: Date, allTasks: Task[] = [], last: string = ''): Observable<Array<Task>> {
-        return this.loadTasks(last)
-            .pipe(map((tasks) => {
-                return reverse(tasks.filter(t => moment(t.last_activity).toDate() > lastActivity));
-            }));
-    }
-
-    cancelRefresh() {
-        if (this.refresh.lastActivities) {
-            this.refresh.lastActivities = null;
-        }
-    }
-
-    refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
-        if (this.loaders[`task${id}`]) {
-            return;
-        }
-        const sub = of(id).pipe(delay(delayMillisecond)).pipe(repeat(times - 1)).pipe(startWith(id)).subscribe((id: string) => {
-            this.zone.run(() => {
-                this.loaders[`task${id}`] = true;
-            });
-            this.api.task.get(id).toPromise().then((task: Task) => {
-                this.zone.run(() => {
-                    this.mergeTask(task);
+                this._zone.run(() => {
+                    this.loadingTasks = false;
+                    this._cd.markForCheck();
                 });
-                if (['DONE', 'CANCELLED'].indexOf(task.state) > -1) {
-                    sub.unsubscribe();
-                }
-            });
-        }, (err) => {
-            if (err.status === 404) {
-                remove(this.tasks, { id });
-            }
-        }, () => {
-            this.zone.run(() => {
-                this.loaders[`task${id}`] = false;
-            });
+            })).toPromise();
+
+        this._zone.run(() => {
+            this.tasks = this.tasks.concat(tasks);
+            tasks.forEach(t => this._taskService.registerTags(t));
+            this.hasMore = tasks.length === this.params.page_size;
+            this._cd.markForCheck();
         });
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
-        return this.api.task.list({
+        return this._api.task.list({
             ...this.params,
             last: paramLast
         }).pipe(map(res => res.body));
     }
 
-    next(force: boolean = false) {
-        if (this.loaders.next || (!this.hasMore && !force)) {
+    // Manage fetch task
+    // search params should not be listed in browser url if empty
+
+    initLoadNewTasks() {
+        this._zone.runOutsideAngular(() => {
+            this.intervalLoadNewTasks = interval(this.options.refreshTasks)
+                .pipe(filter(() => this.tasks.length > 0))
+                .pipe(map(() => {
+                    const taskLastChanged = this.tasks.sort((a, b) => a.last_activity > b.last_activity ? -1 : 1)[0];
+                    return moment(taskLastChanged.last_activity).toDate();
+                }))
+                .pipe(concatMap((lastActivity) => this.fetchNewTasks(lastActivity)))
+                .subscribe(() => { });
+        });
+    }
+
+    async fetchNewTasks(lastActivity: Date) {
+        this._zone.run(() => {
+            this.errors.fetchNewTasks = null;
+            this._cd.markForCheck();
+        });
+        const newTasks = await this.loadTasks()
+            .pipe(catchError(err => {
+                this._zone.run(() => {
+                    this.errors.fetchNewTasks = err;
+                    this._cd.markForCheck();
+                });
+                return throwError(err);
+            }))
+            .toPromise();
+
+        this._zone.run(() => {
+            // Last tasks will be added to new tasks list waiting for the user to display it
+            this.newTasks = newTasks
+                .filter(t => moment(t.last_activity).toDate() > lastActivity)
+                .filter(t => !this.tasks.find(ta => ta.id === t.id))
+                .sort((a, b) => a.last_activity > b.last_activity ? -1 : 1);
+
+            // Also we update the tasks that are already visible
+            // We don't refresh all the tasks in the table but the only the one returns when searching for new tasks
+            this.tasks = this.tasks.map(t => {
+                const updatedTask = newTasks.find(ta => ta.id === t.id);
+                return updatedTask ? updatedTask : t;
+            });
+
+            this._cd.markForCheck();
+        });
+    }
+
+    cancelLoadNewTasks() {
+        if (this.intervalLoadNewTasks) { this.intervalLoadNewTasks.unsubscribe(); }
+    }
+
+    clickShowNewTasks() {
+        this.tasks = this.newTasks.concat(this.tasks);
+        this.newTasks = [];
+        this._cd.markForCheck();
+    }
+
+    initRefreshTasks() {
+        this.intervalRefreshTasks = interval(this.options.refreshTask)
+            .pipe(concatMap(() => this.refreshTasks()))
+            .subscribe(() => { });
+    }
+
+    cancelRefreshTasks() {
+        if (this.intervalRefreshTasks) { this.intervalRefreshTasks.unsubscribe(); }
+    }
+
+    async refreshTasks() {
+        const taskIDs = Object.keys(this.tasksToRefresh)
+            .filter(k => this.tasksToRefresh[k] > 0);
+
+        if (taskIDs.length === 0) {
             return;
         }
 
-        this.loaders.next = true;
-        this.loadTasks(last(this.tasks).id)
-            .pipe(catchError((err, tasks) => {
-                this.errors.next = err;
-                return [];
-            }))
-            .pipe(finalize(() => {
-                this.loaders.next = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.next = null;
-                this.tasks = this.tasks.concat(tasks);
-                this.hasMore = (tasks as any[]).length === this.params.page_size;
-            });
+        this.errors.refreshTasks = null;
+        this._cd.markForCheck();
+
+        let tasks: Array<Task>;
+        try {
+            tasks = await Promise.all(taskIDs.map(k => this._api.task.get(k).toPromise()))
+        } catch (e) {
+            this.errors.refreshTasks = e;
+            this._cd.markForCheck();
+            return;
+        }
+
+        this.tasks = this.tasks.map(t => {
+            const updatedTask = tasks.find(ta => ta.id === t.id);
+            return updatedTask ? updatedTask : t;
+        });
+
+        // Decrement or stop task refresh
+        tasks.forEach(t => {
+            if (['DONE', 'CANCELLED'].indexOf(t.state) > -1) {
+                this.tasksToRefresh[t.id] = 0;
+            } else {
+                this.tasksToRefresh[t.id]--;
+            }
+        });
+
+        this._cd.markForCheck();
     }
 
-    search() {
-        this.clickCheckAll(false);
-        this.cancelRefresh();
-
-        this.loaders.tasks = true;
-        this.loadTasks()
-            .pipe(catchError((err, tasks) => {
-                this.errors.tasks = err;
-                return [];
-            }))
-            .pipe(finalize(() => {
-                this.loaders.tasks = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((tasks: Task[]) => {
-                this.errors.tasks = null;
-                this.tasks = tasks;
-                this.hasMore = (tasks as any[]).length === this.params.page_size;
-            });
-    }
-
+    getTaskActions(t: Task) { return new TaskActions(t, this.meta); }
 
     // Manage actions on task
 
     cancelResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.cancel(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 1, this.options.refreshTask);
+        this._resolutionService.cancel(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 1;
             this.event.emit({ type: 'info', message: 'The resolution has been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -328,16 +380,11 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.cancelAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            // taskIds.forEach((id) => {
-            //     this.refreshTask(id, 4, this.options.refreshTask);
-            // });
+        this._resolutionService.cancelAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -346,8 +393,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     pauseResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.pause(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.pause(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been paused.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -359,15 +406,11 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
 
-        this.resolutionService.pauseAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.pauseAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been paused.' });
         }).catch((err) => {
-            if (err !== 'close') {
-                this.search();
+            if (err === 'close') {
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -376,8 +419,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     extendResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.extend(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.extend(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been extended.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -388,16 +431,11 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.extendAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.extendAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been extended.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
@@ -406,8 +444,9 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     deleteTask(id: string) {
-        this.taskService.delete(id).then((data: any) => {
-            remove(this.tasks, { id });
+        this._taskService.delete(id).then((data: any) => {
+            this.tasks = this.tasks.filter(t => t.id !== id);
+            this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The task has been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -418,30 +457,22 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
 
     deleteAll() {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
-
-        this.taskService.deleteAll(selectedTaskIDs).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id: string) => {
-            //    remove(this.tasks, { id });
-            //})
+        this._taskService.deleteAll(selectedTaskIDs).then(() => {
+            this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(ta => ta.id === t.id));
+            this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 1);
-            //});
         }).finally(() => {
             this.clickCheckAll(false);
         });
     }
 
     runResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.run(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.run(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been run.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
@@ -452,16 +483,11 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
         const resolutionIds = selectedTask.map(t => t.resolution);
-
-        this.resolutionService.runAll(resolutionIds).then(() => {
-            // TODO fix refresh tasks
-            //taskIds.forEach((id) => {
-            //    this.refreshTask(id, 4, this.options.refreshTask);
-            //});
+        this._resolutionService.runAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been run.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => { this.clickCheckAll(false); });

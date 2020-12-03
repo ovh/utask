@@ -1,3 +1,7 @@
+.app-layout {
+  height: 100vh;
+}
+
 nz-header {
   display: flex;
   flex-direction: row;
@@ -5,13 +9,26 @@ nz-header {
 }
 
 .logo {
-  margin: 16px 24px 16px 0;
+  width: 120px;
+  height: 31px;
+  margin: 16px 28px;
+  float: left;
+  color: #fff;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 30px;
 }
 
 [nz-menu] {
   flex: 1;
   line-height: 64px;
   display: inline-block;
+
+  ::ng-deep {
+    .ant-menu-item:focus {
+      outline: none;
+    }
+  }
 }
 
 nz-switch {
@@ -47,26 +64,4 @@ nz-content {
     }
     overflow: hidden;
   }
-}
-
-:host {
-  display: flex;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.app-layout {
-  height: 100vh;
-}
-
-.logo {
-  width: 120px;
-  height: 31px;
-  margin: 16px 28px;
-  float: left;
-  color: #fff;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 30px;
 }

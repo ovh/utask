@@ -8,6 +8,7 @@ import { Subject } from 'rxjs';
 import Task from '../@models/task.model';
 import environment from '../@services/config';
 import { clone } from 'lodash-es';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Injectable()
 export class TaskService {
@@ -17,7 +18,8 @@ export class TaskService {
 
   constructor(
     private modalService: NgbModal,
-    private api: ApiService
+    private api: ApiService,
+    private modal: NzModalService
   ) {
     this.tagsRaw = localStorage.getItem(this.localStorageTags) ? JSON.parse(localStorage.getItem(this.localStorageTags)) : [];
   }
@@ -26,7 +28,7 @@ export class TaskService {
     return clone(this.tagsRaw);
   }
 
-  registerTags(task: Task): any {
+  registerTags(task: Task): void {
     let hasNewTags = false;
     const tags = Object.keys(get(task, 'tags', {}));
     tags.forEach((t: string) => {
@@ -39,35 +41,18 @@ export class TaskService {
       this.tags.next(this.tagsRaw);
       localStorage.setItem(this.localStorageTags, JSON.stringify(this.tagsRaw));
     }
-    return task;
   }
 
   delete(taskId: string) {
     return new Promise((resolve, reject) => {
-      const modal = this.modalService.open(ModalConfirmationApiComponent, {
-        size: 'xl'
-      });
-      modal.componentInstance.question = `Are you sure you want to delete this task #${taskId} ?`;
-      modal.componentInstance.title = `Delete task`;
-      modal.componentInstance.yes = `Yes, I'm sure`;
-      modal.componentInstance.apiCall = () => {
-        return this.api.task.delete(taskId).toPromise();
-      };
-      modal.componentInstance.dismiss = () => {
-        modal.dismiss();
-      };
-      modal.componentInstance.close = () => {
-        modal.close();
-      };
-      modal.result.then((res: any) => {
-        resolve(res);
-      }).catch((err) => {
-        console.log(err);
-        if (err !== 0 && err !== 1 && err !== 'Cross click') {
-          reject(err);
-        } else {
-          reject('close');
-        }
+      this.modal.confirm({
+        nzTitle: '<i>Are you sure you want to delete this task?</i>',
+        nzContent: `Task ID: ${taskId}`,
+        nzOkText: 'Yes',
+        nzOkType: 'danger',
+        nzOnOk: () => this.api.task.delete(taskId).subscribe(() => resolve()),
+        nzCancelText: 'No',
+        nzOnCancel: () => reject()
       });
     });
   }

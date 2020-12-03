@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import isString from 'lodash-es/isString';
 import isArray from 'lodash-es/isArray';
@@ -11,6 +11,7 @@ import { TaskState, TaskType } from 'projects/utask-lib/src/lib/@models/task.mod
 @Component({
   templateUrl: './tasks.html',
   styleUrls: ['./tasks.sass'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TasksComponent implements OnInit {
   tags: string[] = [];
@@ -21,7 +22,8 @@ export class TasksComponent implements OnInit {
     private _activateRoute: ActivatedRoute,
     private router: Router,
     private taskService: TaskService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private _cd: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -32,8 +34,9 @@ export class TasksComponent implements OnInit {
     this.meta = this._activateRoute.snapshot.data.meta as Meta;
     this._activateRoute.queryParams.subscribe(params => {
       this.pagination = this.queryToSearchTask(params);
-      this.search(true);
+      this._cd.markForCheck();
     });
+    this.search(true);
   }
 
   routeTo(taskId: string) {
@@ -56,7 +59,7 @@ export class TasksComponent implements OnInit {
       }
       return !!this.pagination[key];
     }).forEach(key => {
-      cleanParams[key] = this.pagination[key];
+      cleanParams[key] = isArray(this.pagination[key]) ? JSON.stringify(this.pagination[key]) : this.pagination[key];
     });
     this.router.navigate([], {
       queryParams: cleanParams,
@@ -72,7 +75,7 @@ export class TasksComponent implements OnInit {
     params.type = queryParams.type || defaultType;
     params.last = '';
     params.state = queryParams.state || '';
-    params.tag = queryParams.tag ? (isString(queryParams.tag) ? [queryParams.tag] : queryParams.tag) : [];
+    params.tag = queryParams.tag ? JSON.parse(queryParams.tag) : [];
     return params;
   }
 
