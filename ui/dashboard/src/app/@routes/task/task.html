@@ -140,8 +140,8 @@
 
               </div>
               <div class="col-8 steps-viewer">
-                <utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
-                </utask-steps-viewer>
+                <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
+                </lib-utask-steps-viewer>
               </div>
             </div>
             <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>

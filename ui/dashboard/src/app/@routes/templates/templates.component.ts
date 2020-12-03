@@ -5,7 +5,7 @@ import { NzTableComponent } from 'ng-zorro-antd/table';
 
 @Component({
   templateUrl: './templates.html',
-  styleUrls: ['./templates.sass'],
+  styleUrls: ['./templates.sass']
 })
 export class TemplatesComponent implements OnInit {
   templates: Template[];

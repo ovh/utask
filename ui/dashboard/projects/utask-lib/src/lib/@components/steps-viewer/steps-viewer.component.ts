@@ -80,12 +80,9 @@ interface Graph {
 }
 
 @Component({
-    selector: 'utask-steps-viewer',
-    template: `
-        <svg #svg width="100%" height="600px" oncontextmenu="return false;"></svg>
-        <button type="button" (click)="center()">Center</button>
-    `,
-    styleUrls: ['./steps-viewer.sass'],
+    selector: 'lib-utask-steps-viewer',
+    templateUrl: './steps-viewer.html',
+    styleUrls: ['./steps-viewer.sass']
 })
 export class StepsViewerComponent implements AfterViewInit, OnChanges {
     @ViewChild('svg', { read: ViewContainerRef }) svg: ViewContainerRef;

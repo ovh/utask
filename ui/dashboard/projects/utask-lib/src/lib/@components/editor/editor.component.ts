@@ -9,6 +9,7 @@ import EditorConfig from '../../@models/editorconfig.model';
 
 @Component({
     selector: 'lib-utask-editor',
+    styleUrls: ['./editor.sass'],
     template: `
     <div #editor>
     </div>

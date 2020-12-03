@@ -19,8 +19,7 @@ export class TemplateDetailsComponent implements OnInit {
         readonly: true,
         mode: 'ace/mode/yaml',
         theme: 'ace/theme/monokai',
-        wordwrap: true,
-        maxLines: 20,
+        wordwrap: true
     };
 
     constructor(private api: ApiService) {

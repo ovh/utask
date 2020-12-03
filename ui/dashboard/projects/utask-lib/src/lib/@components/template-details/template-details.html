@@ -1,8 +1,7 @@
 <utask-loader *ngIf="loading"></utask-loader>
 <lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
 
-
 <ng-container *ngIf="!loading && !error">
     <lib-utask-editor [value]="text" [config]="config"></lib-utask-editor>
-    <utask-steps-viewer [resolution]="template" *ngIf="template"></utask-steps-viewer>
+    <lib-utask-steps-viewer [resolution]="template" *ngIf="template"></lib-utask-steps-viewer>
 </ng-container>
