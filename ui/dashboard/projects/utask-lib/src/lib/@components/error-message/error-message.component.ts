@@ -5,12 +5,11 @@ import isString from 'lodash-es/isString';
 @Component({
     selector: 'lib-utask-error-message',
     template: `
-        <div class="alert alert-danger" role="alert">{{text}}</div>
+        <nz-alert nzType="error" [nzMessage]="text"></nz-alert>
     `,
 })
 export class ErrorMessageComponent implements OnChanges {
-    @Input()
-    data: any;
+    @Input() data: any;
     text = '';
 
     constructor() { }

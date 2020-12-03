@@ -27,7 +27,6 @@ import {
     map,
     tap
 } from 'rxjs/operators';
-import remove from 'lodash-es/remove';
 import get from 'lodash-es/get';
 import * as moment_ from 'moment';
 const moment = moment_;
@@ -444,21 +443,17 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     deleteTask(id: string) {
-        this._taskService.delete(id).then((data: any) => {
+        this._taskService.delete(id).then(() => {
             this.tasks = this.tasks.filter(t => t.id !== id);
             this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The task has been deleted.' });
-        }).catch((err) => {
-            if (err !== 'close') {
-                this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
-            }
         });
     }
 
     deleteAll() {
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         this._taskService.deleteAll(selectedTaskIDs).then(() => {
-            this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(ta => ta.id === t.id));
+            this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(id => id === t.id));
             this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
