@@ -40,6 +40,7 @@
         "js-yaml": "3.14.0",
         "lodash-es": "4.17.15",
         "moment": "2.29.1",
+        "monaco-editor": "^0.21.2",
         "ng-zorro-antd": "10.1.2",
         "ngx-chips": "2.2.2",
         "ngx-infinite-scroll": "10.0.0",
