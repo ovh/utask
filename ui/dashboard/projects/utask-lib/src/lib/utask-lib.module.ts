@@ -2,6 +2,7 @@ import { NgModule, ModuleWithProviders } from '@angular/core';
 import { ApiServiceOptions } from './@services/api.service';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { ModalConfirmationApiComponent } from './@modals/modal-confirmation-api/modal-confirmation-api.component';
+import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { EditorComponent } from './@components/editor/editor.component';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -17,6 +18,7 @@ import { FromNowPipe } from './@pipes/fromNow.pipe';
 import { LoaderComponent } from './@components/loader/loader.component';
 import { RequestService } from './@services/request.service';
 import { WorkflowService } from './@services/workflow.service';
+import { ModalService } from './@services/modal.service';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { StepsListComponent } from './@components/stepslist/stepslist.component';
 import { TagInputModule } from 'ngx-chips';
@@ -39,6 +41,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 
 const components: any[] = [
   LoaderComponent,
@@ -55,6 +58,7 @@ const components: any[] = [
   ModalConfirmationApiComponent,
   ModalApiYamlComponent,
   ModalApiYamlEditComponent,
+  NzModalContentWithErrorComponent,
 
   FromNowPipe,
   TaskStatusComponent,
@@ -86,13 +90,15 @@ interface UtaskLibConfiguration {
     NzAutocompleteModule,
     NzModalModule,
     NzGridModule,
+    NzAlertModule,
   ],
   exports: components,
   bootstrap: [],
   entryComponents: [
     ModalConfirmationApiComponent,
     ModalApiYamlComponent,
-    ModalApiYamlEditComponent
+    ModalApiYamlEditComponent,
+    NzModalContentWithErrorComponent
   ],
 })
 export class UTaskLibModule {
@@ -108,7 +114,8 @@ export class UTaskLibModule {
         TaskService,
         RequestService,
         WorkflowService,
-        { provide: NZ_I18N, useValue: en_US }
+        { provide: NZ_I18N, useValue: en_US },
+        ModalService
       ]
     }
   }

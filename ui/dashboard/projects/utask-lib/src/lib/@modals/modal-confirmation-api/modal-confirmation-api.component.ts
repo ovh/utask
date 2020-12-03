@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -11,12 +11,13 @@ export class ModalConfirmationApiComponent {
   @Input() title: string;
   @Input() yes: string;
   @Input() apiCall: any;
-  errors: any[];
+
   loading = false;
   error = null;
 
-  constructor(public activeModal: NgbActiveModal) {
-  }
+  constructor(
+    public activeModal: NgbActiveModal
+  ) { }
 
   submit() {
     this.loading = true;

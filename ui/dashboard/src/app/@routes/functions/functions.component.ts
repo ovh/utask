@@ -11,9 +11,9 @@ export class FunctionsComponent implements OnInit {
   functions: Function[];
   @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Function>;
   display: { [key: string]: boolean } = {};
-  JSON = JSON;
 
   expandSet = new Set<number>();
+  codes: string[] = [];
 
   onExpandChange(id: number, checked: boolean): void {
     if (checked) {
@@ -28,5 +28,9 @@ export class FunctionsComponent implements OnInit {
 
   ngOnInit() {
     this.functions = this.route.parent.snapshot.data.functions;
+    this.codes = [];
+    this.functions.forEach((item) => {
+      this.codes.push(JSON.stringify(item, null, 4));
+    });
   }
 }

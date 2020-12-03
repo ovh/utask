@@ -1,19 +1,23 @@
-<nz-table #virtualTable [nzData]="functions" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small" [nsAutoHeightTable]>
-    <thead>
-        <tr>
-            <th nzWidth="60px"></th>
-            <th>Name</th>
-        </tr>
-    </thead>
-    <tbody>
-        <ng-container *ngFor="let item of virtualTable.data">
+<div class="content">
+    <nz-table #virtualTable [nzData]="functions" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small" [nsAutoHeightTable]>
+        <thead>
             <tr>
-                <td [nzExpand]="expandSet.has(item.name)" (nzExpandChange)="onExpandChange(item.name, $event)"></td>
-                <td>{{item.name}}</td>
+                <th nzWidth="60px"></th>
+                <th>Name</th>
             </tr>
-            <tr [nzExpand]="expandSet.has(item.name)">
-                <lib-utask-editor [value]="JSON.stringify(item, null, 4)" [config]="{readonly: true}"></lib-utask-editor>
-            </tr>
-        </ng-container>
-    </tbody>
-</nz-table>
+        </thead>
+        <tbody>
+            <ng-container *ngFor="let item of virtualTable.data; let index = index;">
+                <tr>
+                    <td [nzExpand]="expandSet.has(item.name)" (nzExpandChange)="onExpandChange(item.name, $event)"></td>
+                    <td>{{item.name}}</td>
+                </tr>
+                <tr *ngIf="expandSet.has(item.name)">
+                    <td colspan="2">
+                        <nz-code-editor class="editor" [ngModel]="codes[index]" [nzEditorOption]="{ language: 'json', readOnly: true }" *ngIf="expandSet.has(item.name)"></nz-code-editor>
+                    </td>
+                </tr>
+            </ng-container>
+        </tbody>
+    </nz-table>
+</div>

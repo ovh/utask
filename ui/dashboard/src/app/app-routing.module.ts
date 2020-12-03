@@ -40,6 +40,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { ThemeService } from './@services/theme.service';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
+import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -147,6 +148,7 @@ const routes: Routes = [
       }
     ),
     NzTableModule,
+    NzCodeEditorModule,
   ],
   exports: [RouterModule],
   providers: [
