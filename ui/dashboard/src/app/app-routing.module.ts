@@ -38,6 +38,8 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { ThemeService } from './@services/theme.service';
+import { NzTableModule } from 'ng-zorro-antd/table';
+import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -143,7 +145,8 @@ const routes: Routes = [
         useHash: true,
         paramsInheritanceStrategy: 'always',
       }
-    )
+    ),
+    NzTableModule,
   ],
   exports: [RouterModule],
   providers: [
@@ -151,7 +154,8 @@ const routes: Routes = [
     TemplatesResolve,
     StatsResolve,
     FunctionsResolve,
-    ThemeService
+    ThemeService,
+    { provide: NZ_I18N, useValue: en_US },
   ]
 })
 export class AppRoutingModule { }

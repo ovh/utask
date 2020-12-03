@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { ToastrModule } from 'ngx-toastr';
-import { TemplateDetailsComponent } from './@components/template-details/template-details.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
 import { AutofocusDirective } from './@directives/autofocus.directive';
 import { FullHeightDirective } from './@directives/fullheight.directive';
@@ -16,7 +15,6 @@ import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
 import { BoxComponent } from './@components/box/box.component';
 
 const components: any[] = [
-  TemplateDetailsComponent,
   ChartTaskStatesComponent,
   BoxComponent,
 

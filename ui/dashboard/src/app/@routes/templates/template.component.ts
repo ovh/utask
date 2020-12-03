@@ -2,16 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  template: `
-    <div class="main">
-      <header>
-        <h1>Template - {{templateName}}</h1>
-      </header>
-      <section>
-        <app-template-details *ngIf="templateName" [templateName]="templateName"></app-template-details>
-      </section>
-    </div>
-  `,
+  templateUrl: './template.html',
+  styleUrls: ['./template.sass'],
 })
 export class TemplateComponent implements OnInit {
   templateName: string;

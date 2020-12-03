@@ -7,6 +7,7 @@ import { ApiService } from '../../@services/api.service';
 @Component({
     selector: 'lib-utask-template-details',
     templateUrl: 'template-details.html',
+    styleUrls: ['template-details.sass'],
 })
 export class TemplateDetailsComponent implements OnInit {
     @Input() templateName: string;
@@ -19,7 +20,7 @@ export class TemplateDetailsComponent implements OnInit {
         mode: 'ace/mode/yaml',
         theme: 'ace/theme/monokai',
         wordwrap: true,
-        maxLines: 50,
+        maxLines: 20,
     };
 
     constructor(private api: ApiService) {
