@@ -7,7 +7,7 @@ import { ThemeService } from 'src/app/@services/theme.service';
 
 @Component({
   templateUrl: './base.html',
-  styleUrls: ['./base.scss'],
+  styleUrls: ['./base.scss']
 })
 export class BaseComponent implements OnInit {
   meta: Meta;

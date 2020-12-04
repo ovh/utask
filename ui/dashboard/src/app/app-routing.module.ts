@@ -18,7 +18,7 @@ import { TagInputModule } from 'ngx-chips';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
 import { UTaskModule } from 'src/utask-module/utask.module';
 import { environment } from 'src/environments/environment';
@@ -41,6 +41,10 @@ import { ThemeService } from './@services/theme.service';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -134,9 +138,14 @@ const routes: Routes = [
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     MatButtonToggleModule,
     MatCheckboxModule,
     MatButtonModule,
+    NzToolTipModule,
+    NzInputModule,
+    NzAlertModule,
+    NzCheckboxModule,
     ToastrModule.forRoot({ positionClass: 'toast-bottom-right', }),
     UTaskModule,
     UTaskLibModule.forRoot({ apiBaseUrl: environment.apiBaseUrl }),

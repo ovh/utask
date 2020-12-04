@@ -1,92 +1,147 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import Template from 'projects/utask-lib/src/lib/@models/template.model';
-import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
-import omit from 'lodash-es/omit';
-import clone from 'lodash-es/clone';
+import { ApiService, NewTask } from 'projects/utask-lib/src/lib/@services/api.service';
 import get from 'lodash-es/get';
-import isArray from 'lodash-es/isArray';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { isArray } from 'lodash-es';
 
 @Component({
-  templateUrl: './new.html'
+  templateUrl: './new.html',
+  styleUrls: ['./new.sass'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NewComponent implements OnInit {
+  validateForm!: FormGroup;
+
   loaders: { [key: string]: boolean } = {};
-  display: { [key: string]: boolean } = {};
-  textarea: { [key: string]: boolean } = {};
   errors: { [key: string]: any } = {};
   templates: Template[] = [];
-  item: any = {};
   selectedTemplate: Template = null;
-  Object = Object;
+  inputControls: Array<string> = [];
 
   constructor(
-    private api: ApiService,
-    private activatedRoute: ActivatedRoute,
-    private router: Router
+    private _api: ApiService,
+    private _activatedRoute: ActivatedRoute,
+    private _router: Router,
+    private _fb: FormBuilder,
+    private _cd: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
-    this.templates = this.activatedRoute.snapshot.data.templates.sort((a, b) => {
+    this.validateForm = this._fb.group({
+      template: [null, [Validators.required]],
+      watchers: [null, []]
+    });
+
+    this.templates = this._activatedRoute.snapshot.data.templates.sort((a, b) => {
       return a.description.toLowerCase() < b.description.toLowerCase() ? -1 : 1;
     });
 
-    this.activatedRoute.queryParams.subscribe((values) => {
+    this._activatedRoute.queryParams.subscribe((values) => {
       const template = this.templates.find(t => t.name === values.template_name);
       if (template) {
         if (!this.selectedTemplate || this.selectedTemplate.name !== template.name) {
-          this.selectedTemplate = template;
-          this.newTask(template);
+          this.templateChange(template);
+          const inputs = {
+            template,
+            watchers: values.watcher_usernames ?
+              (isArray(values.watcher_usernames) ? values.watcher_usernames : [values.watcher_usernames])
+              : []
+          };
+          get(template, 'inputs', []).forEach(input => {
+            if (input.collection && !isArray(values[input.name])) {
+              inputs['input_' + input.name] = values[input.name] ? [values[input.name]] : [];
+            } else if (input.type === 'number' && get(values, input.name)) {
+              inputs['input_' + input.name] = +values[input.name];
+            } else if (input.type === 'bool') {
+              inputs['input_' + input.name] = values[input.name] === 'true';
+            } else if (input.type !== 'password') {
+              inputs['input_' + input.name] = values[input.name];
+            }
+          });
+          this.validateForm.patchValue(inputs, { emitEvent: false, onlySelf: true });
         }
-        get(template, 'inputs', []).forEach((input) => {
-          if (input.collection && !isArray(values[input.name])) {
-            this.item.input[input.name] = values[input.name] ? [values[input.name]] : [];
-          } else if (input.type === 'number' && get(values, input.name)) {
-            this.item.input[input.name] = +values[input.name];
-          } else if (input.type === 'bool') {
-            this.item.input[input.name] = values[input.name] === 'true';
-          } else if (input.type !== 'password') {
-            this.item.input[input.name] = values[input.name];
-          }
-        })
       }
+    });
+
+    this.validateForm.valueChanges.subscribe(data => {
+      const item = this.formValuesToNewTask(data);
+      this.saveFormInQueryParams(item);
     });
   }
 
-  submit() {
-    this.loaders.submit = true;
+  templateChange(t: Template): void {
+    this.inputControls.forEach(key => this.validateForm.removeControl(key));
+    if (t) {
+      t.inputs.forEach(input => {
+        const validators: Array<ValidatorFn> = [];
+        if (!input.optional) {
+          validators.push(Validators.required);
+        }
+        this.validateForm.addControl('input_' + input.name, new FormControl(null, validators))
+      });
+      this.inputControls = t.inputs.map(input => 'input_' + input.name);
+      this.selectedTemplate = t;
+      this._cd.markForCheck();
+    }
+  }
 
-    return this.api.task.add(this.item).toPromise().then((data: any) => {
-      this.errors.submit = null;
-      this.router.navigate([`/task/${data.id}`]);
+  formValuesToNewTask(values: any): NewTask {
+    const item = new NewTask();
+    item.template_name = values.template.name;
+    item.input = {};
+    Object.keys(values)
+      .filter(k => k.startsWith('input_'))
+      .forEach(k => item.input[k.split('input_')[1]] = values[k]);
+    item.watcher_usernames = values.watchers ? values.watchers : [];
+    return item;
+  }
+
+  submitForm(): void {
+    for (const i in this.validateForm.controls) {
+      if (Object.prototype.hasOwnProperty.call(this.validateForm.controls, i)) {
+        this.validateForm.controls[i].markAsDirty();
+        this.validateForm.controls[i].updateValueAndValidity();
+      }
+    }
+    if (this.validateForm.invalid) {
+      return;
+    }
+
+    const item = this.formValuesToNewTask(this.validateForm.value);
+
+    this.loaders.submit = true;
+    this._cd.markForCheck();
+    this._api.task.add(item).toPromise().then((data: any) => {
+      this._router.navigate([`/task/${data.id}`]);
     }).catch((err) => {
       this.errors.submit = err;
     }).finally(() => {
       this.loaders.submit = false;
+      this._cd.markForCheck();
     });
   }
 
-  newTask(template: Template) {
-    this.item.template_name = template.name;
-    this.item.input = Object.assign({}, ...(template.inputs || []).map((i: any) => {
-      const o = {};
-      o[i.name] = i.default;
-      return o;
-    }));
-  }
+  saveFormInQueryParams(item: NewTask) {
+    const passwordFieldsName = get(this.selectedTemplate, 'inputs', [])
+      .filter(t => t.type === 'password').map((e: any) => e.name);
 
-  saveFormInQueryParams() {
-    const passwordFieldsName = get(this.selectedTemplate, 'inputs', []).filter(t => t.type === 'password').map((e: any) => e.name);
-    const inputs = omit(clone(this.item.input), passwordFieldsName);
-    this.router.navigate(
-      [],
-      {
-        relativeTo: this.activatedRoute,
-        queryParams: {
-          ...inputs,
-          template_name: this.item.template_name
-        },
-        queryParamsHandling: 'merge',
+    const queryParams = {
+      template_name: item.template_name,
+      watcher_usernames: item.watcher_usernames
+    };
+
+    Object.keys(item.input)
+      .filter(k => passwordFieldsName.indexOf(k) === -1)
+      .forEach(k => {
+        queryParams[k] = item.input[k];
       });
+
+    this._router.navigate([], {
+      relativeTo: this._activatedRoute,
+      queryParams,
+      replaceUrl: true
+    });
   }
 }
