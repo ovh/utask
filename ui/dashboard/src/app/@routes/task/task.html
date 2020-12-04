@@ -144,12 +144,13 @@
           Resolve this task
         </div>
         <div app-box-content>
-          <lib-utask-inputs-form *ngIf="template" [formGroup]="validateForm" [inputs]="template.resolver_inputs">
+          <lib-utask-inputs-form *ngIf="template" [formGroup]="validateResolveForm" [inputs]="template.resolver_inputs">
           </lib-utask-inputs-form>
-          <form nz-form [formGroup]="validateForm" (ngSubmit)="resolveTask()">
+          <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
             <nz-form-item nz-row class="register-area">
-              <nz-form-control [nzSpan]="14" [nzOffset]="6">
-                <button nz-button nzType="primary" [nzLoading]="loaders.resolveTask">Resolve</button>
+              <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
+                  [nzLoading]="loaders.resolveTask">Resolve</button>
               </nz-form-control>
             </nz-form-item>
           </form>
@@ -165,25 +166,24 @@
           Reject this task
         </div>
         <div app-box-content>
-          <form novalidate #rejectForm="ngForm" (ngSubmit)="rejectTask()">
-
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="confirmReject" id="confirmReject"
-                [(ngModel)]='confirm.reject' required />
-
-              <label class="form-check-label" for="confirmReject">
-                Are you sure you want to reject this request ?
-              </label>
-            </div>
-
-            <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></lib-utask-error-message>
-
-            <button type="submit" class="btn btn-danger"
-              [disabled]="rejectForm.invalid || loaders.rejectTask">Reject</button>
+          <form nz-form [formGroup]="validateRejectForm" (ngSubmit)="rejectTask()">
+            <nz-form-item nz-row class="register-area">
+              <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                <label formControlName="agree" nz-checkbox>
+                  Are you sure you want to reject this request ?
+                </label>
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item nz-row class="register-area">
+              <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
+                  [nzLoading]="loaders.rejectTask">Reject</button>
+              </nz-form-control>
+            </nz-form-item>
           </form>
+          <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></lib-utask-error-message>
         </div>
       </lib-utask-box>
-
     </div>
 
     <lib-utask-box [header]="{openable: true, init: false, class: 'primary', openOnClick: true}"
@@ -223,7 +223,7 @@
           <nz-avatar nz-comment-avatar [nzText]="this.meta.username[0].toUpperCase()"></nz-avatar>
           <nz-comment-content>
             <nz-form-item>
-              <textarea [(ngModel)]="comment.content" nz-input rows="4"></textarea>
+              <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
             </nz-form-item>
             <nz-form-item>
               <button nz-button nzType="primary" [nzLoading]="loaders.addComment" [disabled]="!comment.content"

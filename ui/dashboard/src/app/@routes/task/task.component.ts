@@ -22,7 +22,8 @@ import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inpu
   styleUrls: ['./task.sass'],
 })
 export class TaskComponent implements OnInit, OnDestroy {
-  validateForm!: FormGroup;
+  validateResolveForm!: FormGroup;
+  validateRejectForm!: FormGroup;
   inputControls: Array<string> = [];
 
   objectKeys = Object.keys;
@@ -78,7 +79,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.validateForm = this._fb.group({});
+    this.validateResolveForm = this._fb.group({});
+    this.validateRejectForm = this._fb.group({
+      agree: [false, [Validators.requiredTrue]]
+    });
 
     this.meta = this.route.parent.snapshot.data.meta;
     this.route.params.subscribe(params => {
@@ -215,6 +219,16 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   rejectTask() {
+    for (const i in this.validateRejectForm.controls) {
+      if (Object.prototype.hasOwnProperty.call(this.validateResolveForm.controls, i)) {
+        this.validateRejectForm.controls[i].markAsDirty();
+        this.validateRejectForm.controls[i].updateValueAndValidity();
+      }
+    }
+    if (this.validateRejectForm.invalid) {
+      return;
+    }
+
     this.loaders.rejectTask = true;
     this.api.task.reject(this.task.id).toPromise().then((res: any) => {
       this.errors.rejectTask = null;
@@ -227,20 +241,20 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   resolveTask() {
-    for (const i in this.validateForm.controls) {
-      if (Object.prototype.hasOwnProperty.call(this.validateForm.controls, i)) {
-        this.validateForm.controls[i].markAsDirty();
-        this.validateForm.controls[i].updateValueAndValidity();
+    for (const i in this.validateResolveForm.controls) {
+      if (Object.prototype.hasOwnProperty.call(this.validateResolveForm.controls, i)) {
+        this.validateResolveForm.controls[i].markAsDirty();
+        this.validateResolveForm.controls[i].updateValueAndValidity();
       }
     }
-    if (this.validateForm.invalid) {
+    if (this.validateResolveForm.invalid) {
       return;
     }
 
     this.loaders.resolveTask = true;
     this.api.resolution.add({
       ...this.item,
-      resolver_inputs: InputsFormComponent.getInputs(this.validateForm.value)
+      resolver_inputs: InputsFormComponent.getInputs(this.validateResolveForm.value)
     }).toPromise().then((res: any) => {
       this.errors.resolveTask = null;
       this.loadTask();
@@ -257,15 +271,17 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   templateChange(t: Template): void {
     if (t && (!this.template || t.name !== this.template.name)) {
-      this.inputControls.forEach(key => this.validateForm.removeControl(key));
-      t.resolver_inputs.forEach(input => {
-        const validators: Array<ValidatorFn> = [];
-        if (!input.optional) {
-          validators.push(Validators.required);
-        }
-        this.validateForm.addControl('input_' + input.name, new FormControl(null, validators))
-      });
-      this.inputControls = t.resolver_inputs.map(input => 'input_' + input.name);
+      this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
+      if (t.resolver_inputs) {
+        t.resolver_inputs.forEach(input => {
+          const validators: Array<ValidatorFn> = [];
+          if (!input.optional) {
+            validators.push(Validators.required);
+          }
+          this.validateResolveForm.addControl('input_' + input.name, new FormControl(null, validators))
+        });
+        this.inputControls = t.resolver_inputs.map(input => 'input_' + input.name);
+      }
       this.template = t;
     }
   }

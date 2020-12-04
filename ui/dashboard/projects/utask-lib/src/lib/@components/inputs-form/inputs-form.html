@@ -15,8 +15,8 @@
 				<input type="number" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='number'"
 					placeholder="{{input.default}}">
 				<input type="password" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='password'">
-				<input type="text" formControlName="input_{{input.name}}" nz-input
-					*ngIf="input.type!='number' && input.type!='password'" [pattern]="input.regex">
+				<textarea formControlName="input_{{input.name}}" *ngIf="input.type!='number' && input.type!='password'"
+					[pattern]="input.regex" nz-input nzAutosize></textarea>
 			</ng-container>
 			<!-- Input multiple with strict values -->
 			<nz-select formControlName="input_{{input.name}}" *ngIf="input.legal_values && input.collection" nzMode="multiple"
