@@ -1,83 +1,55 @@
-$color-danger: #dc3545
-$color-warning: #fd7e14
 $color-success: #28a745
-$color-primary: #007bff
-$color-info: #5578eb
-$color-secondary: #fff
-$color-dark: #232946
-$color-light: #fffffe
-$color-white: #fffffe
-$color-text-dark: #24292e
-
-$bloc-primary: $color-dark
-$bloc-secondary: #434966
-$bloc-tercery: #636986
+$color-secondary: #434966
+$color-tercery: #636986
+$color-danger: #dc3545
+$color-warning: #fd7e14   
 
 :host
     display: block
     margin-top: 15px
 
-.box
-    margin-bottom: 8px
-    border: 1px solid $color-dark
-    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1)
-    header.clickable
-        cursor: pointer
-    header
-        color: $color-white
-        padding: 4px
-        .headerContent
-            overflow: hidden
-            white-space: nowrap
-            text-overflow: ellipsis
-        .caret
-            width: 30px
-            float: left
-            text-align: center
-            cursor: pointer
+.box:not(.primary)
+    ::ng-deep
+        .ant-collapse-header
+            color: white
 
-    content
-            padding: 4px 12px
-            display: block
-.box.primary
-    border-color: $bloc-primary
-    header
-        background: $bloc-primary
-        &:hover
-            background: lighten($bloc-primary, 10%)
-            transition: background .3s linear
-.box.secondary
-    border-color: $bloc-secondary
-    header
-        background: $bloc-secondary
-        &:hover
-            background: lighten($bloc-secondary, 10%)
-            transition: background .3s linear
-.box.tercery
-    border-color: $bloc-tercery
-    header
-        background: $bloc-tercery
-        &:hover
-            background: lighten($bloc-tercery, 10%)
-            transition: background .3s linear
-.box.danger
-    border-color: $color-danger
-    header
-        background: $color-danger
-        &:hover
-            background: lighten($color-danger, 10%)
-            transition: background .3s linear
-.box.warning
-    border-color: $color-warning
-    header
-        background: $color-warning
-        &:hover
-            background: lighten($color-warning, 10%)
-            transition: background .3s linear
 .box.success
     border-color: $color-success
-    header
-        background: $color-success
-        &:hover
-            background: lighten($color-success, 10%)
-            transition: background .3s linear
+    background: darken($color-success, 10%)
+    nz-collapse-panel
+        border-color: $color-success
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-success
+.box.secondary
+    border-color: $color-secondary
+    background: darken($color-secondary, 10%)
+    nz-collapse-panel
+        border-color: $color-secondary
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-secondary
+.box.tercery
+    border-color: $color-tercery
+    background: darken($color-tercery, 10%)
+    nz-collapse-panel
+        border-color: $color-tercery
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-tercery
+.box.danger
+    border-color: $color-danger
+    background: darken($color-danger, 10%)
+    nz-collapse-panel
+        border-color: $color-danger
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-danger
+.box.warning
+    border-color: $color-warning
+    background: darken($color-warning, 10%)
+    nz-collapse-panel
+        border-color: $color-warning
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-warning

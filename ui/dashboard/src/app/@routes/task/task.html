@@ -137,9 +137,10 @@
     </div>
   </lib-utask-box>
 
-  <div class="row" *ngIf="taskIsResolvable">
-    <div class="col-md-6">
-      <lib-utask-box [header]="{openable: true, init: display.resolution, class: 'success', openOnClick: true}">
+  <ng-container *ngIf="taskIsResolvable">
+    <div nz-row [nzGutter]="16">
+      <lib-utask-box nz-col [nzSpan]="12"
+        [header]="{openable: true, init: display.resolution, class: 'success', openOnClick: true}">
         <div app-box-header>
           Resolve this task
         </div>
@@ -158,10 +159,8 @@
           </lib-utask-error-message>
         </div>
       </lib-utask-box>
-    </div>
-
-    <div class="col-md-6">
-      <lib-utask-box [header]="{openable: true, init: display.resolution, class: 'danger', openOnClick: true}">
+      <lib-utask-box nz-col [nzSpan]="12"
+        [header]="{openable: true, init: display.resolution, class: 'danger', openOnClick: true}">
         <div app-box-header>
           Reject this task
         </div>
@@ -236,5 +235,5 @@
         <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
       </div>
     </lib-utask-box>
-  </div>
+  </ng-container>
 </ng-container>

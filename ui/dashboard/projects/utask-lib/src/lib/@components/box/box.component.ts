@@ -26,12 +26,12 @@ export class BoxComponent implements OnChanges {
     ngOnChanges() {
         this.display = this.header.init ?? true;
         this.headerConfig = {
-            ...this.header,
             openable: false,
             init: true,
             link: '',
             openOnClick: false,
             class: 'primary',
+            ...this.header
         };
     }
 
