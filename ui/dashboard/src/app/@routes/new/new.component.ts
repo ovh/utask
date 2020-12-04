@@ -5,6 +5,7 @@ import { ApiService, NewTask } from 'projects/utask-lib/src/lib/@services/api.se
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { isArray } from 'lodash-es';
+import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
 
 @Component({
   templateUrl: './new.html',
@@ -90,10 +91,7 @@ export class NewComponent implements OnInit {
   formValuesToNewTask(values: any): NewTask {
     const item = new NewTask();
     item.template_name = values.template.name;
-    item.input = {};
-    Object.keys(values)
-      .filter(k => k.startsWith('input_'))
-      .forEach(k => item.input[k.split('input_')[1]] = values[k]);
+    item.input = InputsFormComponent.getInputs(values);
     item.watcher_usernames = values.watchers ? values.watchers : [];
     return item;
   }

@@ -14,12 +14,17 @@ import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 import Template from 'projects/utask-lib/src/lib/@models/template.model';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 import { ModalApiYamlComponent } from 'projects/utask-lib/src/lib/@modals/modal-api-yaml/modal-api-yaml.component';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
 
 @Component({
   templateUrl: './task.html',
   styleUrls: ['./task.sass'],
 })
 export class TaskComponent implements OnInit, OnDestroy {
+  validateForm!: FormGroup;
+  inputControls: Array<string> = [];
+
   objectKeys = Object.keys;
   loaders: { [key: string]: boolean } = {};
   haveAtLeastOneChilTask: boolean = false;
@@ -64,7 +69,8 @@ export class TaskComponent implements OnInit, OnDestroy {
     private requestService: RequestService,
     private taskService: TaskService,
     private router: Router,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private _fb: FormBuilder
   ) { }
 
   ngOnDestroy() {
@@ -72,6 +78,8 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.validateForm = this._fb.group({});
+
     this.meta = this.route.parent.snapshot.data.meta;
     this.route.params.subscribe(params => {
       this.errors.main = null;
@@ -219,8 +227,21 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   resolveTask() {
+    for (const i in this.validateForm.controls) {
+      if (Object.prototype.hasOwnProperty.call(this.validateForm.controls, i)) {
+        this.validateForm.controls[i].markAsDirty();
+        this.validateForm.controls[i].updateValueAndValidity();
+      }
+    }
+    if (this.validateForm.invalid) {
+      return;
+    }
+
     this.loaders.resolveTask = true;
-    this.api.resolution.add(this.item).toPromise().then((res: any) => {
+    this.api.resolution.add({
+      ...this.item,
+      resolver_inputs: InputsFormComponent.getInputs(this.validateForm.value)
+    }).toPromise().then((res: any) => {
       this.errors.resolveTask = null;
       this.loadTask();
     }).catch((err) => {
@@ -232,6 +253,21 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   selectStepFromViewer(step) {
     this.selectedStep = step || '';
+  }
+
+  templateChange(t: Template): void {
+    if (t && (!this.template || t.name !== this.template.name)) {
+      this.inputControls.forEach(key => this.validateForm.removeControl(key));
+      t.resolver_inputs.forEach(input => {
+        const validators: Array<ValidatorFn> = [];
+        if (!input.optional) {
+          validators.push(Validators.required);
+        }
+        this.validateForm.addControl('input_' + input.name, new FormControl(null, validators))
+      });
+      this.inputControls = t.resolver_inputs.map(input => 'input_' + input.name);
+      this.template = t;
+    }
   }
 
   loadTask() {
@@ -249,7 +285,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
         this.item.task_id = this.task.id;
-        this.template = this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name);
+        this.templateChange(this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name));
         const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;

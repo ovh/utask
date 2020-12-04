@@ -4,7 +4,7 @@ import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { ModalConfirmationApiComponent } from './@modals/modal-confirmation-api/modal-confirmation-api.component';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { EditorComponent } from './@components/editor/editor.component';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -29,6 +29,7 @@ import { ModalApiYamlComponent } from './@modals/modal-api-yaml/modal-api-yaml.c
 import { StepsViewerComponent } from './@components/steps-viewer/steps-viewer.component';
 import { StepNodeComponent } from './@components/step-node/step-node.component';
 import { TaskStatusComponent } from './@components/task-status/task-status.component';
+import { InputsFormComponent } from './@components/inputs-form/inputs-form.component';
 import { NsAutoHeightTableDirective } from './@directives/ns-auto-height-table.directive';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -45,6 +46,8 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { BoxComponent } from './@components/box/box.component';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 
 const components: any[] = [
   LoaderComponent,
@@ -58,6 +61,7 @@ const components: any[] = [
   TemplateDetailsComponent,
   ChartTaskStatesComponent,
   BoxComponent,
+  InputsFormComponent,
 
   ModalConfirmationApiComponent,
   ModalApiYamlComponent,
@@ -80,6 +84,7 @@ interface UtaskLibConfiguration {
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     RouterModule,
     TagInputModule,
     NgbModule,
@@ -97,6 +102,8 @@ interface UtaskLibConfiguration {
     NzAlertModule,
     NzCollapseModule,
     NzCodeEditorModule,
+    NzFormModule,
+    NzCheckboxModule
   ],
   exports: components,
   bootstrap: [],
