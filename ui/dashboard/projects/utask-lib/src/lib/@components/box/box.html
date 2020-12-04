@@ -1,4 +1,5 @@
-<div class="box {{headerConfig.class}}">
+<!-- FIXME remove this code when migrated -->
+<!--<div class="box {{headerConfig.class}}">
     <header class="{{headerConfig.openOnClick || headerConfig.link ? 'clickable': ''}}">
         <div class="caret" (click)="display = !display" *ngIf="headerConfig.openable">
             <div *ngIf="!display">
@@ -15,4 +16,13 @@
     <content *ngIf="display">
         <ng-content select="[app-box-content]"></ng-content>
     </content>
-</div>
+</div>-->
+
+<nz-collapse nzAccordion>
+    <nz-collapse-panel [nzHeader]="boxHeader" [nzActive]="display">
+        <ng-content select="[app-box-content]"></ng-content>
+    </nz-collapse-panel>
+    <ng-template #boxHeader>
+        <ng-content select="[app-box-header]"></ng-content>
+    </ng-template>
+</nz-collapse>

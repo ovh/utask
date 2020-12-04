@@ -10,7 +10,7 @@ class HeaderConfig {
 }
 
 @Component({
-    selector: 'app-box',
+    selector: 'lib-utask-box',
     templateUrl: './box.html',
     styleUrls: ['./box.sass'],
 })

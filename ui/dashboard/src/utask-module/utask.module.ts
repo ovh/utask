@@ -12,11 +12,9 @@ import { TagInputModule } from 'ngx-chips';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { environment } from 'src/environments/environment';
 import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
-import { BoxComponent } from './@components/box/box.component';
 
 const components: any[] = [
   ChartTaskStatesComponent,
-  BoxComponent,
 
   FullHeightDirective,
   AutofocusDirective,

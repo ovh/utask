@@ -1,352 +1,330 @@
-<div>
-  <utask-loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></utask-loader>
-  <lib-utask-error-message [data]="errors.main" *ngIf="errors.main"></lib-utask-error-message>
+<utask-loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></utask-loader>
+<lib-utask-error-message [data]="errors.main" *ngIf="errors.main"></lib-utask-error-message>
 
-  <div class="main" *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
-    <header class="clear-after">
-      <div class="title">
-        <h1>
-          <span class="bloc_status task_state_{{task.state}}">{{task.state}}</span>
-          {{task.title}}
-          <small *ngIf="task?.tags?._utask_parent_task_id">
-            <a [routerLink]="'/task/'+task.tags._utask_parent_task_id">
-              Parent task <strong>{{task.tags._utask_parent_task_id}}</strong>
-            </a>
-          </small>
-        </h1>
-        <div *ngIf="task.tags">
-          <ng-template ngFor let-tagKey [ngForOf]="objectKeys(task.tags)">
-            <span class="badge badge-primary">
-              {{tagKey}}=<strong>{{task.tags[tagKey]}}</strong>
-            </span>
-            &nbsp;
-          </ng-template>
+<ng-container *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
+  <div class="header">
+    <div class="title">
+      <span class="bloc_status task_state_{{task.state}}">{{task.state}}</span>
+      {{task.title}}
+      <small *ngIf="task?.tags?._utask_parent_task_id">
+        <a [routerLink]="'/task/'+task.tags._utask_parent_task_id">
+          Parent task <strong>{{task.tags._utask_parent_task_id}}</strong>
+        </a>
+      </small>
+      <div *ngIf="task.tags">
+        <ng-template ngFor let-tagKey [ngForOf]="objectKeys(task.tags)">
+          <span class="badge badge-primary">
+            {{tagKey}}=<strong>{{task.tags[tagKey]}}</strong>
+          </span>
+          &nbsp;
+        </ng-template>
+      </div>
+    </div>
+    <div class="actions">
+      Autorefresh (5s)
+      <nz-switch [(ngModel)]="autorefresh.actif" [nzDisabled]="!autorefresh.enable"
+        (ngModelChange)="autorefresh.hasChanged = true"></nz-switch>
+      <nz-button-group>
+        <button nz-button (click)="loadTask();" title="Refresh tasks" [disabled]="loaders.task || loaders.resolution"><i
+            nz-icon [nzType]="loaders.task ? 'loading' : 'sync'"></i>Refresh</button>
+      </nz-button-group>
+    </div>
+  </div>
+
+  <lib-utask-box [header]="{openable: true, init: display.result, class: 'primary', openOnClick: true}"
+    *ngIf="task.result && task.resolution">
+    <div app-box-header>Result</div>
+    <div app-box-content>
+      <lib-utask-editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult">
+      </lib-utask-editor>
+    </div>
+  </lib-utask-box>
+
+  <lib-utask-box [header]="{openable: true, init: display.request, class: 'primary', openOnClick: true}">
+    <div app-box-header>
+      Request - {{task.id}}
+      <nz-button-group nzSize="small">
+        <button nz-button nzType="primary" title="View as code" (click)="previewTask(); $event.stopPropagation();"><i
+            nz-icon nzType="file-text"></i></button>
+        <button nz-button nzType="primary" title="Edit the task"
+          (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
+        <button nz-button nzType="primary" title="Delete the task"
+          (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
+      </nz-button-group>
+    </div>
+    <div app-box-content>
+      <nz-descriptions *ngIf="task.input" nzBordered [nzSize]="'small'" [nzColumn]="1">
+        <nz-descriptions-item nzTitle="Template">
+          <a [routerLink]="'/template/'+task.template_name" title="Template {{task.template_name}}"
+            *ngIf="meta.user_is_admin">
+            {{task.template_name}}
+          </a>
+          <span *ngIf="!meta.user_is_admin">{{task.template_name}}</span>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Inputs">
+          <table>
+            <tbody>
+              <tr *ngFor="let inputKey of objectKeys(task.input)">
+                <td>{{inputKey}}</td>
+                <td>{{task.input[inputKey] | json}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Informations">
+          Created by {{task.requester_username}} <abbr
+            title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created | utaskFromNow}}</em></abbr>
+          <span *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username"> and
+            updated by {{task.resolver_username}} <abbr
+              title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity | utaskFromNow}}</em></abbr></span>
+        </nz-descriptions-item>
+      </nz-descriptions>
+    </div>
+  </lib-utask-box>
+
+  <lib-utask-box [header]="{openable: true, init: display.execution, class: 'primary', openOnClick: true}"
+    *ngIf="resolution && resolution.steps">
+    <div app-box-header>
+      Execution -
+      <small>{{resolution.id}}</small> -
+      <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}</small>
+
+      <span *ngIf="loaders.execution || loaders.task">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
+
+      <nz-button-group nzSize="small">
+        <button nz-button nzType="primary" title="Run" (click)="runResolution(resolution)"><i nz-icon
+            nzType="caret-right"></i></button>
+        <button nz-button nzType="primary" title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
+            nzType="stop"></i></button>
+        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary"
+          (click)="$event.stopPropagation()">More</button>
+      </nz-button-group>
+      <nz-dropdown-menu #menu="nzDropdownMenu">
+        <ul nz-menu>
+          <li nz-menu-item (click)="previewResolution()">
+            View as code
+          </li>
+          <li nz-menu-item (click)="pauseResolution(resolution)">
+            Pause
+          </li>
+          <li nz-menu-item (click)="extendResolution(resolution)">
+            Extend</li>
+          <li nz-menu-item (click)="editResolution(resolution)">Edit</li>
+        </ul>
+      </nz-dropdown-menu>
+    </div>
+    <div app-box-content>
+      <div class="row">
+        <div class="col-4">
+          <h3>Steps</h3>
+          <div *ngIf="resolution.steps">
+            <lib-utask-steps-list [resolution]="resolution" [selectedStep]="selectedStep">
+            </lib-utask-steps-list>
+          </div>
+        </div>
+        <div class="col-8 steps-viewer">
+          <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
+          </lib-utask-steps-viewer>
         </div>
       </div>
-      <div class="actions">
-        <div class="btn-group" role="group">
-          <button type="button" mat-raised-button
-            (click)="autorefresh.actif = !autorefresh.actif;autorefresh.hasChanged = true;"
-            [disabled]="!autorefresh.enable">
-            <input type="checkbox" [(ngModel)]="autorefresh.actif" readonly="readonly" />
-            &nbsp;Autorefresh (5s)
-          </button>
-          <button mat-raised-button (click)="loadTask();" title="Refresh tasks"
-            [disabled]="loaders.task || loaders.resolution">
-            <i class="fas fa-sync" ng-class="{'fa-spin': loaders.tasks}"></i>
-            Refresh
-          </button>
-        </div>
+      <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>
+      <div class="row">
+        <span class="col-3">Last start</span>
+        <strong class="col-9">{{resolution.last_start | date: 'yyyy/MM/dd HH:mm'}}</strong>
+
+        <span class="col-3">Last stop</span>
+        <strong class="col-9">{{resolution.last_stop | date: 'yyyy/MM/dd HH:mm'}}</strong>
+
+        <span class="col-3">Run count</span>
+        <strong class="col-9">{{resolution.run_count}} / {{resolution.run_max}}</strong>
       </div>
-    </header>
-    <section>
-      <div style="padding: 0 18px 27px 18px">
-        <app-box [header]="{openable: true, init: display.result, class: 'primary', openOnClick: true}"
-          *ngIf="task.result && task.resolution">
-          <div app-box-header>
-            Result
-          </div>
-          <div app-box-content>
-            <lib-utask-editor [value]="JSON.stringify(task.result, null, 2)" [config]="editorConfigResult"></lib-utask-editor>
-          </div>
-        </app-box>
-
-        <app-box [header]="{openable: true, init: display.request, class: 'primary', openOnClick: true}">
-          <div app-box-header>
-            Request -
-            <small>{{task.id}}</small>
-            <div class="app-box_dropdown">
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-sm btn-primary" title="View as code"
-                  (click)="previewTask(); $event.stopPropagation();">
-                  <i class="fas fa-file-code"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-primary" title="Edit the task"
-                  (click)="editRequest(task); $event.stopPropagation();">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-primary" title="Delete the task"
-                  (click)="deleteTask(task.id); $event.stopPropagation();">
-                  <i class="fas fa-trash-alt"></i>
-                </button>
-              </div>
-            </div>
-
-          </div>
-          <div app-box-content>
-            <h3 *ngIf="task.input">Inputs</h3>
-            <table class="table table-responsive table-striped table-condensed" *ngIf="task.input">
-              <tbody>
-                <tr *ngFor="let inputKey of objectKeys(task.input)">
-                  <td>{{inputKey}}</td>
-                  <td>
-                    <strong>{{task.input[inputKey] | json}}</strong>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <small>Created from the template '<a [routerLink]="'/template/'+task.template_name"
-                title="Template {{task.template_name}}" *ngIf="meta.user_is_admin">
-                <strong>{{task.template_name}}</strong>
-              </a><strong *ngIf="!meta.user_is_admin">{{task.template_name}}</strong>'
-              by {{task.requester_username}} <abbr
-                title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created | utaskFromNow}}</em></abbr>
-              <span *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username"> and
-                updated by {{task.resolver_username}} <abbr
-                  title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity | utaskFromNow}}</em></abbr></span>
-            </small>
-          </div>
-        </app-box>
-
-        <app-box [header]="{openable: true, init: display.execution, class: 'primary', openOnClick: true}"
-          *ngIf="resolution && resolution.steps">
-          <div app-box-header>
-            Execution -
-            <small>{{resolution.id}}</small> -
-            <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}</small>
-
-            <span *ngIf="loaders.execution || loaders.task">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
-            <div class="btn-group app-box_dropdown" ngbDropdown (click)="$event.stopPropagation();">
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-sm btn-primary" title="Run" (click)="runResolution(resolution);">
-                  <i class="fas fa-play"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-primary" title="Cancel"
-                  (click)="cancelResolution(resolution);">
-                  <i class="fas fa-ban"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-primary" ngbDropdownToggle>
-                  More
-                </button>
-              </div>
-              <div class="dropdown-menu" ngbDropdownMenu>
-                <button type="button" ngbDropdownItem (click)="previewResolution();">View
-                  as
-                  code</button>
-                <button type="button" ngbDropdownItem (click)="pauseResolution(resolution);">Pause</button>
-                <button type="button" ngbDropdownItem (click)="extendResolution(resolution);">Extend</button>
-                <button type="button" ngbDropdownItem (click)="editResolution(resolution);">Edit</button>
-              </div>
-            </div>
-          </div>
-          <div app-box-content>
-            <div class="row">
-              <div class="col-4">
-                <h3>Steps</h3>
-                <div *ngIf="resolution.steps">
-                  <lib-utask-steps-list [resolution]="resolution" [selectedStep]="selectedStep">
-                  </lib-utask-steps-list>
-                </div>
-
-              </div>
-              <div class="col-8 steps-viewer">
-                <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
-                </lib-utask-steps-viewer>
-              </div>
-            </div>
-            <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>
-            <div class="row">
-              <span class="col-3">Last start</span>
-              <strong class="col-9">{{resolution.last_start | date: 'yyyy/MM/dd HH:mm'}}</strong>
-
-              <span class="col-3">Last stop</span>
-              <strong class="col-9">{{resolution.last_stop | date: 'yyyy/MM/dd HH:mm'}}</strong>
-
-              <span class="col-3">Run count</span>
-              <strong class="col-9">{{resolution.run_count}} / {{resolution.run_max}}</strong>
-            </div>
-          </div>
-        </app-box>
+    </div>
+  </lib-utask-box>
 
 
-        <div class="row" *ngIf="taskIsResolvable">
-          <div class="col-md-6">
-            <app-box [header]="{openable: true, init: display.resolution, class: 'success', openOnClick: true}">
-              <div app-box-header>
-                Resolve this task
-              </div>
-              <div app-box-content>
-                <form novalidate #myForm="ngForm" (ngSubmit)="resolveTask()">
-                  <div *ngFor="let input of template.resolver_inputs">
-
-                    <!-- INPUT TYPE TEXT(regex) / NUMBER / PASSWORD / TEXTAREA-->
-                    <div class="form-group" *ngIf="!input.legal_values && input.type!='bool' && !input.collection"
-                      [ngClass]="{'input__required': !input.optional}">
-                      <label for="input_{{input.name}}">
-                        {{input.description || input.name}}
-                        <i class="fas fa-question-circle" *ngIf="input.regex" title="{{input.regex}}"></i>
-                        <button type="button" class="btn btn-secondary" *ngIf="input.type!='number'"
-                          title="{{textarea[input.name] ? 'Click to disable multi line' : 'Click to enable multi line'}}"
-                          (click)="textarea[input.name] = !textarea[input.name]">
-                          <span *ngIf="textarea[input.name]">
-                            <i class="fas fa-ban"
-                              style="color: Tomato;position: absolute;margin-left: -3px;font-size: 21px;"></i>
-                          </span>
-                          <span>
-                            <i class="fas fa-align-justify fa-1x"></i></span>
-                        </button>
-                      </label>
-
-                      <input type="number" [(ngModel)]="item.resolver_inputs[input.name]" *ngIf="input.type=='number'"
-                        [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}"
-                        placeholder="{{input.default}}" class="form-control"
-                        [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
-
-                      <input type="password" [(ngModel)]="item.resolver_inputs[input.name]"
-                        *ngIf="input.type=='password' && !textarea[input.name]" [required]="!input.optional"
-                        name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
-                        [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
-
-                      <input type="text" [(ngModel)]="item.resolver_inputs[input.name]"
-                        *ngIf="input.type!='number' && input.type!='password' && !textarea[input.name]"
-                        [required]="!input.optional" name="input_{{input.name}}" [pattern]="input.regex"
-                        id="input_{{input.name}}" class="form-control"
-                        [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
-
-                      <textarea [(ngModel)]="item.resolver_inputs[input.name]"
-                        *ngIf="input.type!='number' && textarea[input.name]" [required]="!input.optional"
-                        name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}"
-                        class="form-control"
-                        [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}"></textarea>
-                    </div>
-
-                    <div *ngIf="input.legal_values && input.collection" class="form-group">
-                      <label for="input_{{input.name}}">
-                        {{input.description || input.name}}
-                      </label>
-
-                      <tag-input name="input_{{input.name}}" id="input_{{input.name}}"
-                        [(ngModel)]='item.resolver_inputs[input.name]' [modelAsStrings]="true"
-                        [onlyFromAutocomplete]="true" [required]="!input.optional" [secondaryPlaceholder]="'Items'"
-                        [placeholder]="'Add'">
-                        <tag-input-dropdown [showDropdownIfEmpty]="true" [autocompleteItems]="input.legal_values">
-                        </tag-input-dropdown>
-                      </tag-input>
-                    </div>
-
-                    <div *ngIf="!input.legal_values && input.collection" class="form-group">
-                      <label for="input_{{input.name}}">
-                        {{input.description || input.name}}
-                      </label>
-
-                      <tag-input name="input_{{input.name}}" id="input_{{input.name}}"
-                        [(ngModel)]='item.resolver_inputs[input.name]' [modelAsStrings]="true"
-                        [required]="!input.optional" [secondaryPlaceholder]="'Items'" [placeholder]="'Add'">
-                      </tag-input>
-                    </div>
-
-                    <div *ngIf="input.legal_values && !input.collection" class="form-group">
-                      <label for="input_{{input.name}}">
-                        {{input.description || input.name}}
-                      </label>
-
-                      <select name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
-                        [(ngModel)]='item.resolver_inputs[input.name]' [required]="!input.optional">
-                        <option></option>
-                        <option *ngFor="let option of input.legal_values" value="{{option}}">{{option}}</option>
-                      </select>
-                    </div>
-
-                    <div *ngIf="input.type=='bool'" class="form-group">
-                      <label for="input_{{input.name}}">
-                        {{input.description || input.name}}
-                      </label>
-
-                      <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
-                        [(ngModel)]='item.resolver_inputs[input.name]' />
-                    </div>
-                  </div>
-
-                  <lib-utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask"></lib-utask-error-message>
-
-                  <button type="submit" class="btn btn-success"
-                    [disabled]="myForm.invalid || loaders.resolveTask">Resolve</button>
-                </form>
-              </div>
-            </app-box>
-          </div>
-
-          <div class="col-md-6">
-
-            <app-box [header]="{openable: true, init: display.resolution, class: 'danger', openOnClick: true}">
-              <div app-box-header>
-                Reject this task
-              </div>
-              <div app-box-content>
-                <form novalidate #rejectForm="ngForm" (ngSubmit)="rejectTask()">
-
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="confirmReject" id="confirmReject"
-                      [(ngModel)]='confirm.reject' required />
-
-                    <label class="form-check-label" for="confirmReject">
-                      Are you sure you want to reject this request ?
-                    </label>
-                  </div>
-
-                  <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></lib-utask-error-message>
-
-                  <button type="submit" class="btn btn-danger"
-                    [disabled]="rejectForm.invalid || loaders.rejectTask">Reject</button>
-                </form>
-              </div>
-            </app-box>
-
-          </div>
+  <div class="row" *ngIf="taskIsResolvable">
+    <div class="col-md-6">
+      <lib-utask-box [header]="{openable: true, init: display.resolution, class: 'success', openOnClick: true}">
+        <div app-box-header>
+          Resolve this task
         </div>
+        <div app-box-content>
+          <form novalidate #myForm="ngForm" (ngSubmit)="resolveTask()">
+            <div *ngFor="let input of template.resolver_inputs">
 
-        <app-box [header]="{openable: true, init: false, class: 'primary', openOnClick: true}"
-          *ngIf="haveAtLeastOneChilTask">
-          <div app-box-header>
-            Sub Tasks
-          </div>
-          <div app-box-content>
-            <lib-utask-tasks-list [meta]="meta" [params]="{
+              <!-- INPUT TYPE TEXT(regex) / NUMBER / PASSWORD / TEXTAREA-->
+              <div class="form-group" *ngIf="!input.legal_values && input.type!='bool' && !input.collection"
+                [ngClass]="{'input__required': !input.optional}">
+                <label for="input_{{input.name}}">
+                  {{input.description || input.name}}
+                  <i class="fas fa-question-circle" *ngIf="input.regex" title="{{input.regex}}"></i>
+                  <button type="button" class="btn btn-secondary" *ngIf="input.type!='number'"
+                    title="{{textarea[input.name] ? 'Click to disable multi line' : 'Click to enable multi line'}}"
+                    (click)="textarea[input.name] = !textarea[input.name]">
+                    <span *ngIf="textarea[input.name]">
+                      <i class="fas fa-ban"
+                        style="color: Tomato;position: absolute;margin-left: -3px;font-size: 21px;"></i>
+                    </span>
+                    <span>
+                      <i class="fas fa-align-justify fa-1x"></i></span>
+                  </button>
+                </label>
+
+                <input type="number" [(ngModel)]="item.resolver_inputs[input.name]" *ngIf="input.type=='number'"
+                  [required]="!input.optional" name="input_{{input.name}}" id="input_{{input.name}}"
+                  placeholder="{{input.default}}" class="form-control"
+                  [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
+
+                <input type="password" [(ngModel)]="item.resolver_inputs[input.name]"
+                  *ngIf="input.type=='password' && !textarea[input.name]" [required]="!input.optional"
+                  name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
+                  [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
+
+                <input type="text" [(ngModel)]="item.resolver_inputs[input.name]"
+                  *ngIf="input.type!='number' && input.type!='password' && !textarea[input.name]"
+                  [required]="!input.optional" name="input_{{input.name}}" [pattern]="input.regex"
+                  id="input_{{input.name}}" class="form-control"
+                  [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}">
+
+                <textarea [(ngModel)]="item.resolver_inputs[input.name]"
+                  *ngIf="input.type!='number' && textarea[input.name]" [required]="!input.optional"
+                  name="input_{{input.name}}" [pattern]="input.regex" id="input_{{input.name}}" class="form-control"
+                  [ngClass]="{'is-invalid': myForm.form.controls['input_'+input.name]?.invalid && myForm.form.controls['input_'+input.name]?.touched}"></textarea>
+              </div>
+
+              <div *ngIf="input.legal_values && input.collection" class="form-group">
+                <label for="input_{{input.name}}">
+                  {{input.description || input.name}}
+                </label>
+
+                <tag-input name="input_{{input.name}}" id="input_{{input.name}}"
+                  [(ngModel)]='item.resolver_inputs[input.name]' [modelAsStrings]="true" [onlyFromAutocomplete]="true"
+                  [required]="!input.optional" [secondaryPlaceholder]="'Items'" [placeholder]="'Add'">
+                  <tag-input-dropdown [showDropdownIfEmpty]="true" [autocompleteItems]="input.legal_values">
+                  </tag-input-dropdown>
+                </tag-input>
+              </div>
+
+              <div *ngIf="!input.legal_values && input.collection" class="form-group">
+                <label for="input_{{input.name}}">
+                  {{input.description || input.name}}
+                </label>
+
+                <tag-input name="input_{{input.name}}" id="input_{{input.name}}"
+                  [(ngModel)]='item.resolver_inputs[input.name]' [modelAsStrings]="true" [required]="!input.optional"
+                  [secondaryPlaceholder]="'Items'" [placeholder]="'Add'">
+                </tag-input>
+              </div>
+
+              <div *ngIf="input.legal_values && !input.collection" class="form-group">
+                <label for="input_{{input.name}}">
+                  {{input.description || input.name}}
+                </label>
+
+                <select name="input_{{input.name}}" id="input_{{input.name}}" class="form-control"
+                  [(ngModel)]='item.resolver_inputs[input.name]' [required]="!input.optional">
+                  <option></option>
+                  <option *ngFor="let option of input.legal_values" value="{{option}}">{{option}}</option>
+                </select>
+              </div>
+
+              <div *ngIf="input.type=='bool'" class="form-group">
+                <label for="input_{{input.name}}">
+                  {{input.description || input.name}}
+                </label>
+
+                <input type="checkbox" name="input_{{input.name}}" id="input_{{input.name}}"
+                  [(ngModel)]='item.resolver_inputs[input.name]' />
+              </div>
+            </div>
+
+            <lib-utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask">
+            </lib-utask-error-message>
+
+            <button type="submit" class="btn btn-success"
+              [disabled]="myForm.invalid || loaders.resolveTask">Resolve</button>
+          </form>
+        </div>
+      </lib-utask-box>
+    </div>
+
+    <div class="col-md-6">
+
+      <lib-utask-box [header]="{openable: true, init: display.resolution, class: 'danger', openOnClick: true}">
+        <div app-box-header>
+          Reject this task
+        </div>
+        <div app-box-content>
+          <form novalidate #rejectForm="ngForm" (ngSubmit)="rejectTask()">
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="confirmReject" id="confirmReject"
+                [(ngModel)]='confirm.reject' required />
+
+              <label class="form-check-label" for="confirmReject">
+                Are you sure you want to reject this request ?
+              </label>
+            </div>
+
+            <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask"></lib-utask-error-message>
+
+            <button type="submit" class="btn btn-danger"
+              [disabled]="rejectForm.invalid || loaders.rejectTask">Reject</button>
+          </form>
+        </div>
+      </lib-utask-box>
+
+    </div>
+
+    <lib-utask-box [header]="{openable: true, init: false, class: 'primary', openOnClick: true}"
+      *ngIf="haveAtLeastOneChilTask">
+      <div app-box-header>
+        Sub Tasks
+      </div>
+      <div app-box-content>
+        <lib-utask-tasks-list [meta]="meta" [params]="{
             page_size: 10,
             type: meta.user_is_admin ? 'all' : 'own',
             tag: '_utask_parent_task_id=' + taskId
           }" (event)="eventUtask($event)">
-            </lib-utask-tasks-list>
-          </div>
-        </app-box>
-
-        <app-box [header]="{openable: true, init: display.comments, class: 'primary', openOnClick: true}">
-          <div app-box-header>
-            Comments - <span class="badge"
-              [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
-            <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
-          </div>
-          <div app-box-content>
-            <ul class="utask_comments" *ngIf="task.comments && task.comments.length">
-              <li class="utask_comment" *ngFor="let comment of task.comments">
-                <p>{{comment.content}}</p>
-                <small><em>{{comment.username}}</em>, {{comment.created | utaskFromNow}}</small>
-              </li>
-            </ul>
-            <div *ngIf="!task.comments || task.comments.length === 0">
-              No comments
-            </div>
-
-            <hr />
-            <form novalidate #myCommentForm="ngForm" (ngSubmit)="addComment()">
-              <div class="form-group input__required">
-                <label for="comment">
-                  Comment
-                </label>
-                <textarea name="comment" id="comment" class="form-control" [(ngModel)]="comment.content"></textarea>
-              </div>
-
-              <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
-
-              <button type="submit" mat-raised-button color="primary"
-                [disabled]="myCommentForm.invalid || loaders.addComment">Add
-                comment</button>
-
-            </form>
-          </div>
-        </app-box>
+        </lib-utask-tasks-list>
       </div>
+    </lib-utask-box>
 
-    </section>
+    <lib-utask-box [header]="{openable: true, init: display.comments, class: 'primary', openOnClick: true}">
+      <div app-box-header>
+        Comments - <span class="badge"
+          [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
+        <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
+      </div>
+      <div app-box-content>
+        <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments" [nzRenderItem]="comment"
+          [nzItemLayout]="'horizontal'">
+          <ng-template #comment let-comment>
+            <nz-comment [nzAuthor]="comment.username" [nzDatetime]="comment.created | utaskFromNow">
+              <nz-avatar nz-comment-avatar [nzText]="comment.username[0].toUpperCase()"></nz-avatar>
+              <nz-comment-content>
+                <p>{{ comment.content }}</p>
+              </nz-comment-content>
+            </nz-comment>
+          </ng-template>
+        </nz-list>
+        <nz-comment>
+          <nz-avatar nz-comment-avatar [nzText]="this.meta.username[0].toUpperCase()"></nz-avatar>
+          <nz-comment-content>
+            <nz-form-item>
+              <textarea [(ngModel)]="comment.content" nz-input rows="4"></textarea>
+            </nz-form-item>
+            <nz-form-item>
+              <button nz-button nzType="primary" [nzLoading]="loaders.addComment" [disabled]="!comment.content"
+                (click)="addComment()">
+                Add Comment
+              </button>
+            </nz-form-item>
+          </nz-comment-content>
+        </nz-comment>
+        <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
+      </div>
+    </lib-utask-box>
   </div>
-</div>
+</ng-container>

@@ -42,6 +42,8 @@ import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { BoxComponent } from './@components/box/box.component';
+import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 
 const components: any[] = [
   LoaderComponent,
@@ -54,6 +56,7 @@ const components: any[] = [
   StepsListComponent,
   TemplateDetailsComponent,
   ChartTaskStatesComponent,
+  BoxComponent,
 
   ModalConfirmationApiComponent,
   ModalApiYamlComponent,
@@ -91,6 +94,7 @@ interface UtaskLibConfiguration {
     NzModalModule,
     NzGridModule,
     NzAlertModule,
+    NzCollapseModule
   ],
   exports: components,
   bootstrap: [],
