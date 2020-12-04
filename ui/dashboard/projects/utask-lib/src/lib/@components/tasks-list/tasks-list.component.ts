@@ -9,7 +9,8 @@ import {
     ChangeDetectorRef,
     ChangeDetectionStrategy,
     OnChanges,
-    NgZone
+    NgZone,
+    AfterViewInit
 } from '@angular/core';
 import {
     interval,
@@ -89,7 +90,7 @@ export class TasksListComponentOptions {
     styleUrls: ['./tasks-list.sass'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
+export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
 
     @Input() set params(data: ParamsListTasks) { this.registrerScroll.next(data); }
@@ -116,6 +117,8 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
     scrollSub: Subscription;
     registrerScroll = new Subject<ParamsListTasks>();
 
+    titleWidth: string;
+
     constructor(
         private _api: ApiService,
         private _resolutionService: ResolutionService,
@@ -128,6 +131,15 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
             .pipe(tap(data => this._params = { ...data }))
             .pipe(concatMap(() => this.registerInfiniteScroll()))
             .subscribe(() => { });
+    }
+
+    ngAfterViewInit() {
+        let offsetWidth = (this.nzTableComponent as any).elementRef.nativeElement.offsetWidth;
+        if (offsetWidth > 1100) {
+            this.titleWidth = `${offsetWidth - 800}px`;
+        } else {
+            this.titleWidth = '300px';
+        }
     }
 
     ngOnInit() {

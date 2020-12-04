@@ -1,8 +1,7 @@
 <lib-utask-error-message [data]="errors.tasks" *ngIf="errors.tasks"></lib-utask-error-message>
 
 <div class="send-request" *ngIf="!!bulkActions">
-    <button nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'" nzType="primary"
-        [nzTrigger]="'click'">Bulk
+    <button nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'" nzType="primary" [nzTrigger]="'click'">Bulk
         actions</button>
     <nz-dropdown-menu #menuBulk="nzDropdownMenu">
         <ul nz-menu>
@@ -18,19 +17,17 @@
     </nz-dropdown-menu>
 </div>
 
-<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="1"
-    [nzVirtualForTrackBy]="trackByTaskID" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small"
-    [nzLoading]="loadingTasks && tasks.length === 0">
+<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="1" [nzVirtualForTrackBy]="trackByTaskID" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small" [nzLoading]="loadingTasks && tasks.length === 0">
     <thead>
         <tr>
-            <th nzWidth="50px" [nzChecked]="!!bulkAllSelected" (nzCheckedChange)="clickCheckAll($event)">
+            <th nzLeft nzWidth="50px" [nzChecked]="!!bulkAllSelected" (nzCheckedChange)="clickCheckAll($event)">
             </th>
-            <th>Title</th>
+            <th [nzWidth]="titleWidth">Title</th>
             <th nzWidth="150px">Status</th>
             <th nzWidth="150px">Requester</th>
             <th nzWidth="150px">Resolver</th>
             <th nzWidth="150px">Last activity</th>
-            <th nzWidth="150px">Actions</th>
+            <th nzRight nzWidth="150px">Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -42,7 +39,7 @@
                 </td>
             </tr>
             <tr>
-                <td [nzChecked]="!!bulkSelection[item.id]" (nzCheckedChange)="clickCheckTask(item.id, $event)">
+                <td nzLeft [nzChecked]="!!bulkSelection[item.id]" (nzCheckedChange)="clickCheckTask(item.id, $event)">
                 </td>
                 <td>
                     <a [routerLink]='options.routingTask+item.id' title="{{item.title}}">{{item.title}}</a>
@@ -63,24 +60,19 @@
                 <td>
                     {{item.last_activity | utaskFromNow}}
                 </td>
-                <td *ngIf="getTaskActions(item); let actions">
+                <td nzRight *ngIf="getTaskActions(item); let actions">
                     <nz-button-group>
-                        <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)"
-                            [disabled]="!actions.run"><i nz-icon nzType="caret-right"></i></button>
-                        <button nz-button nzType="primary" title="Cancel"
-                            (click)="cancelResolution(item.resolution, item.id)" [disabled]="!actions.cancel"><i nz-icon
+                        <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)" [disabled]="!actions.run"><i nz-icon nzType="caret-right"></i></button>
+                        <button nz-button nzType="primary" title="Cancel" (click)="cancelResolution(item.resolution, item.id)" [disabled]="!actions.cancel"><i nz-icon
                                 nzType="stop"></i></button>
-                        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
-                            nzType="primary" [disabled]="!actions.more">More</button>
+                        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary" [disabled]="!actions.more">More</button>
                     </nz-button-group>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                         <ul nz-menu>
-                            <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)"
-                                [nzDisabled]="!actions.pause">
+                            <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)" [nzDisabled]="!actions.pause">
                                 Pause
                             </li>
-                            <li nz-menu-item (click)="extendResolution(item.resolution, item.id)"
-                                [nzDisabled]="!actions.extend">
+                            <li nz-menu-item (click)="extendResolution(item.resolution, item.id)" [nzDisabled]="!actions.extend">
                                 Extend</li>
                             <li nz-menu-item (click)="deleteTask(item.id)" [nzDisabled]="!actions.delete">Delete</li>
                         </ul>
