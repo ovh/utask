@@ -10,6 +10,7 @@ class VMTaskState {
 
 @Component({
   templateUrl: './stats.html',
+  styleUrls: ['./stats.sass'],
 })
 export class StatsComponent implements OnInit {
   taskStates: VMTaskState[];

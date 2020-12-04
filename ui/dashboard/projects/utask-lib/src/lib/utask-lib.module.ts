@@ -44,6 +44,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { BoxComponent } from './@components/box/box.component';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
+import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 
 const components: any[] = [
   LoaderComponent,
@@ -94,7 +95,8 @@ interface UtaskLibConfiguration {
     NzModalModule,
     NzGridModule,
     NzAlertModule,
-    NzCollapseModule
+    NzCollapseModule,
+    NzCodeEditorModule,
   ],
   exports: components,
   bootstrap: [],

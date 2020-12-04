@@ -2,6 +2,7 @@
 <lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
 
 <ng-container *ngIf="!loading && !error">
-    <lib-utask-editor [value]="text" [config]="config"></lib-utask-editor>
+    <nz-code-editor class="editor" [ngModel]="text" [nzEditorOption]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
+    </nz-code-editor>
     <lib-utask-steps-viewer [resolution]="template" *ngIf="template"></lib-utask-steps-viewer>
 </ng-container>

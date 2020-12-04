@@ -94,7 +94,7 @@ export class StepNodeComponent implements OnInit, AfterViewInit, OnChanges {
 
     ngAfterViewInit() {
         tippy(this.div.nativeElement, {
-            content: `${this.key} - ${this.step.state}<br/>${this.step.description}`,
+            content: `${this.key} - ${this.step?.state ?? ''}<br/>${this.step.description}`,
             allowHTML: true,
             animation: 'scale'
         });

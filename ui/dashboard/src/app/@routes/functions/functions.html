@@ -1,5 +1,4 @@
-<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="functions" [nzVirtualItemSize]="1"
-    [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small">
+<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="functions" [nzVirtualItemSize]="1" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small">
     <thead>
         <tr>
             <th nzWidth="60px"></th>
@@ -14,8 +13,7 @@
             </tr>
             <tr *ngIf="expandSet.has(item.name)">
                 <td colspan="2">
-                    <nz-code-editor class="editor" [ngModel]="codes[index]"
-                        [nzEditorOption]="{ language: 'json', readOnly: true }" *ngIf="expandSet.has(item.name)">
+                    <nz-code-editor class="editor" [ngModel]="codes[index]" [nzEditorOption]="{ language: 'json', readOnly: true }">
                     </nz-code-editor>
                 </td>
             </tr>
