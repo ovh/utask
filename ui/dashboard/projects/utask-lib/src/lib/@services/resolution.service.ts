@@ -1,16 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, ViewContainerRef } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApiService } from './api.service';
 import { ModalApiYamlEditComponent } from '../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ModalService } from './modal.service';
 import { throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Injectable()
 export class ResolutionService {
 
     constructor(
-        private modalService: NgbModal,
+        private modal: NzModalService,
+        // private viewContainerRef: ViewContainerRef,
         private _modalService: ModalService,
         private api: ApiService
     ) { }
@@ -86,18 +88,18 @@ export class ResolutionService {
 
     edit(resolution: any) {
         return new Promise((resolve, reject) => {
-            const modal = this.modalService.open(ModalApiYamlEditComponent, {
-                size: 'xl'
-            });
-            modal.componentInstance.title = 'Edit resolution';
-            modal.componentInstance.apiCall = () => this.api.resolution.getAsYaml(resolution.id).toPromise();
-            modal.componentInstance.apiCallSubmit = (data: any) => this.api.resolution.updateAsYaml(resolution.id, data).toPromise();
-            modal.result.then((res: any) => {
-                resolve(res);
-            }).catch((err) => {
-                if (err !== 0 && err !== 1 && err !== 'Cross click') {
-                    reject(err);
-                } else {
+            const modal = this.modal.create({
+                nzTitle: 'Resolution preview',
+                nzContent: ModalApiYamlEditComponent,
+                nzWidth: '80%',
+                nzComponentParams: {
+                    apiCall: () => this.api.resolution.getAsYaml(resolution.id).toPromise(),
+                    apiCallSubmit: (data: any) => this.api.resolution.updateAsYaml(resolution.id, data).toPromise()
+                },
+                nzOnOk: (data: ModalApiYamlEditComponent) => {
+                    resolve(data.result);
+                },
+                nzOnCancel: () => {
                     reject('close');
                 }
             });

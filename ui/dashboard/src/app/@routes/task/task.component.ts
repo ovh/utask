@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
-import EditorConfig from 'projects/utask-lib/src/lib/@models/editorconfig.model';
 import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
 import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 import { RequestService } from 'projects/utask-lib/src/lib/@services/request.service';
@@ -16,6 +15,8 @@ import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 import { ModalApiYamlComponent } from 'projects/utask-lib/src/lib/@modals/modal-api-yaml/modal-api-yaml.component';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { EditorOptions } from 'ng-zorro-antd/code-editor';
 
 @Component({
   templateUrl: './task.html',
@@ -42,11 +43,9 @@ export class TaskComponent implements OnInit, OnDestroy {
   taskIsResolvable = false;
   taskId = '';
   resolution: any = null;
-  editorConfigResult: EditorConfig = {
-    readonly: true,
-    mode: 'ace/mode/json',
-    theme: 'ace/theme/monokai',
-    maxLines: 25,
+  editorConfigResult: EditorOptions = {
+    readOnly: true,
+    wordWrap: 'on',
   };
   selectedStep = '';
   meta: Meta = null;
@@ -71,7 +70,9 @@ export class TaskComponent implements OnInit, OnDestroy {
     private taskService: TaskService,
     private router: Router,
     private toastr: ToastrService,
-    private _fb: FormBuilder
+    private _fb: FormBuilder,
+    private modal: NzModalService,
+    private viewContainerRef: ViewContainerRef,
   ) { }
 
   ngOnDestroy() {
@@ -126,19 +127,27 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   previewTask() {
-    const previewModal = this.modalService.open(ModalApiYamlComponent, {
-      size: 'xl'
+    const modal = this.modal.create({
+      nzTitle: 'Request preview',
+      nzContent: ModalApiYamlComponent,
+      nzWidth: '80%',
+      nzViewContainerRef: this.viewContainerRef,
+      nzComponentParams: {
+        apiCall: () => this.api.task.getAsYaml(this.taskId).toPromise()
+      },
     });
-    previewModal.componentInstance.title = 'Request preview';
-    previewModal.componentInstance.apiCall = () => this.api.task.getAsYaml(this.taskId).toPromise();
   }
 
   previewResolution() {
-    const previewModal = this.modalService.open(ModalApiYamlComponent, {
-      size: 'xl'
+    const modal = this.modal.create({
+      nzTitle: 'Resolution preview',
+      nzContent: ModalApiYamlComponent,
+      nzWidth: '80%',
+      nzViewContainerRef: this.viewContainerRef,
+      nzComponentParams: {
+        apiCall: () => this.api.resolution.getAsYaml(this.resolution.id).toPromise()
+      },
     });
-    previewModal.componentInstance.title = 'Resolution preview';
-    previewModal.componentInstance.apiCall = () => this.api.resolution.getAsYaml(this.resolution.id).toPromise();
   }
 
   editRequest(task: Task) {

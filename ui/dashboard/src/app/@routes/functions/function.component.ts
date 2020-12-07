@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
         <h1>Function - {{functionName}}</h1>
       </header>
       <section>
-        <lib-utask-editor [value]="JSON.stringify(function, null, 4)" [config]="{readonly: true, wordWrap: 'on'}"></lib-utask-editor>
+        <lib-utask-editor [ngModel]="JSON.stringify(function, null, 4)" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{readonly: true, wordWrap: 'on'}"></lib-utask-editor>
       </section>
     </div>
   `,

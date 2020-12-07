@@ -1,7 +1,7 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { ApiServiceOptions } from './@services/api.service';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
-import { ModalConfirmationApiComponent } from './@modals/modal-confirmation-api/modal-confirmation-api.component';
+// import { ModalConfirmationApiComponent } from './@modals/modal-confirmation-api/modal-confirmation-api.component';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { EditorComponent } from './@components/editor/editor.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -48,6 +48,7 @@ import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 const components: any[] = [
   LoaderComponent,
@@ -63,7 +64,7 @@ const components: any[] = [
   BoxComponent,
   InputsFormComponent,
 
-  ModalConfirmationApiComponent,
+  // ModalConfirmationApiComponent,
   ModalApiYamlComponent,
   ModalApiYamlEditComponent,
   NzModalContentWithErrorComponent,
@@ -103,12 +104,13 @@ interface UtaskLibConfiguration {
     NzCollapseModule,
     NzCodeEditorModule,
     NzFormModule,
-    NzCheckboxModule
+    NzCheckboxModule,
+    NzSpinModule,
   ],
   exports: components,
   bootstrap: [],
   entryComponents: [
-    ModalConfirmationApiComponent,
+    // ModalConfirmationApiComponent,
     ModalApiYamlComponent,
     ModalApiYamlEditComponent,
     NzModalContentWithErrorComponent

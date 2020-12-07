@@ -13,8 +13,8 @@
             </tr>
             <tr *ngIf="expandSet.has(item.name)">
                 <td colspan="2">
-                    <nz-code-editor class="editor" [ngModel]="codes[index]" [nzEditorOption]="{ language: 'json', readOnly: true }">
-                    </nz-code-editor>
+                    <lib-utask-editor class="editor" [ngModel]="codes[index]" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'json', readOnly: true }">
+                    </lib-utask-editor>
                 </td>
             </tr>
         </ng-container>

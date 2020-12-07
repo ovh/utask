@@ -5,9 +5,9 @@ import uniq from 'lodash-es/uniq';
 import compact from 'lodash-es/compact';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WorkflowService } from '../../@services/workflow.service';
-import EditorConfig from '../../@models/editorconfig.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import JSToYaml from 'convert-yaml';
+import { EditorOptions } from 'ng-zorro-antd/code-editor';
 
 @Component({
     selector: 'lib-utask-steps-list',
@@ -21,17 +21,17 @@ export class StepsListComponent implements OnChanges {
     filter: any = {
         tags: []
     };
-    editorConfigPayload: EditorConfig = {
-        readonly: true,
-        maxLines: 10,
+    editorConfigPayload: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
     };
-    editorConfigError: EditorConfig = {
-        readonly: true,
-        maxLines: 10,
+    editorConfigError: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
     };
-    editorConfigChildren: EditorConfig = {
-        readonly: true,
-        maxLines: 20,
+    editorConfigChildren: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
     };
     filteredStepNames: string[];
     states: any = null;
