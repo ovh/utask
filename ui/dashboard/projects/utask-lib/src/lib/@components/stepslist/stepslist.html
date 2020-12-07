@@ -3,60 +3,47 @@
     </tag-input-dropdown>
     <ng-template let-item="item" let-index="index">
         <span *ngIf="item.startsWith('State:')">
-      <span class="fas {{getIcon(item.split(':')[1])}}"></span> {{ item.split(':')[1] }}
+            <span class="fas {{getIcon(item.split(':')[1])}}"></span> {{ item.split(':')[1] }}
         </span>
         <span *ngIf="!item.startsWith('State:')">
-      {{ item }}
-    </span>
+            {{ item }}
+        </span>
         <delete-icon (click)="input.onRemoveRequested(item, index)"></delete-icon>
     </ng-template>
 </tag-input>
 
-<div>
-    <div class="utask_step" *ngFor="let stepName of filteredStepNames" [ngStyle]="{
-          'border-left': 
-            '1px solid ' + 
-              (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color),
-          'border-right': '1px solid ' + 
-              (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color),
-          'border-bottom': '1px solid ' + 
-              (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color)
-        }">
-        <div class="utask_step-name nowrap" title="{{resolution.steps[stepName].state}} - {{stepName}}" [ngStyle]="{
-          'background': 
-              (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color),
-          'color': 
-              (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)
-       }" (click)="displayDetails[stepName] = !displayDetails[stepName]" style="cursor:pointer;">
-
-            <span *ngIf="!displayDetails[stepName]">
-        <i class="fas fa-caret-down"></i>
-      </span>
-            <span *ngIf="displayDetails[stepName]">
-        <i class="fas fa-caret-up"></i>
-      </span> {{resolution.steps[stepName].state}} - {{stepName}}
-        </div>
-        <div class="utask_step-details" *ngIf="displayDetails[stepName]">
+<ng-container *ngFor="let stepName of filteredStepNames">
+    <lib-utask-box
+        [header]="{openable: true, init: true, class: 'primary', openOnClick: true, color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
+        <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}</div>
+        <div app-box-content>
             <div *ngIf="resolution.steps[stepName].output">
                 Output:
-                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].output, null, 4)" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigPayload"></lib-utask-editor>
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].output, null, 4)"
+                    ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigPayload">
+                </lib-utask-editor>
             </div>
 
             <div *ngIf="resolution.steps[stepName].children">
                 Children:
-                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].children, null, 4)" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigChildren"></lib-utask-editor>
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].children, null, 4)"
+                    ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigChildren">
+                </lib-utask-editor>
             </div>
 
             <div *ngIf="resolution.steps[stepName].error">
                 <span *ngIf="resolution.steps[stepName].state !== 'DONE'">Error:</span>
                 <span *ngIf="resolution.steps[stepName].state === 'DONE'">Message:</span>
-                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].error, null, 4)" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigError"></lib-utask-editor>
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].error, null, 4)" ngDefaultControl
+                    [ngModelOptions]="{standalone: true}" [config]="editorConfigError"></lib-utask-editor>
             </div>
 
-            <small *ngIf="resolution.steps[stepName].last_run && resolution.steps[stepName].last_run != '0001-01-01T00:00:00Z'">
-        Last run: <strong>{{resolution.steps[stepName].last_run | utaskFromNow}}</strong>
-      </small>
-            <button type="button" class="btn btn-secondary btn-outline-primary" (click)="previewStepDetails(resolution.steps[stepName])">View</button>
+            <small
+                *ngIf="resolution.steps[stepName].last_run && resolution.steps[stepName].last_run != '0001-01-01T00:00:00Z'">
+                Last run: <strong>{{resolution.steps[stepName].last_run | utaskFromNow}}</strong>
+            </small>
+            <button type="button" class="btn btn-secondary btn-outline-primary"
+                (click)="previewStepDetails(resolution.steps[stepName])">View</button>
         </div>
-    </div>
-</div>
+    </lib-utask-box>
+</ng-container>

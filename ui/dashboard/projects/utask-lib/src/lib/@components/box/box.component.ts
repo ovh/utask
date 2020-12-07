@@ -1,5 +1,6 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { NzCollapsePanelComponent } from 'ng-zorro-antd/collapse';
 
 class HeaderConfig {
     init: boolean;
@@ -7,6 +8,8 @@ class HeaderConfig {
     link: string;
     openOnClick: boolean;
     class: string;
+    color: string;
+    fontColor: string;
 }
 
 @Component({
@@ -14,14 +17,32 @@ class HeaderConfig {
     templateUrl: './box.html',
     styleUrls: ['./box.sass'],
 })
-export class BoxComponent implements OnChanges {
-    @Input('header') header: HeaderConfig;
-    display: boolean = true;
+export class BoxComponent implements OnChanges, AfterViewInit {
+    @ViewChild('panel') panel: NzCollapsePanelComponent;
+
+    @Input() header: HeaderConfig;
+    display = true;
     headerConfig: HeaderConfig;
+
+    customStyle: any
+    customStylePanel: any
+    customStyleHeader: any
 
     constructor(
         private router: Router
     ) { }
+
+    ngAfterViewInit(): void {
+        const oldCallback = this.panel.clickHeader.bind(this.panel);
+        this.panel.clickHeader = () => {
+            if (this.header.link) {
+                this.router.navigate([this.header.link]);
+            }
+            if (this.header.openOnClick) {
+                oldCallback();
+            }
+        }
+    }
 
     ngOnChanges() {
         this.display = this.header.init ?? true;
@@ -33,14 +54,17 @@ export class BoxComponent implements OnChanges {
             class: 'primary',
             ...this.header
         };
-    }
-
-    headerClick() {
-        if (this.header.link) {
-            this.router.navigate([this.header.link]);
-        }
-        else if (this.header.openOnClick) {
-            this.display = !this.display;
+        if (this.headerConfig.color && this.headerConfig.color) {
+            this.customStyle = {
+                'border-color': this.headerConfig.color,
+                'background-color': this.headerConfig.color
+            };
+            this.customStylePanel = {
+                'border-color': this.headerConfig.color
+            };
+            this.customStyleHeader = {
+                color: this.headerConfig.fontColor
+            }
         }
     }
 }
