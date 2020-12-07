@@ -49,6 +49,7 @@ import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 
 const components: any[] = [
   LoaderComponent,
@@ -106,6 +107,7 @@ interface UtaskLibConfiguration {
     NzFormModule,
     NzCheckboxModule,
     NzSpinModule,
+    NzDescriptionsModule
   ],
   exports: components,
   bootstrap: [],
