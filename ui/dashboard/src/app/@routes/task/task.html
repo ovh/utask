@@ -112,18 +112,14 @@
       </nz-dropdown-menu>
     </div>
     <div app-box-content>
-      <div class="row">
-        <div class="col-4">
+      <div nz-row [nzGutter]="16">
+        <div nz-col [nzSpan]="12">
           <h3>Steps</h3>
-          <div *ngIf="resolution.steps">
-            <lib-utask-steps-list [resolution]="resolution" [selectedStep]="selectedStep">
-            </lib-utask-steps-list>
-          </div>
+          <lib-utask-steps-list *ngIf="resolution.steps" [resolution]="resolution" [selectedStep]="selectedStep">
+          </lib-utask-steps-list>
         </div>
-        <div class="col-8 steps-viewer">
-          <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
-          </lib-utask-steps-viewer>
-        </div>
+        <lib-utask-steps-viewer nz-col [nzSpan]="12" [resolution]="resolution" (select)="selectStepFromViewer($event)">
+        </lib-utask-steps-viewer>
       </div>
       <p>Execution instance #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}.</p>
       <div class="row">

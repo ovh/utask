@@ -9,14 +9,26 @@ nz-header {
 }
 
 .logo {
-  width: 120px;
-  height: 31px;
-  margin: 16px 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 120px;
+  height: 35px;
+  margin: 16px 30px 16px 10px;
   float: left;
-  color: #fff;
-  font-weight: 600;
-  font-size: 24px;
-  line-height: 30px;
+
+  img {
+    height: 100%;
+  }
+
+  span {
+    flex: 1;
+    color: #fff;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 30px;
+    margin: 0 20px;
+  }
 }
 
 [nz-menu] {
