@@ -1,7 +1,8 @@
 <lib-utask-error-message [data]="errors.tasks" *ngIf="errors.tasks"></lib-utask-error-message>
 
 <div class="send-request" *ngIf="!!bulkActions">
-    <button nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'" nzType="primary" [nzTrigger]="'click'">Bulk
+    <button nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'" nzType="primary"
+        [nzTrigger]="'click'">Bulk
         actions</button>
     <nz-dropdown-menu #menuBulk="nzDropdownMenu">
         <ul nz-menu>
@@ -17,7 +18,8 @@
     </nz-dropdown-menu>
 </div>
 
-<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzVirtualItemSize]="1" [nzVirtualForTrackBy]="trackByTaskID" [nzFrontPagination]="false" [nzShowPagination]="false" nzSize="small" [nzLoading]="loadingTasks && tasks.length === 0">
+<nz-table #virtualTable [nsAutoHeightTable]="39" [nzData]="tasks" [nzFrontPagination]="false" [nzShowPagination]="false"
+    nzSize="small" [nzLoading]="loadingTasks && tasks.length === 0">
     <thead>
         <tr>
             <th nzLeft nzWidth="50px" [nzChecked]="!!bulkAllSelected" (nzCheckedChange)="clickCheckAll($event)">
@@ -31,7 +33,7 @@
         </tr>
     </thead>
     <tbody>
-        <ng-template nz-virtual-scroll let-item let-index="index">
+        <ng-container *ngFor="let item of virtualTable.data; let index = index">
             <tr *ngIf="index === 0 && newTasks.length > 0">
                 <td [nzAlign]="'center'" colspan="7">
                     <button nz-button nzType="default" (click)="clickShowNewTasks()">Show {{newTasks.length}}
@@ -62,23 +64,28 @@
                 </td>
                 <td nzRight *ngIf="getTaskActions(item); let actions">
                     <nz-button-group>
-                        <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)" [disabled]="!actions.run"><i nz-icon nzType="caret-right"></i></button>
-                        <button nz-button nzType="primary" title="Cancel" (click)="cancelResolution(item.resolution, item.id)" [disabled]="!actions.cancel"><i nz-icon
+                        <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)"
+                            [disabled]="!actions.run"><i nz-icon nzType="caret-right"></i></button>
+                        <button nz-button nzType="primary" title="Cancel"
+                            (click)="cancelResolution(item.resolution, item.id)" [disabled]="!actions.cancel"><i nz-icon
                                 nzType="stop"></i></button>
-                        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary" [disabled]="!actions.more">More</button>
+                        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
+                            nzType="primary" [disabled]="!actions.more">More</button>
                     </nz-button-group>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                         <ul nz-menu>
-                            <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)" [nzDisabled]="!actions.pause">
+                            <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)"
+                                [nzDisabled]="!actions.pause">
                                 Pause
                             </li>
-                            <li nz-menu-item (click)="extendResolution(item.resolution, item.id)" [nzDisabled]="!actions.extend">
+                            <li nz-menu-item (click)="extendResolution(item.resolution, item.id)"
+                                [nzDisabled]="!actions.extend">
                                 Extend</li>
                             <li nz-menu-item (click)="deleteTask(item.id)" [nzDisabled]="!actions.delete">Delete</li>
                         </ul>
                     </nz-dropdown-menu>
                 </td>
             </tr>
-        </ng-template>
+        </ng-container>
     </tbody>
 </nz-table>

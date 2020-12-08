@@ -114,6 +114,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     bulkActions: TaskActions;
 
     errors: { [key: string]: any } = {};
+    scroll = new Subject<void>();
     scrollSub: Subscription;
     registrerScroll = new Subject<ParamsListTasks>();
 
@@ -130,7 +131,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
             .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
             .pipe(tap(data => this._params = { ...data }))
             .pipe(concatMap(() => this.registerInfiniteScroll()))
-            .subscribe(() => { });
+            .subscribe();
     }
 
     ngAfterViewInit() {
@@ -149,6 +150,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
     ngOnDestroy() {
         this.registrerScroll.complete();
+        this.scroll.complete();
         this.cancelScrollSub();
         this.cancelLoadNewTasks();
         this.cancelRefreshTasks();
@@ -188,8 +190,6 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
     // Manage infinite scroll
 
-    trackByTaskID(n: number, data: Task): string { return data.id + data.last_activity; }
-
     async registerInfiniteScroll() {
         this.cancelScrollSub();
         this.tasks = [];
@@ -209,54 +209,53 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
         let contentHeight = 0;
         while (this.firstLoad || (tableHeight >= contentHeight && this.hasMore)) {
             this.firstLoad = false;
-            await this.loadMore();
+            await this.loadMore(true);
             this._cd.detectChanges(); // force detect change to render the table and get its new size
-            contentHeight = scrollComponent.cdkVirtualScrollViewport.measureRenderedContentSize();
+            contentHeight = scrollComponent.tableBodyElement.nativeElement.scrollHeight;
         }
 
-        this._zone.runOutsideAngular(() => {
-            // Subscribe changes on scroll, when we reach the end of the table try to load more tasks
-            this.scrollSub = scrollComponent.cdkVirtualScrollViewport.scrolledIndexChange.subscribe(() => {
-                const offset = scrollComponent.cdkVirtualScrollViewport.measureScrollOffset('bottom');
-                if (offset < 100 && this.hasMore) {
-                    this.loadMore();
-                }
-            });
-        });
+        scrollComponent.tableBodyElement.nativeElement.onscroll = () => { this.scroll.next(); };
+
+        this.scrollSub = this.scroll
+            .pipe(concatMap(() => this.loadMore()))
+            .subscribe();
     }
 
     cancelScrollSub(): void {
         if (this.scrollSub) { this.scrollSub.unsubscribe() };
     }
 
-    async loadMore() {
+    async loadMore(skipCheckScroll = false) {
         if (this.loadingTasks) { return; }
+
+        const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+        const height = scrollComponent.tableBodyElement.nativeElement.offsetHeight;
+        const innerHeight = scrollComponent.tableBodyElement.nativeElement.scrollHeight;
+        const scrollTop = scrollComponent.tableBodyElement.nativeElement.scrollTop;
+        const scrollBottom = innerHeight - (scrollTop + height)
+        if (!skipCheckScroll && (scrollBottom > 100 || !this.hasMore)) {
+            return;
+        }
 
         const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
 
-        this._zone.run(() => {
-            this.loadingTasks = true;
-            this.errors.loadMore = null;
-        });
+        this.loadingTasks = true;
+        this.errors.loadMore = null;
         this._cd.markForCheck();
         const tasks = await this.loadTasks(paramLast)
             .pipe(catchError(err => {
-                this._zone.run(() => { this.errors.loadMore = err; });
+                this.errors.loadMore = err;
                 return throwError(err);
             }))
             .pipe(finalize(() => {
-                this._zone.run(() => {
-                    this.loadingTasks = false;
-                    this._cd.markForCheck();
-                });
+                this.loadingTasks = false;
+                this._cd.markForCheck();
             })).toPromise();
 
-        this._zone.run(() => {
-            this.tasks = this.tasks.concat(tasks);
-            tasks.forEach(t => this._taskService.registerTags(t));
-            this.hasMore = tasks.length === this.params.page_size;
-            this._cd.markForCheck();
-        });
+        this.tasks = this.tasks.concat(tasks);
+        tasks.forEach(t => this._taskService.registerTags(t));
+        this.hasMore = tasks.length === this.params.page_size;
+        this._cd.detectChanges();
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
