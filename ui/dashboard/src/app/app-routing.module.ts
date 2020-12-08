@@ -1,8 +1,5 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatButtonModule } from '@angular/material/button';
 import { MetaResolve } from './@resolves/meta.resolve';
 import { TaskComponent } from './@routes/task/task.component';
 import { BaseComponent } from './@routes/base/base.component';
@@ -13,9 +10,7 @@ import { TemplatesComponent } from './@routes/templates/templates.component';
 import { TemplateComponent } from './@routes/templates/template.component';
 import { StatsComponent } from './@routes/stats/stats.component';
 import { StatsResolve } from './@routes/stats/stats.resolve';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TagInputModule } from 'ngx-chips';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -137,16 +132,11 @@ const routes: Routes = [
     NzBadgeModule,
     NzFormModule,
     NzSwitchModule,
-    InfiniteScrollModule,
     TagInputModule,
-    NgbModule,
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
     ReactiveFormsModule,
-    MatButtonToggleModule,
-    MatCheckboxModule,
-    MatButtonModule,
     NzToolTipModule,
     NzInputModule,
     NzAlertModule,

@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
-import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
-import { ApiService, ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
+import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 import { RequestService } from 'projects/utask-lib/src/lib/@services/request.service';
 import { ResolutionService } from 'projects/utask-lib/src/lib/@services/resolution.service';
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
@@ -16,6 +15,8 @@ import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@a
 import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { EditorOptions } from 'ng-zorro-antd/code-editor';
+import { interval, of, Subscription } from 'rxjs';
+import { concatMap, filter } from 'rxjs/operators';
 
 @Component({
   templateUrl: './task.html',
@@ -28,11 +29,11 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   objectKeys = Object.keys;
   loaders: { [key: string]: boolean } = {};
-  haveAtLeastOneChilTask: boolean = false;
+  haveAtLeastOneChilTask = false;
   errors: { [key: string]: any } = {};
   display: { [key: string]: boolean } = {};
   confirm: { [key: string]: boolean } = {};
-  refreshes: { [key: string]: any } = {};
+  refreshes: { [key: string]: Subscription } = {};
   textarea: { [key: string]: boolean } = {};
   item: any = {
     resolver_inputs: {},
@@ -74,7 +75,9 @@ export class TaskComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnDestroy() {
-    this.refreshes.tasks.stopInterval();
+    if (this.refreshes.tasks) {
+      this.refreshes.tasks.unsubscribe();
+    }
   }
 
   ngOnInit() {
@@ -102,12 +105,12 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.refreshes.tasks = new ActiveInterval();
-    this.refreshes.tasks.setInterval(() => {
-      if (!this.loaders.task && this.autorefresh.actif) {
-        this.loadTask();
-      }
-    }, environment.refresh.task, false);
+    this.refreshes.tasks = interval(environment.refresh.task)
+      .pipe(filter(() => {
+        return !this.loaders.task && this.autorefresh.actif;
+      }))
+      .pipe(concatMap(() => this.loadTask()))
+      .subscribe();
   }
 
   addComment() {

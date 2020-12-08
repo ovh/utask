@@ -7,9 +7,7 @@ import { FullHeightDirective } from './@directives/fullheight.directive';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TagInputModule } from 'ngx-chips';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { environment } from 'src/environments/environment';
 import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
 
@@ -30,10 +28,7 @@ const components: any[] = [
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
-    InfiniteScrollModule,
     TagInputModule,
-    NgbModule,
-
     UTaskLibModule.forRoot({
       apiBaseUrl: environment.apiBaseUrl,
     }),

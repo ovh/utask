@@ -13,14 +13,10 @@
         "@angular/platform-browser": "11.0.0",
         "@angular/platform-browser-dynamic": "11.0.0",
         "@angular/router": "11.0.0",
-        "active-interval": "0.0.4",
-        "brace": "0.11.1",
         "convert-yaml": "1.0.5",
         "moment": "2.29.1",
         "tippy.js": "6.2.7",
         "ngx-chips": "2.2.2",
-        "ngx-infinite-scroll": "10.0.0",
-        "lodash-es": "4.17.15",
         "@types/lodash-es": "4.17.3"
     },
     "dependencies": {}

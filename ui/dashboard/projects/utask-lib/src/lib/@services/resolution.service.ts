@@ -1,5 +1,4 @@
-import { Injectable, ViewContainerRef } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { ModalApiYamlEditComponent } from '../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ModalService } from './modal.service';
@@ -12,7 +11,6 @@ export class ResolutionService {
 
     constructor(
         private modal: NzModalService,
-        // private viewContainerRef: ViewContainerRef,
         private _modalService: ModalService,
         private api: ApiService
     ) { }

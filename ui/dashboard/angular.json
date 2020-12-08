@@ -50,7 +50,6 @@
                         ],
                         "scripts": [],
                         "allowedCommonJsDependencies": [
-                            "active-interval",
                             "chart.js"
                         ]
                     },

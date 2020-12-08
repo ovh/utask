@@ -1,14 +1,12 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { ApiServiceOptions } from './@services/api.service';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
-// import { ModalConfirmationApiComponent } from './@modals/modal-confirmation-api/modal-confirmation-api.component';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { EditorComponent } from './@components/editor/editor.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ErrorMessageComponent } from './@components/error-message/error-message.component';
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { TasksListComponent } from './@components/tasks-list/tasks-list.component';
@@ -19,7 +17,6 @@ import { LoaderComponent } from './@components/loader/loader.component';
 import { RequestService } from './@services/request.service';
 import { WorkflowService } from './@services/workflow.service';
 import { ModalService } from './@services/modal.service';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { StepsListComponent } from './@components/stepslist/stepslist.component';
 import { TagInputModule } from 'ngx-chips';
 import { TemplateDetailsComponent } from './@components/template-details/template-details.component';
@@ -89,8 +86,6 @@ interface UtaskLibConfiguration {
     ReactiveFormsModule,
     RouterModule,
     TagInputModule,
-    NgbModule,
-    InfiniteScrollModule,
     NzTableModule,
     NzButtonModule,
     NzIconModule,

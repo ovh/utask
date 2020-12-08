@@ -4,18 +4,12 @@
   "lib": {
     "entryFile": "src/public-api.ts",
     "umdModuleIds": {
-      "@ng-bootstrap/ng-bootstrap": "@ng-bootstrap/ng-bootstrap",
       "chart.js": "chart.js",
       "convert-yaml": "convert-yaml",
-      "brace": "brace",
-      "active-interval": "active-interval",
-      "bluebird": "bluebird",
       "moment": "moment",
-      "q": "q",
       "tippy.js": "tippy.js",
       "d3": "d3",
       "dagre-d3": "dagre-d3",
-      "ngx-infinite-scroll": "ngx-infinite-scroll",
       "ngx-chips": "ngx-chips",
       "lodash-es/isString": "lodash-es/isString",
       "lodash-es/remove": "lodash-es/remove",
