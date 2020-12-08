@@ -1,20 +1,20 @@
-<tag-input [(ngModel)]='filter.tags' [modelAsStrings]="true" #input (onRemove)="filterSteps()" (onAdd)="filterSteps()">
-    <tag-input-dropdown [showDropdownIfEmpty]="true" [autocompleteItems]="presentStates">
-    </tag-input-dropdown>
-    <ng-template let-item="item" let-index="index">
-        <span *ngIf="item.startsWith('State:')">
-            <span class="fas {{getIcon(item.split(':')[1])}}"></span> {{ item.split(':')[1] }}
+<nz-select nzMode="multiple" nzPlaceHolder="Filter steps" [(ngModel)]="filter.tags" (ngModelChange)="filterSteps()"
+    [nzCustomTemplate]="multipleTemplate">
+    <nz-option *ngFor="let item of presentStates" [nzLabel]="item" [nzValue]="item">
+    </nz-option>
+    <ng-template #multipleTemplate let-item>
+        <span *ngIf="item.nzValue.startsWith('State:')">
+            <span class="fas {{getIcon(item.nzValue.split(':')[1])}}"></span> {{ item.nzValue.split(':')[1] }}
         </span>
-        <span *ngIf="!item.startsWith('State:')">
-            {{ item }}
+        <span *ngIf="!item.nzValue.startsWith('State:')">
+            {{ item.nzValue }}
         </span>
-        <delete-icon (click)="input.onRemoveRequested(item, index)"></delete-icon>
     </ng-template>
-</tag-input>
+</nz-select>
 
 <ng-container *ngFor="let stepName of filteredStepNames">
     <lib-utask-box
-        [header]="{openable: true, init: false, class: 'primary', openOnClick: true, color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
+        [header]="{openable: true, init: false, class: 'primary', color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
         <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}
             <nz-button-group nzSize="small">
                 <button nz-button [nzGhost]="true" title="View as code"

@@ -6,7 +6,6 @@ class HeaderConfig {
     init: boolean;
     openable: boolean;
     link: string;
-    openOnClick: boolean;
     class: string;
     color: string;
     fontColor: string;
@@ -38,7 +37,7 @@ export class BoxComponent implements OnChanges, AfterViewInit {
             if (this.header.link) {
                 this.router.navigate([this.header.link]);
             }
-            if (this.header.openOnClick) {
+            if (this.header.openable) {
                 oldCallback();
             }
         }
@@ -50,7 +49,6 @@ export class BoxComponent implements OnChanges, AfterViewInit {
             openable: false,
             init: true,
             link: '',
-            openOnClick: false,
             class: 'primary',
             ...this.header
         };

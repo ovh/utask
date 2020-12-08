@@ -27,14 +27,6 @@ fontawesome.library.add(
   faAlignJustify
 );
 import { AppRoutingModule } from './app-routing.module';
-import { TagInputModule } from 'ngx-chips';
-
-TagInputModule.withDefaults({
-  tagInput: {
-    placeholder: 'Add filter',
-    secondaryPlaceholder: 'Filter steps'
-  }
-});
 import { AppComponent } from './app.component';
 import { MyErrorHandler } from './handlers/error.handler';
 import { ThemeService } from './@services/theme.service';
