@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveInterval } from 'active-interval';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
-import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
+import { ApiService, ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
 import { RequestService } from 'projects/utask-lib/src/lib/@services/request.service';
 import { ResolutionService } from 'projects/utask-lib/src/lib/@services/resolution.service';
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
@@ -62,7 +61,6 @@ export class TaskComponent implements OnInit, OnDestroy {
   };
 
   constructor(
-    private modalService: NgbModal,
     private api: ApiService,
     private route: ActivatedRoute,
     private resolutionService: ResolutionService,
@@ -305,7 +303,7 @@ export class TaskComponent implements OnInit, OnDestroy {
           type: this.meta.user_is_admin ? 'all' : 'own',
           tag: '_utask_parent_task_id=' + this.taskId
         } as any).toPromise(),
-      ]).then((data: any[]) => {
+      ]).then((data) => {
         this.task = data[0];
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);

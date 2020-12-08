@@ -19,7 +19,7 @@
     </div>
 
     <!-- Task info -->
-    <nz-descriptions *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
+    <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
         <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent&nbsp;task">
             <a [routerLink]="'/task/'+task.tags._utask_parent_task_id">{{task.tags._utask_parent_task_id}}</a>
         </nz-descriptions-item>
@@ -150,105 +150,103 @@
         </div>
     </lib-utask-box>
 
-    <ng-container *ngIf="taskIsResolvable">
-        <!-- Resolve & reject boxes -->
-        <div nz-row [nzGutter]="16">
-            <lib-utask-box nz-col [nzSpan]="12" [header]="{openable: true, init: display.resolution, class: 'success'}">
-                <div app-box-header>
-                    Resolve this task
-                </div>
-                <div app-box-content>
-                    <lib-utask-inputs-form *ngIf="template" [formGroup]="validateResolveForm"
-                        [inputs]="template.resolver_inputs">
-                    </lib-utask-inputs-form>
-                    <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
-                        <nz-form-item nz-row class="register-area">
-                            <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
-                                <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
-                                    [nzLoading]="loaders.resolveTask">Resolve</button>
-                            </nz-form-control>
-                        </nz-form-item>
-                    </form>
-                    <lib-utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask">
-                    </lib-utask-error-message>
-                </div>
-            </lib-utask-box>
-            <lib-utask-box nz-col [nzSpan]="12" [header]="{openable: true, init: display.resolution, class: 'danger'}">
-                <div app-box-header>
-                    Reject this task
-                </div>
-                <div app-box-content>
-                    <form nz-form [formGroup]="validateRejectForm" (ngSubmit)="rejectTask()">
-                        <nz-form-item nz-row class="register-area">
-                            <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
-                                <label formControlName="agree" nz-checkbox>
-                                    Are you sure you want to reject this request ?
-                                </label>
-                            </nz-form-control>
-                        </nz-form-item>
-                        <nz-form-item nz-row class="register-area">
-                            <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
-                                <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
-                                    [nzLoading]="loaders.rejectTask">Reject</button>
-                            </nz-form-control>
-                        </nz-form-item>
-                    </form>
-                    <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask">
-                    </lib-utask-error-message>
-                </div>
-            </lib-utask-box>
-        </div>
-
-        <!-- Sub tasks box -->
-        <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
+    <!-- Resolve & reject boxes -->
+    <div nz-row [nzGutter]="16" *ngIf="taskIsResolvable">
+        <lib-utask-box nz-col [nzSpan]="12" [header]="{openable: true, init: display.resolution, class: 'success'}">
             <div app-box-header>
-                Sub Tasks
+                Resolve this task
             </div>
             <div app-box-content>
-                <lib-utask-tasks-list [meta]="meta" [params]="{
+                <lib-utask-inputs-form *ngIf="template" [formGroup]="validateResolveForm"
+                    [inputs]="template.resolver_inputs">
+                </lib-utask-inputs-form>
+                <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
+                    <nz-form-item nz-row class="register-area">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                            <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
+                                [nzLoading]="loaders.resolveTask">Resolve</button>
+                        </nz-form-control>
+                    </nz-form-item>
+                </form>
+                <lib-utask-error-message [data]="errors.resolveTask" *ngIf="errors.resolveTask">
+                </lib-utask-error-message>
+            </div>
+        </lib-utask-box>
+        <lib-utask-box nz-col [nzSpan]="12" [header]="{openable: true, init: display.resolution, class: 'danger'}">
+            <div app-box-header>
+                Reject this task
+            </div>
+            <div app-box-content>
+                <form nz-form [formGroup]="validateRejectForm" (ngSubmit)="rejectTask()">
+                    <nz-form-item nz-row class="register-area">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                            <label formControlName="agree" nz-checkbox>
+                                Are you sure you want to reject this request ?
+                            </label>
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item nz-row class="register-area">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                            <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
+                                [nzLoading]="loaders.rejectTask">Reject</button>
+                        </nz-form-control>
+                    </nz-form-item>
+                </form>
+                <lib-utask-error-message [data]="errors.rejectTask" *ngIf="errors.rejectTask">
+                </lib-utask-error-message>
+            </div>
+        </lib-utask-box>
+    </div>
+
+    <!-- Sub tasks box -->
+    <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
+        <div app-box-header>
+            Sub Tasks
+        </div>
+        <div app-box-content>
+            <lib-utask-tasks-list [meta]="meta" [params]="{
             page_size: 10,
             type: meta.user_is_admin ? 'all' : 'own',
             tag: '_utask_parent_task_id=' + taskId
           }" (event)="eventUtask($event)">
-                </lib-utask-tasks-list>
-            </div>
-        </lib-utask-box>
+            </lib-utask-tasks-list>
+        </div>
+    </lib-utask-box>
 
-        <!-- Comments box -->
-        <lib-utask-box [header]="{openable: true, init: display.comments, class: 'primary'}">
-            <div app-box-header>
-                Comments - <span class="badge"
-                    [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
-                <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
-            </div>
-            <div app-box-content>
-                <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments"
-                    [nzRenderItem]="comment" [nzItemLayout]="'horizontal'">
-                    <ng-template #comment let-comment>
-                        <nz-comment [nzAuthor]="comment.username" [nzDatetime]="comment.created | utaskFromNow">
-                            <nz-avatar nz-comment-avatar [nzText]="comment.username[0].toUpperCase()"></nz-avatar>
-                            <nz-comment-content>
-                                <p>{{ comment.content }}</p>
-                            </nz-comment-content>
-                        </nz-comment>
-                    </ng-template>
-                </nz-list>
-                <nz-comment>
-                    <nz-avatar nz-comment-avatar [nzText]="this.meta.username[0].toUpperCase()"></nz-avatar>
-                    <nz-comment-content>
-                        <nz-form-item>
-                            <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
-                        </nz-form-item>
-                        <nz-form-item>
-                            <button nz-button nzType="primary" [nzLoading]="loaders.addComment"
-                                [disabled]="!comment.content" (click)="addComment()">
-                                Add Comment
-                            </button>
-                        </nz-form-item>
-                    </nz-comment-content>
-                </nz-comment>
-                <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
-            </div>
-        </lib-utask-box>
-    </ng-container>
+    <!-- Comments box -->
+    <lib-utask-box [header]="{openable: true, init: display.comments, class: 'primary'}">
+        <div app-box-header>
+            Comments - <span class="badge"
+                [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
+            <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
+        </div>
+        <div app-box-content>
+            <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments"
+                [nzRenderItem]="comment" [nzItemLayout]="'horizontal'">
+                <ng-template #comment let-comment>
+                    <nz-comment [nzAuthor]="comment.username" [nzDatetime]="comment.created | utaskFromNow">
+                        <nz-avatar nz-comment-avatar [nzText]="comment.username[0].toUpperCase()"></nz-avatar>
+                        <nz-comment-content>
+                            <p>{{ comment.content }}</p>
+                        </nz-comment-content>
+                    </nz-comment>
+                </ng-template>
+            </nz-list>
+            <nz-comment>
+                <nz-avatar nz-comment-avatar [nzText]="this.meta.username[0].toUpperCase()"></nz-avatar>
+                <nz-comment-content>
+                    <nz-form-item>
+                        <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <button nz-button nzType="primary" [nzLoading]="loaders.addComment"
+                            [disabled]="!comment.content" (click)="addComment()">
+                            Add Comment
+                        </button>
+                    </nz-form-item>
+                </nz-comment-content>
+            </nz-comment>
+            <lib-utask-error-message [data]="errors.addComment" *ngIf="errors.addComment"></lib-utask-error-message>
+        </div>
+    </lib-utask-box>
 </ng-container>
