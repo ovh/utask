@@ -2,12 +2,11 @@ import { Component } from '@angular/core';
 
 @Component({
   template: `
-    <div>
-      <div class="alert alert-danger">
-        <strong>Error !</strong> An error just occured, please refresh the page or contact the administrators.
+    <nz-result nzStatus="error" nzSubTitle="An error just occured, please refresh the page or contact the administrators.">
+      <div nz-result-extra>
+        <button nz-button nzType="primary" routerLink="/">Back to Home</button>
       </div>
-      <a class="btn btn-link" routerLink="/home">Back to Home</a>
-    </div>
+    </nz-result>
   `,
 })
 export class ErrorComponent {

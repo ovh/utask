@@ -49,6 +49,7 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzCommentModule } from 'ng-zorro-antd/comment';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzResultModule } from 'ng-zorro-antd/result';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -154,6 +155,7 @@ const routes: Routes = [
     NzDescriptionsModule,
     NzCommentModule,
     NzListModule,
+    NzResultModule,
     ToastrModule.forRoot({ positionClass: 'toast-bottom-right', }),
     UTaskModule,
     UTaskLibModule.forRoot({ apiBaseUrl: environment.apiBaseUrl }),
