@@ -34,7 +34,9 @@ nz-header {
 [nz-menu] {
   flex: 1;
   line-height: 64px;
-  display: inline-block;
+  height: 100%;
+  overflow: auto;
+  display: flex;
 
   ::ng-deep {
     .ant-menu-item:focus {

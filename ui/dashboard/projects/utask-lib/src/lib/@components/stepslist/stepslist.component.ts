@@ -55,8 +55,8 @@ export class StepsListComponent implements OnChanges {
             this.filterSteps();
             this.setPresentStates();
         } else if (changes.selectedStep) {
-            remove(this.filter.tags, (tag: string) => {
-                return tag.startsWith('Step:');
+            this.filter.tags = this.filter.tags.filter((tag: string) => {
+                return !tag.startsWith('Step:');
             });
             if (this.selectedStep) {
                 this.displayDetails[this.selectedStep] = true;

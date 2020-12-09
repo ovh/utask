@@ -23,7 +23,7 @@ export class EditorComponent implements OnChanges {
     constructor(private elRef: ElementRef) { }
 
     ngOnChanges(): void {
-        let height = (this.ngModel.split('\n').length + 1) * 18;
+        const height = (this.ngModel.split('\n').length + 1) * 18;
         this.elRef.nativeElement.style.height = `${height}px`;
     }
 }

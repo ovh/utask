@@ -4,6 +4,7 @@
   "lib": {
     "entryFile": "src/public-api.ts",
     "umdModuleIds": {
+      "@swimlane/ngx-charts": "@swimlane/ngx-charts",
       "convert-yaml": "convert-yaml",
       "moment": "moment",
       "d3": "d3",
@@ -28,6 +29,7 @@
       "ng-zorro-antd/modal": "ng-zorro-antd/modal",
       "ng-zorro-antd/auto-complete": "ng-zorro-antd/auto-complete",
       "ng-zorro-antd/code-editor": "ng-zorro-antd/code-editor",
+      "ng-zorro-antd/tooltip": "ng-zorro-antd/tooltip",
       "lodash-es/isString": "lodash-es/isString",
       "lodash-es/remove": "lodash-es/remove",
       "lodash-es/map": "lodash-es/map",

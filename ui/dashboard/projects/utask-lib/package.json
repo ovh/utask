@@ -15,7 +15,8 @@
         "@angular/router": "11.0.0",
         "convert-yaml": "1.0.5",
         "moment": "2.29.1",
-        "@types/lodash-es": "4.17.3"
+        "@types/lodash-es": "4.17.3",
+        "@swimlane/ngx-charts": "16.0.0"
     },
     "dependencies": {}
 }
