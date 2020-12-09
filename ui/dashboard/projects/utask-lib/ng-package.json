@@ -4,7 +4,6 @@
   "lib": {
     "entryFile": "src/public-api.ts",
     "umdModuleIds": {
-      "chart.js": "chart.js",
       "convert-yaml": "convert-yaml",
       "moment": "moment",
       "d3": "d3",

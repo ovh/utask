@@ -27,6 +27,8 @@ import { StepNodeComponent } from './@components/step-node/step-node.component';
 import { TaskStatusComponent } from './@components/task-status/task-status.component';
 import { InputsFormComponent } from './@components/inputs-form/inputs-form.component';
 import { NsAutoHeightTableDirective } from './@directives/ns-auto-height-table.directive';
+import { FullHeightDirective } from './@directives/fullheight.directive';
+import { AutofocusDirective } from './@directives/autofocus.directive';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
@@ -47,6 +49,7 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { ChartCommonModule, PieChartModule } from '@swimlane/ngx-charts';
 
 const components: any[] = [
   LoaderComponent,
@@ -68,7 +71,9 @@ const components: any[] = [
 
   FromNowPipe,
   TaskStatusComponent,
-  NsAutoHeightTableDirective
+  NsAutoHeightTableDirective,
+  FullHeightDirective,
+  AutofocusDirective
 ];
 
 interface UtaskLibConfiguration {
@@ -101,7 +106,9 @@ interface UtaskLibConfiguration {
     NzCheckboxModule,
     NzSpinModule,
     NzDescriptionsModule,
-    NzToolTipModule
+    NzToolTipModule,
+    ChartCommonModule,
+    PieChartModule
   ],
   exports: components,
   bootstrap: [],

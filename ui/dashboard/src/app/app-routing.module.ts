@@ -13,8 +13,6 @@ import { StatsResolve } from './@routes/stats/stats.resolve';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ToastrModule } from 'ngx-toastr';
-import { UTaskModule } from 'src/utask-module/utask.module';
 import { environment } from 'src/environments/environment';
 import { FunctionsComponent } from './@routes/functions/functions.component';
 import { FunctionComponent } from './@routes/functions/function.component';
@@ -44,6 +42,7 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzCommentModule } from 'ng-zorro-antd/comment';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzResultModule } from 'ng-zorro-antd/result';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -144,8 +143,6 @@ const routes: Routes = [
     NzCommentModule,
     NzListModule,
     NzResultModule,
-    ToastrModule.forRoot({ positionClass: 'toast-bottom-right', }),
-    UTaskModule,
     UTaskLibModule.forRoot({ apiBaseUrl: environment.apiBaseUrl }),
     RouterModule.forRoot(
       routes,
@@ -156,6 +153,7 @@ const routes: Routes = [
     ),
     NzTableModule,
     NzCodeEditorModule,
+    NzNotificationModule
   ],
   exports: [RouterModule],
   providers: [

@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import isString from 'lodash-es/isString';
 import isArray from 'lodash-es/isArray';
-import { ToastrService } from 'ngx-toastr';
 import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
 import { ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
 import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
 import { TaskState, TaskType } from 'projects/utask-lib/src/lib/@models/task.model';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 @Component({
   templateUrl: './tasks.html',
@@ -22,8 +21,8 @@ export class TasksComponent implements OnInit {
     private _activateRoute: ActivatedRoute,
     private router: Router,
     private taskService: TaskService,
-    private toastr: ToastrService,
-    private _cd: ChangeDetectorRef
+    private _cd: ChangeDetectorRef,
+    private _notif: NzNotificationService
   ) { }
 
   ngOnInit() {
@@ -44,11 +43,11 @@ export class TasksComponent implements OnInit {
   }
 
   toastError(message: string) {
-    this.toastr.error(message);
+    this._notif.error('', message);
   }
 
   toastInfo(message: string) {
-    this.toastr.info(message);
+    this._notif.info('', message);
   }
 
   search(replaceUrl: boolean = false) {

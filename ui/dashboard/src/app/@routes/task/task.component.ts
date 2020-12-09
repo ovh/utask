@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
-import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
 import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
@@ -17,6 +16,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { EditorOptions } from 'ng-zorro-antd/code-editor';
 import { interval, of, Subscription } from 'rxjs';
 import { concatMap, filter } from 'rxjs/operators';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 @Component({
   templateUrl: './task.html',
@@ -68,10 +68,10 @@ export class TaskComponent implements OnInit, OnDestroy {
     private requestService: RequestService,
     private taskService: TaskService,
     private router: Router,
-    private toastr: ToastrService,
     private _fb: FormBuilder,
     private modal: NzModalService,
     private viewContainerRef: ViewContainerRef,
+    private _notif: NzNotificationService
   ) { }
 
   ngOnDestroy() {
@@ -154,10 +154,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   editRequest(task: Task) {
     this.requestService.edit(task).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The request has been edited.');
+      this._notif.info('', 'The request has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -165,10 +165,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   editResolution(resolution: any) {
     this.resolutionService.edit(resolution).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The resolution has been edited.');
+      this._notif.info('', 'The resolution has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -176,10 +176,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   runResolution(resolution: any) {
     this.resolutionService.run(resolution.id).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The resolution has been run.');
+      this._notif.info('', 'The resolution has been run.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -187,10 +187,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   pauseResolution(resolution: any) {
     this.resolutionService.pause(resolution.id).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The resolution has been paused.');
+      this._notif.info('', 'The resolution has been paused.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -198,10 +198,10 @@ export class TaskComponent implements OnInit, OnDestroy {
   cancelResolution(resolution: any) {
     this.resolutionService.cancel(resolution.id).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The resolution has been cancelled.');
+      this._notif.info('', 'The resolution has been cancelled.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -209,21 +209,21 @@ export class TaskComponent implements OnInit, OnDestroy {
   extendResolution(resolution: any) {
     this.resolutionService.extend(resolution.id).then((data: any) => {
       this.loadTask();
-      this.toastr.info('The resolution has been extended.');
+      this._notif.info('', 'The resolution has been extended.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
 
   deleteTask(taskId: string) {
     this.taskService.delete(taskId).then((data: any) => {
-      this.router.navigate([`/home`]);
-      this.toastr.info('The task has been deleted.');
+      this.router.navigate([`/`]);
+      this._notif.info('', 'The task has been deleted.');
     }).catch((err) => {
       if (err !== 'close') {
-        this.toastr.error(get(err, 'error.error', 'An error just occured, please retry'));
+        this._notif.error('', get(err, 'error.error', 'An error just occured, please retry'));
       }
     });
   }
@@ -370,6 +370,6 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   eventUtask(event: any) {
-    this.toastr[event.type](event.message);
+    this._notif.create(event.type, '', event.message);
   }
 }

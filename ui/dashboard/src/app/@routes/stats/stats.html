@@ -1,19 +1,27 @@
-<h2>Task states</h2>
-
 <div nz-row>
     <div nz-col nzSpan="12">
-        <app-chart-task-states [data]="taskStates">
-        </app-chart-task-states>
+        <lib-utask-chart-task-states [data]="taskStates">
+        </lib-utask-chart-task-states>
     </div>
     <div nz-col nzSpan="12">
-        <table>
-            <tr *ngFor="let state of taskStates">
-                <td [ngStyle]="{'background':state.color, 'color': 'white', 'width.px': 30}"></td>
-                <td>{{state.label}}</td>
-                <td>{{state.value}}</td>
-                <td><a [routerLink]="['/tasks']" [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i
-                            class="fas fa-link"></i></a></td>
-            </tr>
-        </table>
+        <nz-table nzTemplateMode>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>State</th>
+                    <th>Count</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let state of taskStates">
+                    <td [ngStyle]="{'background':state.color, 'color': 'white', 'width.px': 30}"></td>
+                    <td>{{state.label}}</td>
+                    <td>{{state.value}}</td>
+                    <td><a [routerLink]="['/tasks']" [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i
+                                class="fas fa-link"></i></a></td>
+                </tr>
+            </tbody>
+        </nz-table>
     </div>
 </div>

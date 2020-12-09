@@ -26,8 +26,8 @@
         "@fortawesome/fontawesome": "1.1.8",
         "@fortawesome/fontawesome-free-solid": "5.0.13",
         "@sentry/browser": "5.27.4",
+        "@swimlane/ngx-charts": "16.0.0",
         "@types/lodash-es": "4.17.3",
-        "chart.js": "2.9.4",
         "convert-yaml": "1.0.5",
         "dagre-d3": "0.6.4",
         "ejs": "3.1.5",
@@ -37,7 +37,6 @@
         "moment": "2.29.1",
         "monaco-editor": "0.21.2",
         "ng-zorro-antd": "10.1.2",
-        "ngx-toastr": "13.1.0",
         "rxjs": "6.6.3",
         "tslib": "2.0.3",
         "zone.js": "0.11.3"

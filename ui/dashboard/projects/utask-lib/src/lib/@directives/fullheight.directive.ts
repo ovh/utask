@@ -1,4 +1,4 @@
-import { Directive, OnInit, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { Directive, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 
 @Directive({
     selector: '[fullHeight]',

@@ -34,7 +34,7 @@
                                 "output": "/assets/"
                             },
                             {
-                                "glob": "**/*.min.css",
+                                "glob": "ng-zorro-antd.dark.min.css",
                                 "input": "./node_modules/ng-zorro-antd",
                                 "output": "/assets/"
                             },
@@ -51,7 +51,7 @@
                         ],
                         "scripts": [],
                         "allowedCommonJsDependencies": [
-                            "chart.js"
+                            "dagre-d3"
                         ]
                     },
                     "configurations": {
@@ -64,7 +64,8 @@
                             "extractLicenses": true,
                             "vendorChunk": false,
                             "buildOptimizer": true,
-                            "budgets": [{
+                            "budgets": [
+                                {
                                     "type": "initial",
                                     "maximumWarning": "2mb",
                                     "maximumError": "5mb"

@@ -1,12 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
-class VMTaskState {
-  label: string;
-  color: string;
-  value: number;
-  key: string;
-}
+import { VMTaskState } from 'projects/utask-lib/src/lib/@components/chart-task-states/chart-task-states.component';
 
 @Component({
   templateUrl: './stats.html',
