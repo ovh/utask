@@ -7,7 +7,6 @@ import { FullHeightDirective } from './@directives/fullheight.directive';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { TagInputModule } from 'ngx-chips';
 import { environment } from 'src/environments/environment';
 import { UTaskLibModule } from 'projects/utask-lib/src/lib/utask-lib.module';
 
@@ -28,7 +27,6 @@ const components: any[] = [
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,
-    TagInputModule,
     UTaskLibModule.forRoot({
       apiBaseUrl: environment.apiBaseUrl,
     }),

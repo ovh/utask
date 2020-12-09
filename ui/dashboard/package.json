@@ -37,10 +37,8 @@
         "moment": "2.29.1",
         "monaco-editor": "0.21.2",
         "ng-zorro-antd": "10.1.2",
-        "ngx-chips": "2.2.2",
         "ngx-toastr": "13.1.0",
         "rxjs": "6.6.3",
-        "tippy.js": "6.2.7",
         "tslib": "2.0.3",
         "zone.js": "0.11.3"
     },

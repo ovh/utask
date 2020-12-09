@@ -46,6 +46,7 @@
                         ],
                         "styles": [
                             "./node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
+                            "./node_modules/ng-zorro-antd/code-editor/style/index.min.css",
                             "src/styles.sass"
                         ],
                         "scripts": [],
@@ -107,6 +108,7 @@
                         ],
                         "styles": [
                             "./node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
+                            "./node_modules/ng-zorro-antd/code-editor/style/index.min.css",
                             "src/styles.sass"
                         ],
                         "scripts": []

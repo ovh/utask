@@ -13,3 +13,77 @@ button
     position: absolute
     right: 20px
     bottom: 20px
+
+::ng-deep
+    g.edgePath > path
+        fill: transparent
+        stroke: black
+        stroke-width: 4px
+    marker > path
+        fill: black
+
+    g.edgePath.STANDARD
+        > path
+            stroke: black
+        marker > path
+            fill: black
+    g.edgePath.DONE
+        > path
+            stroke: #a0da57
+        marker > path
+            fill: #a0da57
+    g.edgePath.TO_RETRY
+        > path
+            stroke: #32acff
+        marker > path
+            fill: #32acff
+    g.edgePath.RUNNING
+        > path
+            stroke: #32acff
+        marker > path
+            fill: #32acff
+    g.edgePath.TODO
+        > path
+            stroke: #AAA
+        marker > path
+            fill: #AAA
+    g.edgePath.EXPANDED
+        > path
+            stroke: #32acff
+        marker > path
+            fill: #32acff
+    g.edgePath.CLIENT_ERROR
+        > path
+            stroke: #ff9803
+        marker > path
+            fill: #ff9803
+    g.edgePath.PRUNE
+        > path
+            stroke: #DDD
+        marker > path
+            fill: #DDD
+    g.edgePath.SERVER_ERROR
+        > path
+            stroke: #ff9803
+        marker > path
+            fill: #ff9803
+    g.edgePath.FATAL_ERROR
+        > path
+            stroke: #ff9803
+        marker > path
+            fill: #ff9803
+    g.edgePath.ANY 
+        > path
+            stroke: #ad0067
+            stroke-width: 6px
+        marker > path
+            fill: transparent
+
+    g.edgeLabel div
+            font-size: 40px
+
+    g.node.SELECTION > rect
+            stroke: #1A97F1 !important
+            stroke-width: 16px !important
+    g.node.HIDDEN, g.edgePath.HIDDEN
+            opacity: 0.15 !important

@@ -2,19 +2,17 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
-    selector: 'app-modal-yaml-preview',
+    selector: 'lib-utask-modal-yaml-preview',
     template: `
         <div>
             <utask-loader *ngIf="loading"></utask-loader>
             <lib-utask-error-message [data]="error" *ngIf="error && !loading"></lib-utask-error-message>
-            
             <lib-utask-editor class="editor" *ngIf="!loading" [ngModel]="text" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
             </lib-utask-editor>
-
         </div>
-        <ng-template [nzModalFooter]>
+        <div *nzModalFooter>
             <button type="button" nz-button (click)="modal.close()">Close</button>
-        </ng-template>
+        </div>
   `,
     styleUrls: ['./modal-api-yaml.sass']
 })

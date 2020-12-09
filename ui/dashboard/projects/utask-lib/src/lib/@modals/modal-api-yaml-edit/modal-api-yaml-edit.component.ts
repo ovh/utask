@@ -2,20 +2,18 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
-    selector: 'app-modal-yaml-preview',
+    selector: 'lib-utask-modal-yaml-preview',
     template: `
         <div>
             <utask-loader *ngIf="loaders.main"></utask-loader>
             <lib-utask-error-message [data]="errors.main" *ngIf="errors.main && !loaders.main"></lib-utask-error-message>
-            
             <lib-utask-editor *ngIf="!loaders.main && !errors.main" [(ngModel)]="text" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'yaml', readOnly: false, wordWrap: 'on' }"></lib-utask-editor>
-
             <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
         </div>
-        <ng-template [nzModalFooter]>
+        <div *nzModalFooter>
             <button type="button" nz-button (click)="modal.triggerCancel()">Close</button>
             <button type="button" nz-button (click)="submit();" [disabled]="loaders.main || loaders.submit || errors.main">Update</button>
-        </ng-template>
+        </div>
   `,
     styleUrls: ['./modal-api-yaml-edit.sass'],
 })
@@ -43,7 +41,6 @@ export class ModalApiYamlEditComponent implements OnInit {
 
     submit() {
         this.loaders.submit = true;
-        console.log(this.text);
         this.apiCallSubmit(this.text).then((data) => {
             this.errors.submit = null;
             this.result = data;

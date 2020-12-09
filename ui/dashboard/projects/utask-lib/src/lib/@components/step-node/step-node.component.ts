@@ -1,17 +1,12 @@
-import { Component, Input, OnInit, ElementRef, ViewChild, AfterViewInit, Output, EventEmitter, OnChanges } from "@angular/core";
-import tippy from 'tippy.js';
-import Step from "../../@models/step.model";
+import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, OnChanges } from '@angular/core';
+import Step from '../../@models/step.model';
 
 @Component({
-    selector: 'utask-step-node',
-    template: `
-        <div #div class="step step-{{styleClass}}" (click)="clickNode()">
-            <div class="title">{{key}}</div>
-        </div>
-    `,
+    selector: 'lib-utask-step-node',
+    templateUrl: './step-node.html',
     styleUrls: ['./step-node.sass']
 })
-export class StepNodeComponent implements OnInit, AfterViewInit, OnChanges {
+export class StepNodeComponent implements OnInit, OnChanges {
     @Input() step: Step;
     @Input() key: string;
     @ViewChild('div', { static: false }) div: ElementRef;
@@ -90,14 +85,6 @@ export class StepNodeComponent implements OnInit, AfterViewInit, OnChanges {
                 }
             };
         }
-    }
-
-    ngAfterViewInit() {
-        tippy(this.div.nativeElement, {
-            content: `${this.key} - ${this.step?.state ?? ''}<br/>${this.step.description}`,
-            allowHTML: true,
-            animation: 'scale'
-        });
     }
 
     clickNode() {

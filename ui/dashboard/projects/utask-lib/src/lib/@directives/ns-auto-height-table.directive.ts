@@ -9,14 +9,12 @@ import {
   ChangeDetectorRef,
 } from '@angular/core';
 import { NzTableComponent } from 'ng-zorro-antd/table';
-import { off } from 'process';
 
 @Directive({
   selector: '[nsAutoHeightTable]'
 })
 export class NsAutoHeightTableDirective {
-  @Input('nsAutoHeightTable')
-  offset: number;
+  @Input('nsAutoHeightTable') offset: number;
 
   constructor(
     private element: ElementRef,
@@ -36,7 +34,7 @@ export class NsAutoHeightTableDirective {
   }
 
   @HostListener('window:resize', ['$event'])
-  onResize() {
+  onResize(event: any) {
     this.doAutoSize();
   }
 

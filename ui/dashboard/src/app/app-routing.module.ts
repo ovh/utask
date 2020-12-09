@@ -10,7 +10,6 @@ import { TemplatesComponent } from './@routes/templates/templates.component';
 import { TemplateComponent } from './@routes/templates/template.component';
 import { StatsComponent } from './@routes/stats/stats.component';
 import { StatsResolve } from './@routes/stats/stats.resolve';
-import { TagInputModule } from 'ngx-chips';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -132,7 +131,6 @@ const routes: Routes = [
     NzBadgeModule,
     NzFormModule,
     NzSwitchModule,
-    TagInputModule,
     BrowserAnimationsModule,
     BrowserModule,
     FormsModule,

@@ -6,7 +6,7 @@ import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 @Injectable()
 export class StatsResolve implements Resolve<any> {
     api: ApiService;
-    constructor(api: ApiService, private router: Router) {
+    constructor(api: ApiService) {
         this.api = api;
     }
 

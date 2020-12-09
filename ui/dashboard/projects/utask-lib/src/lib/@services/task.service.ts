@@ -4,9 +4,9 @@ import get from 'lodash-es/get';
 import { Subject, throwError } from 'rxjs';
 import Task from '../@models/task.model';
 import environment from '../@services/config';
-import { clone } from 'lodash-es';
 import { ModalService } from './modal.service';
 import { catchError } from 'rxjs/operators';
+import clone from 'lodash-es/clone';
 
 @Injectable()
 export class TaskService {

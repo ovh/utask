@@ -18,7 +18,6 @@ import { RequestService } from './@services/request.service';
 import { WorkflowService } from './@services/workflow.service';
 import { ModalService } from './@services/modal.service';
 import { StepsListComponent } from './@components/stepslist/stepslist.component';
-import { TagInputModule } from 'ngx-chips';
 import { TemplateDetailsComponent } from './@components/template-details/template-details.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
 import { ModalApiYamlEditComponent } from './@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
@@ -47,6 +46,7 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 const components: any[] = [
   LoaderComponent,
@@ -62,7 +62,6 @@ const components: any[] = [
   BoxComponent,
   InputsFormComponent,
 
-  // ModalConfirmationApiComponent,
   ModalApiYamlComponent,
   ModalApiYamlEditComponent,
   NzModalContentWithErrorComponent,
@@ -85,7 +84,6 @@ interface UtaskLibConfiguration {
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
-    TagInputModule,
     NzTableModule,
     NzButtonModule,
     NzIconModule,
@@ -102,12 +100,12 @@ interface UtaskLibConfiguration {
     NzFormModule,
     NzCheckboxModule,
     NzSpinModule,
-    NzDescriptionsModule
+    NzDescriptionsModule,
+    NzToolTipModule
   ],
   exports: components,
   bootstrap: [],
   entryComponents: [
-    // ModalConfirmationApiComponent,
     ModalApiYamlComponent,
     ModalApiYamlEditComponent,
     NzModalContentWithErrorComponent
