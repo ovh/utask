@@ -33,7 +33,7 @@
         </tr>
     </thead>
     <tbody>
-        <ng-container *ngFor="let item of virtualTable.data; let index = index">
+        <ng-container *ngFor="let item of virtualTable.data; let index = index; trackBy: trackInput">
             <tr *ngIf="index === 0 && newTasks.length > 0">
                 <td [nzAlign]="'center'" colspan="7">
                     <button nz-button nzType="default" (click)="clickShowNewTasks()">Show {{newTasks.length}}
@@ -62,28 +62,34 @@
                 <td>
                     {{item.last_activity | utaskFromNow}}
                 </td>
-                <td nzRight *ngIf="getTaskActions(item); let actions">
+                <td nzRight>
                     <nz-button-group>
                         <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)"
-                            [disabled]="!actions.run"><i nz-icon nzType="caret-right"></i></button>
+                            [disabled]="!tasksActions[index].run"><i nz-icon nzType="caret-right"></i></button>
                         <button nz-button nzType="primary" title="Cancel"
-                            (click)="cancelResolution(item.resolution, item.id)" [disabled]="!actions.cancel"><i nz-icon
-                                nzType="stop"></i></button>
+                            (click)="cancelResolution(item.resolution, item.id)"
+                            [disabled]="!tasksActions[index].cancel"><i nz-icon nzType="stop"></i></button>
                         <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
-                            nzType="primary" [disabled]="!actions.more">More</button>
+                            nzType="primary" [disabled]="!tasksActions[index].more">More</button>
                     </nz-button-group>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                         <ul nz-menu>
                             <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)"
-                                [nzDisabled]="!actions.pause">
+                                [nzDisabled]="!tasksActions[index].pause">
                                 Pause
                             </li>
                             <li nz-menu-item (click)="extendResolution(item.resolution, item.id)"
-                                [nzDisabled]="!actions.extend">
+                                [nzDisabled]="!tasksActions[index].extend">
                                 Extend</li>
-                            <li nz-menu-item (click)="deleteTask(item.id)" [nzDisabled]="!actions.delete">Delete</li>
+                            <li nz-menu-item (click)="deleteTask(item.id)" [nzDisabled]="!tasksActions[index].delete">
+                                Delete</li>
                         </ul>
                     </nz-dropdown-menu>
+                </td>
+            </tr>
+            <tr *ngIf="index === tasks.length-1 && hasMore">
+                <td [nzAlign]="'center'" colspan="7">
+                    <button nz-button nzType="default" (click)="clickShowMore()">Show more</button>
                 </td>
             </tr>
         </ng-container>

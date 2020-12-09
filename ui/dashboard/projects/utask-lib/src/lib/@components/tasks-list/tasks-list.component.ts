@@ -26,6 +26,7 @@ import {
     finalize,
     first,
     map,
+    mergeMap,
     tap
 } from 'rxjs/operators';
 import get from 'lodash-es/get';
@@ -101,6 +102,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     @Output() public event: EventEmitter<any> = new EventEmitter();
 
     tasks: Task[] = [];
+    tasksActions: TaskActions[] = [];
     loadingTasks: boolean;
     firstLoad: boolean;
     hasMore: boolean;
@@ -193,6 +195,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     async registerInfiniteScroll() {
         this.cancelScrollSub();
         this.tasks = [];
+        this.tasksActions = [];
         this.firstLoad = true;
         this.hasMore = true;
 
@@ -216,9 +219,11 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
         scrollComponent.tableBodyElement.nativeElement.onscroll = () => { this.scroll.next(); };
 
-        this.scrollSub = this.scroll
-            .pipe(concatMap(() => this.loadMore()))
-            .subscribe();
+        this._zone.runOutsideAngular(() => {
+            this.scrollSub = this.scroll
+                .pipe(mergeMap(() => this.loadMore()))
+                .subscribe();
+        });
     }
 
     cancelScrollSub(): void {
@@ -233,7 +238,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
         const innerHeight = scrollComponent.tableBodyElement.nativeElement.scrollHeight;
         const scrollTop = scrollComponent.tableBodyElement.nativeElement.scrollTop;
         const scrollBottom = innerHeight - (scrollTop + height)
-        if (!skipCheckScroll && (scrollBottom > 100 || !this.hasMore)) {
+        if (!skipCheckScroll && (scrollBottom > 200 || !this.hasMore)) {
             return;
         }
 
@@ -253,6 +258,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
             })).toPromise();
 
         this.tasks = this.tasks.concat(tasks);
+        this.computeTaskActions();
         tasks.forEach(t => this._taskService.registerTags(t));
         this.hasMore = tasks.length === this.params.page_size;
         this._cd.detectChanges();
@@ -263,6 +269,14 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
             ...this.params,
             last: paramLast
         }).pipe(map(res => res.body));
+    }
+
+    clickShowMore(): void {
+        this.scroll.next();
+    }
+
+    trackInput(index: number, task: Task) {
+        return task.id + task.last_activity;
     }
 
     // Manage fetch task
@@ -309,6 +323,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
                 const updatedTask = newTasks.find(ta => ta.id === t.id);
                 return updatedTask ? updatedTask : t;
             });
+            this.computeTaskActions();
 
             this._cd.markForCheck();
         });
@@ -320,6 +335,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
 
     clickShowNewTasks() {
         this.tasks = this.newTasks.concat(this.tasks);
+        this.computeTaskActions();
         this.newTasks = [];
         this._cd.markForCheck();
     }
@@ -358,6 +374,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
             const updatedTask = tasks.find(ta => ta.id === t.id);
             return updatedTask ? updatedTask : t;
         });
+        this.computeTaskActions();
 
         // Decrement or stop task refresh
         tasks.forEach(t => {
@@ -371,7 +388,9 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
         this._cd.markForCheck();
     }
 
-    getTaskActions(t: Task) { return new TaskActions(t, this.meta); }
+    computeTaskActions() {
+        this.tasksActions = this.tasks.map(t => new TaskActions(t, this.meta));
+    }
 
     // Manage actions on task
 
@@ -456,6 +475,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     deleteTask(id: string) {
         this._taskService.delete(id).then(() => {
             this.tasks = this.tasks.filter(t => t.id !== id);
+            this.computeTaskActions();
             this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The task has been deleted.' });
         });
@@ -465,6 +485,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
         const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
         this._taskService.deleteAll(selectedTaskIDs).then(() => {
             this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(id => id === t.id));
+            this.computeTaskActions();
             this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
