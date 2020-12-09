@@ -24,14 +24,17 @@ export class StepsListComponent implements OnChanges {
     editorConfigPayload: EditorOptions = {
         readOnly: true,
         wordWrap: 'on',
+        language: 'json',
     };
     editorConfigError: EditorOptions = {
         readOnly: true,
         wordWrap: 'on',
+        language: 'json',
     };
     editorConfigChildren: EditorOptions = {
         readOnly: true,
         wordWrap: 'on',
+        language: 'json',
     };
     filteredStepNames: string[];
     states: any = null;
