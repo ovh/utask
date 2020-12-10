@@ -43,10 +43,6 @@ export class TaskComponent implements OnInit, OnDestroy {
   taskIsResolvable = false;
   taskId = '';
   resolution: any = null;
-  editorConfigResult: EditorOptions = {
-    readOnly: true,
-    wordWrap: 'on',
-  };
   selectedStep = '';
   meta: Meta = null;
 

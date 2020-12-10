@@ -43,6 +43,7 @@ import { NzCommentModule } from 'ng-zorro-antd/comment';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 
 const routes: Routes = [
   { path: 'error', component: ErrorComponent },
@@ -153,7 +154,8 @@ const routes: Routes = [
     ),
     NzTableModule,
     NzCodeEditorModule,
-    NzNotificationModule
+    NzNotificationModule,
+    NzPageHeaderModule
   ],
   exports: [RouterModule],
   providers: [

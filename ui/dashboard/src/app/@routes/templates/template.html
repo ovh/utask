@@ -1,2 +1,4 @@
-<h1>Template - {{templateName}}</h1>
+<nz-page-header nzBackIcon [nzGhost]="false">
+	<nz-page-header-title>{{templateName}}</nz-page-header-title>
+</nz-page-header>
 <lib-utask-template-details *ngIf="templateName" [templateName]="templateName"></lib-utask-template-details>

@@ -11,16 +11,11 @@ lib-utask-box
     nz-button-group
       float: right
 
-.header
-  display: flex
-  flex-direction: row
-  .title
-    flex: 1
-  .actions
-    nz-switch
-      margin-left: 5px
-    nz-button-group
-      margin-left: 20px
+nz-page-header-extra
+  nz-switch
+    margin-left: 5px
+  nz-button-group
+    margin-left: 20px
 
 .task-description
   margin-top: 15px
@@ -72,14 +67,14 @@ lib-utask-box
     color: white
 
 lib-utask-steps-list
-  margin-bottom: 15px
-  height: 400px
-  display: flex
-  flex-direction: column
+    margin-bottom: 15px
+    height: 400px
+    display: flex
+    flex-direction: column
 
 lib-utask-steps-viewer
-  height: 100%
-  min-height: 400px
+    height: 100%
+    min-height: 400px
 
 .resolution_state
   &_WONTFIX, &_CANCELLED, &_PAUSED

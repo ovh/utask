@@ -15,8 +15,9 @@ export class TemplateDetailsComponent implements OnInit {
     template: Template;
     text: string;
 
-    constructor(private api: ApiService) {
-    }
+    constructor(
+        private api: ApiService
+    ) { }
 
     ngOnInit() {
         this.loading = true;
