@@ -123,16 +123,16 @@ export class UTaskLibModule {
     return {
       ngModule: UTaskLibModule,
       providers: [
+        { provide: NZ_I18N, useValue: en_US },
         {
           provide: ApiServiceOptions,
           useFactory: ApiServiceOptionsFactory(conf.apiBaseUrl),
         },
+        ModalService,
         ResolutionService,
         TaskService,
         RequestService,
-        WorkflowService,
-        { provide: NZ_I18N, useValue: en_US },
-        ModalService
+        WorkflowService
       ]
     }
   }
