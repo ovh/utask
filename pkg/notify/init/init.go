@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/utask/pkg/notify"
 	"github.com/ovh/utask/pkg/notify/slack"
 	"github.com/ovh/utask/pkg/notify/tat"
+	"github.com/ovh/utask/pkg/notify/webhook"
 )
 
 const (
@@ -27,7 +28,7 @@ func Init(store *configstore.Store) error {
 		case tat.Type:
 			f := utask.NotifyBackendTat{}
 			if err := json.Unmarshal(ncfg.Config, &f); err != nil {
-				return fmt.Errorf("%s: %s, %s", errRetrieveCfg, ncfg.Type, name)
+				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
 			}
 			tn, err := tat.NewTatNotificationSender(
 				f.URL,
@@ -43,9 +44,17 @@ func Init(store *configstore.Store) error {
 		case slack.Type:
 			f := utask.NotifyBackendSlack{}
 			if err := json.Unmarshal(ncfg.Config, &f); err != nil {
-				return fmt.Errorf("%s: %s, %s", errRetrieveCfg, ncfg.Type, name)
+				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
 			}
 			sn := slack.NewSlackNotificationSender(f.WebhookURL)
+			notify.RegisterSender(sn, name)
+
+		case webhook.Type:
+			f := utask.NotifyBackendWebhook{}
+			if err := json.Unmarshal(ncfg.Config, &f); err != nil {
+				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
+			}
+			sn := webhook.NewWebhookNotificationSender(f.WebhookURL, f.Username, f.Password, f.Headers)
 			notify.RegisterSender(sn, name)
 
 		default:

@@ -151,6 +151,30 @@ For development purposes, an optional `basic-auth` configstore item can be provi
 
 Extending this basic authentication mechanism is possible by developing an "init" plugin, as described [below](#plugins).
 
+### Notification
+
+Every task state change can be notified to a notification backend.
+µTask implements three differents notification backends: Slack, [TaT](https://github.com/ovh/tat), and generic webhooks.
+
+Default payload that will be sent for generic webhooks is :
+```json
+{
+    "message": "string",
+    "task_id": "public_task_uuid",
+    "title": "task title string",
+    "state": "current task state",
+    "template": "template_name",
+    "requester": "optional",
+    "resolver": "optional",
+    "steps": "14/20",
+    "potential_resolvers": "user1,user2,admin",
+    "resolution_id": "optional,public_resolution_uuid",
+    "tags": "{\"tag1\":\"value1\"}"
+}
+```
+
+Notification backends can be configured in the global µTask configuration, as described [here](./config/README.md#utask-cfg).
+
 ## Authoring Task Templates <a name="templates"></a>
 
 Checkout the [µTask examples directory](./examples).

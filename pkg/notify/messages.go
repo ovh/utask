@@ -1,7 +1,9 @@
 package notify
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -15,6 +17,7 @@ type Message struct {
 type TaskStateUpdate struct {
 	Title              string
 	PublicID           string
+	ResolutionPublicID string
 	State              string
 	TemplateName       string
 	RequesterUsername  string
@@ -22,6 +25,7 @@ type TaskStateUpdate struct {
 	PotentialResolvers []string
 	StepsDone          int
 	StepsTotal         int
+	Tags               map[string]string
 }
 
 // WrapTaskStateUpdate returns a Message struct formatted for a task state change
@@ -32,6 +36,8 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 
 	m.Fields = make(map[string]string)
 
+	m.Fields["task_id"] = tsu.PublicID
+	m.Fields["title"] = tsu.Title
 	m.Fields["state"] = tsu.State
 	m.Fields["template"] = tsu.TemplateName
 	if tsu.RequesterUsername != "" {
@@ -43,6 +49,18 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	m.Fields["steps"] = fmt.Sprintf("%d/%d", tsu.StepsDone, tsu.StepsTotal)
 	if tsu.PotentialResolvers != nil && len(tsu.PotentialResolvers) > 0 {
 		m.Fields["potential_resolvers"] = strings.Join(tsu.PotentialResolvers, " ")
+	}
+	if tsu.ResolutionPublicID != "" {
+		m.Fields["resolution_id"] = tsu.ResolutionPublicID
+	}
+
+	if tsu.Tags != nil {
+		tags, err := json.Marshal(tsu.Tags)
+		if err == nil {
+			m.Fields["tags"] = string(tags)
+		} else {
+			log.Printf("notify error: failed to marshal tags for task #%s: %s", tsu.PublicID, err)
+		}
 	}
 
 	return &m

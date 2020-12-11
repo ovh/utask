@@ -163,7 +163,12 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 		return nil, pgjuju.Interpret(err)
 	}
 
-	t.notifyState(tt.AllowedResolverUsernames)
+	notificationAllowedResolverUsernames := []string{}
+	notificationAllowedResolverUsernames = append(notificationAllowedResolverUsernames, tt.AllowedResolverUsernames...)
+	if tt.AllowAllResolverUsernames {
+		notificationAllowedResolverUsernames = append(notificationAllowedResolverUsernames, t.RequesterUsername)
+	}
+	t.notifyState(notificationAllowedResolverUsernames)
 
 	return t, nil
 }
@@ -602,6 +607,10 @@ func (t *Task) notifyState(potentialResolvers []string) {
 		ResolverUsername:   t.ResolverUsername,
 		StepsDone:          t.StepsDone,
 		StepsTotal:         t.StepsTotal,
+		Tags:               t.Tags,
+	}
+	if t.Resolution != nil {
+		tsu.ResolutionPublicID = *t.Resolution
 	}
 
 	notify.Send(
