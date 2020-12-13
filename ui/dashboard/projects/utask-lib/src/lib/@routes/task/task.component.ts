@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewContainerRef, Input, OnChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -6,7 +6,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { interval, Subscription } from 'rxjs';
 import { concatMap, filter } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { ApiService } from '../../@services/api.service';
+import { ApiService, UTaskLibOptions } from '../../@services/api.service';
 import { ResolutionService } from '../../@services/resolution.service';
 import { RequestService } from '../../@services/request.service';
 import { TaskService } from '../../@services/task.service';
@@ -15,16 +15,14 @@ import Meta from '../../@models/meta.model';
 import Task, { Comment } from '../../@models/task.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
+import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
 
 @Component({
-	selector: 'lib-utask-task',
-	templateUrl: './task.html',
-	styleUrls: ['./task.sass']
+  selector: 'lib-utask-task',
+  templateUrl: './task.html',
+  styleUrls: ['./task.sass']
 })
 export class TaskComponent implements OnInit, OnDestroy {
-  // TODO get from environment.refresh.task
-  refreshDelay = 5000;
-
   validateResolveForm!: FormGroup;
   validateRejectForm!: FormGroup;
   inputControls: Array<string> = [];
@@ -58,6 +56,8 @@ export class TaskComponent implements OnInit, OnDestroy {
     enable: false,
     actif: false
   };
+  uiBaseUrl: string;
+  listOptions = new TasksListComponentOptions();
 
   constructor(
     private api: ApiService,
@@ -69,8 +69,12 @@ export class TaskComponent implements OnInit, OnDestroy {
     private _fb: FormBuilder,
     private modal: NzModalService,
     private viewContainerRef: ViewContainerRef,
-    private _notif: NzNotificationService
-  ) { }
+    private _notif: NzNotificationService,
+    private _options: UTaskLibOptions
+  ) {
+    this.uiBaseUrl = this._options.uiBaseUrl;
+    this.listOptions.routingTaskPath = this._options.uiBaseUrl;
+  }
 
   ngOnDestroy() {
     if (this.refreshes.tasks) {
@@ -103,13 +107,13 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.refreshes.tasks = interval(this.refreshDelay)
+    this.refreshes.tasks = interval(this._options.refresh.task)
       .pipe(filter(() => {
         return !this.loaders.task && this.autorefresh.actif;
       }))
       .pipe(concatMap(() => this.loadTask()))
       .subscribe();
-	}
+  }
 
   addComment() {
     this.loaders.addComment = true;
@@ -217,7 +221,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   deleteTask(taskId: string) {
     this.taskService.delete(taskId).then((data: any) => {
-      this.router.navigate([`/`]);
+      this.router.navigate([this._options.uiBaseUrl + '/']);
       this._notif.info('', 'The task has been deleted.');
     }).catch((err) => {
       if (err !== 'close') {

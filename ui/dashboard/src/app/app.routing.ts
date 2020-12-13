@@ -3,6 +3,7 @@ import { Routes, RouterModule, PreloadAllModules } from '@angular/router';
 import { BaseComponent } from './@routes/base/base.component';
 import { AppModule } from './app.module';
 import { MetaResolve } from 'projects/utask-lib/src/lib/@resolves/meta.resolve';
+import { NotFoundComponent } from './@routes/not-found/not-found.component';
 
 const routes: Routes = [
   {
@@ -12,11 +13,15 @@ const routes: Routes = [
       meta: MetaResolve
     },
     children: [
+      { path: '', redirectTo: '/tasks', pathMatch: 'full' },
       {
         path: '', loadChildren: () => import('../../projects/utask-lib/src/lib/utask-lib.module')
           .then(m => m.UTaskLibModule)
       }
     ]
+  },
+  {
+    path: '**', component: NotFoundComponent,
   }
 ];
 

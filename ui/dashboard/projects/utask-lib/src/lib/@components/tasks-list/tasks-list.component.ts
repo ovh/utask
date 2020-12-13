@@ -78,7 +78,7 @@ export class TaskActions {
 export class TasksListComponentOptions {
     public refreshTasks = 15000;
     public refreshTask = 1000;
-    public routingTask = '/task/';
+    public routingTaskPath = '';
 
     public constructor(init?: Partial<TasksListComponentOptions>) {
         Object.assign(this, init);

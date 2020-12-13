@@ -32,10 +32,12 @@
             <nz-form-item>
                 <nz-form-label>Tags</nz-form-label>
                 <nz-form-control>
-                    <lib-utask-input-tags (update)="inputTagsChanged($event);" [value]="pagination.tag" [placeholder]="'Search tags...'" [rawTags]="tags"></lib-utask-input-tags>
+                    <lib-utask-input-tags (update)="inputTagsChanged($event);" [value]="pagination.tag"
+                        [placeholder]="'Search tags...'" [rawTags]="tags"></lib-utask-input-tags>
                 </nz-form-control>
             </nz-form-item>
         </div>
     </div>
 </div>
-<lib-utask-tasks-list [meta]="meta" [params]="pagination" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)" (toastError)="toastError($event)"></lib-utask-tasks-list>
+<lib-utask-tasks-list [meta]="meta" [params]="pagination" (routeTo)="routeTo($event)" (toastInfo)="toastInfo($event)"
+    (toastError)="toastError($event)" [options]="listOptions"></lib-utask-tasks-list>

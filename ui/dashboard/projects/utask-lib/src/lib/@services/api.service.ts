@@ -263,10 +263,20 @@ export class ApiServiceResolution {
 @Injectable({
     providedIn: "root"
 })
-export class ApiServiceOptions {
+export class UTaskLibOptions {
     constructor(
         @Inject('apiBaseUrl') public apiBaseUrl: string,
+        @Inject('uiBaseUrl') public uiBaseUrl: string,
+        @Inject('refresh') public refresh: UtaskLibOptionsRefresh
     ) { }
+}
+
+export class UtaskLibOptionsRefresh {
+    home: { tasks: number, task: number } = {
+        tasks: 15000,
+        task: 1000
+    };
+    task: number = 5000;
 }
 
 @Injectable({
@@ -283,7 +293,7 @@ export class ApiService {
 
     constructor(
         private _http: HttpClient,
-        private _options: ApiServiceOptions,
+        private _options: UTaskLibOptions,
     ) {
         this.apiBaseUrl = this._options.apiBaseUrl;
         this.meta = new ApiServiceMeta(this._http, this.apiBaseUrl);

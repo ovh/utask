@@ -41,18 +41,21 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { ApiServiceOptions } from 'projects/utask-lib/src/lib/@services/api.service';
-import { ApiServiceOptionsFactory } from 'projects/utask-lib/src/lib/utask-lib.module';
+import { UTaskLibOptions } from 'projects/utask-lib/src/lib/@services/api.service';
+import { UTaskLibOptionsFactory } from 'projects/utask-lib/src/lib/utask-lib.module';
 import { environment } from 'src/environments/environment';
 import { MetaResolve } from 'projects/utask-lib/src/lib/@resolves/meta.resolve';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { IconsProviderModule } from './icons-provider.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NotFoundComponent } from './@routes/not-found/not-found.component';
+import { NzResultModule } from 'ng-zorro-antd/result';
 
 @NgModule({
   declarations: [
     AppComponent,
     BaseComponent,
+    NotFoundComponent
   ],
   imports: [
     BrowserModule,
@@ -68,6 +71,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     NzBadgeModule,
     NzSwitchModule,
     NzToolTipModule,
+    NzResultModule,
 
     IconsProviderModule,
 
@@ -77,8 +81,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     { provide: NZ_I18N, useValue: en_US },
     { provide: ErrorHandler, useClass: MyErrorHandler },
     {
-      provide: ApiServiceOptions,
-      useFactory: ApiServiceOptionsFactory(environment.apiBaseUrl),
+      provide: UTaskLibOptions,
+      useFactory: UTaskLibOptionsFactory(environment.apiBaseUrl, '/', environment.refresh),
     },
     ThemeService,
     MetaResolve

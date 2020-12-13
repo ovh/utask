@@ -2,14 +2,15 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
-import { ApiService, ParamsListFunctions } from '../@services/api.service';
+import { ApiService, ParamsListFunctions, UTaskLibOptions } from '../@services/api.service';
 import Function from '../@models/function.model';
 
 @Injectable()
 export class FunctionsResolve implements Resolve<any> {
     constructor(
         private _api: ApiService,
-        private _router: Router
+        private _router: Router,
+        private _options: UTaskLibOptions
     ) { }
 
     hasLast(headers: HttpHeaders): string {
@@ -32,7 +33,7 @@ export class FunctionsResolve implements Resolve<any> {
         // Load first page
         let items: Array<Function>;
         let res = await this._api.function.list(pagination).toPromise().catch((err) => {
-            this._router.navigate(['/error']);
+            this._router.navigate([this._options.uiBaseUrl + '/error']);
             throw err;
         });
         pagination.last = this.hasLast(res.headers);
@@ -41,7 +42,7 @@ export class FunctionsResolve implements Resolve<any> {
         // Load more page if needed
         while (pagination.last) {
             res = await this._api.function.list(pagination).toPromise().catch((err) => {
-                this._router.navigate(['/error']);
+                this._router.navigate([this._options.uiBaseUrl + '/error']);
                 throw err;
             });
             pagination.last = this.hasLast(res.headers);

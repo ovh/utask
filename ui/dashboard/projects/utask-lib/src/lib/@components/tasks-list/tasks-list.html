@@ -44,7 +44,8 @@
                 <td nzLeft [nzChecked]="!!bulkSelection[item.id]" (nzCheckedChange)="clickCheckTask(item.id, $event)">
                 </td>
                 <td>
-                    <a [routerLink]='options.routingTask+item.id' title="{{item.title}}">{{item.title}}</a>
+                    <a [routerLink]="options.routingTaskPath+'/task/'+item.id"
+                        title="{{item.title}}">{{item.title}}</a>
                     <br />
                     <small>{{item.id}}</small>
                 </td>

@@ -20,7 +20,6 @@ const utaskLibRoutes: Routes = [
 		path: '',
 		children: [
 			{ path: 'error', component: ErrorComponent },
-			{ path: '', redirectTo: '/tasks', pathMatch: 'full' },
 			{
 				path: '',
 				resolve: {

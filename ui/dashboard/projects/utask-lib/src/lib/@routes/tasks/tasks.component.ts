@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { ActivatedRoute, Router } from '@angular/router';
 import isArray from 'lodash-es/isArray';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
 import Meta from '../../@models/meta.model';
 import { TaskState, TaskType } from '../../@models/task.model';
-import { ParamsListTasks } from '../../@services/api.service';
+import { ParamsListTasks, UTaskLibOptions } from '../../@services/api.service';
 import { TaskService } from '../../@services/task.service';
 
 @Component({
@@ -16,14 +17,20 @@ export class TasksComponent implements OnInit {
   tags: string[] = [];
   meta: Meta = null;
   pagination: ParamsListTasks = new ParamsListTasks();
+  listOptions = new TasksListComponentOptions();
 
   constructor(
     private _activateRoute: ActivatedRoute,
     private router: Router,
     private taskService: TaskService,
     private _cd: ChangeDetectorRef,
-    private _notif: NzNotificationService
-  ) { }
+    private _notif: NzNotificationService,
+    private _options: UTaskLibOptions
+  ) {
+    this.listOptions.refreshTask = this._options.refresh.home.task;
+    this.listOptions.refreshTasks = this._options.refresh.home.tasks;
+    this.listOptions.routingTaskPath = this._options.uiBaseUrl;
+  }
 
   ngOnInit() {
     this.tags = this.taskService.getTagsRaw();
@@ -39,7 +46,7 @@ export class TasksComponent implements OnInit {
   }
 
   routeTo(taskId: string) {
-    this.router.navigate(['/task/' + taskId]);
+    this.router.navigate([this._options.uiBaseUrl + '/task/' + taskId]);
   }
 
   toastError(message: string) {

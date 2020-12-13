@@ -2,14 +2,15 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
-import { ApiService, ParamsListTemplates } from '../@services/api.service';
+import { ApiService, ParamsListTemplates, UTaskLibOptions } from '../@services/api.service';
 import Template from '../@models/template.model';
 
 @Injectable()
 export class TemplatesResolve implements Resolve<any> {
     constructor(
         private _api: ApiService,
-        private _router: Router
+        private _router: Router,
+        private _options: UTaskLibOptions
     ) { }
 
     hasLast(headers: HttpHeaders, pagination: any) {
@@ -50,7 +51,7 @@ export class TemplatesResolve implements Resolve<any> {
             load(pagination).then((templates: Template[]) => {
                 resolve(templates);
             }).catch((err) => {
-                this._router.navigate(['/error']);
+                this._router.navigate([this._options.uiBaseUrl + '/error']);
                 reject(err);
             });
         });

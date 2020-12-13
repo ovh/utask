@@ -20,7 +20,9 @@
     <!-- Task info -->
     <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
         <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent&nbsp;task">
-            <a [routerLink]="'/task/'+task.tags._utask_parent_task_id">{{task.tags._utask_parent_task_id}}</a>
+            <a [routerLink]="[uiBaseUrl, 'task', task.tags._utask_parent_task_id]">
+                {{task.tags._utask_parent_task_id}}
+            </a>
         </nz-descriptions-item>
         <nz-descriptions-item *ngIf="task.tags" nzTitle="Tags">
             <table>
@@ -61,8 +63,8 @@
         <div app-box-content>
             <nz-descriptions *ngIf="task.input" nzBordered [nzSize]="'small'" [nzColumn]="1">
                 <nz-descriptions-item nzTitle="Template">
-                    <a [routerLink]="'/template/'+task.template_name" title="Template {{task.template_name}}"
-                        *ngIf="meta.user_is_admin">
+                    <a [routerLink]="[uiBaseUrl, 'template', task.template_name]"
+                        title="Template {{task.template_name}}" *ngIf="meta.user_is_admin">
                         {{task.template_name}}
                     </a>
                     <span *ngIf="!meta.user_is_admin">{{task.template_name}}</span>
@@ -207,7 +209,7 @@
             page_size: 10,
             type: meta.user_is_admin ? 'all' : 'own',
             tag: '_utask_parent_task_id=' + taskId
-          }" (event)="eventUtask($event)">
+          }" (event)="eventUtask($event)" [options]="listOptions">
             </lib-utask-tasks-list>
         </div>
     </lib-utask-box>

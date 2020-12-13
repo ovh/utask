@@ -1,6 +1,5 @@
-import { NgModule, ModuleWithProviders } from '@angular/core';
-import { ApiServiceOptions } from './@services/api.service';
-import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { EditorComponent } from './@components/editor/editor.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -69,6 +68,7 @@ import { ErrorComponent } from './@routes/error/error.component';
 import { StatsResolve } from './@resolves/stats.resolve';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { UTaskLibOptions, UtaskLibOptionsRefresh } from './@services/api.service';
 
 const components: any[] = [
   // Components
@@ -167,7 +167,7 @@ const components: any[] = [
 })
 export class UTaskLibModule { }
 
-export function ApiServiceOptionsFactory(apiBaseUrl: string): any {
-  const res = (http: HttpClient) => new ApiServiceOptions(apiBaseUrl);
+export function UTaskLibOptionsFactory(apiBaseUrl: string, uiBaseUrl: string, refresh: UtaskLibOptionsRefresh): any {
+  const res = () => new UTaskLibOptions(apiBaseUrl, uiBaseUrl, refresh);
   return res;
 }

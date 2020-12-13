@@ -4,7 +4,7 @@ import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import isArray from 'lodash-es/isArray';
 import Template from '../../@models/template.model';
-import { ApiService, NewTask } from '../../@services/api.service';
+import { ApiService, NewTask, UTaskLibOptions } from '../../@services/api.service';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 
 @Component({
@@ -26,7 +26,8 @@ export class NewComponent implements OnInit {
     private _activatedRoute: ActivatedRoute,
     private _router: Router,
     private _fb: FormBuilder,
-    private _cd: ChangeDetectorRef
+    private _cd: ChangeDetectorRef,
+    private _options: UTaskLibOptions
   ) { }
 
   ngOnInit() {
@@ -112,7 +113,7 @@ export class NewComponent implements OnInit {
     this.loaders.submit = true;
     this._cd.markForCheck();
     this._api.task.add(item).toPromise().then((data: any) => {
-      this._router.navigate([`/task/${data.id}`]);
+      this._router.navigate([this._options.uiBaseUrl + `/task/${data.id}`]);
     }).catch((err) => {
       this.errors.submit = err;
     }).finally(() => {
