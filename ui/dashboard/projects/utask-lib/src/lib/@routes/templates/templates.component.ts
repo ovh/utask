@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import Template from 'projects/utask-lib/src/lib/@models/template.model';
 import { NzTableComponent } from 'ng-zorro-antd/table';
+import Template from '../../@models/template.model';
 
 @Component({
   templateUrl: './templates.html',
@@ -13,10 +13,10 @@ export class TemplatesComponent implements OnInit {
   @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Template>;
 
   constructor(
-    private route: ActivatedRoute
+    private _route: ActivatedRoute
   ) { }
 
   ngOnInit() {
-    this.templates = this.route.parent.snapshot.data.templates;
+    this.templates = this._route.parent.snapshot.data.templates;
   }
 }

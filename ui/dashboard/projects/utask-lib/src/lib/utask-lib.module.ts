@@ -5,11 +5,11 @@ import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-e
 import { EditorComponent } from './@components/editor/editor.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ErrorMessageComponent } from './@components/error-message/error-message.component';
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { TasksListComponent } from './@components/tasks-list/tasks-list.component';
+import { TaskComponent } from './@routes/task/task.component';
+import { TasksComponent } from './@routes/tasks/tasks.component';
 import { ResolutionService } from './@services/resolution.service';
 import { TaskService } from './@services/task.service';
 import { FromNowPipe } from './@pipes/fromNow.pipe';
@@ -31,7 +31,6 @@ import { FullHeightDirective } from './@directives/fullheight.directive';
 import { AutofocusDirective } from './@directives/autofocus.directive';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -50,8 +49,29 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { ChartCommonModule, PieChartModule } from '@swimlane/ngx-charts';
+import { CommonModule } from '@angular/common';
+import { NzCommentModule } from 'ng-zorro-antd/comment';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzListModule } from 'ng-zorro-antd/list';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
+import { utaskLibRouting } from './utask-lib.routing';
+import { FunctionsResolve } from './@resolves/functions.resolve';
+import { MetaResolve } from './@resolves/meta.resolve';
+import { TemplatesResolve } from './@resolves/templates.resolve';
+import { TemplatesComponent } from './@routes/templates/templates.component';
+import { TemplateComponent } from './@routes/template/template.component';
+import { FunctionsComponent } from './@routes/functions/functions.component';
+import { FunctionComponent } from './@routes/function/function.component';
+import { NewComponent } from './@routes/new/new.component';
+import { StatsComponent } from './@routes/stats/stats.component';
+import { ErrorComponent } from './@routes/error/error.component';
+import { StatsResolve } from './@resolves/stats.resolve';
+import { NzResultModule } from 'ng-zorro-antd/result';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
 
 const components: any[] = [
+  // Components
   LoaderComponent,
   ErrorMessageComponent,
   InputTagsComponent,
@@ -64,31 +84,42 @@ const components: any[] = [
   ChartTaskStatesComponent,
   BoxComponent,
   InputsFormComponent,
-
   ModalApiYamlComponent,
   ModalApiYamlEditComponent,
   NzModalContentWithErrorComponent,
+  TaskStatusComponent,
+
+  // Routes
+  TasksComponent,
+  TaskComponent,
+  NewComponent,
+  TemplatesComponent,
+  TemplateComponent,
+  FunctionsComponent,
+  FunctionComponent,
+  StatsComponent,
+  ErrorComponent,
 
   FromNowPipe,
-  TaskStatusComponent,
+
   NsAutoHeightTableDirective,
   FullHeightDirective,
   AutofocusDirective
 ];
 
-interface UtaskLibConfiguration {
-  apiBaseUrl: string;
-};
-
 @NgModule({
   declarations: components,
   imports: [
+    CommonModule,
     HttpClientModule,
-    BrowserAnimationsModule,
-    BrowserModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
+    utaskLibRouting,
+
+    ChartCommonModule,
+    PieChartModule,
+
     NzTableModule,
     NzButtonModule,
     NzIconModule,
@@ -107,8 +138,13 @@ interface UtaskLibConfiguration {
     NzSpinModule,
     NzDescriptionsModule,
     NzToolTipModule,
-    ChartCommonModule,
-    PieChartModule
+    NzCommentModule,
+    NzAvatarModule,
+    NzListModule,
+    NzSwitchModule,
+    NzPageHeaderModule,
+    NzResultModule,
+    NzNotificationModule
   ],
   exports: components,
   bootstrap: [],
@@ -117,26 +153,19 @@ interface UtaskLibConfiguration {
     ModalApiYamlEditComponent,
     NzModalContentWithErrorComponent
   ],
+  providers: [
+    ModalService,
+    ResolutionService,
+    TaskService,
+    RequestService,
+    WorkflowService,
+    MetaResolve,
+    TemplatesResolve,
+    FunctionsResolve,
+    StatsResolve
+  ]
 })
-export class UTaskLibModule {
-  static forRoot(conf: UtaskLibConfiguration): ModuleWithProviders<UTaskLibModule> {
-    return {
-      ngModule: UTaskLibModule,
-      providers: [
-        { provide: NZ_I18N, useValue: en_US },
-        {
-          provide: ApiServiceOptions,
-          useFactory: ApiServiceOptionsFactory(conf.apiBaseUrl),
-        },
-        ModalService,
-        ResolutionService,
-        TaskService,
-        RequestService,
-        WorkflowService
-      ]
-    }
-  }
-}
+export class UTaskLibModule { }
 
 export function ApiServiceOptionsFactory(apiBaseUrl: string): any {
   const res = (http: HttpClient) => new ApiServiceOptions(apiBaseUrl);

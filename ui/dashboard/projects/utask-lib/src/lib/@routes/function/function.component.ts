@@ -18,13 +18,14 @@ export class FunctionComponent implements OnInit {
   function: Function;
   JSON = JSON;
 
-  constructor(private route: ActivatedRoute) {
-  }
+  constructor(
+    private _route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
+    this._route.params.subscribe(params => {
       this.functionName = params.functionName;
-      this.function = this.route.parent.snapshot.data.functions.find(f => f.name === this.functionName);
+      this.function = this._route.parent.snapshot.data.functions.find(f => f.name === this.functionName);
     });
   }
 }

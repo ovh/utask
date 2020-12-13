@@ -30,6 +30,13 @@
       "ng-zorro-antd/auto-complete": "ng-zorro-antd/auto-complete",
       "ng-zorro-antd/code-editor": "ng-zorro-antd/code-editor",
       "ng-zorro-antd/tooltip": "ng-zorro-antd/tooltip",
+      "ng-zorro-antd/notification": "ng-zorro-antd/notification",
+      "ng-zorro-antd/comment": "ng-zorro-antd/comment",
+      "ng-zorro-antd/avatar": "ng-zorro-antd/avatar",
+      "ng-zorro-antd/list": "ng-zorro-antd/list",
+      "ng-zorro-antd/switch": "ng-zorro-antd/switch",
+      "ng-zorro-antd/page-header": "ng-zorro-antd/page-header",
+      "ng-zorro-antd/result": "ng-zorro-antd/result",
       "lodash-es/isString": "lodash-es/isString",
       "lodash-es/remove": "lodash-es/remove",
       "lodash-es/map": "lodash-es/map",
@@ -38,7 +45,8 @@
       "lodash-es/keys": "lodash-es/keys",
       "lodash-es/difference": "lodash-es/difference",
       "lodash-es/get": "lodash-es/get",
-      "lodash-es/clone": "lodash-es/clone"
+      "lodash-es/clone": "lodash-es/clone",
+      "lodash-es/isArray": "lodash-es/isArray"
     }
   }
 }

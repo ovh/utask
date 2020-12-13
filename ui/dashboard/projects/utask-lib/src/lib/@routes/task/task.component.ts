@@ -1,28 +1,30 @@
-import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewContainerRef, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
-import { environment } from 'src/environments/environment';
-import Task, { Comment } from 'projects/utask-lib/src/lib/@models/task.model';
-import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
-import { RequestService } from 'projects/utask-lib/src/lib/@services/request.service';
-import { ResolutionService } from 'projects/utask-lib/src/lib/@services/resolution.service';
-import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
-import Template from 'projects/utask-lib/src/lib/@models/template.model';
-import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
-import { ModalApiYamlComponent } from 'projects/utask-lib/src/lib/@modals/modal-api-yaml/modal-api-yaml.component';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
-import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { EditorOptions } from 'ng-zorro-antd/code-editor';
-import { interval, of, Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { concatMap, filter } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { ApiService } from '../../@services/api.service';
+import { ResolutionService } from '../../@services/resolution.service';
+import { RequestService } from '../../@services/request.service';
+import { TaskService } from '../../@services/task.service';
+import Template from '../../@models/template.model';
+import Meta from '../../@models/meta.model';
+import Task, { Comment } from '../../@models/task.model';
+import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
+import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 
 @Component({
-  templateUrl: './task.html',
-  styleUrls: ['./task.sass'],
+	selector: 'lib-utask-task',
+	templateUrl: './task.html',
+	styleUrls: ['./task.sass']
 })
 export class TaskComponent implements OnInit, OnDestroy {
+  // TODO get from environment.refresh.task
+  refreshDelay = 5000;
+
   validateResolveForm!: FormGroup;
   validateRejectForm!: FormGroup;
   inputControls: Array<string> = [];
@@ -101,13 +103,13 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
     });
 
-    this.refreshes.tasks = interval(environment.refresh.task)
+    this.refreshes.tasks = interval(this.refreshDelay)
       .pipe(filter(() => {
         return !this.loaders.task && this.autorefresh.actif;
       }))
       .pipe(concatMap(() => this.loadTask()))
       .subscribe();
-  }
+	}
 
   addComment() {
     this.loaders.addComment = true;

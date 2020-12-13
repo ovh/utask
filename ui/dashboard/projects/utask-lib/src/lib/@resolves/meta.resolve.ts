@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
 import { Resolve } from '@angular/router';
-import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
+import { ApiService } from '../@services/api.service';
 
 @Injectable()
 export class MetaResolve implements Resolve<any> {

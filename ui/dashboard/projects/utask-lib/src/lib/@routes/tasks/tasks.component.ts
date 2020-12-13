@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import isArray from 'lodash-es/isArray';
-import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
-import { ParamsListTasks } from 'projects/utask-lib/src/lib/@services/api.service';
-import { TaskService } from 'projects/utask-lib/src/lib/@services/task.service';
-import { TaskState, TaskType } from 'projects/utask-lib/src/lib/@models/task.model';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import Meta from '../../@models/meta.model';
+import { TaskState, TaskType } from '../../@models/task.model';
+import { ParamsListTasks } from '../../@services/api.service';
+import { TaskService } from '../../@services/task.service';
 
 @Component({
   templateUrl: './tasks.html',

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import Template from 'projects/utask-lib/src/lib/@models/template.model';
-import { ApiService, NewTask } from 'projects/utask-lib/src/lib/@services/api.service';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
-import { InputsFormComponent } from 'projects/utask-lib/src/lib/@components/inputs-form/inputs-form.component';
 import isArray from 'lodash-es/isArray';
+import Template from '../../@models/template.model';
+import { ApiService, NewTask } from '../../@services/api.service';
+import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 
 @Component({
   templateUrl: './new.html',

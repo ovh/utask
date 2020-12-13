@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NzTableComponent } from 'ng-zorro-antd/table';
-import { ApiService } from 'projects/utask-lib/src/lib/@services/api.service';
 
 @Component({
   templateUrl: './functions.html',
@@ -23,11 +22,12 @@ export class FunctionsComponent implements OnInit {
     }
   }
 
-  constructor(private api: ApiService, private route: ActivatedRoute, private router: Router) {
-  }
+  constructor(
+    private _route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
-    this.functions = this.route.parent.snapshot.data.functions;
+    this.functions = this._route.parent.snapshot.data.functions;
     this.codes = [];
     this.functions.forEach((item) => {
       this.codes.push(JSON.stringify(item, null, 4));

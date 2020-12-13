@@ -9,11 +9,11 @@ export class TemplateComponent implements OnInit {
   templateName: string;
 
   constructor(
-    private route: ActivatedRoute
+    private _route: ActivatedRoute
   ) { }
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
+    this._route.params.subscribe(params => {
       this.templateName = params.templateName;
     });
   }

@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Resolve } from '@angular/router';
 import { HttpHeaders } from '@angular/common/http';
-import { ApiService, ParamsListFunctions } from 'projects/utask-lib/src/lib/@services/api.service';
-import Function from 'projects/utask-lib/src/lib/@models/function.model';
+import { ApiService, ParamsListFunctions } from '../@services/api.service';
+import Function from '../@models/function.model';
 
 @Injectable()
 export class FunctionsResolve implements Resolve<any> {

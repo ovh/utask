@@ -19,7 +19,6 @@
 			<nz-avatar [nzText]="meta?.username[0].toUpperCase()" [nzShape]="'square'" nzTooltipTitle="{{meta?.username}}"
 				nzTooltipPlacement="bottomRight" nz-tooltip></nz-avatar>
 		</nz-badge>
-
 		<ng-template #iconTemplate>
 			<i *ngIf="meta?.user_is_admin" nz-icon nzType="crown" class="ant-scroll-number-custom-component crown-badge"></i>
 		</ng-template>
