@@ -1,31 +1,4 @@
 import { NgModule, ErrorHandler } from '@angular/core';
-import {
-  faUserShield,
-  faCheckCircle,
-  faTimesCircle,
-  faBan,
-  faHistory,
-  faSync,
-  faHourglassHalf,
-  faQuestionCircle,
-  faCaretDown,
-  faCaretUp,
-  faAlignJustify
-} from '@fortawesome/fontawesome-free-solid';
-import fontawesome from '@fortawesome/fontawesome';
-fontawesome.library.add(
-  faUserShield,
-  faCheckCircle,
-  faTimesCircle,
-  faBan,
-  faHistory,
-  faSync,
-  faHourglassHalf,
-  faQuestionCircle,
-  faCaretDown,
-  faCaretUp,
-  faAlignJustify
-);
 import { AppComponent } from './app.component';
 import { MyErrorHandler } from './handlers/error.handler';
 import { ThemeService } from './@services/theme.service';
@@ -46,7 +19,6 @@ import { UTaskLibOptionsFactory } from 'projects/utask-lib/src/lib/utask-lib.mod
 import { environment } from 'src/environments/environment';
 import { MetaResolve } from 'projects/utask-lib/src/lib/@resolves/meta.resolve';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
-import { IconsProviderModule } from './icons-provider.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NotFoundComponent } from './@routes/not-found/not-found.component';
 import { NzResultModule } from 'ng-zorro-antd/result';
@@ -73,9 +45,7 @@ import { NzResultModule } from 'ng-zorro-antd/result';
     NzToolTipModule,
     NzResultModule,
 
-    IconsProviderModule,
-
-    routing,
+    routing
   ],
   providers: [
     { provide: NZ_I18N, useValue: en_US },

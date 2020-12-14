@@ -69,6 +69,7 @@ import { StatsResolve } from './@resolves/stats.resolve';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { UTaskLibOptions, UtaskLibOptionsRefresh } from './@services/api.service';
+import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 
 const components: any[] = [
   // Components
@@ -154,6 +155,7 @@ const components: any[] = [
     NzModalContentWithErrorComponent
   ],
   providers: [
+    { provide: NZ_I18N, useValue: en_US },
     ModalService,
     ResolutionService,
     TaskService,
