@@ -4,7 +4,8 @@
     </nz-option>
     <ng-template #multipleTemplate let-item>
         <span *ngIf="item.nzValue.startsWith('State:')">
-            <span class="fas {{getIcon(item.nzValue.split(':')[1])}}"></span> {{ item.nzValue.split(':')[1] }}
+            <i nz-icon [nzType]="getIcon(item.nzValue.split(':')[1])"></i>
+            {{ item.nzValue.split(':')[1] }}
         </span>
         <span *ngIf="!item.nzValue.startsWith('State:')">
             {{ item.nzValue }}

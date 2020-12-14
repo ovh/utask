@@ -7,15 +7,8 @@ import { RouterModule } from '@angular/router';
 import { ErrorMessageComponent } from './@components/error-message/error-message.component';
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { TasksListComponent } from './@components/tasks-list/tasks-list.component';
-import { TaskComponent } from './@routes/task/task.component';
-import { TasksComponent } from './@routes/tasks/tasks.component';
-import { ResolutionService } from './@services/resolution.service';
-import { TaskService } from './@services/task.service';
 import { FromNowPipe } from './@pipes/fromNow.pipe';
 import { LoaderComponent } from './@components/loader/loader.component';
-import { RequestService } from './@services/request.service';
-import { WorkflowService } from './@services/workflow.service';
-import { ModalService } from './@services/modal.service';
 import { StepsListComponent } from './@components/stepslist/stepslist.component';
 import { TemplateDetailsComponent } from './@components/template-details/template-details.component';
 import { ChartTaskStatesComponent } from './@components/chart-task-states/chart-task-states.component';
@@ -54,25 +47,21 @@ import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
-import { utaskLibRouting } from './utask-lib.routing';
-import { FunctionsResolve } from './@resolves/functions.resolve';
-import { MetaResolve } from './@resolves/meta.resolve';
-import { TemplatesResolve } from './@resolves/templates.resolve';
-import { TemplatesComponent } from './@routes/templates/templates.component';
-import { TemplateComponent } from './@routes/template/template.component';
-import { FunctionsComponent } from './@routes/functions/functions.component';
-import { FunctionComponent } from './@routes/function/function.component';
-import { NewComponent } from './@routes/new/new.component';
-import { StatsComponent } from './@routes/stats/stats.component';
-import { ErrorComponent } from './@routes/error/error.component';
-import { StatsResolve } from './@resolves/stats.resolve';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { UTaskLibOptions, UtaskLibOptionsRefresh } from './@services/api.service';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
+import { ModalService } from './@services/modal.service';
+import { ResolutionService } from './@services/resolution.service';
+import { TaskService } from './@services/task.service';
+import { FunctionsResolve } from './@resolves/functions.resolve';
+import { MetaResolve } from './@resolves/meta.resolve';
+import { StatsResolve } from './@resolves/stats.resolve';
+import { TemplatesResolve } from './@resolves/templates.resolve';
+import { RequestService } from './@services/request.service';
+import { WorkflowService } from './@services/workflow.service';
 
 const components: any[] = [
-  // Components
   LoaderComponent,
   ErrorMessageComponent,
   InputTagsComponent,
@@ -90,17 +79,6 @@ const components: any[] = [
   NzModalContentWithErrorComponent,
   TaskStatusComponent,
 
-  // Routes
-  TasksComponent,
-  TaskComponent,
-  NewComponent,
-  TemplatesComponent,
-  TemplateComponent,
-  FunctionsComponent,
-  FunctionComponent,
-  StatsComponent,
-  ErrorComponent,
-
   FromNowPipe,
 
   NsAutoHeightTableDirective,
@@ -116,7 +94,6 @@ const components: any[] = [
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
-    utaskLibRouting,
 
     ChartCommonModule,
     PieChartModule,

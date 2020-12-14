@@ -11,7 +11,7 @@ DIST_TAR=dist.tar.gz
 DIR_NODEMODULES=node_modules
 
 BASEHREF ?= /
-PORT ?= 5557
+PORT ?= 5558
 
 all: debug clean install build
 

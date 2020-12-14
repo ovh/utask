@@ -21,6 +21,7 @@ export * from './lib/@services/request.service';
 export * from './lib/@services/resolution.service';
 export * from './lib/@services/task.service';
 export * from './lib/@services/workflow.service';
+export * from './lib/@services/modal.service';
 
 export * from './lib/@models/stepstate.model';
 export * from './lib/@models/resolution.model';
@@ -30,4 +31,5 @@ export * from './lib/@models/meta.model';
 export * from './lib/@models/template.model';
 export * from './lib/@models/function.model';
 
-export * from './lib/utask-lib.module';
+export { UTaskLibModule } from './lib/utask-lib.module';
+export { UTaskLibRoutingModule } from './lib/utask-lib.routing.module';

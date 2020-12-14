@@ -15,8 +15,8 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: '/tasks', pathMatch: 'full' },
       {
-        path: '', loadChildren: () => import('../../projects/utask-lib/src/lib/utask-lib.module')
-          .then(m => m.UTaskLibModule)
+        path: '', loadChildren: () => import('../../projects/utask-lib/src/lib/utask-lib.routing.module')
+          .then(m => m.UTaskLibRoutingModule)
       }
     ]
   },

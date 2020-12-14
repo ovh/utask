@@ -22,6 +22,7 @@ import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NotFoundComponent } from './@routes/not-found/not-found.component';
 import { NzResultModule } from 'ng-zorro-antd/result';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { NzResultModule } from 'ng-zorro-antd/result';
     NzSwitchModule,
     NzToolTipModule,
     NzResultModule,
+    NzIconModule,
 
     routing
   ],

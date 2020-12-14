@@ -81,12 +81,14 @@
                 </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Informations">
                     Created by {{task.requester_username}} <abbr
-                        title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created | utaskFromNow}}</em></abbr>
+                        title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created |
+                            utaskFromNow}}</em></abbr>
                     <span
                         *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username">
                         and
                         updated by {{task.resolver_username}} <abbr
-                            title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity | utaskFromNow}}</em></abbr></span>
+                            title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity |
+                                utaskFromNow}}</em></abbr></span>
                 </nz-descriptions-item>
             </nz-descriptions>
         </div>
@@ -99,7 +101,7 @@
             Execution -
             <small>{{resolution.id}}</small> -
             <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}</small>
-            <span *ngIf="loaders.execution || loaders.task">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
+            <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
                 <button nz-button nzType="primary" title="Run" (click)="runResolution(resolution)"><i nz-icon
                         nzType="caret-right"></i></button>
@@ -219,7 +221,7 @@
         <div app-box-header>
             Comments - <span class="badge"
                 [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
-            <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i class="fas fa-spinner fa-spin"></i></span>
+            <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i nz-icon nzType="loading"></i></span>
         </div>
         <div app-box-content>
             <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments"
