@@ -152,7 +152,17 @@ func GetResolution(c *gin.Context, in *getResolutionIn) (*resolution.Resolution,
 		return nil, err
 	}
 
-	if err := auth.IsResolver(c, r); err != nil {
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		return nil, err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
 		r.ClearOutputs()
 	}
 
