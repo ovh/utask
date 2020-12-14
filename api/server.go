@@ -333,6 +333,7 @@ func (s *Server) build(ctx context.Context) {
 					[]fizz.OperationOption{
 						fizz.Summary("Execute a task"),
 					},
+					maintenanceMode,
 					tonic.Handler(handler.RunResolution, 204))
 				resolutionRoutes.POST("/resolution/:id/pause",
 					[]fizz.OperationOption{
