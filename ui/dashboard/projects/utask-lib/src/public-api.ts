@@ -31,5 +31,5 @@ export * from './lib/@models/meta.model';
 export * from './lib/@models/template.model';
 export * from './lib/@models/function.model';
 
-export { UTaskLibModule } from './lib/utask-lib.module';
+export { UTaskLibModule, UTaskLibOptionsFactory } from './lib/utask-lib.module';
 export { UTaskLibRoutingModule } from './lib/utask-lib.routing.module';
