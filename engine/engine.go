@@ -68,6 +68,10 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 	if err != nil {
 		return err
 	}
+	// Squash to ensure that secrets with lower priority
+	// are dismissed.
+	itemList = configstore.Filter().Squash().Apply(itemList)
+
 	// drop those that shouldnt be available for task execution
 	// (don't let DB credentials leak, for instance...)
 	config, err := filteredConfig(itemList, cfg.ConcealedSecrets...)
