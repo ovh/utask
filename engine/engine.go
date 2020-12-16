@@ -485,6 +485,9 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 		if err := t.SetResult(res.Values); err != nil {
 			debugLogger.Debugf("Engine: resolve() %s loop, task SetResult error: %s", res.PublicID, err)
 		}
+
+		// register task duration statistics
+		task.RegisterTaskTime(t.TemplateName, t.DBModel.Created, res.Created)
 	}
 
 	// further qualify a resolution in error state -> give hints to collectors, change task state if intervention required

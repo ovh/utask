@@ -3,7 +3,7 @@
 export PG_USER="test"
 export PG_PASSWORD="test"
 export PG_PORT="5432"
-export PG_DATABASENAME="postgres"
+export PG_DATABASENAME="test"
 
 PG_DOCKER_ID=$(docker run -v $PWD/sql/schema.sql:/docker-entrypoint-initdb.d/v0001.sql:ro -e POSTGRES_USER=$PG_USER -e POSTGRES_PASSWORD=$PG_PASSWORD -e POSTGRES_DBNAME=$PG_DATABASENAME -d postgres:9.6-alpine)
 

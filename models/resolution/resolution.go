@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/utask/models"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/now"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid"
@@ -72,6 +73,7 @@ type DBModel struct {
 
 	State      string     `json:"state" db:"state"`
 	InstanceID *uint64    `json:"instance_id,omitempty" db:"instance_id"`
+	Created    time.Time  `json:"created,omitempty" db:"created"`
 	LastStart  *time.Time `json:"last_start,omitempty" db:"last_start"`
 	LastStop   *time.Time `json:"last_stop,omitempty" db:"last_stop"`
 	NextRetry  *time.Time `json:"next_retry,omitempty" db:"next_retry"`
@@ -100,6 +102,7 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 			TaskID:           t.ID,
 			ResolverUsername: resUser,
 			State:            StateTODO,
+			Created:          now.Get(),
 		},
 		TaskPublicID: t.PublicID,
 		Values:       values.NewValues(),
@@ -159,6 +162,9 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 	if err != nil {
 		return nil, pgjuju.Interpret(err)
 	}
+
+	// register validation duration
+	task.RegisterValidationTime(tt.Name, t.Created)
 
 	return r, nil
 }
@@ -496,7 +502,7 @@ func (r *Resolution) SetInput(input map[string]interface{}) {
 }
 
 var rSelector = sqlgenerator.PGsql.Select(
-	`"resolution".id, "resolution".public_id, "resolution".id_task, "resolution".resolver_username, "resolution".state, "resolution".instance_id, "resolution".last_start, "resolution".last_stop, "resolution".next_retry, "resolution".run_count, "resolution".run_max, "resolution".crypt_key, "resolution".encrypted_steps, "resolution".encrypted_resolver_input, "resolution".base_configurations, "task".public_id as task_public_id, "task".title as task_title`,
+	`"resolution".id, "resolution".public_id, "resolution".id_task, "resolution".resolver_username, "resolution".state, "resolution".instance_id, "resolution".created, "resolution".last_start, "resolution".last_stop, "resolution".next_retry, "resolution".run_count, "resolution".run_max, "resolution".crypt_key, "resolution".encrypted_steps, "resolution".encrypted_resolver_input, "resolution".base_configurations, "task".public_id as task_public_id, "task".title as task_title`,
 ).From(
 	`"resolution"`,
 ).OrderBy(

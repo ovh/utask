@@ -14,17 +14,8 @@ import (
 	"github.com/ovh/utask/models/task"
 )
 
-const taskStateMetricPrefix = "utask_task_state_total_"
-
 var (
-	gauges = map[string]prometheus.Gauge{
-		task.StateTODO:      promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateTODO}),
-		task.StateBlocked:   promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateBlocked}),
-		task.StateRunning:   promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateRunning}),
-		task.StateWontfix:   promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateWontfix}),
-		task.StateDone:      promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateDone}),
-		task.StateCancelled: promauto.NewGauge(prometheus.GaugeOpts{Name: taskStateMetricPrefix + task.StateCancelled}),
-	}
+	metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state"}, []string{"status"})
 )
 
 func collectMetrics(ctx context.Context) {
@@ -44,9 +35,7 @@ func collectMetrics(ctx context.Context) {
 					logrus.Warn(err)
 				}
 				for state, count := range stats {
-					if gauge, ok := gauges[state]; ok {
-						gauge.Set(count)
-					}
+					metrics.WithLabelValues(state).Set(count)
 				}
 			case <-ctx.Done():
 				tick.Stop()
