@@ -47,6 +47,7 @@ postgres://user:pass@db/utask?sslmode=disable
     // implemented notifiers include:
     // - tat (github.com/ovh/tat)
     // - slack webhook (https://api.slack.com/messaging/webhooks)
+    // - generic webhook (custom URL, with HTTP POST method)
     "notify_config": {
         "tat-internal": {
             "type": "tat",
@@ -61,6 +62,17 @@ postgres://user:pass@db/utask?sslmode=disable
             "type": "slack",
             "config": {
                 "webhook_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            }
+        },
+        "webhook-example.org": {
+            "type": "webhook",
+            "config": {
+                "webhook_url": "https://example.org/webhook/XXXXXXXXXXXXXXXXXXXX",
+                "username": "foo",
+                "password": "very-secret",
+                "headers": {
+                    "X-Specific-Header": "foobar"
+                }
             }
         }
     },
