@@ -105,4 +105,10 @@ CREATE TABLE "runner_instance" (
     heartbeat TIMESTAMP with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE "utask_sql_migrations" (
+    current_migration_applied TEXT PRIMARY KEY
+);
+
+INSERT INTO "utask_sql_migrations" VALUES ('v1.10.0-migration005');
+
 END;

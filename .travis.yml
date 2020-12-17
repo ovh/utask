@@ -1,51 +1,49 @@
 os:
-  - linux
+    - linux
 dist: bionic
 
 language: go
 go:
-  - "1.15"
-  - "1.14"
-  - "1.13"
-  - "master"
+    - "1.15"
+    - "master"
 go_import_path: github.com/ovh/utask
 
 cache: apt
 
 services:
-  - postgresql
+    - postgresql
 addons:
-  postgresql: "9.5"
+    postgresql: "9.5"
 
 env:
-  global:
-    - GO111MODULE=on
-    - DEV=true
-    - PG_USER=travis
-    - PG_PASSWORD=travispwd
-    - PG_HOST=localhost
-    - PG_PORT=5432
-    - PG_DATABASENAME=travisdb
-    - PSQL_BIN="psql travisdb"
+    global:
+        - GO111MODULE=on
+        - DEV=true
+        - PG_USER=travis
+        - PG_PASSWORD=travispwd
+        - PG_HOST=localhost
+        - PG_PORT=5432
+        - PG_DATABASENAME=travisdb
+        - PSQL_BIN="psql travisdb"
 
 before_script:
-  - psql -c 'create database travisdb;' -U postgres
+    - psql -c 'create database travisdb;' -U postgres
 
 # we could also use YAML aliases for Golang steps https://docs.travis-ci.com/user/build-stages/using-yaml-aliases/
 script:
-  - make test-travis
-  - make release
+    - make test-travis
+    - make release
 
 after_success:
-  - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform
+    - $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # upload coverage.out results to goveralls plateform
 
 jobs:
-  include:
-    - name: test docker build
-      script: docker build -t utask-dev ./
-      language: shell
-      addons: {}
-      before_script: echo "override before_script"
-      after_success: echo "override after_success"
-  allow_failures:
-    - go: master
+    include:
+        - name: test docker build
+          script: docker build -t utask-dev ./
+          language: shell
+          addons: {}
+          before_script: echo "override before_script"
+          after_success: echo "override after_success"
+    allow_failures:
+        - go: master

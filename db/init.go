@@ -103,6 +103,11 @@ func Init(store *configstore.Store) error {
 	if err := now.Init(); err != nil {
 		return err
 	}
+
+	if err := migrationChecker(); err != nil {
+		return err
+	}
+
 	return models.Init(store)
 }
 
