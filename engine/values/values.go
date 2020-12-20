@@ -66,6 +66,7 @@ func NewValues() *Values {
 	}
 	v.funcMap = sprig.FuncMap()
 	v.funcMap["field"] = v.fieldTmpl
+	v.funcMap["fieldFrom"] = fieldFromTmpl
 	v.funcMap["eval"] = v.varEval
 	v.funcMap["evalCache"] = v.varEvalCache
 	v.funcMap["fromJson"] = v.fromJSON
@@ -306,9 +307,13 @@ func (v *Values) fieldTmpl(key ...string) reflect.Value {
 	var i interface{}
 
 	i = map[string]interface{}(v.m)
+	return fieldFn(i, key)
+}
+
+func fieldFn(i interface{}, keys []string) reflect.Value {
 	var ok bool
 
-	for _, k := range key {
+	for _, k := range keys {
 		switch i.(type) {
 		case map[string]interface{}:
 			i, ok = i.(map[string]interface{})[k]
@@ -325,6 +330,33 @@ func (v *Values) fieldTmpl(key ...string) reflect.Value {
 		}
 	}
 	return reflect.ValueOf(i)
+}
+
+func fieldFromTmpl(params ...interface{}) (reflect.Value, error) {
+	if len(params) < 2 {
+		return zero, errors.New("invalid number of parameters given")
+	}
+	var i interface{}
+	var ok bool
+	i, ok = params[len(params)-1].(map[string]interface{})
+	if !ok {
+		return zero, errors.New("unable to cast given data to a map[string]")
+	}
+
+	keys := []string{}
+	for j := range params {
+		if j >= len(params)-1 {
+			break
+		}
+
+		item, ok := params[j].(string)
+		if !ok {
+			return zero, errors.New("foo")
+		}
+		keys = append(keys, item)
+	}
+
+	return fieldFn(i, keys), nil
 }
 
 func (v *Values) varEvalCache(varName string) (interface{}, error) {

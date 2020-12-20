@@ -27,7 +27,7 @@ require (
 	github.com/loopfz/gadgeto v0.10.1
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/markusthoemmes/goautoneg v0.0.0-20190713162725-c6008fefa5b1
-	github.com/maxatome/go-testdeep v1.6.0
+	github.com/maxatome/go-testdeep v1.8.0
 	github.com/miscreant/miscreant.go v0.0.0-20200214223636-26d376326b75 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/ovh/configstore v0.3.2
