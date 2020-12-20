@@ -718,6 +718,8 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 		s.Error = err.Error()
 		return
 	}
+
+	var previousChildStepName string
 	// generate all children steps
 	for i, item := range items {
 		childStepName := fmt.Sprintf("%s-%d", s.Name, i)
@@ -736,6 +738,15 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 			Resources:    s.Resources,
 			Item:         item,
 		}
+
+		if s.ForEachStrategy == step.ForEachStrategySequence {
+			if previousChildStepName != "" {
+				res.Steps[childStepName].Dependencies = append(res.Steps[childStepName].Dependencies, previousChildStepName)
+			}
+
+			previousChildStepName = childStepName
+		}
+
 		delete(res.ForeachChildrenAlreadyContracted, childStepName)
 	}
 	// update parent dependencies to wait on children

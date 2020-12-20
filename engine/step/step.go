@@ -27,6 +27,9 @@ const (
 	RetrySeconds = "seconds"
 	RetryMinutes = "minutes"
 	RetryHours   = "hours"
+
+	ForEachStrategyParallel = "parallel"
+	ForEachStrategySequence = "sequence"
 )
 
 // possible states of a step
@@ -106,7 +109,8 @@ type Step struct {
 	Conditions   []*condition.Condition `json:"conditions,omitempty"`
 	skipped      bool
 	// loop
-	ForEach         string          `json:"foreach,omitempty"`        // "parent" step: expression for list of items
+	ForEach         string          `json:"foreach,omitempty"` // "parent" step: expression for list of items
+	ForEachStrategy string          `json:"foreach_strategy"`
 	ChildrenSteps   []string        `json:"children_steps,omitempty"` // list of children names
 	ChildrenStepMap map[string]bool `json:"children_steps_map,omitempty"`
 	Item            interface{}     `json:"item,omitempty"` // "child" step: item value, issued from foreach
@@ -555,6 +559,71 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 		}
 		if err != nil {
 			return errors.NewNotValid(err, "Invalid prehook action")
+		}
+	}
+
+	// check that we don't set restricted field from the template
+	if st.State != "" {
+		return errors.NewNotValid(nil, "step state must not be set")
+	}
+
+	if st.ChildrenSteps != nil {
+		return errors.NewNotValid(nil, "step children_steps must not be set")
+	}
+
+	if st.ChildrenStepMap != nil {
+		return errors.NewNotValid(nil, "step children_steps_map must not be set")
+	}
+
+	if st.Output != nil {
+		return errors.NewNotValid(nil, "step output must not be set")
+	}
+
+	if st.Metadata != nil {
+		return errors.NewNotValid(nil, "step metadatas must not be set")
+	}
+
+	if st.Tags != nil {
+		return errors.NewNotValid(nil, "step tags must not be set")
+	}
+
+	if st.Children != nil {
+		return errors.NewNotValid(nil, "step children must not be set")
+	}
+
+	if st.Error != "" {
+		return errors.NewNotValid(nil, "step error must not be set")
+	}
+
+	if st.Metadata != nil {
+		return errors.NewNotValid(nil, "step metadatas must not be set")
+	}
+
+	if st.TryCount != 0 {
+		return errors.NewNotValid(nil, "step try_count must not be set")
+	}
+
+	t := time.Time{}
+	if st.LastRun != t {
+		return errors.NewNotValid(nil, "step last_time must not be set")
+	}
+
+	if st.Item != nil {
+		return errors.NewNotValid(nil, "step item must not be set")
+	}
+
+	if st.ForEachStrategy != "" && st.ForEach == "" {
+		return errors.NewNotValid(nil, "step foreach_strategy can't be set without foreach")
+	}
+
+	if st.ForEach != "" {
+		switch st.ForEachStrategy {
+		case ForEachStrategyParallel, ForEachStrategySequence:
+		case "":
+			// expliciting default value
+			st.ForEachStrategy = ForEachStrategyParallel
+		default:
+			return errors.NewNotValid(nil, fmt.Sprintf("step foreach_strategy %q is not a valid value", st.ForEachStrategy))
 		}
 	}
 

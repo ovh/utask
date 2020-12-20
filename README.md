@@ -590,6 +590,11 @@ This output can be then passed to another step in json format:
 foreach: '{{.step.prefixStrings.children | toJson}}'
 ```
 
+It's possible to configure the strategy used to run each elements: default strategy is `parallel`: each elements will be run in parallel to maximize throughput ; `sequence` will run each element when the previous one is done, to ensure the sequence between elements. It can be declared in the template as is:
+```yaml
+foreach_strategy: "sequence"
+```
+
 #### Resources <a name="resources"></a>
 
 Resources are a way to restrict the concurrency factor of certain operations, to control the throughput and avoid dangerous behavior e.g. flooding the targets.
