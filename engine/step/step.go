@@ -2,6 +2,7 @@ package step
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -144,12 +145,12 @@ func uniqueSortedList(s []string) []string {
 }
 
 type execution struct {
-	baseCfgRaw       json.RawMessage
-	outputs          []*executor.Output
-	config           json.RawMessage
-	runner           Runner
-	ctx              interface{}
-	stopRunningSteps <-chan struct{}
+	baseCfgRaw  json.RawMessage
+	outputs     []*executor.Output
+	config      json.RawMessage
+	runner      Runner
+	ctx         interface{}
+	shutdownCtx context.Context
 }
 
 func (e *execution) generateOutput(st *Step, v *values.Values) error {
@@ -190,10 +191,10 @@ func (e *execution) generateOutput(st *Step, v *values.Values) error {
 	return nil
 }
 
-func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, stopRunningSteps <-chan struct{}) (*execution, error) {
+func (st *Step) generateExecution(action executor.Executor, baseConfig map[string]json.RawMessage, values *values.Values, shutdownCtx context.Context) (*execution, error) {
 	var ret = execution{
-		config:           action.Configuration,
-		stopRunningSteps: stopRunningSteps,
+		config:      action.Configuration,
+		shutdownCtx: shutdownCtx,
 	}
 	var err error
 
@@ -294,7 +295,7 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 func (st *Step) execute(execution *execution, callback func(interface{}, interface{}, map[string]string, error)) {
 
 	select {
-	case <-execution.stopRunningSteps:
+	case <-execution.shutdownCtx.Done():
 		st.State = StateToRetry
 		return
 	default:
@@ -303,7 +304,12 @@ func (st *Step) execute(execution *execution, callback func(interface{}, interfa
 
 	resources := append(execution.runner.Resources(execution.baseCfgRaw, execution.config), st.Resources...)
 	limits := uniqueSortedList(resources)
-	utask.AcquireResources(limits)
+	if acquiredErr := utask.AcquireResources(execution.shutdownCtx, limits); acquiredErr != nil {
+		// if resource acquisition takes too long (timeout or shutdown), let's put the step in ToRetry state
+		// to release the Execution pool, or let the instance shutdowns correctly, as the step execution didn't started yet
+		callback(`{}`, "", map[string]string{}, errors.NotProvisionedf("failed to acquire resources"))
+		return
+	}
 	defer utask.ReleaseResources(limits)
 
 	output, metadata, tags, err := execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
@@ -312,9 +318,9 @@ func (st *Step) execute(execution *execution, callback func(interface{}, interfa
 
 // Run carries out the action defined by a Step, by providing values to its configuration
 // - a stepChan channel is provided for committing the result back
-// - a stopRunningSteps channel is provided to interrupt execution in flight
+// - a shutdownCtx context is provided to interrupt execution in flight
 // values IS NOT CONCURRENT SAFE, DO NOT SHARE WITH OTHER GOROUTINES
-func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Values, stepChan chan<- *Step, wg *sync.WaitGroup, stopRunningSteps <-chan struct{}) {
+func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Values, stepChan chan<- *Step, wg *sync.WaitGroup, shutdownCtx context.Context) {
 
 	// Step already ran, directly going to afterrun process
 	if st.State == StateAfterrunError {
@@ -351,7 +357,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 	preHookValues := stepValues.Clone()
 	var preHookWg sync.WaitGroup
 	if prehook != nil {
-		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, stopRunningSteps)
+		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, shutdownCtx)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = fmt.Sprintf("prehook: %s", err)
@@ -384,8 +390,18 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		// Wait the prehook execution is done
 		preHookWg.Wait()
 
+		// after pre-hook execution, let's verify if we are not shutting down the instance
+		// in that case, we can just put the step in ToRetry instead of starting the main execution of the step
+		select {
+		case <-shutdownCtx.Done():
+			st.State = StateToRetry
+			go noopStep(st, stepChan)
+			return
+		default:
+		}
+
 		// Generate the execution
-		execution, err := st.generateExecution(st.Action, baseConfig, preHookValues, stopRunningSteps)
+		execution, err := st.generateExecution(st.Action, baseConfig, preHookValues, shutdownCtx)
 		if err != nil {
 			st.State = StateFatalError
 			st.Error = err.Error()

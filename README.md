@@ -356,6 +356,7 @@ Note that the operators `IN` and `NOTIN` expect a list of acceptable values in t
 - `dependencies`: a list of step names on which this step waits before running
 - `custom_states`: a list of personnalised allowed state for this step (can be assigned to the state's step using `conditions`)
 - `retry_pattern`: (`seconds`, `minutes`, `hours`) define on what temporal order of magnitude the re-runs of this step should be spread (default = `seconds`)
+- `resources`: a list of resources that will be used during the step execution, to control and limit the concurrent execution of the step (more information in [the resources section](#resources)).
 
 <p align="center">
 <img src="./assets/img/utask_backoff.png" width="70%">
@@ -480,14 +481,16 @@ The `pre_hook` field of a step can be set to define an action that is executed b
 doSomeAuthPost:
   pre_hook:
     type: http
-    method: "GET"
-    url: "https://myAwesomeApi/otp"
+    configuration:
+      method: "GET"
+      url: "https://example.org/otp"
   action:
     type: http
-    method: "POST"
-    url: "https://myAwesomeApi/doSomePost"
-    headers:
-      X-Otp: "{{ .pre_hook.output }}"
+    configuration:
+      method: "POST"
+      url: "https://example.org/doSomePost"
+      headers:
+        X-Otp: "{{ .pre_hook.output }}"
 ```
 
 #### Functions <a name="functions"></a>
@@ -586,6 +589,39 @@ This output can be then passed to another step in json format:
 ```yaml
 foreach: '{{.step.prefixStrings.children | toJson}}'
 ```
+
+#### Resources <a name="resources"></a>
+
+Resources are a way to restrict the concurrency factor of certain operations, to control the throughput and avoid dangerous behavior e.g. flooding the targets.
+
+High level view:
+
+- For each action to execute, a list of target `resources` is determined. (see later)
+- In the µTask configuration, numerical limits can be set to each _resource_ label. This acts as a semaphore, allowing a certain number of concurrent slots for the given _resource_ label. If no limit is set for a resource label, the previously mentionned target resources have no effect. Limits are declared in the `resource_limits` property.
+
+The target _resources_ for a step can be defined in its YAML definition, using the `resources` property.
+
+```yaml
+steps:
+  foobar:
+    description: A dummy step, that should not execute in parallel
+    resources: ["myLimitedResource"]
+    action:
+      type: echo
+      configuration:
+        output:
+          foobar: fuzz
+```
+
+Alternatively, some target resources are determined automatically by µTask Engine:
+
+- When a task is run, the resource `template:my-template-name` is used automatically.
+- When a step is run, the plugin in charge of the execution automatically generates a list of resources. This includes generic resources such as `socket`, `url:www.example.org`, `fork`...
+ allowing the µTask administrator to set-up generic limits such as `"socket": 48` or `"url:www.example.org": 1`.
+
+Each builtin plugins declares resources which can be discovered using the _README_ of the plugin (example for [_http_ plugin](./pkg/plugins/builtin/script/README.md#Resources)).
+
+Declared `resource_limits` must be positive integers. When a step is executed, if the number of concurrent executions is reached, the µTask Engine will wait for a slot to be released. If the resource is limited to the `0` value, then the step will not be executed and is set to `TO_RETRY` state, it will be run once the instance allows the execution of its resources. The default time that µTask Engine will wait for a resource to become available is `1 minute`, but it can be configured using the `resource_acquire_timeout` property.
 
 ### Task templates validation
 
