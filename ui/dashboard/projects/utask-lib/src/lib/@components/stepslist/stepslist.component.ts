@@ -68,7 +68,7 @@ export class StepsListComponent implements OnChanges {
     }
 
     previewStepDetails(step: any) {
-        const modal = this._modal.create({
+        this._modal.create({
             nzTitle: `Step - ${step.name}`,
             nzContent: ModalApiYamlComponent,
             nzWidth: '80%',

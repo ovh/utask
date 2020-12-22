@@ -130,7 +130,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   previewTask() {
-    const modal = this.modal.create({
+    this.modal.create({
       nzTitle: 'Request preview',
       nzContent: ModalApiYamlComponent,
       nzWidth: '80%',
@@ -142,7 +142,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   previewResolution() {
-    const modal = this.modal.create({
+    this.modal.create({
       nzTitle: 'Resolution preview',
       nzContent: ModalApiYamlComponent,
       nzWidth: '80%',

@@ -86,7 +86,7 @@ export class ResolutionService {
 
     edit(resolution: any) {
         return new Promise((resolve, reject) => {
-            const modal = this.modal.create({
+            this.modal.create({
                 nzTitle: 'Resolution preview',
                 nzContent: ModalApiYamlEditComponent,
                 nzWidth: '80%',
