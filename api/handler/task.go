@@ -81,6 +81,7 @@ type listTasksIn struct {
 	Type          string     `query:"type,default=own"`
 	State         *string    `query:"state"`
 	BatchPublicID *string    `query:"batch"`
+	Template      *string    `query:"template"`
 	PageSize      uint64     `query:"page_size"`
 	Last          *string    `query:"last"`
 	After         *time.Time `query:"after"`
@@ -115,6 +116,7 @@ func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 		State:    in.State,
 		After:    in.After,
 		Before:   in.Before,
+		Template: in.Template,
 		Tags:     tags,
 	}
 
