@@ -48,6 +48,10 @@ postgres://user:pass@db/utask?sslmode=disable
     // - tat (github.com/ovh/tat)
     // - slack webhook (https://api.slack.com/messaging/webhooks)
     // - generic webhook (custom URL, with HTTP POST method)
+    // notification strategies can be declared per backend:
+    // - template_notification_strategies is an array of strategy per template
+    // - default_notification_strategy is the strategy that will apply, if none matched above
+    // available strategies are: always, failure_only, silent
     "notify_config": {
         "tat-internal": {
             "type": "tat",
@@ -56,13 +60,19 @@ postgres://user:pass@db/utask?sslmode=disable
                 "password": "very-secret",
                 "url": "http://localhost:9999/tat",
                 "topic": "utask.notifications"
-            }
+            },
+            "default_notification_strategy":"silent",
+            "template_notification_strategies": [{
+                "templates": ["hello-world", "hello-world-2"],
+                "notification_strategy": "always"
+            }]
         },
         "slack-webhook": {
             "type": "slack",
             "config": {
                 "webhook_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-            }
+            },
+            "default_notification_strategy":"failure_only"
         },
         "webhook-example.org": {
             "type": "webhook",
@@ -110,6 +120,8 @@ postgres://user:pass@db/utask?sslmode=disable
     // delay_between_crashed_tasks_resolution defines a wait duration between two tasks from a crashed instance will be schedule in the current uTask instance
     // default 1, unit: seconds
     "delay_between_crashed_tasks_resolution": 1,
+    // base_url defines the base URL for the µTask UI. It's used for determining the public URL of a task, for notification purposes. dashboard_path_prefix will be appended to this URL.
+    "base_url": "https://utask.example.org",
     // dashboard_path_prefix defines the path prefix for the dashboard UI. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path
     // default: empty, no prefix
     "dashboard_path_prefix": "/my-utask-instance",

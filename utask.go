@@ -86,6 +86,13 @@ const (
 
 	// UtaskCfgSecretAlias is the key for the config item containing global configuration data
 	UtaskCfgSecretAlias = "utask-cfg"
+
+	// NotificationStrategySilent corresponds to the mode where notifications will never be sent for the given templates
+	NotificationStrategySilent = "silent"
+	// NotificationStrategyAlways corresponds to the mode where notifications will always be sent for the given templates
+	NotificationStrategyAlways = "always"
+	// NotificationStrategyFailureOnly corresponds to the mode where notifications will only be sent if the state is BLOCKED
+	NotificationStrategyFailureOnly = "failure_only"
 )
 
 // Cfg holds global configuration data
@@ -105,6 +112,7 @@ type Cfg struct {
 	MaxConcurrentExecutionsFromCrashedComputed int                      `json:"-"`
 	DelayBetweenCrashedTasksResolution         string                   `json:"delay_between_crashed_tasks_resolution"`
 	InstanceCollectorWaitDuration              time.Duration            `json:"-"`
+	BaseURL                                    string                   `json:"base_url"`
 	DashboardPathPrefix                        string                   `json:"dashboard_path_prefix"`
 	DashboardAPIPathPrefix                     string                   `json:"dashboard_api_path_prefix"`
 	DashboardSentryDSN                         string                   `json:"dashboard_sentry_dsn"`
@@ -123,8 +131,16 @@ type ServerOpt struct {
 
 // NotifyBackend holds configuration for instantiating a notify client
 type NotifyBackend struct {
-	Type   string          `json:"type"`
-	Config json.RawMessage `json:"config"`
+	Type                           string                         `json:"type"`
+	Config                         json.RawMessage                `json:"config"`
+	TemplateNotificationStrategies []TemplateNotificationStrategy `json:"template_notification_strategies"`
+	DefaultNotificationStrategy    string                         `json:"default_notification_strategy"` // can be `always`, `failure_only`, `silent`
+}
+
+// TemplateNotificationStrategy configures how a NotifyBackend should behave for a given set of templates
+type TemplateNotificationStrategy struct {
+	Templates            []string `json:"templates"`
+	NotificationStrategy string   `json:"notification_strategy"` // can be `always`, `failure_only`, `silent`
 }
 
 // NotifyBackendTat holds configuration for instantiating a Tat notify client

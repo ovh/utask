@@ -7,7 +7,7 @@ import "github.com/ovh/utask"
 // this package allows for the registration of different senders, capable of handling the Message struct
 
 var (
-	senders = make(map[string]NotificationSender)
+	senders = make(map[string]notificationBackend)
 	// actions represents configuration of each notify actions
 	actions utask.NotifyActions
 )
@@ -18,9 +18,19 @@ type NotificationSender interface {
 	Send(m *Message, name string)
 }
 
+type notificationBackend struct {
+	sender                         NotificationSender
+	defaultNotificationStrategy    string
+	templateNotificationStrategies []utask.TemplateNotificationStrategy
+}
+
 // RegisterSender adds a NotificationSender to the pool of available senders
-func RegisterSender(s NotificationSender, name string) {
-	senders[name] = s
+func RegisterSender(name string, s NotificationSender, defaultNotificationStrategy string, templateNotificationStrategies []utask.TemplateNotificationStrategy) {
+	senders[name] = notificationBackend{
+		sender:                         s,
+		defaultNotificationStrategy:    defaultNotificationStrategy,
+		templateNotificationStrategies: templateNotificationStrategies,
+	}
 }
 
 // ListSendersNames returns a list of available senders
@@ -51,7 +61,9 @@ func Send(m *Message, params utask.NotifyActionsParameters) {
 	// Empty NotifyBackends list means any
 	if len(params.NotifyBackends) == 0 {
 		for name, s := range senders {
-			go s.Send(m, name)
+			if checkIfDeliverMessage(m, &s) {
+				go s.sender.Send(m, name)
+			}
 		}
 		return
 	}
@@ -61,7 +73,9 @@ func Send(m *Message, params utask.NotifyActionsParameters) {
 		for nsname, ns := range senders {
 			switch n {
 			case nsname:
-				go ns.Send(m, nsname)
+				if checkIfDeliverMessage(m, &ns) {
+					go ns.sender.Send(m, nsname)
+				}
 			}
 		}
 	}
