@@ -24,7 +24,8 @@ export class ResolutionStep {
 export enum TaskType {
     all = 'all',
     own = 'own',
-    resolvable = 'resolvable',
+    both = 'both',
+    resolvable = 'resolvable'
 };
 
 export enum TaskState {
@@ -33,7 +34,7 @@ export enum TaskState {
     DONE = 'DONE',
     RUNNING = 'RUNNING',
     TODO = 'TODO',
-    WONTFIX = 'WONTFIX',
+    WONTFIX = 'WONTFIX'
 };
 
 export class Comment {
@@ -71,6 +72,7 @@ export default class Task {
     title: string;
     watcher_usernames: string[];
     tags: { [key: string]: string };
+    resolver_inputs: any[];
 
     public constructor(init?: Partial<Task>) {
         Object.assign(this, init);

@@ -160,12 +160,11 @@
                 Resolve this task
             </div>
             <div app-box-content>
-                <lib-utask-inputs-form *ngIf="template" [formGroup]="validateResolveForm"
-                    [inputs]="template.resolver_inputs">
+                <lib-utask-inputs-form [formGroup]="validateResolveForm" [inputs]="resolverInputs">
                 </lib-utask-inputs-form>
                 <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
                     <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
                             <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
                                 [nzLoading]="loaders.resolveTask">Resolve</button>
                         </nz-form-control>
@@ -182,14 +181,14 @@
             <div app-box-content>
                 <form nz-form [formGroup]="validateRejectForm" (ngSubmit)="rejectTask()">
                     <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
                             <label formControlName="agree" nz-checkbox>
                                 Are you sure you want to reject this request ?
                             </label>
                         </nz-form-control>
                     </nz-form-item>
                     <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="template.resolver_inputs ? 6 : 1">
+                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
                             <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
                                 [nzLoading]="loaders.rejectTask">Reject</button>
                         </nz-form-control>

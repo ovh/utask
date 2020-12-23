@@ -45,6 +45,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   resolution: any = null;
   selectedStep = '';
   meta: Meta = null;
+  resolverInputs: Array<any> = [];
 
   JSON = JSON;
   template: Template;
@@ -282,19 +283,27 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   templateChange(t: Template): void {
-    if (t && (!this.template || t.name !== this.template.name)) {
-      this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
-      if (t.resolver_inputs) {
-        t.resolver_inputs.forEach(input => {
-          const validators: Array<ValidatorFn> = [];
-          if (!input.optional) {
-            validators.push(Validators.required);
-          }
-          this.validateResolveForm.addControl('input_' + input.name, new FormControl(null, validators))
-        });
-        this.inputControls = t.resolver_inputs.map(input => 'input_' + input.name);
+    if (t) {
+      if (this.template && t.name === this.template.name) {
+        return;
       }
-      this.template = t;
+      this.resolverInputs = t.resolver_inputs;
+    } else {
+      if (this.task.resolver_inputs && this.resolverInputs && this.task.resolver_inputs.length === this.resolverInputs.length) {
+        return;
+      }
+      this.resolverInputs = this.task.resolver_inputs;
+    }
+    this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
+    if (this.resolverInputs) {
+      this.resolverInputs.forEach(input => {
+        const validators: Array<ValidatorFn> = [];
+        if (!input.optional && input.type !== 'bool') {
+          validators.push(Validators.required);
+        }
+        this.validateResolveForm.addControl('input_' + input.name, new FormControl(null, validators))
+      });
+      this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
     }
   }
 
@@ -314,7 +323,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
         this.item.task_id = this.task.id;
         this.templateChange(this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name));
-        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template.allowed_resolver_usernames || []);
+        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template?.allowed_resolver_usernames || []);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;
           this.autorefresh.actif = false;
