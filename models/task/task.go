@@ -278,6 +278,7 @@ type ListFilter struct {
 	Before                *time.Time
 	After                 *time.Time
 	Tags                  map[string]string
+	Template              *string
 }
 
 // ListTasks returns a list of tasks, optionally filtered on one or several criteria
@@ -335,6 +336,10 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 			return nil, err
 		}
 		sel = sel.Where(`"task".tags @> ?::jsonb`, string(b))
+	}
+
+	if filter.Template != nil {
+		sel = sel.Where(squirrel.Eq{`"task_template".name`: *filter.Template})
 	}
 
 	query, params, err := sel.ToSql()
