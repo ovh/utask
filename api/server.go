@@ -354,6 +354,27 @@ func (s *Server) build(ctx context.Context) {
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CancelResolution, 204))
+				resolutionRoutes.GET("/resolution/:id/step/:stepName",
+					[]fizz.OperationOption{
+						fizz.Summary("Get the details of the step of a task resolution"),
+						fizz.Description("Returns the current implementation of the step, including the output of the step."),
+					},
+					tonic.Handler(handler.GetResolutionStep, 200))
+				resolutionRoutes.PUT("/resolution/:id/step/:stepName",
+					[]fizz.OperationOption{
+						fizz.Summary("Edit the details of the step of a task resolution"),
+						fizz.Description("Allow the edition of a step, if a step needs fixing. Admin users only."),
+					},
+					requireAdmin,
+					maintenanceMode,
+					tonic.Handler(handler.UpdateResolutionStep, 204))
+				resolutionRoutes.PUT("/resolution/:id/step/:stepName/state",
+					[]fizz.OperationOption{
+						fizz.Summary("Edit the state of the step of a task resolution"),
+						fizz.Description("Allow the edition of the step state, if a step needs to be re-run or skipped manually. Resolution managers only."),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.UpdateResolutionStepState, 204))
 
 				//	resolutionRoutes.POST("/resolution/:id/rollback",
 				//		[]fizz.OperationOption{
