@@ -12,6 +12,7 @@ export class ParamsListTasks {
     type: TaskType;
     last?: string;
     state?: TaskState;
+    template?: string;
 
     public static equals(a: ParamsListTasks, b: ParamsListTasks): boolean {
         return JSON.stringify(a) === JSON.stringify(b);

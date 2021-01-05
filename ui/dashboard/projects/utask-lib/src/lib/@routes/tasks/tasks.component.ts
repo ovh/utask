@@ -5,6 +5,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
 import Meta from '../../@models/meta.model';
 import { TaskState, TaskType } from '../../@models/task.model';
+import Template from '../../@models/template.model';
 import { ParamsListTasks, UTaskLibOptions } from '../../@services/api.service';
 import { TaskService } from '../../@services/task.service';
 
@@ -18,6 +19,7 @@ export class TasksComponent implements OnInit {
   meta: Meta = null;
   pagination: ParamsListTasks = new ParamsListTasks();
   listOptions = new TasksListComponentOptions();
+  templates: Template[] = [];
 
   constructor(
     private _activateRoute: ActivatedRoute,
@@ -41,6 +43,9 @@ export class TasksComponent implements OnInit {
     this._activateRoute.queryParams.subscribe(params => {
       this.pagination = this.queryToSearchTask(params);
       this._cd.markForCheck();
+    });
+    this.templates = this._activateRoute.snapshot.data.templates.sort((a, b) => {
+      return a.description.toLowerCase() < b.description.toLowerCase() ? -1 : 1;
     });
     this.search(true);
   }
@@ -81,6 +86,7 @@ export class TasksComponent implements OnInit {
     params.type = queryParams.type || defaultType;
     params.last = '';
     params.state = queryParams.state || '';
+    params.template = queryParams.template || '';
     params.tag = queryParams.tag ? JSON.parse(queryParams.tag) : [];
     return params;
   }
@@ -92,6 +98,11 @@ export class TasksComponent implements OnInit {
 
   paginationStateChange(state: TaskState) {
     this.pagination.state = state;
+    this.search();
+  }
+
+  paginationTemplateChange(name: string) {
+    this.pagination.template = name;
     this.search();
   }
 
