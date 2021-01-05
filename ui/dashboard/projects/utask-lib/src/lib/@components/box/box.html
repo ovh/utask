@@ -1,0 +1,16 @@
+<nz-collapse nzAccordion class="box {{headerConfig.class}}" [class.custom-color]="customStyle && customStylePanel"
+    [ngStyle]="customStyle">
+    <nz-collapse-panel #panel [nzHeader]="boxHeader" [nzActive]="display" [ngStyle]="customStylePanel"
+        [nzExpandedIcon]="expandedIcon" [nzShowArrow]="headerConfig.openable">
+        <ng-content select="[app-box-content]"></ng-content>
+    </nz-collapse-panel>
+    <ng-template #expandedIcon let-active>
+        <i [ngStyle]="customStyleHeader" nz-icon nzType="down" class="ant-collapse-arrow"
+            [nzRotate]="panel.nzActive ? 0 : -90"></i>
+    </ng-template>
+    <ng-template #boxHeader>
+        <div [ngStyle]="customStyleHeader">
+            <ng-content select="[app-box-header]"></ng-content>
+        </div>
+    </ng-template>
+</nz-collapse>

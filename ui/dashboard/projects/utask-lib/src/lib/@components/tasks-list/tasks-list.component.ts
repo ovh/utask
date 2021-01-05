@@ -1,15 +1,35 @@
-import { Component, OnDestroy, OnInit, Input, NgZone, OnChanges, Output, EventEmitter } from '@angular/core';
-import { of } from 'rxjs';
-import { delay, repeat, startWith } from 'rxjs/operators';
-import { ActiveInterval } from 'active-interval';
-import * as bbPromise from 'bluebird';
-import remove from 'lodash-es/remove';
+import {
+    Component,
+    OnDestroy,
+    OnInit,
+    Input,
+    Output,
+    EventEmitter,
+    ViewChild,
+    ChangeDetectorRef,
+    ChangeDetectionStrategy,
+    OnChanges,
+    NgZone,
+    AfterViewInit
+} from '@angular/core';
+import {
+    interval,
+    Observable,
+    Subject,
+    Subscription,
+    throwError
+} from 'rxjs';
+import {
+    catchError,
+    concatMap,
+    filter,
+    finalize,
+    first,
+    map,
+    mergeMap,
+    tap
+} from 'rxjs/operators';
 import get from 'lodash-es/get';
-import last from 'lodash-es/last';
-import reverse from 'lodash-es/reverse';
-import compact from 'lodash-es/compact';
-import maxBy from 'lodash-es/maxBy';
-import clone from 'lodash-es/clone';
 import * as moment_ from 'moment';
 const moment = moment_;
 import Task from '../../@models/task.model';
@@ -17,251 +37,366 @@ import { ParamsListTasks, ApiService } from '../../@services/api.service';
 import Meta from '../../@models/meta.model';
 import { ResolutionService } from '../../@services/resolution.service';
 import { TaskService } from '../../@services/task.service';
+import { NzTableComponent } from 'ng-zorro-antd/table';
+
+export class TaskActions {
+    delete: boolean;
+    cancel: boolean;
+    run: boolean;
+    pause: boolean;
+    extend: boolean;
+    more: boolean;
+
+    constructor(t: Task, m: Meta) {
+        this.run = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.cancel = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.pause = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.extend = t.resolution && t.state !== 'DONE' && t.state !== 'CANCELLED';
+        this.delete = !(t.state === 'BLOCKED' || !m.user_is_admin);
+        this.more = this.pause || this.extend || this.delete;
+    }
+
+    public static mergeTaskActions(tas: Array<TaskActions>): TaskActions {
+        if (tas.length === 0) {
+            return null;
+        }
+        return tas.reduce((res, ta) => {
+            if (!res) {
+                return { ...ta };
+            }
+            return {
+                delete: res.delete && ta.delete,
+                cancel: res.cancel && ta.cancel,
+                run: res.run && ta.run,
+                pause: res.pause && ta.pause,
+                extend: res.extend && ta.extend,
+            } as TaskActions
+        });
+    }
+}
 
 export class TasksListComponentOptions {
     public refreshTasks = 15000;
     public refreshTask = 1000;
-    public routingTask: string = '/task/';
+    public routingTaskPath = '';
 
     public constructor(init?: Partial<TasksListComponentOptions>) {
         Object.assign(this, init);
     }
 }
 
-bbPromise.config({
-    cancellation: true
-});
-
 @Component({
     selector: 'lib-utask-tasks-list',
     templateUrl: './tasks-list.html',
     styleUrls: ['./tasks-list.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
-    tasks: Task[] = [];
-    @Input() params: ParamsListTasks;
+export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
+    @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;
+
+    @Input() set params(data: ParamsListTasks) { this.registrerScroll.next(data); }
+    get params() { return this._params; }
+    _params = new ParamsListTasks();
     @Input() meta: Meta;
     @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
     @Output() public event: EventEmitter<any> = new EventEmitter();
 
-    hasMore = true;
-    firstLoad = true;
-    percentages: { [key: string]: number } = {};
-    interval: ActiveInterval;
-    refresh: { [key: string]: bbPromise<any> } = {};
-    display: { [key: string]: boolean } = {};
-    hide: { [key: string]: boolean } = {};
-    bulkActions = {
-        enable: false,
-        selection: {},
-        actions: {},
-        all: false,
-    };
+    tasks: Task[] = [];
+    tasksActions: TaskActions[] = [];
+    loadingTasks: boolean;
+    firstLoad: boolean;
+    hasMore: boolean;
+    intervalLoadNewTasks: Subscription;
+    newTasks: Task[] = [];
+    intervalRefreshTasks: Subscription;
+    tasksToRefresh: { [key: string]: number } = {};
 
-    loaders: { [key: string]: boolean } = {};
+    bulkAllSelected: boolean;
+    bulkSelection: { [key: string]: boolean } = {};
+    bulkActions: TaskActions;
+
     errors: { [key: string]: any } = {};
-    iterableDiffer: any;
+    scroll = new Subject<void>();
+    scrollSub: Subscription;
+    registrerScroll = new Subject<ParamsListTasks>();
 
-    constructor(private api: ApiService, private resolutionService: ResolutionService, private taskService: TaskService, private zone: NgZone) {
+    titleWidth: string;
+
+    constructor(
+        private _api: ApiService,
+        private _resolutionService: ResolutionService,
+        private _taskService: TaskService,
+        private _cd: ChangeDetectorRef,
+        private _zone: NgZone
+    ) {
+        this.registrerScroll
+            .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
+            .pipe(tap(data => this._params = { ...data }))
+            .pipe(concatMap(() => this.registerInfiniteScroll()))
+            .subscribe();
+    }
+
+    ngAfterViewInit() {
+        let offsetWidth = (this.nzTableComponent as any).elementRef.nativeElement.offsetWidth;
+        if (offsetWidth > 1100) {
+            this.titleWidth = `${offsetWidth - 800}px`;
+        } else {
+            this.titleWidth = '300px';
+        }
     }
 
     ngOnInit() {
-        this.loaders.tasks = true;
-        this.loadTasks().then((tasks: Task[]) => {
-            this.errors.tasks = null;
-            this.tasks = tasks.map(t => this.taskService.registerTags(t));
-            this.generateProgressBars(this.tasks);
-            this.hasMore = (tasks as any[]).length === this.params.page_size;
-        }).catch((err) => {
-            this.errors.tasks = err;
-        }).finally(() => {
-            this.loaders.tasks = false;
-        });
-
-        this.interval = new ActiveInterval();
-        this.interval.setInterval(() => {
-            if (this.tasks.length && !this.loaders.tasks) {
-                const lastActivity = moment(maxBy(this.tasks, t => t.last_activity).last_activity).toDate();
-                this.refresh.lastActivities = this.fetchLastActivities(lastActivity).then((tasks: Task[]) => {
-                    if (tasks.length) {
-                        tasks.forEach((task: Task) => {
-                            const t = this.tasks.find(ta => ta.id === task.id);
-                            if (t) {
-                                this.zone.run(() => {
-                                    this.mergeTask(t);
-                                });
-                                this.refreshTask(t.id, 4, this.options.refreshTask);
-                            } else {
-                                this.zone.run(() => {
-                                    this.display.newTasks = true;
-                                    this.hide[task.id] = true;
-                                    this.tasks.unshift(task);
-                                });
-                                this.refreshTask(task.id, 4, this.options.refreshTask);
-                            }
-                        });
-                        this.generateProgressBars(this.tasks);
-                    }
-                }).catch((err) => {
-                    console.log(err);
-                });
-            }
-        }, this.options.refreshTasks, false);
+        this.initLoadNewTasks();
+        this.initRefreshTasks();
     }
 
     ngOnDestroy() {
-        this.cancelRefresh();
-        this.interval.stopInterval();
+        this.registrerScroll.complete();
+        this.scroll.complete();
+        this.cancelScrollSub();
+        this.cancelLoadNewTasks();
+        this.cancelRefreshTasks();
     }
 
-    ngOnChanges() {
-        if (!this.firstLoad) {
-            this.search();
+    ngOnChanges(): void {
+        this.clickCheckAll(false);
+    }
+
+    // Manage task selection
+
+    clickCheckAll(checked: boolean): void {
+        this.bulkSelection = {};
+        this.bulkActions = null;
+        if (checked) {
+            this.tasks.forEach(t => { this.bulkSelection[t.id] = true; });
+            this.bulkActions = TaskActions.mergeTaskActions(this.tasks.map(t => new TaskActions(t, this.meta)));
         }
-        this.firstLoad = false;
+        this._cd.markForCheck();
+        this.refreshCheckAllState();
     }
 
-    selectAll() {
-        this.tasks.forEach((t: Task) => {
-            if (!this.hide[t.id]) {
-                this.bulkActions.selection[t.id] = true
+    clickCheckTask(taskID: number, checked: boolean): void {
+        this.bulkSelection[taskID] = checked;
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
+        this.bulkActions = TaskActions.mergeTaskActions(selectedTask.map(t => new TaskActions(t, this.meta)));
+        this._cd.markForCheck();
+        this.refreshCheckAllState();
+    }
+
+    refreshCheckAllState(): void {
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        this.bulkAllSelected = this.tasks && this.tasks.length > 0 && this.tasks.length === selectedTaskIDs.length;
+        this._cd.markForCheck();
+    }
+
+    // Manage infinite scroll
+
+    async registerInfiniteScroll() {
+        this.cancelScrollSub();
+        this.tasks = [];
+        this.tasksActions = [];
+        this.firstLoad = true;
+        this.hasMore = true;
+
+        // Wait for the table to be rendered
+        await interval(10)
+            .pipe(map(() => !!this.nzTableComponent.nzTableInnerScrollComponent))
+            .pipe(filter(exists => exists))
+            .pipe(first())
+            .toPromise()
+
+        // Handle first load usecase to call load tasks until the table is not full and there is more tasks available
+        const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+        const tableHeight = parseInt(this.nzTableComponent.nzScroll.y.split('px')[0], 10);
+        let contentHeight = 0;
+        while (this.firstLoad || (tableHeight >= contentHeight && this.hasMore)) {
+            this.firstLoad = false;
+            await this.loadMore(true);
+            this._cd.detectChanges(); // force detect change to render the table and get its new size
+            contentHeight = scrollComponent.tableBodyElement.nativeElement.scrollHeight;
+        }
+
+        scrollComponent.tableBodyElement.nativeElement.onscroll = () => { this.scroll.next(); };
+
+        this._zone.runOutsideAngular(() => {
+            this.scrollSub = this.scroll
+                .pipe(mergeMap(() => this.loadMore()))
+                .subscribe();
+        });
+    }
+
+    cancelScrollSub(): void {
+        if (this.scrollSub) { this.scrollSub.unsubscribe() };
+    }
+
+    async loadMore(skipCheckScroll = false) {
+        if (this.loadingTasks) { return; }
+
+        const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;
+        const height = scrollComponent.tableBodyElement.nativeElement.offsetHeight;
+        const innerHeight = scrollComponent.tableBodyElement.nativeElement.scrollHeight;
+        const scrollTop = scrollComponent.tableBodyElement.nativeElement.scrollTop;
+        const scrollBottom = innerHeight - (scrollTop + height)
+        if (!skipCheckScroll && (scrollBottom > 200 || !this.hasMore)) {
+            return;
+        }
+
+        const paramLast = this.tasks.length > 0 ? this.tasks[this.tasks.length - 1].id : '';
+
+        this.loadingTasks = true;
+        this.errors.loadMore = null;
+        this._cd.markForCheck();
+        const tasks = await this.loadTasks(paramLast)
+            .pipe(catchError(err => {
+                this.errors.loadMore = err;
+                return throwError(err);
+            }))
+            .pipe(finalize(() => {
+                this.loadingTasks = false;
+                this._cd.markForCheck();
+            })).toPromise();
+
+        this.tasks = this.tasks.concat(tasks);
+        this.computeTaskActions();
+        tasks.forEach(t => this._taskService.registerTags(t));
+        this.hasMore = tasks.length === this.params.page_size;
+        this._cd.detectChanges();
+    }
+
+    loadTasks(paramLast: string = ''): Observable<Array<Task>> {
+        return this._api.task.list({
+            ...this.params,
+            last: paramLast
+        }).pipe(map(res => res.body));
+    }
+
+    clickShowMore(): void {
+        this.scroll.next();
+    }
+
+    trackInput(index: number, task: Task) {
+        return task.id + task.last_activity;
+    }
+
+    // Manage fetch task
+    // search params should not be listed in browser url if empty
+
+    initLoadNewTasks() {
+        this._zone.runOutsideAngular(() => {
+            this.intervalLoadNewTasks = interval(this.options.refreshTasks)
+                .pipe(filter(() => this.tasks.length > 0))
+                .pipe(map(() => {
+                    const taskLastChanged = this.tasks.sort((a, b) => a.last_activity > b.last_activity ? -1 : 1)[0];
+                    return moment(taskLastChanged.last_activity).toDate();
+                }))
+                .pipe(concatMap((lastActivity) => this.fetchNewTasks(lastActivity)))
+                .subscribe(() => { });
+        });
+    }
+
+    async fetchNewTasks(lastActivity: Date) {
+        this._zone.run(() => {
+            this.errors.fetchNewTasks = null;
+            this._cd.markForCheck();
+        });
+        const newTasks = await this.loadTasks()
+            .pipe(catchError(err => {
+                this._zone.run(() => {
+                    this.errors.fetchNewTasks = err;
+                    this._cd.markForCheck();
+                });
+                return throwError(err);
+            }))
+            .toPromise();
+
+        this._zone.run(() => {
+            // Last tasks will be added to new tasks list waiting for the user to display it
+            this.newTasks = newTasks
+                .filter(t => moment(t.last_activity).toDate() > lastActivity)
+                .filter(t => !this.tasks.find(ta => ta.id === t.id))
+                .sort((a, b) => a.last_activity > b.last_activity ? -1 : 1);
+
+            // Also we update the tasks that are already visible
+            // We don't refresh all the tasks in the table but the only the one returns when searching for new tasks
+            this.tasks = this.tasks.map(t => {
+                const updatedTask = newTasks.find(ta => ta.id === t.id);
+                return updatedTask ? updatedTask : t;
+            });
+            this.computeTaskActions();
+
+            this._cd.markForCheck();
+        });
+    }
+
+    cancelLoadNewTasks() {
+        if (this.intervalLoadNewTasks) { this.intervalLoadNewTasks.unsubscribe(); }
+    }
+
+    clickShowNewTasks() {
+        this.tasks = this.newTasks.concat(this.tasks);
+        this.computeTaskActions();
+        this.newTasks = [];
+        this._cd.markForCheck();
+    }
+
+    initRefreshTasks() {
+        this.intervalRefreshTasks = interval(this.options.refreshTask)
+            .pipe(concatMap(() => this.refreshTasks()))
+            .subscribe(() => { });
+    }
+
+    cancelRefreshTasks() {
+        if (this.intervalRefreshTasks) { this.intervalRefreshTasks.unsubscribe(); }
+    }
+
+    async refreshTasks() {
+        const taskIDs = Object.keys(this.tasksToRefresh)
+            .filter(k => this.tasksToRefresh[k] > 0);
+
+        if (taskIDs.length === 0) {
+            return;
+        }
+
+        this.errors.refreshTasks = null;
+        this._cd.markForCheck();
+
+        let tasks: Array<Task>;
+        try {
+            tasks = await Promise.all(taskIDs.map(k => this._api.task.get(k).toPromise()))
+        } catch (e) {
+            this.errors.refreshTasks = e;
+            this._cd.markForCheck();
+            return;
+        }
+
+        this.tasks = this.tasks.map(t => {
+            const updatedTask = tasks.find(ta => ta.id === t.id);
+            return updatedTask ? updatedTask : t;
+        });
+        this.computeTaskActions();
+
+        // Decrement or stop task refresh
+        tasks.forEach(t => {
+            if (['DONE', 'CANCELLED'].indexOf(t.state) > -1) {
+                this.tasksToRefresh[t.id] = 0;
+            } else {
+                this.tasksToRefresh[t.id]--;
             }
         });
-        this.checkActions();
+
+        this._cd.markForCheck();
     }
 
-    displayNewTasks() {
-        this.zone.run(() => {
-            this.display.newTasks = false;
-            this.tasks.forEach((t: Task) => {
-                this.hide[t.id] = false;
-            });
-        });
+    computeTaskActions() {
+        this.tasksActions = this.tasks.map(t => new TaskActions(t, this.meta));
     }
 
-    fetchLastActivities(lastActivity: Date, allTasks: Task[] = [], last: string = '') {
-        return new bbPromise((resolve, reject, onCancel) => {
-            const pLoadTasks = this.loadTasks(last).then((tasks: Task[]) => {
-                if (tasks.length) {
-                    let task;
-                    for (let i = 0; i < tasks.length; i++) {
-                        task = tasks[i];
-                        if (moment(task.last_activity).toDate() > lastActivity) {
-                            allTasks.push(task);
-                        }
-                    }
-                    if (allTasks.length === this.params.page_size) {
-                        this.fetchLastActivities(lastActivity, allTasks, task.id).then((data) => {
-                            resolve(data);
-                        }).catch((err) => {
-                            reject(err);
-                        });
-                    } else {
-                        resolve(reverse(allTasks));
-                    }
-                } else {
-                    resolve(reverse(allTasks));
-                }
-            }).catch((err) => {
-                reject(err);
-            });
-
-            if (onCancel) {
-                onCancel(() => {
-                    pLoadTasks.cancel();
-                });
-            }
-        });
-    }
-
-    cancelRefresh() {
-        if (this.refresh.lastActivities) {
-            this.refresh.lastActivities.cancel();
-            this.refresh.lastActivities = null;
-        }
-    }
-
-    mergeTask(task) {
-        const t = this.tasks.find(ta => ta.id === task.id);
-        if (t) {
-            t.title = task.title;
-            t.state = task.state;
-            t.steps_done = task.steps_done;
-            t.steps_total = task.steps_total;
-            t.last_activity = task.last_activity;
-            t.resolution = task.resolution;
-            t.last_start = task.last_start;
-            t.last_stop = task.last_stop;
-            t.resolver_username = task.resolver_username;
-            this.generateProgressBars([t]);
-        }
-    }
-
-
-    refreshTask(id: string, times: number = 1, delayMillisecond: number = 2000) {
-        if (!this.loaders[`task${id}`]) {
-            const sub = of(id).pipe(delay(delayMillisecond)).pipe(repeat(times - 1)).pipe(startWith(id)).subscribe((id: string) => {
-                this.zone.run(() => {
-                    this.loaders[`task${id}`] = true;
-                });
-                this.api.task.get(id).toPromise().then((task: Task) => {
-                    this.zone.run(() => {
-                        this.mergeTask(task);
-                    });
-                    if (['DONE', 'CANCELLED'].indexOf(task.state) > -1) {
-                        sub.unsubscribe();
-                    }
-                });
-            }, (err) => {
-                if (err.status === 404) {
-                    remove(this.tasks, { id });
-                }
-            }, () => {
-                this.zone.run(() => {
-                    this.loaders[`task${id}`] = false;
-                });
-            });
-        }
-    }
-
-    loadTasks(last: string = '') {
-        return new bbPromise((resolve, reject, onCancel) => {
-            const params: ParamsListTasks = clone(this.params);
-            params.last = last;
-            const sub = this.api.task.list(params).subscribe((data: any) => {
-                resolve(data.body);
-            }, (err) => {
-                reject(err);
-            });
-            if (onCancel) {
-                onCancel(() => {
-                    sub.unsubscribe();
-                });
-            }
-        });
-    }
-
-    runResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.run(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
-            this.event.emit({ type: 'info', message: 'The resolution has been run.' });
-        }).catch((err) => {
-            this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
-        });
-    }
-
-    pauseResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.pause(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
-            this.event.emit({ type: 'info', message: 'The resolution has been paused.' });
-        }).catch((err) => {
-            this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
-        });
-    }
+    // Manage actions on task
 
     cancelResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.cancel(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 1, this.options.refreshTask);
+        this._resolutionService.cancel(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 1;
             this.event.emit({ type: 'info', message: 'The resolution has been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
@@ -270,235 +405,123 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges {
         });
     }
 
-    deleteTask(id: string) {
-        this.taskService.delete(id).then((data: any) => {
-            remove(this.tasks, { id });
-            this.event.emit({ type: 'info', message: 'The task has been deleted.' });
+    cancelAll() {
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
+        const resolutionIds = selectedTask.map(t => t.resolution);
+        this._resolutionService.cancelAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
+            this.event.emit({ type: 'info', message: 'The tasks have been cancelled.' });
         }).catch((err) => {
             if (err !== 'close') {
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
+        }).finally(() => {
+            this.clickCheckAll(false);
+        });
+    }
+
+    pauseResolution(resolutionId: string, taskId: string) {
+        this._resolutionService.pause(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
+            this.event.emit({ type: 'info', message: 'The resolution has been paused.' });
+        }).catch((err) => {
+            this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
+        });
+    }
+
+    pauseAll() {
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
+        const resolutionIds = selectedTask.map(t => t.resolution);
+
+        this._resolutionService.pauseAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
+            this.event.emit({ type: 'info', message: 'The tasks have been paused.' });
+        }).catch((err) => {
+            if (err === 'close') {
+                this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
+            }
+        }).finally(() => {
+            this.clickCheckAll(false);
         });
     }
 
     extendResolution(resolutionId: string, taskId: string) {
-        this.resolutionService.extend(resolutionId).then((data: any) => {
-            this.refreshTask(taskId, 4, this.options.refreshTask);
+        this._resolutionService.extend(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
             this.event.emit({ type: 'info', message: 'The resolution has been extended.' });
         }).catch((err) => {
             this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
         });
     }
 
-
-    next(force: boolean = false) {
-        if (!this.loaders.next && (this.hasMore || force)) {
-            this.loaders.next = true;
-            this.loadTasks(last(this.tasks).id).then((tasks: Task[]) => {
-                this.errors.next = null;
-                this.tasks = this.tasks.concat(tasks);
-                this.generateProgressBars(this.tasks);
-                this.hasMore = (tasks as any[]).length === this.params.page_size;
-            }).catch((err) => {
-                this.errors.next = err;
-            }).finally(() => {
-                this.loaders.next = false;
-            });
-        }
-    }
-
-    search() {
-        this.cancelRefresh();
-        this.zone.run(() => {
-            this.bulkActions.selection = {};
-            this.bulkActions.all = false;
-            this.bulkActions.enable = false;
-        });
-
-        this.loaders.tasks = true;
-        this.loadTasks().then((tasks: Task[]) => {
-            this.errors.tasks = null;
-            this.tasks = tasks;
-            this.generateProgressBars(this.tasks);
-            this.hasMore = (tasks as any[]).length === this.params.page_size;
-        }).catch((err) => {
-            this.errors.tasks = err;
-        }).finally(() => {
-            this.loaders.tasks = false;
-        });
-    }
-
-    generateProgressBars(tasks: Task[]) {
-        tasks.forEach((task: Task) => {
-            this.percentages[task.id] = Math.round(task.steps_done / task.steps_total * 100);
-        });
-    }
-
-    cancelAll() {
-        const tmpIds = Object.keys(this.bulkActions.selection);
-        const taskIds = [];
-        for (let i = 0; i < tmpIds.length; i++) {
-            if (this.bulkActions.selection[tmpIds[i]]) {
-                taskIds.push(tmpIds[i]);
-            }
-        }
-        const resolutionIds = compact(taskIds.map((id) => {
-            return get(this.tasks.find(t => t.id === id), 'resolution');
-        }));
-        this.resolutionService.cancelAll(resolutionIds).then(() => {
-            taskIds.forEach((id) => {
-                this.refreshTask(id, 4, this.options.refreshTask);
-            });
-            this.event.emit({ type: 'info', message: 'The tasks have been cancelled.' });
-            this.bulkActions.selection = {};
-            this.bulkActions.all = false;
-        }).catch((err) => {
-            if (err !== 'close') {
-                this.search();
-                this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
-            }
-        }).finally(() => {
-            this.checkActions();
-        });
-    }
-
-    pauseAll() {
-        const tmpIds = Object.keys(this.bulkActions.selection);
-        const taskIds = [];
-        for (let i = 0; i < tmpIds.length; i++) {
-            if (this.bulkActions.selection[tmpIds[i]]) {
-                taskIds.push(tmpIds[i]);
-            }
-        }
-        const resolutionIds = compact(taskIds.map((id) => {
-            return get(this.tasks.find(t => t.id === id), 'resolution');
-        }));
-        this.resolutionService.pauseAll(resolutionIds).then(() => {
-            taskIds.forEach((id) => {
-                this.refreshTask(id, 4, this.options.refreshTask);
-            });
-            this.event.emit({ type: 'info', message: 'The tasks have been paused.' });
-            this.bulkActions.selection = {};
-            this.bulkActions.all = false;
-        }).catch((err) => {
-            if (err !== 'close') {
-                this.search();
-                this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
-            }
-        }).finally(() => {
-            this.checkActions();
-        });
-    }
-
     extendAll() {
-        const tmpIds = Object.keys(this.bulkActions.selection);
-        const taskIds = [];
-        for (let i = 0; i < tmpIds.length; i++) {
-            if (this.bulkActions.selection[tmpIds[i]]) {
-                taskIds.push(tmpIds[i]);
-            }
-        }
-        const resolutionIds = compact(taskIds.map((id) => {
-            return get(this.tasks.find(t => t.id === id), 'resolution');
-        }));
-        this.resolutionService.extendAll(resolutionIds).then(() => {
-            taskIds.forEach((id) => {
-                this.refreshTask(id, 4, this.options.refreshTask);
-            });
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
+        const resolutionIds = selectedTask.map(t => t.resolution);
+        this._resolutionService.extendAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been extended.' });
-            this.bulkActions.selection = {};
-            this.bulkActions.all = false;
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
         }).finally(() => {
-            this.checkActions();
+            this.clickCheckAll(false);
+        });
+    }
+
+    deleteTask(id: string) {
+        this._taskService.delete(id).then(() => {
+            this.tasks = this.tasks.filter(t => t.id !== id);
+            this.computeTaskActions();
+            this._cd.markForCheck();
+            this.event.emit({ type: 'info', message: 'The task has been deleted.' });
         });
     }
 
     deleteAll() {
-        const tmpIds = Object.keys(this.bulkActions.selection);
-        const taskIds = [];
-        for (let i = 0; i < tmpIds.length; i++) {
-            if (this.bulkActions.selection[tmpIds[i]]) {
-                taskIds.push(tmpIds[i]);
-            }
-        }
-        this.taskService.deleteAll(taskIds).then(() => {
-            taskIds.forEach((id: string) => {
-                remove(this.tasks, { id });
-            })
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        this._taskService.deleteAll(selectedTaskIDs).then(() => {
+            this.tasks = this.tasks.filter(t => !selectedTaskIDs.find(id => id === t.id));
+            this.computeTaskActions();
+            this._cd.markForCheck();
             this.event.emit({ type: 'info', message: 'The tasks have been deleted.' });
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
-            taskIds.forEach((id) => {
-                this.refreshTask(id, 1);
-            });
         }).finally(() => {
-            this.checkActions();
+            this.clickCheckAll(false);
+        });
+    }
+
+    runResolution(resolutionId: string, taskId: string) {
+        this._resolutionService.run(resolutionId).then((data: any) => {
+            this.tasksToRefresh[taskId] = 4;
+            this.event.emit({ type: 'info', message: 'The resolution has been run.' });
+        }).catch((err) => {
+            this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
         });
     }
 
     runAll() {
-        const tmpIds = Object.keys(this.bulkActions.selection);
-        const taskIds = [];
-        for (let i = 0; i < tmpIds.length; i++) {
-            if (this.bulkActions.selection[tmpIds[i]]) {
-                taskIds.push(tmpIds[i]);
-            }
-        }
-        const resolutionIds = compact(taskIds.map((id) => {
-            return get(this.tasks.find(t => t.id === id), 'resolution');
-        }));
-        this.resolutionService.runAll(resolutionIds).then(() => {
-            taskIds.forEach((id) => {
-                this.refreshTask(id, 4, this.options.refreshTask);
-            });
+        const selectedTaskIDs = Object.keys(this.bulkSelection).filter(key => this.bulkSelection[key]);
+        const selectedTask = this.tasks.filter(t => selectedTaskIDs.find(id => id === t.id));
+        const resolutionIds = selectedTask.map(t => t.resolution);
+        this._resolutionService.runAll(resolutionIds).then(() => {
+            resolutionIds.forEach(id => { this.tasksToRefresh[id] = 4; });
             this.event.emit({ type: 'info', message: 'The tasks have been run.' });
-            this.bulkActions.selection = {};
-            this.bulkActions.all = false;
         }).catch((err) => {
             if (err !== 'close') {
-                this.search();
                 this.event.emit({ type: 'error', message: get(err, 'error.error', 'An error just occured, please retry') });
             }
-        }).finally(() => {
-            this.checkActions();
-        });
-    }
-
-    checkActions() {
-        this.bulkActions.enable = false;
-        if (this.meta.user_is_admin) {
-            this.bulkActions.actions['delete'] = true;
-        }
-        this.bulkActions.actions['cancel'] = true;
-        this.bulkActions.actions['run'] = true;
-        this.bulkActions.actions['pause'] = true;
-        this.bulkActions.actions['extend'] = true;
-        const ids = Object.keys(this.bulkActions.selection);
-        for (let i = 0; i < ids.length; i++) {
-            const task = this.tasks.find(t => t.id === ids[i]);
-            if (task && this.bulkActions.selection[ids[i]] === true) {
-                this.bulkActions.enable = true;
-                if ((!task.resolution || task.state === 'DONE' || task.state === 'CANCELLED')) {
-                    this.bulkActions.actions['cancel'] = false;
-                    this.bulkActions.actions['run'] = false;
-                    this.bulkActions.actions['pause'] = false;
-                    this.bulkActions.actions['extend'] = false;
-                    if (!this.meta.user_is_admin) {
-                        this.event.emit({ type: 'info', message: `The task '${ids[i]}' has no resolution or is finished, you can\'t make multi actions on it.` });
-                    }
-                    break;
-                } else if (task.state === 'BLOCKED') {
-                    this.bulkActions.actions['delete'] = false;
-                }
-            }
-        }
+        }).finally(() => { this.clickCheckAll(false); });
     }
 }
+
+
+
+
+

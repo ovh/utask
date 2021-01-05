@@ -1,0 +1,81 @@
+.app-layout {
+  height: 100vh;
+}
+
+nz-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 120px;
+  height: 35px;
+  margin: 16px 30px 16px 10px;
+  float: left;
+
+  img {
+    height: 100%;
+  }
+
+  span {
+    flex: 1;
+    color: #fff;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 30px;
+    margin: 0 20px;
+  }
+}
+
+[nz-menu] {
+  flex: 1;
+  line-height: 64px;
+  height: 100%;
+  overflow: auto;
+  display: flex;
+
+  ::ng-deep {
+    .ant-menu-item:focus {
+      outline: none;
+    }
+  }
+}
+
+nz-switch {
+  margin: 0 40px;
+}
+
+.crown-badge {
+  color: #ffffff;
+  background: #f5222d;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 23px;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+}
+
+nz-content {
+  margin: 25px 0;
+  padding: 0 25px;
+}
+
+.content-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  .inner-content {
+    flex: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    :host-context(.dark) & {
+      background-color: #141414;
+    }
+    overflow: hidden;
+  }
+}

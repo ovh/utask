@@ -1,0 +1,20 @@
+<nz-select #selectComponent nzAllowClear [nzPlaceHolder]="placeholder" [nzDropdownRender]="addTagTemplate"
+	[nzOptionHeightPx]="0" [ngModel]="values" (ngModelChange)="onSelectedTagsChange($event)"
+	(nzOpenChange)="onSelectOpen($event)" nzMode="tags">
+	<nz-option *ngFor="let value of values" [nzValue]="value" [nzLabel]="value"></nz-option>
+</nz-select>
+<ng-template #addTagTemplate>
+	<div class="container">
+		<input placeholder="Select new tag" nz-input [nzAutocomplete]="auto" [ngModel]="currentTag"
+			(ngModelChange)="onChangeTagInput($event)" (keydown)="onKeyDownTagInput($event)" #inputTag />
+		<nz-autocomplete #auto>
+			<nz-auto-option *ngFor="let tag of filteredTags" [nzValue]="tag+'='">
+				{{ tag }}
+			</nz-auto-option>
+		</nz-autocomplete>
+		<nz-button-group>
+			<button nz-button nzType="primary" [disabled]="!inputTagValid" (click)="addItem()"><i nz-icon
+					nzType="plus"></i></button>
+		</nz-button-group>
+	</div>
+</ng-template>

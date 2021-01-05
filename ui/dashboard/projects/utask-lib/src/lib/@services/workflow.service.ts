@@ -163,7 +163,7 @@ export class WorkflowService {
         fontColor: 'white',
         shape: 'shape_blue',
         isFinal: false,
-        icon: 'fa-history',
+        icon: 'history',
         error: false
     }, {
         key: 'RUNNING',
@@ -171,7 +171,7 @@ export class WorkflowService {
         fontColor: 'white',
         shape: 'shape_blue',
         isFinal: false,
-        icon: 'fa-sync',
+        icon: 'sync',
         error: false
     }, {
         key: 'TODO',
@@ -179,7 +179,7 @@ export class WorkflowService {
         shape: 'shape_white',
         fontColor: 'black',
         isFinal: false,
-        icon: 'fa-hourglass-half',
+        icon: 'hourglass',
         error: false
     }, {
         key: 'EXPANDED',
@@ -187,7 +187,7 @@ export class WorkflowService {
         shape: 'shape_blue',
         fontColor: 'white',
         isFinal: false,
-        icon: 'fa-clock',
+        icon: 'clock-circle',
         error: false
     }, {
         key: 'CLIENT_ERROR',
@@ -195,7 +195,7 @@ export class WorkflowService {
         shape: 'shape_red',
         fontColor: 'white',
         isFinal: false,
-        icon: 'fa-times-circle',
+        icon: 'close-circle',
         error: true
     }, {
         key: 'DONE',
@@ -203,7 +203,7 @@ export class WorkflowService {
         shape: 'shape_green',
         fontColor: 'white',
         isFinal: true,
-        icon: 'fa-check-circle',
+        icon: 'check-circle',
         error: false
     }, {
         key: 'PRUNE',
@@ -211,7 +211,7 @@ export class WorkflowService {
         shape: 'shape_white_striped',
         fontColor: 'grey',
         isFinal: true,
-        icon: 'fa-ban',
+        icon: 'stop',
         error: false
     }, {
         key: 'SERVER_ERROR',
@@ -219,7 +219,7 @@ export class WorkflowService {
         shape: 'shape_red',
         fontColor: 'white',
         isFinal: false,
-        icon: 'fa-times-circle',
+        icon: 'close-circle',
         error: true
     }, {
         key: 'FATAL_ERROR',
@@ -227,7 +227,7 @@ export class WorkflowService {
         shape: 'shape_red',
         fontColor: 'white',
         isFinal: true,
-        icon: 'fa-times-circle',
+        icon: 'close-circle',
         error: true
     }];
     public defaultState: any = {
@@ -235,12 +235,9 @@ export class WorkflowService {
         shape: 'shape_orange',
         fontColor: 'white',
         isFinal: true,
-        icon: 'fa-check-circle',
+        icon: 'check-circle',
         error: false
     };
-
-    constructor() {
-    }
 
     getState(key: string): StepState {
         const state = this.states.find(s => s.key === key);

@@ -1,0 +1,16 @@
+:host
+  display: flex
+  flex-direction: row
+  overflow: hidden
+  height: 100%
+
+  lib-utask-editor
+    flex: 1
+    max-height: 100%
+  
+  lib-utask-steps-viewer
+    flex: 1
+
+::ng-deep
+  lib-utask-steps-viewer .step-default
+    background: #333 !important

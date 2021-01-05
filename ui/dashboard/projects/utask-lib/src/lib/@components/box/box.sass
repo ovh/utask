@@ -1,0 +1,62 @@
+$color-success: #28a745
+$color-secondary: #434966
+$color-tercery: #636986
+$color-danger: #dc3545
+$color-warning: #fd7e14   
+
+:host
+    display: block
+    margin-top: 15px
+
+.box:not(.primary)
+    ::ng-deep
+        .ant-collapse-header
+            color: white
+        .ant-collapse-content
+            border: none
+
+.box.custom-color
+    ::ng-deep
+        .ant-collapse-content
+            border: none
+
+.box.success
+    border-color: $color-success
+    background: darken($color-success, 10%)
+    nz-collapse-panel
+        border-color: $color-success
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-success
+.box.secondary
+    border-color: $color-secondary
+    background: darken($color-secondary, 10%)
+    nz-collapse-panel
+        border-color: $color-secondary
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-secondary
+.box.tercery
+    border-color: $color-tercery
+    background: darken($color-tercery, 10%)
+    nz-collapse-panel
+        border-color: $color-tercery
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-tercery
+.box.danger
+    border-color: $color-danger
+    background: darken($color-danger, 10%)
+    nz-collapse-panel
+        border-color: $color-danger
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-danger
+.box.warning
+    border-color: $color-warning
+    background: darken($color-warning, 10%)
+    nz-collapse-panel
+        border-color: $color-warning
+    ::ng-deep
+        .ant-collapse-content
+            border-color: $color-warning

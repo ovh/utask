@@ -1,0 +1,29 @@
+<div nz-row>
+    <div nz-col nzSpan="12">
+        <lib-utask-chart-task-states [data]="taskStates">
+        </lib-utask-chart-task-states>
+    </div>
+    <div nz-col nzSpan="12">
+        <nz-table nzTemplateMode>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>State</th>
+                    <th>Count</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let state of taskStates">
+                    <td [ngStyle]="{'background':state.color, 'color': 'white', 'width.px': 30}"></td>
+                    <td>{{state.label}}</td>
+                    <td>{{state.value}}</td>
+                    <td><button nz-button [routerLink]="[uiBaseUrl, 'tasks']"
+                            [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i nz-icon
+                                nzType="link"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </nz-table>
+    </div>
+</div>

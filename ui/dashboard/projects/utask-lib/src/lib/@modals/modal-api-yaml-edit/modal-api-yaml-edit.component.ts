@@ -1,50 +1,31 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import EditorConfig from '../../@models/editorconfig.model';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
-    selector: 'app-modal-yaml-preview',
+    selector: 'lib-utask-modal-yaml-preview',
     template: `
         <div>
-            <div class="modal-header">
-                <h4 class="modal-title" id="modal-basic-title">
-                    {{title}}
-                </h4>
-                <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss('Cross click')">
-                <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <utask-loader *ngIf="loaders.main"></utask-loader>
-                <lib-utask-error-message [data]="errors.main" *ngIf="errors.main && !loaders.main"></lib-utask-error-message>
-                <lib-utask-editor *ngIf="!loaders.main && !errors.main" [value]="text" [errors]="errors" [config]="config" (update)="text = $event;"></lib-utask-editor>
-
-                <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
-            </div>   
-            <footer class="modal-footer">
-                <button type="button" class="btn btn-success" (click)="submit();" [disabled]="loaders.main || loaders.submit || errors.main">
-                    Update
-                </button>
-            </footer>
+            <utask-loader *ngIf="loaders.main"></utask-loader>
+            <lib-utask-error-message [data]="errors.main" *ngIf="errors.main && !loaders.main"></lib-utask-error-message>
+            <lib-utask-editor *ngIf="!loaders.main && !errors.main" [(ngModel)]="text" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'yaml', readOnly: false, wordWrap: 'on' }"></lib-utask-editor>
+            <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
         </div>
-  `
+        <div *nzModalFooter>
+            <button type="button" nz-button (click)="modal.triggerCancel()">Close</button>
+            <button type="button" nz-button (click)="submit();" [disabled]="loaders.main || loaders.submit || errors.main">Update</button>
+        </div>
+  `,
+    styleUrls: ['./modal-api-yaml-edit.sass'],
 })
 export class ModalApiYamlEditComponent implements OnInit {
-    @Input() public title: string;
     @Input() apiCall: any;
     @Input() apiCallSubmit: any;
     public text: string;
     loaders: { [key: string]: boolean } = {};
     errors: { [key: string]: any } = {};
-    public config: EditorConfig = {
-        readonly: false,
-        mode: 'ace/mode/yaml',
-        theme: 'ace/theme/monokai',
-        wordwrap: true,
-        maxLines: 40,
-    };
+    result: any;
 
-    constructor(public activeModal: NgbActiveModal) {
+    constructor(public modal: NzModalRef) {
     }
 
     ngOnInit() {
@@ -62,7 +43,8 @@ export class ModalApiYamlEditComponent implements OnInit {
         this.loaders.submit = true;
         this.apiCallSubmit(this.text).then((data) => {
             this.errors.submit = null;
-            this.activeModal.close(data);
+            this.result = data;
+            this.modal.triggerOk();
         }).catch((err: any) => {
             this.errors.submit = err;
         }).finally(() => {
@@ -70,3 +52,5 @@ export class ModalApiYamlEditComponent implements OnInit {
         });
     }
 }
+
+

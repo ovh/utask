@@ -1,34 +1,33 @@
-<div>
-  <nav class="navbar navbar-expand navbar-dark bg-dark" style="height:60px;border-bottom:4px solid black;">
-    <span class="navbar-brand">{{meta.application_name}}</span>
-
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/home">Home</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/new">New task</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/templates">Templates</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/functions">Functions</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" routerLink="/stats">Stats</a>
-      </li>
-    </ul>
-    <div>
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-link">
-            <span *ngIf="meta.user_is_admin" class="fas fa-user-shield" title="Is admin"></span>
-            {{meta.username}}
-        </li>
-      </ul>
-    </div>
-  </nav>
-  <div class="container-fluid">
-    <router-outlet></router-outlet>
-  </div>
-</div>
+<nz-layout class="app-layout">
+	<nz-header>
+		<div class="logo">
+			<img src="./assets/logo.png">
+			<span>{{meta?.application_name}}</span>
+		</div>
+		<ul nz-menu nzTheme="dark" nzMode="horizontal">
+			<li nz-menu-item nzMatchRouter routerLink="/tasks">Tasks</li>
+			<li nz-menu-item nzMatchRouter routerLink="/templates">Templates</li>
+			<li nz-menu-item nzMatchRouter routerLink="/functions">Functions</li>
+			<li nz-menu-item nzMatchRouter routerLink="/stats">Stats</li>
+		</ul>
+		<nz-button-group>
+			<button nz-button nzType="primary" routerLink="/new"><i nz-icon nzType="plus"></i> New task</button>
+		</nz-button-group>
+		<nz-switch [ngModel]="darkThemeActive" (ngModelChange)="switchDarkTheme($event)" nzCheckedChildren="☾"
+			nzUnCheckedChildren="☾"></nz-switch>
+		<nz-badge [nzCount]="iconTemplate" [nzShowZero]="true" style="margin-right: 24px;">
+			<nz-avatar [nzText]="meta?.username[0].toUpperCase()" [nzShape]="'square'" nzTooltipTitle="{{meta?.username}}"
+				nzTooltipPlacement="bottomRight" nz-tooltip></nz-avatar>
+		</nz-badge>
+		<ng-template #iconTemplate>
+			<i *ngIf="meta?.user_is_admin" nz-icon nzType="crown" class="ant-scroll-number-custom-component crown-badge"></i>
+		</ng-template>
+	</nz-header>
+	<nz-content>
+		<div class="content-wrapper">
+			<div class="inner-content">
+				<router-outlet></router-outlet>
+			</div>
+		</div>
+	</nz-content>
+</nz-layout>

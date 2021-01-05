@@ -1,31 +1,65 @@
 import { NgModule, ErrorHandler } from '@angular/core';
-import { faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp, faAlignJustify } from '@fortawesome/fontawesome-free-solid';
-import fontawesome from '@fortawesome/fontawesome';
-fontawesome.library.add(faUserShield, faCheckCircle, faTimesCircle, faBan, faHistory, faSync, faHourglassHalf, faQuestionCircle, faCaretDown, faCaretUp, faAlignJustify);
-import { AppRoutingModule } from './app-routing.module';
-import { TagInputModule } from 'ngx-chips';
-
-TagInputModule.withDefaults({
-  tagInput: {
-    placeholder: 'Add filter',
-    secondaryPlaceholder: 'Filter steps'
-  }
-});
 import { AppComponent } from './app.component';
 import { MyErrorHandler } from './handlers/error.handler';
-
-const pages = [
-  AppComponent,
-];
+import { ThemeService } from './@services/theme.service';
+import { routing } from './app.routing';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzLayoutModule } from 'ng-zorro-antd/layout';
+import { BrowserModule } from '@angular/platform-browser';
+import { BaseComponent } from './@routes/base/base.component';
+import { HttpClientModule } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { UTaskLibOptions } from 'projects/utask-lib/src/lib/@services/api.service';
+import { UTaskLibOptionsFactory } from 'projects/utask-lib/src/lib/utask-lib.module';
+import { environment } from 'src/environments/environment';
+import { MetaResolve } from 'projects/utask-lib/src/lib/@resolves/meta.resolve';
+import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NotFoundComponent } from './@routes/not-found/not-found.component';
+import { NzResultModule } from 'ng-zorro-antd/result';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 
 @NgModule({
-  declarations: pages,
-  imports: [
-    AppRoutingModule,
+  declarations: [
+    AppComponent,
+    BaseComponent,
+    NotFoundComponent
   ],
-  providers: [{ provide: ErrorHandler, useClass: MyErrorHandler }],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
+
+    NzLayoutModule,
+    NzMenuModule,
+    NzButtonModule,
+    NzAvatarModule,
+    NzBadgeModule,
+    NzSwitchModule,
+    NzToolTipModule,
+    NzResultModule,
+    NzIconModule,
+
+    routing
+  ],
+  providers: [
+    { provide: NZ_I18N, useValue: en_US },
+    { provide: ErrorHandler, useClass: MyErrorHandler },
+    {
+      provide: UTaskLibOptions,
+      useFactory: UTaskLibOptionsFactory(environment.apiBaseUrl, '/', environment.refresh),
+    },
+    ThemeService,
+    MetaResolve
+  ],
   bootstrap: [AppComponent],
-  entryComponents: [
-  ]
+  entryComponents: []
 })
 export class AppModule { }

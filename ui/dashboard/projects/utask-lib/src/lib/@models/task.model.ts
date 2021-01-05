@@ -76,3 +76,7 @@ export default class Task {
         Object.assign(this, init);
     }
 }
+
+export class Stats {
+    task_states: { [state: string]: number }
+}

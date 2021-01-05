@@ -80,12 +80,9 @@ interface Graph {
 }
 
 @Component({
-    selector: 'utask-steps-viewer',
-    template: `
-        <svg #svg width="100%" height="600px" oncontextmenu="return false;"></svg>
-        <button type="button" (click)="center()">Center</button>
-    `,
-    styleUrls: ['./steps-viewer.sass'],
+    selector: 'lib-utask-steps-viewer',
+    templateUrl: './steps-viewer.html',
+    styleUrls: ['./steps-viewer.sass']
 })
 export class StepsViewerComponent implements AfterViewInit, OnChanges {
     @ViewChild('svg', { read: ViewContainerRef }) svg: ViewContainerRef;
@@ -107,27 +104,30 @@ export class StepsViewerComponent implements AfterViewInit, OnChanges {
     ) { }
 
     ngAfterViewInit() {
-        this.item.svg = d3.select(this.svg.element.nativeElement);
-        this.item.inner = this.item.svg.append('g');
-        this.item.zoom = d3.zoom().filter(() => {
-            return d3.event.ctrlKey;
-        }).on('zoom', () => {
-            this.item.inner.attr('transform', d3.event.transform);
-        });
-        this.item.svg.call(this.item.zoom);
-        this.item.render = new dagreD3.render();
-        this.item.g = new dagreD3.graphlib.Graph();
-        this.item.g.setGraph({
-            nodesep: 70,
-            ranksep: 50,
-            rankdir: "TB",
-            marginx: 20,
-            marginy: 20
-        });
-        this.item.g.graph().transition = (selection) => {
-            return selection.transition().duration(500);
-        };
-        this.draw(false);
+        // setTimeout: To let the parent div to set his height
+        setTimeout(() => {
+            this.item.svg = d3.select(this.svg.element.nativeElement);
+            this.item.inner = this.item.svg.append('g');
+            this.item.zoom = d3.zoom().filter(() => {
+                return d3.event.ctrlKey;
+            }).on('zoom', () => {
+                this.item.inner.attr('transform', d3.event.transform);
+            });
+            this.item.svg.call(this.item.zoom);
+            this.item.render = new dagreD3.render();
+            this.item.g = new dagreD3.graphlib.Graph();
+            this.item.g.setGraph({
+                nodesep: 70,
+                ranksep: 50,
+                rankdir: "TB",
+                marginx: 20,
+                marginy: 20
+            });
+            this.item.g.graph().transition = (selection) => {
+                return selection.transition().duration(500);
+            };
+            this.draw(false);
+        }, 1)
     }
 
     ngOnChanges(diff: SimpleChanges) {

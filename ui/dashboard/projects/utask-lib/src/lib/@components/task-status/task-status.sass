@@ -1,0 +1,57 @@
+$color-danger: #dc3545
+$color-warning: #fd7e14
+$color-success: #28a745
+$color-primary: #007bff
+
+.wrapper
+  display: flex
+  flex-direction: column
+  color: #FFFFFF
+  height: 35px
+  width: 120px
+
+  &.DONE
+    background: $color-success
+  &.RUNNING
+    background-color: $color-primary
+    background-image: linear-gradient(-45deg, transparent 33%, rgba(0, 0, 0, .1) 33%, rgba(0, 0, 0, .1) 66%, transparent 66%)
+    background-size: 4rem 100%, 100% 100%, 100% 100%
+    animation: animate-state-running 1s linear infinite
+  &.CANCELLED, &.WONTFIX
+    background: $color-warning
+  &.BLOCKED
+    background: $color-danger
+  &.TODO
+    background: $color-primary
+
+  .status
+    flex: 1
+    display: flex
+    flex-direction: row
+    align-items: center
+    .text
+      width: 100%
+      text-align: center
+      font-weight: bold
+
+  .progress
+    position: relative
+    height: 13px
+    width: 100%
+    .text
+      top: 0
+      left: 0
+      width: 100%
+      height: 100%
+      position: absolute
+      font-size: 11px
+      line-height: 13px
+      text-align: center
+      font-weight: bold
+
+    .bar
+      position: relative
+      background: #000000
+      height: 100%
+      transition: width 0.25s
+      opacity: 0.2

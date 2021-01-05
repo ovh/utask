@@ -1,42 +1,28 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import EditorConfig from '../../@models/editorconfig.model';
+import { NzModalRef } from 'ng-zorro-antd/modal';
 
 @Component({
-    selector: 'app-modal-yaml-preview',
+    selector: 'lib-utask-modal-yaml-preview',
     template: `
         <div>
-            <div class="modal-header">
-                <h4 class="modal-title" id="modal-basic-title">
-                    {{title}}
-                </h4>
-                <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss('Cross click')">
-                <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <utask-loader *ngIf="loading"></utask-loader>
-                <lib-utask-error-message [data]="error" *ngIf="error && !loading"></lib-utask-error-message>
-                <lib-utask-editor *ngIf="!loading" [value]="text" [config]="config"></lib-utask-editor>
-            </div>   
+            <utask-loader *ngIf="loading"></utask-loader>
+            <lib-utask-error-message [data]="error" *ngIf="error && !loading"></lib-utask-error-message>
+            <lib-utask-editor class="editor" *ngIf="!loading" [ngModel]="text" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
+            </lib-utask-editor>
         </div>
-  `
+        <div *nzModalFooter>
+            <button type="button" nz-button (click)="modal.close()">Close</button>
+        </div>
+  `,
+    styleUrls: ['./modal-api-yaml.sass']
 })
 export class ModalApiYamlComponent implements OnInit {
-    @Input() public title: string;
     @Input() apiCall: any;
     public text: string;
-    public config: EditorConfig = {
-        readonly: true,
-        mode: 'ace/mode/yaml',
-        theme: 'ace/theme/monokai',
-        wordwrap: true,
-        maxLines: 40,
-    };
     loading = false;
     error = null;
 
-    constructor(public activeModal: NgbActiveModal) {
+    constructor(public modal: NzModalRef) {
     }
 
     ngOnInit() {

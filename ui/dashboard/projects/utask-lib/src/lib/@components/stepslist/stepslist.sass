@@ -1,8 +1,15 @@
-.utask_step
-  .utask_step-name
-    color: white
-    padding: 4px 8px
-  .utask_step-details
-    color: #333
-    padding: 4px 8px
-  margin-bottom: 8px
+:host
+  display: block
+
+div
+  overflow-y: auto
+  height: 100%
+
+lib-utask-box
+  [app-box-header]
+    nz-button-group
+      float: right
+
+nz-select
+    width: 100%
+    margin-top: 15px

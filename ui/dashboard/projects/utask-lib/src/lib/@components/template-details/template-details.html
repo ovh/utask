@@ -1,13 +1,9 @@
-<div>
-  <utask-loader *ngIf="loading"></utask-loader>
-  <lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
+<utask-loader *ngIf="loading"></utask-loader>
+<lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
 
-  <div class="row" *ngIf="!loading && !error">
-    <div class="col-4">
-      <lib-utask-editor [value]="text" [config]="config"></lib-utask-editor>
-    </div>
-    <div class="col-8">
-      <utask-steps-viewer [resolution]="template" *ngIf="template"></utask-steps-viewer>
-    </div>
-  </div>
-</div>
+<ng-container *ngIf="!loading && !error">
+    <lib-utask-editor class="editor" [ngModel]="text" ngDefaultControl [ngModelOptions]="{standalone: true}"
+        [config]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
+    </lib-utask-editor>
+    <lib-utask-steps-viewer [resolution]="template" *ngIf="template"></lib-utask-steps-viewer>
+</ng-container>

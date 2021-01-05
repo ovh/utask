@@ -1,13 +1,13 @@
-import { Component, Input, Output, OnChanges, SimpleChanges, EventEmitter } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import remove from 'lodash-es/remove';
 import map from 'lodash-es/map';
 import uniq from 'lodash-es/uniq';
 import compact from 'lodash-es/compact';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WorkflowService } from '../../@services/workflow.service';
-import EditorConfig from '../../@models/editorconfig.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import JSToYaml from 'convert-yaml';
+import { EditorOptions } from 'ng-zorro-antd/code-editor';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
     selector: 'lib-utask-steps-list',
@@ -21,17 +21,20 @@ export class StepsListComponent implements OnChanges {
     filter: any = {
         tags: []
     };
-    editorConfigPayload: EditorConfig = {
-        readonly: true,
-        maxLines: 10,
+    editorConfigPayload: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
+        language: 'json',
     };
-    editorConfigError: EditorConfig = {
-        readonly: true,
-        maxLines: 10,
+    editorConfigError: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
+        language: 'json',
     };
-    editorConfigChildren: EditorConfig = {
-        readonly: true,
-        maxLines: 20,
+    editorConfigChildren: EditorOptions = {
+        readOnly: true,
+        wordWrap: 'on',
+        language: 'json',
     };
     filteredStepNames: string[];
     states: any = null;
@@ -39,9 +42,12 @@ export class StepsListComponent implements OnChanges {
     presentStates: string[] = [];
     defaultState;
 
-    constructor(private modalService: NgbModal, private workflowService: WorkflowService) {
-        this.defaultState = this.workflowService.defaultState;
-        this.states = this.workflowService.getMapStates();
+    constructor(
+        private _modal: NzModalService,
+        private _workflowService: WorkflowService
+    ) {
+        this.defaultState = this._workflowService.defaultState;
+        this.states = this._workflowService.getMapStates();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -49,8 +55,8 @@ export class StepsListComponent implements OnChanges {
             this.filterSteps();
             this.setPresentStates();
         } else if (changes.selectedStep) {
-            remove(this.filter.tags, (tag: string) => {
-                return tag.startsWith('Step:');
+            this.filter.tags = this.filter.tags.filter((tag: string) => {
+                return !tag.startsWith('Step:');
             });
             if (this.selectedStep) {
                 this.displayDetails[this.selectedStep] = true;
@@ -62,18 +68,20 @@ export class StepsListComponent implements OnChanges {
     }
 
     previewStepDetails(step: any) {
-        const previewModal = this.modalService.open(ModalApiYamlComponent, {
-            size: 'xl'
+        this._modal.create({
+            nzTitle: `Step - ${step.name}`,
+            nzContent: ModalApiYamlComponent,
+            nzWidth: '80%',
+            nzComponentParams: {
+                apiCall: () => {
+                    return new Promise((resolve) => {
+                        JSToYaml.spacingStart = ' '.repeat(0);
+                        JSToYaml.spacing = ' '.repeat(4);
+                        resolve(JSToYaml.stringify(step).value);
+                    });
+                }
+            }
         });
-        previewModal.componentInstance.title = `Step - ${step.name}`;
-        previewModal.componentInstance.apiCall = () => {
-            return new Promise((resolve) => {
-                JSToYaml.spacingStart = ' '.repeat(0);
-                JSToYaml.spacing = ' '.repeat(4);
-                let text = JSToYaml.stringify(step).value;
-                resolve(text);
-            });
-        };
     }
 
     setPresentStates() {
@@ -85,7 +93,7 @@ export class StepsListComponent implements OnChanges {
     }
 
     getIcon(state: string) {
-        return this.workflowService.getState(state).icon;
+        return this._workflowService.getState(state).icon;
     }
 
     filterSteps() {

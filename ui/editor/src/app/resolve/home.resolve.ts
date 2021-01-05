@@ -18,8 +18,6 @@ export class HomeResolve implements Resolve<string> {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<any>|Promise<any>|any {
-    console.log("__________________XXXXXXXXXXXXXX_______________");
-    //return this.homeObject.fetchTeam(route.params.id);
     return this.homeObject.fetchTeam(route.params.id);
   }
 }

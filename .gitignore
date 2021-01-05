@@ -43,5 +43,6 @@ scripts/*
 # Related to Goreleaser
 dist/
 
-# Templates
-templates
+# Templates & functions
+/templates
+/functions
