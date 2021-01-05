@@ -55,6 +55,7 @@ require (
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/wI2L/fizz v0.13.4
 	github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d
+	github.com/ybriffa/go-http-digest-auth-client v0.6.3
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73
