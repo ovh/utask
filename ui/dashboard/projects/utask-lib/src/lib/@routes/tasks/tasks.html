@@ -28,7 +28,18 @@
                 </nz-form-control>
             </nz-form-item>
         </div>
-        <div nz-col [nzSpan]="16">
+        <div nz-col [nzSpan]="4">
+            <nz-form-item>
+                <nz-form-label>Template</nz-form-label>
+                <nz-form-control>
+                    <nz-select [ngModel]="pagination.template" (ngModelChange)="paginationTemplateChange($event)">
+                        <nz-option nzValue="" nzLabel="All"></nz-option>
+                        <nz-option *ngFor="let t of templates" [nzValue]="t.name" [nzLabel]="t.name"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="12">
             <nz-form-item>
                 <nz-form-label>Tags</nz-form-label>
                 <nz-form-control>
