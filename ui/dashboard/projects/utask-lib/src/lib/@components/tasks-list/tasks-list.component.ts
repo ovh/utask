@@ -13,6 +13,7 @@ import {
     AfterViewInit
 } from '@angular/core';
 import {
+    forkJoin,
     interval,
     Observable,
     Subject,
@@ -32,7 +33,7 @@ import {
 import get from 'lodash-es/get';
 import * as moment_ from 'moment';
 const moment = moment_;
-import Task from '../../@models/task.model';
+import Task, { TaskType } from '../../@models/task.model';
 import { ParamsListTasks, ApiService } from '../../@services/api.service';
 import Meta from '../../@models/meta.model';
 import { ResolutionService } from '../../@services/resolution.service';
@@ -265,10 +266,26 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
-        return this._api.task.list({
-            ...this.params,
-            last: paramLast
-        }).pipe(map(res => res.body));
+        // Trick to get both own and resolvable task for non admin user
+        // We ignore the last param for resolvable tasks so we will only get the first ones
+        if (this.params.type === TaskType.both) {
+            return forkJoin({
+                resolvable: this._api.task.list({
+                    ...this.params,
+                    type: TaskType.resolvable
+                }),
+                own: this._api.task.list({
+                    ...this.params,
+                    type: TaskType.own,
+                    last: paramLast
+                })
+            }).pipe(map(r => r.own.body.concat(r.resolvable.body)));
+        } else {
+            return this._api.task.list({
+                ...this.params,
+                last: paramLast
+            }).pipe(map(res => res.body));
+        }
     }
 
     clickShowMore(): void {

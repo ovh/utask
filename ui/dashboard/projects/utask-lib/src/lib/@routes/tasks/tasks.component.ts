@@ -82,7 +82,7 @@ export class TasksComponent implements OnInit {
     const params = new ParamsListTasks();
     const pageSize = parseInt(queryParams.page_size, 10)
     params.page_size = pageSize && 10 <= pageSize && pageSize <= 1000 ? pageSize : 10;
-    const defaultType = this.meta.user_is_admin ? 'all' : 'own';
+    const defaultType = this.meta.user_is_admin ? TaskType.all : TaskType.both;
     params.type = queryParams.type || defaultType;
     params.last = '';
     params.state = queryParams.state || '';
