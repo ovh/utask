@@ -722,6 +722,27 @@ func (s *Step) GetPreHook() (*executor.Executor, error) {
 
 }
 
+func (s *Step) CheckIfValidState() (bool, error) {
+	for _, state := range builtinStates {
+		if state == s.State {
+			return true, nil
+		}
+	}
+
+	states, err := s.GetCustomStates()
+	if err != nil {
+		return false, err
+	}
+
+	for _, state := range states {
+		if state == s.State {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func annotateFunctions(functions []string, err error) error {
 	for _, function := range functions {
 		err = errors.Annotate(err, fmt.Sprintf("function %q", function))

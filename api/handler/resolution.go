@@ -526,3 +526,212 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 
 	return nil
 }
+
+type getResolutionStepIn struct {
+	PublicID string `path:"id" validate:"required"`
+	StepName string `path:"stepName" validate:"required"`
+}
+
+// GetResolutionStep returns a single step resolution, with its full content (output included)
+func GetResolutionStep(c *gin.Context, in *getResolutionStepIn) (*step.Step, error) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := resolution.LoadFromPublicID(dbp, in.PublicID)
+	if err != nil {
+		return nil, err
+	}
+
+	step, ok := r.Steps[in.StepName]
+	if !ok {
+		return nil, errors.NotFoundf("given stepName %q for this resolution", in.StepName)
+	}
+
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		return nil, err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+		r.ClearOutputs()
+	}
+
+	return step, nil
+}
+
+type updateResolutionStepIn struct {
+	step.Step
+	TaskPublicID string `path:"id" validate:"required"`
+	StepName     string `path:"stepName" validate:"required"`
+}
+
+// UpdateResolutionStep is a special handler reserved to administrators, which allows the
+// edition of a live resolution. It's equivalent to UpdateResolution, but focus on a singular step
+// instead of live patch the whole resolution.
+// can only be called when resolution is in state PAUSED
+func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return err
+	}
+
+	if err := dbp.Tx(); err != nil {
+		return err
+	}
+
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.TaskPublicID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if _, ok := r.Steps[in.StepName]; !ok {
+		dbp.Rollback()
+		return errors.NotFoundf("given stepName %q for this resolution", in.StepName)
+	}
+
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if r.State != resolution.StatePaused {
+		dbp.Rollback()
+		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
+	}
+
+	if err := auth.IsAdmin(c); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	r.Steps[in.StepName] = &in.Step
+
+	if err := r.Steps[in.StepName].ValidAndNormalize(in.StepName, tt.BaseConfigurations, r.Steps); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler UpdateResolutionStep: manual update of resolution %s step %s", r.PublicID, in.StepName)
+
+	if err := r.Update(dbp); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually updated resolution step "+in.StepName)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+type updateResolutionStepStateIn struct {
+	TaskPublicID string `path:"id" validate:"required"`
+	StepName     string `path:"stepName" validate:"required"`
+	State        string `json:"state" validate:"required"`
+}
+
+// UpdateResolutionStepState allows the edition of a step state.
+// Can only be called when the resolution is in state PAUSED, and by a resolution manager.
+func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) error {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return err
+	}
+
+	if err := dbp.Tx(); err != nil {
+		return err
+	}
+
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.TaskPublicID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if _, ok := r.Steps[in.StepName]; !ok {
+		dbp.Rollback()
+		return errors.NotFoundf("given stepName %q for this resolution", in.StepName)
+	}
+
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if r.State != resolution.StatePaused {
+		dbp.Rollback()
+		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
+	}
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	s := r.Steps[in.StepName]
+	oldState := s.State
+	s.State = in.State
+
+	valid, err := s.CheckIfValidState()
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if !valid {
+		dbp.Rollback()
+		return errors.NewBadRequest(nil, fmt.Sprintf("invalid state provided: %q is not allowed", in.State))
+	}
+
+	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler UpdateResolutionStepState: manual update of resolution %s step %s state switched from %s to %s", r.PublicID, in.StepName, oldState, in.State)
+
+	if err := r.Update(dbp); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	reqUsername := auth.GetIdentity(c)
+	_, err = task.CreateComment(dbp, t, reqUsername, "manually updated resolution step "+in.StepName+" state from "+oldState+" to "+in.State)
+	if err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
+		return err
+	}
+
+	return nil
+}
