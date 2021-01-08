@@ -5,6 +5,16 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/ovh/utask"
+)
+
+const (
+	// corresponds to github.com/ovh/utask/models/task.StateBlocked
+	stateBlocked = "BLOCKED"
+
+	// corresponds to the path of a task in the Dashboard UI
+	dashboardUriTaskView = "/ui/dashboard/#/task/"
 )
 
 // Message represents a generic message to be sent
@@ -63,5 +73,45 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 		}
 	}
 
+	if cfg, err := utask.Config(nil); err == nil {
+		m.Fields["url"] = cfg.BaseURL + cfg.DashboardPathPrefix + dashboardUriTaskView + tsu.PublicID
+	}
+
 	return &m
+}
+
+func checkIfDeliverMessage(m *Message, b *notificationBackend) bool {
+	send := checkIfDeliverMessageFromState(m, b.defaultNotificationStrategy)
+
+	templateName, ok := m.Fields["template"]
+	if !ok {
+		return send
+	}
+
+	for _, strat := range b.templateNotificationStrategies {
+		for _, t := range strat.Templates {
+			if t != templateName {
+				continue
+			}
+
+			return checkIfDeliverMessageFromState(m, strat.NotificationStrategy)
+		}
+	}
+
+	return send
+}
+
+func checkIfDeliverMessageFromState(m *Message, strategy string) bool {
+	var send bool
+	switch strategy {
+	case utask.NotificationStrategyAlways:
+		send = true
+	case utask.NotificationStrategyFailureOnly:
+		if v, ok := m.Fields["state"]; ok && v == stateBlocked {
+			send = true
+		}
+	case utask.NotificationStrategySilent:
+	}
+
+	return send
 }

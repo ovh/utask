@@ -24,6 +24,22 @@ func Init(store *configstore.Store) error {
 	}
 
 	for name, ncfg := range cfg.NotifyConfig {
+		switch ncfg.DefaultNotificationStrategy {
+		case utask.NotificationStrategyAlways, utask.NotificationStrategySilent, utask.NotificationStrategyFailureOnly:
+		case "":
+			ncfg.DefaultNotificationStrategy = utask.NotificationStrategyAlways
+		default:
+			return fmt.Errorf("invalid default_notification_strategy: %q is not a valid value", ncfg.DefaultNotificationStrategy)
+		}
+
+		for _, strat := range ncfg.TemplateNotificationStrategies {
+			switch strat.NotificationStrategy {
+			case utask.NotificationStrategyAlways, utask.NotificationStrategySilent, utask.NotificationStrategyFailureOnly:
+			default:
+				return fmt.Errorf("invalid notification_strategy for templates %#v: %q is not a valid value", strat.Templates, strat.NotificationStrategy)
+			}
+		}
+
 		switch ncfg.Type {
 		case tat.Type:
 			f := utask.NotifyBackendTat{}
@@ -39,7 +55,7 @@ func Init(store *configstore.Store) error {
 			if err != nil {
 				return fmt.Errorf("Failed to instantiate tat notification sender: %s", err)
 			}
-			notify.RegisterSender(tn, name)
+			notify.RegisterSender(name, tn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
 		case slack.Type:
 			f := utask.NotifyBackendSlack{}
@@ -47,7 +63,7 @@ func Init(store *configstore.Store) error {
 				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
 			}
 			sn := slack.NewSlackNotificationSender(f.WebhookURL)
-			notify.RegisterSender(sn, name)
+			notify.RegisterSender(name, sn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
 		case webhook.Type:
 			f := utask.NotifyBackendWebhook{}
@@ -55,7 +71,7 @@ func Init(store *configstore.Store) error {
 				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
 			}
 			sn := webhook.NewWebhookNotificationSender(f.WebhookURL, f.Username, f.Password, f.Headers)
-			notify.RegisterSender(sn, name)
+			notify.RegisterSender(name, sn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
 		default:
 			return fmt.Errorf("Failed to identify backend type: %s", ncfg.Type)
