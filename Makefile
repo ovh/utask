@@ -53,9 +53,9 @@ release:
 	bash hack/generate-install-script.sh
 
 release-utask-lib:	
-	(cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version)
-	(cd ui/dashboard && npm install && ng build --prod utask-lib)
-	(npm publish ui/dashboard/dist/utask-lib --access public)
+	cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version
+	cd ui/dashboard && npm install && ng build --prod utask-lib
+	npm publish ui/dashboard/dist/utask-lib --access public
 
 test:
 	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod
