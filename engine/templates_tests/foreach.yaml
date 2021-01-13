@@ -7,51 +7,54 @@ inputs:
 steps:
     emptyLoop:
         description: a foreach step with empty input
-        foreach: '[]'
+        foreach: "[]"
         action:
             type: echo
             configuration:
-                output: {foo: bar}
+                output: { foo: bar }
     generateItems:
         description: generate list for next step
-        foreach: '{{.input.list | toJson}}'
+        foreach: "{{.input.list | toJson}}"
         conditions:
             - type: skip
               if:
-                - value: '{{.iterator}}'
-                  operator: EQ
-                  expected: a
+                  - value: "{{.iterator}}"
+                    operator: EQ
+                    expected: a
               then:
-                this: PRUNE
+                  this: PRUNE
             - type: check
               if:
-                - value: '{{.iterator}}'
-                  operator: EQ
-                  expected: b
+                  - value: "{{.iterator}}"
+                    operator: EQ
+                    expected: b
               then:
-                bStep: B
+                  bStep: B
         action:
             type: echo
             configuration:
                 output:
-                    foo: 'foo-{{.iterator}}'
-                    bar: 'bar-{{.iterator}}'
+                    foo: "foo-{{.iterator}}"
+                    bar: "bar-{{.iterator}}"
     concatItems:
-        description:  transform a list of items
+        description: transform a list of items
         dependencies: [generateItems]
-        foreach: '{{.step.generateItems.children | toJson}}'
+        foreach: "{{.step.generateItems.children | toJson}}"
         conditions:
             - type: check
               if:
-                - value: '{{ index .step "this" "output" "concat"}}'
-                  operator: EQ
-                  expected: foo-c-bar-c
+                  - value: '{{ index .step "this" "output" "concat"}}'
+                    operator: EQ
+                    expected: foo-c-bar-c
               then:
-                this: PRUNE
+                  this: PRUNE
         action:
             type: echo
             configuration:
-                output: {concat: '{{.iterator.output.foo}}-{{.iterator.output.bar}}'}
+                output:
+                    {
+                        concat: "{{.iterator.output.foo}}-{{.iterator.output.bar}}",
+                    }
     bStep:
         description: impacted by concatItems b step
         dependencies: [generateItems]
@@ -59,12 +62,11 @@ steps:
         action:
             type: echo
             configuration:
-                output: {foo: 42}
+                output: { foo: 42 }
     finalStep:
         description: pruned by concatItems("c")
         dependencies: [concatItems]
         action:
             type: echo
             configuration:
-                output: {foo: bar}
-             
+                output: { foo: bar }

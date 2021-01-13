@@ -15,6 +15,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+	"github.com/maxatome/go-testdeep/td"
 	"github.com/ovh/configstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,7 @@ import (
 	"github.com/ovh/utask/engine/functions"
 	functionrunner "github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/engine/step"
+	"github.com/ovh/utask/engine/step/condition"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
@@ -642,6 +644,56 @@ func TestForeach(t *testing.T) {
 	firstItem := concatList[0].(map[string]interface{})
 	firstItemOutput := firstItem[values.OutputKey].(map[string]interface{})
 	assert.Equal(t, "foo-b-bar-b", firstItemOutput["concat"])
+}
+
+func TestForeachWithChainedIterations(t *testing.T) {
+	_, require := td.AssertRequire(t)
+	res, err := createResolution("foreach.yaml", map[string]interface{}{
+		"list": []interface{}{"a", "b", "c", "d", "e"},
+	}, nil)
+	require.Nil(err)
+	require.NotNil(res)
+
+	res.Steps["generateItems"].Conditions[0].Then["this"] = "DONE"
+	res.Steps["generateItems"].Conditions = append(
+		res.Steps["generateItems"].Conditions,
+		&condition.Condition{
+			Type: condition.CHECK,
+			If: []*condition.Assert{
+				{
+					Value:    "{{.iterator}}",
+					Operator: condition.EQ,
+					Expected: "d",
+				},
+			},
+			Then: map[string]string{
+				"this": "SERVER_ERROR",
+			},
+		},
+	)
+	res.Steps["generateItems"].ForEachStrategy = "sequence"
+	err = updateResolution(res)
+	require.Nil(err)
+
+	res, err = runResolution(res)
+	require.NotNil(res)
+	require.Nil(err)
+	require.Cmp(res.State, resolution.StateError)
+
+	td.Cmp(t, res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
+	td.Cmp(t, res.Steps["concatItems"].State, step.StateTODO)
+	td.Cmp(t, res.Steps["finalStep"].State, step.StateTODO)
+	td.Cmp(t, res.Steps["bStep"].State, "B")
+	td.Cmp(t, res.Steps["generateItems-0"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-1"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-2"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-3"].State, step.StateServerError)
+	td.Cmp(t, res.Steps["generateItems-4"].State, step.StateTODO)
+	td.CmpLen(t, res.Steps["generateItems-0"].Dependencies, 0)
+	td.Cmp(t, res.Steps["generateItems-1"].Dependencies, []string{"generateItems-0"})
+	td.Cmp(t, res.Steps["generateItems-2"].Dependencies, []string{"generateItems-1"})
+	td.Cmp(t, res.Steps["generateItems-3"].Dependencies, []string{"generateItems-2"})
+	td.Cmp(t, res.Steps["generateItems-4"].Dependencies, []string{"generateItems-3"})
 }
 
 func TestForeachWithPreRun(t *testing.T) {
