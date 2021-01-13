@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
+	dac "github.com/ybriffa/go-http-digest-auth-client"
 )
 
 // the HTTP plugin performs an HTTP call
@@ -57,13 +58,20 @@ type parameter struct {
 
 // auth represents HTTP authentication
 type auth struct {
-	Basic     *authBasic `json:"basic"`
-	Bearer    *string    `json:"bearer"`
-	MutualTLS *mTLS      `json:"mutual_tls"`
+	Basic     *authBasic  `json:"basic"`
+	Digest    *authDigest `json:"digest"`
+	Bearer    *string     `json:"bearer"`
+	MutualTLS *mTLS       `json:"mutual_tls"`
 }
 
 // authBasic represents the embedded basic auth inside Auth struct
 type authBasic struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
+// authDigest represents the embedded digest auth inside Auth struct
+type authDigest struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
@@ -107,13 +115,25 @@ func validConfig(config interface{}) error {
 		}
 	}
 
-	if cfg.Auth.Basic != nil && cfg.Auth.Bearer != nil {
-		return fmt.Errorf("basic auth and bearer auth are mutually exclusive")
+	authentication := 0
+	for _, authExist := range []bool{cfg.Auth.Basic != nil, cfg.Auth.Bearer != nil, cfg.Auth.Digest != nil} {
+		if authExist {
+			authentication++
+		}
+	}
+	if authentication > 1 {
+		return errors.New("basic|digest|bearer authentications are mutually exclusive")
 	}
 
 	if cfg.Auth.Basic != nil {
 		if cfg.Auth.Basic.User == "" || cfg.Auth.Basic.Password == "" {
 			return fmt.Errorf("missing either user or password for basic auth")
+		}
+	}
+
+	if cfg.Auth.Digest != nil {
+		if cfg.Auth.Digest.User == "" || cfg.Auth.Digest.Password == "" {
+			return fmt.Errorf("missing either user or password for digest auth")
 		}
 	}
 
@@ -236,6 +256,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		Timeout:        td,
 		FollowRedirect: fr,
 	}
+
 	opts := []func(*http.Transport) error{}
 	if insecureSkipVerify {
 		opts = append(opts, httputil.WithTLSInsecureSkipVerify(true))
@@ -261,6 +282,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	httpClient := httputil.NewHTTPClient(httpClientConfig)
+
+	if cfg.Auth.Digest != nil {
+		transport := dac.NewTransport(cfg.Auth.Digest.User, cfg.Auth.Digest.Password)
+		transport.HTTPClient = httpClient
+		httpClient = &transport
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

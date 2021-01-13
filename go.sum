@@ -351,6 +351,8 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d h1:CMtYkTYEOI9CmV8yfd7FMqJXdDpwu8NSxDwXtXMbY2o=
 github.com/ybriffa/deepcopy v0.0.0-20200601125345-88c31e59651d/go.mod h1:SMxjudgXLmHFX1pP4suwVNURE3VHtRinVMii3OTJjGs=
+github.com/ybriffa/go-http-digest-auth-client v0.6.3 h1:s8r2tg2eqVtQ94Vy2gtCp+kV97RjQd0XeUbH7dOhw3w=
+github.com/ybriffa/go-http-digest-auth-client v0.6.3/go.mod h1:gs7qI0Vksu7hyGo5lrXM8uOlWuC6qCRlfhonZ14exsY=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
 github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=

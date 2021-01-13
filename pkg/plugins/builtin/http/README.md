@@ -13,7 +13,7 @@ This plugin permorms an HTTP request.
 | `body`                 | a string representing the payload to be sent with the request                                                                                                                                                                                                    |
 | `headers`              | a list of headers, represented as (`name`, `value`) pairs                                                                                                                                                                                                        |
 | `timeout`              | timeout expressed as a duration (e.g. `30s`)                                                                                                                                                                                                                     |
-| `auth`                 | a single object composed of either a `basic` object with `user` and `password` fields to enable HTTP basic auth, or a `bearer` field to enable Bearer Token Authorization, or a `mutual_tls` object to enable Mutual TLS authentication                          |
+| `auth`                 | a single object composed of either a `basic` or `digest` object with `user` and `password` fields to enable HTTP basic/digest auth, or a `bearer` field to enable Bearer Token Authorization, or a `mutual_tls` object to enable Mutual TLS authentication                          |
 | `follow_redirect`      | if `true` (string) the plugin will follow up to 10 redirects (302, ...)                                                                                                                                                                                          |
 | `query_parameters`     | a list of query parameters, represented as (`name`, `value`) pairs; these will appended the query parameters present in the `url` field; parameters can be repeated (in either `url` or `query_parameters`) which will produce e.g. `?param=value1&param=value2` |
 | `trim_prefix`          | prefix in the response that must be removed before unmarshalling (optional)                                                                                                                                                                                      |
@@ -33,11 +33,14 @@ action:
     method: POST
     # optional, string as duration
     timeout: "5s"
-    # optional, authentication you can use either basic or bearer auth
+    # optional, authentication you can use basic, digest or bearer auth
     auth:
       basic:
         user: {{.config.basicAuth.user}}
         password: {{.config.basicAuth.password}}
+      digest:
+        user: {{.config.digestAuth.user}}
+        password: {{.config.digestAuth.password}}
       bearer: {{.config.auth.token}}
       mutual_tls:
         # a chain of certificates to identify the caller, first certificate in the chain is considered as the leaf, followed by intermediates

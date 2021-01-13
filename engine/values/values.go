@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/gofrs/uuid"
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
 	"github.com/robertkrimen/otto"
@@ -70,6 +71,7 @@ func NewValues() *Values {
 	v.funcMap["evalCache"] = v.varEvalCache
 	v.funcMap["fromJson"] = v.fromJSON
 	v.funcMap["mustFromJson"] = v.mustFromJSON
+	v.funcMap["uuid"] = uuid.NewV4
 
 	return v
 }
