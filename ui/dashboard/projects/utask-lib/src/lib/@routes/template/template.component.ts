@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 @Component({
   templateUrl: './template.html',
-  styleUrls: ['./template.sass'],
+  styleUrls: ['./template.sass']
 })
 export class TemplateComponent implements OnInit {
   templateName: string;

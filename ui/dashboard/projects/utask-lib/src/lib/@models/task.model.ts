@@ -50,6 +50,17 @@ export class Error {
     step: string;
 }
 
+export class ResolverInput {
+    name: string;
+    description: string;
+    regex: string;
+    legal_values: any[];
+    collection: boolean;
+    type: string;
+    optional: boolean;
+    default: any;
+}
+
 export default class Task {
     batch: string;
     comments: Comment[];
@@ -72,7 +83,7 @@ export default class Task {
     title: string;
     watcher_usernames: string[];
     tags: { [key: string]: string };
-    resolver_inputs: any[];
+    resolver_inputs: ResolverInput[];
 
     public constructor(init?: Partial<Task>) {
         Object.assign(this, init);

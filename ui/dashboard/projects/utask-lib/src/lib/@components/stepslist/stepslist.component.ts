@@ -1,5 +1,4 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import remove from 'lodash-es/remove';
 import map from 'lodash-es/map';
 import uniq from 'lodash-es/uniq';
 import compact from 'lodash-es/compact';

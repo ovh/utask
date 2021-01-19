@@ -2,7 +2,7 @@
 <lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
 
 <ng-container *ngIf="!loading && !error">
-    <lib-utask-editor class="editor" [ngModel]="text" ngDefaultControl [ngModelOptions]="{standalone: true}"
+    <lib-utask-editor class="editor" [ngModel]="templateYAML" ngDefaultControl [ngModelOptions]="{standalone: true}"
         [config]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
     </lib-utask-editor>
     <lib-utask-steps-viewer [resolution]="template" *ngIf="template"></lib-utask-steps-viewer>

@@ -1,4 +1,4 @@
-<form *ngIf="formGroup && inputs" nz-form [formGroup]="formGroup" (ngSubmit)="submitForm()">
+<form *ngIf="formGroup && inputs" nz-form [formGroup]="formGroup">
 	<nz-form-item *ngFor="let input of inputs; trackBy: trackInput">
 		<nz-form-label *ngIf="input.regex" [nzSm]="6" [nzXs]="24" nzFor="input_{{input.name}}"
 			[nzRequired]="!input.optional" [nzTooltipTitle]="input.regex" nzTooltipIcon="info-circle">

@@ -131,15 +131,22 @@ export class ApiServiceTemplate {
         private _base: string
     ) { }
 
-    list(params: ParamsListTemplates): Observable<HttpResponse<Array<Template>>> {
+    list(params: ParamsListTemplates) {
         return this._http.get<Array<Template>>(`${this._base}template`, {
             params: params as any,
             observe: 'response',
         });
     }
 
-    get(name: string): Observable<Template> {
+    get(name: string) {
         return this._http.get<Template>(`${this._base}template/${name}`);
+    }
+
+    getYAML(name: string) {
+        return this._http.get<string>(`${this._base}template/${name}`, {
+            headers: { 'Accept': 'application/x-yaml' },
+            responseType: <any>'text'
+        });
     }
 }
 
@@ -154,15 +161,22 @@ export class ApiServiceFunction {
         private _base: string
     ) { }
 
-    list(params: ParamsListFunctions): Observable<HttpResponse<Array<Function>>> {
+    list(params: ParamsListFunctions) {
         return this._http.get<Array<Function>>(`${this._base}function`, {
             params: params as any,
             observe: 'response',
         });
     }
 
-    get(name: string): Observable<Function> {
+    get(name: string) {
         return this._http.get<Function>(`${this._base}function/${name}`);
+    }
+
+    getYAML(name: string) {
+        return this._http.get<string>(`${this._base}function/${name}`, {
+            headers: { 'Accept': 'application/x-yaml' },
+            responseType: <any>'text'
+        });
     }
 }
 
