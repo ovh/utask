@@ -32,7 +32,8 @@
             <nz-form-item>
                 <nz-form-label>Template</nz-form-label>
                 <nz-form-control>
-                    <nz-select [ngModel]="pagination.template" (ngModelChange)="paginationTemplateChange($event)">
+                    <nz-select nzShowSearch [ngModel]="pagination.template"
+                        (ngModelChange)="paginationTemplateChange($event)">
                         <nz-option nzValue="" nzLabel="All"></nz-option>
                         <nz-option *ngFor="let t of templates" [nzValue]="t.name" [nzLabel]="t.name"></nz-option>
                     </nz-select>
