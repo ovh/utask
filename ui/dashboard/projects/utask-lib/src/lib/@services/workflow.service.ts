@@ -159,9 +159,9 @@ export class WorkflowService {
     }];
     public states: StepState[] = [{
         key: 'TO_RETRY',
-        color: '#32acff',
+        color: '#f09000',
         fontColor: 'white',
-        shape: 'shape_blue',
+        shape: 'shape_orange',
         isFinal: false,
         icon: 'history',
         error: false

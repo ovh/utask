@@ -9,10 +9,8 @@ import { UTaskLibOptions } from '../../@services/api.service';
   styleUrls: ['./templates.sass']
 })
 export class TemplatesComponent implements OnInit {
-  @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Template>;
-  templates: Template[];
-  display: { [key: string]: boolean } = {};
   uiBaseUrl: string;
+  templates: Template[];
 
   constructor(
     private _route: ActivatedRoute,

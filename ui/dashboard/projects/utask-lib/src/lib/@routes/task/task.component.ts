@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewContainerRef, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -12,7 +12,7 @@ import { RequestService } from '../../@services/request.service';
 import { TaskService } from '../../@services/task.service';
 import Template from '../../@models/template.model';
 import Meta from '../../@models/meta.model';
-import Task, { Comment } from '../../@models/task.model';
+import Task, { Comment, ResolverInput } from '../../@models/task.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
@@ -45,7 +45,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   resolution: any = null;
   selectedStep = '';
   meta: Meta = null;
-  resolverInputs: Array<any> = [];
+  resolverInputs: Array<ResolverInput> = [];
 
   JSON = JSON;
   template: Template;
@@ -287,6 +287,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       if (this.template && t.name === this.template.name) {
         return;
       }
+      this.template = t;
       this.resolverInputs = t.resolver_inputs;
     } else {
       if (this.task.resolver_inputs && this.resolverInputs && this.task.resolver_inputs.length === this.resolverInputs.length) {
@@ -294,6 +295,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       }
       this.resolverInputs = this.task.resolver_inputs;
     }
+
     this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
     if (this.resolverInputs) {
       this.resolverInputs.forEach(input => {
@@ -301,7 +303,13 @@ export class TaskComponent implements OnInit, OnDestroy {
         if (!input.optional && input.type !== 'bool') {
           validators.push(Validators.required);
         }
-        this.validateResolveForm.addControl('input_' + input.name, new FormControl(null, validators))
+        let defaultValue: any;
+        if (input.type === 'bool') {
+          defaultValue = !!input.default;
+        } else {
+          defaultValue = input.default;
+        }
+        this.validateResolveForm.addControl('input_' + input.name, new FormControl(defaultValue, validators));
       });
       this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
     }
@@ -332,15 +340,6 @@ export class TaskComponent implements OnInit, OnDestroy {
           if (!this.autorefresh.hasChanged) {
             this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN'].indexOf(this.task.state) > -1;
           }
-        }
-        if (!this.taskIsResolvable && resolvable) {
-          get(this.template, 'resolver_inputs', []).forEach((field: any) => {
-            if (field.type === 'bool' && field.default === null) {
-              this.item.resolver_inputs[field.name] = false;
-            } else {
-              this.item.resolver_inputs[field.name] = field.default;
-            }
-          })
         }
         this.taskIsResolvable = resolvable;
         if (this.task.resolution) {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
 import { ChartCommonModule, PieChartModule } from '@swimlane/ngx-charts';
@@ -95,7 +95,7 @@ const utaskLibRoutes: Routes = [
 ];
 
 @NgModule({
-  declarations: [
+	declarations: [
 		TasksComponent,
 		TaskComponent,
 		NewComponent,
@@ -106,45 +106,45 @@ const utaskLibRoutes: Routes = [
 		StatsComponent,
 		ErrorComponent
 	],
-  imports: [
-    CommonModule,
-    HttpClientModule,
-    FormsModule,
-    ReactiveFormsModule,
-    RouterModule,
+	imports: [
+		CommonModule,
+		HttpClientModule,
+		FormsModule,
+		ReactiveFormsModule,
+		RouterModule,
 
-    ChartCommonModule,
-    PieChartModule,
+		ChartCommonModule,
+		PieChartModule,
 
-    NzTableModule,
-    NzButtonModule,
-    NzIconModule,
-    NzDividerModule,
-    NzDropDownModule,
-    NzInputModule,
-    NzSelectModule,
-    NzAutocompleteModule,
-    NzModalModule,
-    NzGridModule,
-    NzAlertModule,
-    NzCollapseModule,
-    NzCodeEditorModule,
-    NzFormModule,
-    NzCheckboxModule,
-    NzSpinModule,
-    NzDescriptionsModule,
-    NzToolTipModule,
-    NzCommentModule,
-    NzAvatarModule,
-    NzListModule,
-    NzSwitchModule,
-    NzPageHeaderModule,
-    NzResultModule,
+		NzTableModule,
+		NzButtonModule,
+		NzIconModule,
+		NzDividerModule,
+		NzDropDownModule,
+		NzInputModule,
+		NzSelectModule,
+		NzAutocompleteModule,
+		NzModalModule,
+		NzGridModule,
+		NzAlertModule,
+		NzCollapseModule,
+		NzCodeEditorModule,
+		NzFormModule,
+		NzCheckboxModule,
+		NzSpinModule,
+		NzDescriptionsModule,
+		NzToolTipModule,
+		NzCommentModule,
+		NzAvatarModule,
+		NzListModule,
+		NzSwitchModule,
+		NzPageHeaderModule,
+		NzResultModule,
 		NzNotificationModule,
-		
+
 		UTaskLibModule,
 
-    RouterModule.forChild(utaskLibRoutes)
+		RouterModule.forChild(utaskLibRoutes)
 	],
 	providers: [
 		{ provide: NZ_I18N, useValue: en_US }

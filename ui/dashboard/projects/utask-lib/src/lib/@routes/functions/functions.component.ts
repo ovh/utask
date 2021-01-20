@@ -1,36 +1,23 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NzTableComponent } from 'ng-zorro-antd/table';
+import { UTaskLibOptions } from '../../@services/api.service';
 
 @Component({
   templateUrl: './functions.html',
   styleUrls: ['./functions.sass'],
 })
 export class FunctionsComponent implements OnInit {
+  uiBaseUrl: string;
   functions: Function[];
-  @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Function>;
-  display: { [key: string]: boolean } = {};
-
-  expandSet = new Set<number>();
-  codes: string[] = [];
-
-  onExpandChange(id: number, checked: boolean): void {
-    if (checked) {
-      this.expandSet.add(id);
-    } else {
-      this.expandSet.delete(id);
-    }
-  }
 
   constructor(
-    private _route: ActivatedRoute
-  ) { }
+    private _route: ActivatedRoute,
+    private _options: UTaskLibOptions
+  ) {
+    this.uiBaseUrl = this._options.uiBaseUrl;
+  }
 
   ngOnInit() {
     this.functions = this._route.parent.snapshot.data.functions;
-    this.codes = [];
-    this.functions.forEach((item) => {
-      this.codes.push(JSON.stringify(item, null, 4));
-    });
   }
 }

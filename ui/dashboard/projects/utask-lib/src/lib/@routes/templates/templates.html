@@ -4,14 +4,12 @@
     <tr>
       <th>Name</th>
       <th>Description</th>
-      <th nzWidth="130px"></th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let item of virtualTable.data">
-      <td>{{item.name}}</td>
+      <td><a nz-button nzType="link" [routerLink]="[uiBaseUrl, 'template', item.name]">{{item.name}}</a></td>
       <td nzEllipsis title="{{item.description}}">{{item.description}}</td>
-      <td><a nz-button nzType="link" [routerLink]="[uiBaseUrl, 'template', item.name]">View details</a></td>
     </tr>
   </tbody>
 </nz-table>

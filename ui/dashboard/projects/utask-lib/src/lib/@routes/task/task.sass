@@ -57,15 +57,12 @@ nz-page-header-extra
   &_CANCELLED
     background: $color-warning
     color: white
-
   &_BLOCKED
     background: $color-danger
     color: white
-
   &_DONE
     background: $color-success
     color: white
-
   &_TODO, &_RUNNING
     background: $color-primary
     color: white
@@ -81,10 +78,10 @@ lib-utask-steps-viewer
     min-height: 400px
 
 .resolution_state
-  &_WONTFIX, &_CANCELLED, &_PAUSED
+  &_WONTFIX, &_CANCELLED, &_PAUSED, &_ERROR
     background: $color-warning !important
     color: white !important
-  &_SERVER_ERROR, &_ERROR, &_BLOCKED_MAXRETRIES, &_BLOCKED, &_BLOCKED_BADREQUEST, &_BLOCKED_FATAL
+  &_SERVER_ERROR, &_BLOCKED_MAXRETRIES, &_BLOCKED, &_BLOCKED_BADREQUEST, &_BLOCKED_FATAL
     background: $color-danger !important
     color: white !important
   &_DONE

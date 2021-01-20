@@ -7,15 +7,15 @@ import Step from '../../@models/step.model';
     styleUrls: ['./step-node.sass']
 })
 export class StepNodeComponent implements OnInit, OnChanges {
+    @ViewChild('div', { static: false }) div: ElementRef;
+
     @Input() step: Step;
     @Input() key: string;
-    @ViewChild('div', { static: false }) div: ElementRef;
     @Output() click = new EventEmitter<string>();
 
     styleClass: string;
 
-    constructor() {
-    }
+    constructor() { }
 
     ngOnInit() {
         switch (this.step.state) {
@@ -24,6 +24,8 @@ export class StepNodeComponent implements OnInit, OnChanges {
                 break;
             }
             case 'TO_RETRY':
+                this.styleClass = 'orange';
+                break;
             case 'RUNNING':
             case 'EXPANDED': {
                 this.styleClass = 'blue';

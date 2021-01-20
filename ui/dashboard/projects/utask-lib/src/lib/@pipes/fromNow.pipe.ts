@@ -6,11 +6,11 @@ const moment = moment_;
 export class FromNowPipe implements PipeTransform {
     transform(value: any, params: any = {}): string {
         const options = {
-            ...params,
             type: 'date',
             formatDate: null,
             withoutSuffix: false,
-            compareDate: null
+            compareDate: null,
+            ...params
         };
         let date = moment();
         let compareDate = null;

@@ -1,0 +1,10 @@
+<nz-page-header nzBackIcon [nzGhost]="false">
+	<nz-page-header-title>{{functionName}}</nz-page-header-title>
+</nz-page-header>
+
+<utask-loader *ngIf="loading"></utask-loader>
+<lib-utask-error-message [data]="error" *ngIf="error"></lib-utask-error-message>
+
+<lib-utask-editor *ngIf="!loading && !error" [ngModel]="function" ngDefaultControl [ngModelOptions]="{standalone: true}"
+	[config]="{ language: 'yaml', readOnly: true, wordWrap: 'on' }">
+</lib-utask-editor>

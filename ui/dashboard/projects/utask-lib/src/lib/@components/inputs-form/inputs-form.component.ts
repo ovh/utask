@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-
+import { ResolverInput } from '../../@models/task.model';
 @Component({
 	selector: 'lib-utask-inputs-form',
 	templateUrl: './inputs-form.html',
@@ -8,7 +8,7 @@ import { FormGroup } from '@angular/forms';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputsFormComponent {
-	@Input() inputs: any;
+	@Input() inputs: Array<ResolverInput>;
 	@Input() formGroup: FormGroup;
 
 	public static getInputs(values: any): any {
@@ -19,9 +19,7 @@ export class InputsFormComponent {
 		return inputs;
 	}
 
-	submitForm(): void { }
-
-	trackInput(index: number, input: any) {
+	trackInput(index: number, input: ResolverInput): string {
 		return input.name;
 	}
 }
