@@ -211,7 +211,7 @@ The following templating functions are available:
 | **`Golang`**       | Builtin functions from Golang text template                                                                                                                                                                                                                                                                                                                     | [Doc](https://golang.org/pkg/text/template/#hdr-Actions) |
 | **`Sprig`**        | Extended set of functions from the Sprig project                                                                                                                                                                                                                                                                                                                | [Doc](https://masterminds.github.io/sprig/)              |
 | **`field`**        | Equivalent to the dot notation, for entries with forbidden characters                                                                                                                                                                                                                                                                                           | ``{{field `config` `foo.bar`}}``                         |
-| **`fieldFrom`**    | Equivalent to the dot notation, for entries with forbidden characters. It takes the previous template expression as source for the templating values. Example: ``{{ `{"foo.foo":"bar"}` | fromJson | fieldFrom `foo.foo` }}``                                                                                                                                   | ``{{expr | fieldFrom `config` `foo.bar`}}``              |
+| **`fieldFrom`**    | Equivalent to the dot notation, for entries with forbidden characters. It takes the previous template expression as source for the templating values. Example: ```{{ `{"foo.foo":"bar"}` | fromJson | fieldFrom `foo.foo` }}```                                                                                                                                   | ```{{expr | fieldFrom `config` `foo.bar`}}```              |
 | **`eval`**         | Evaluates the value of a template variable                                                                                                                                                                                                                                                                                                                      | ``{{eval `var1`}}``                                      |
 | **`evalCache`**    | Evaluates the value of a template variable, and cache for future usage (to avoid further computation)                                                                                                                                                                                                                                                           | ``{{evalCache `var1`}}``                                 |
 | **`fromJson`**     | Decodes a JSON document into a structure. If the input cannot be decoded as JSON, the function will return an empty string                                                                                                                                                                                                                                      | ``{{fromJson `{"a":"b"}`}}``                             |
@@ -577,14 +577,32 @@ steps:
 
 The following output can be expected to be accessible at `{{.step.prefixStrings.children}}`
 ```js
-[{
-  "prefixed": "pre-a"
-},{
-  "prefixed": "pre-b"
-},{
-  "prefixed": "pre-c"
-}]
+[
+    {
+        "output": {
+            "prefixed": "pre-a"
+        },
+        "metadata": {},
+        "state": "DONE"
+    },
+    {
+        "output": {
+            "prefixed": "pre-b"
+        },
+        "metadata": {},
+        "state": "DONE"
+    },
+    {
+        "output": {
+            "prefixed": "pre-c"
+        },
+        "metadata": {},
+        "state": "DONE"
+    }
+]
 ```
+
+It contains all the `output`, `metadata` and `state` of the different iterations, coming from the `foreach` loop.
 
 This output can be then passed to another step in json format:
 ```yaml
