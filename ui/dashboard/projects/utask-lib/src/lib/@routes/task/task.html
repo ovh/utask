@@ -7,15 +7,24 @@
         </nz-page-header-title>
         <nz-page-header-extra>
             Autorefresh (5s)
-            <nz-switch [(ngModel)]="autorefresh.actif" [nzDisabled]="!autorefresh.enable"
-                (ngModelChange)="autorefresh.hasChanged = true"></nz-switch>
+            <nz-switch [(ngModel)]="autorefresh.actif" [nzDisabled]="!autorefresh.enable" (ngModelChange)="autorefresh.hasChanged = true"></nz-switch>
             <nz-button-group>
-                <button nz-button (click)="loadTask();" title="Refresh tasks"
-                    [disabled]="loaders.task || loaders.resolution"><i nz-icon
+                <button nz-button (click)="loadTask();" title="Refresh tasks" [disabled]="loaders.task || loaders.resolution"><i nz-icon
                         [nzType]="loaders.task ? 'loading' : 'sync'"></i>Refresh</button>
             </nz-button-group>
         </nz-page-header-extra>
     </nz-page-header>
+
+    <!-- Template description -->
+    <nz-alert *ngIf="template.long_description ||template.doc_link" nzType="info" [nzMessage]="templateInfoMessage" nzShowIcon class="template-description"></nz-alert>
+    <ng-template #templateInfoMessage>
+        <p *ngIf="template.long_description" style="white-space: pre-line;">
+            {{template.long_description}}
+            <ng-container *ngIf="template.doc_link">
+                <br /><a href="{{template.doc_link}}" target="_blank">{{template.doc_link}}</a>
+            </ng-container>
+        </p>
+    </ng-template>
 
     <!-- Task info -->
     <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
@@ -37,12 +46,10 @@
     </nz-descriptions>
 
     <!-- Result box -->
-    <lib-utask-box [header]="{openable: true, init: display.result, class: 'primary'}"
-        *ngIf="task.result && task.resolution">
+    <lib-utask-box [header]="{openable: true, init: display.result, class: 'primary'}" *ngIf="task.result && task.resolution">
         <div app-box-header>Result</div>
         <div app-box-content>
-            <lib-utask-editor [ngModel]="JSON.stringify(task.result, null, 2)" ngDefaultControl
-                [ngModelOptions]="{standalone: true}" [config]="{ language: 'json', readOnly: true, wordWrap: 'on' }">
+            <lib-utask-editor [ngModel]="JSON.stringify(task.result, null, 2)" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'json', readOnly: true, wordWrap: 'on' }">
             </lib-utask-editor>
         </div>
     </lib-utask-box>
@@ -52,19 +59,15 @@
         <div app-box-header>
             Request - {{task.id}}
             <nz-button-group nzSize="small">
-                <button nz-button nzType="primary" title="View as code"
-                    (click)="previewTask(); $event.stopPropagation();"><i nz-icon nzType="file-text"></i></button>
-                <button nz-button nzType="primary" title="Edit the task"
-                    (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
-                <button nz-button nzType="primary" title="Delete the task"
-                    (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
+                <button nz-button nzType="primary" title="View as code" (click)="previewTask(); $event.stopPropagation();"><i nz-icon nzType="file-text"></i></button>
+                <button nz-button nzType="primary" title="Edit the task" (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
+                <button nz-button nzType="primary" title="Delete the task" (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
             </nz-button-group>
         </div>
         <div app-box-content>
             <nz-descriptions *ngIf="task.input" nzBordered [nzSize]="'small'" [nzColumn]="1">
                 <nz-descriptions-item nzTitle="Template">
-                    <a [routerLink]="[uiBaseUrl, 'template', task.template_name]"
-                        title="Template {{task.template_name}}" *ngIf="meta.user_is_admin">
+                    <a [routerLink]="[uiBaseUrl, 'template', task.template_name]" title="Template {{task.template_name}}" *ngIf="meta.user_is_admin">
                         {{task.template_name}}
                     </a>
                     <span *ngIf="!meta.user_is_admin">{{task.template_name}}</span>
@@ -80,11 +83,9 @@
                     </table>
                 </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Informations">
-                    Created by {{task.requester_username}} <abbr
-                        title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created |
+                    Created by {{task.requester_username}} <abbr title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created |
                             utaskFromNow}}</em></abbr>
-                    <span
-                        *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username">
+                    <span *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username">
                         and
                         updated by {{task.resolver_username}} <abbr
                             title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity |
@@ -95,8 +96,7 @@
     </lib-utask-box>
 
     <!-- Execution box -->
-    <lib-utask-box [header]="{openable: true, init: display.execution, class: 'primary'}"
-        *ngIf="resolution && resolution.steps">
+    <lib-utask-box [header]="{openable: true, init: display.execution, class: 'primary'}" *ngIf="resolution && resolution.steps">
         <div app-box-header>
             Execution -
             <small>{{resolution.id}}</small> -
@@ -107,8 +107,7 @@
                         nzType="caret-right"></i></button>
                 <button nz-button nzType="primary" title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
                         nzType="stop"></i></button>
-                <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary"
-                    (click)="$event.stopPropagation()">More</button>
+                <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary" (click)="$event.stopPropagation()">More</button>
             </nz-button-group>
             <nz-dropdown-menu #menu="nzDropdownMenu">
                 <ul nz-menu>
@@ -126,7 +125,7 @@
         </div>
         <div app-box-content>
             <div nz-row [nzGutter]="16">
-                <div nz-col [nzSpan]="12">
+                <div nz-col [nzSpan]="8">
                     <nz-descriptions nzBordered [nzSize]="'small'" [nzColumn]="1">
                         <nz-descriptions-item nzTitle="Execution instance">
                             #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}
@@ -141,11 +140,10 @@
                             {{resolution.run_count}} / {{resolution.run_max}}
                         </nz-descriptions-item>
                     </nz-descriptions>
-                    <lib-utask-steps-list *ngIf="resolution.steps" [resolution]="resolution"
-                        [selectedStep]="selectedStep">
+                    <lib-utask-steps-list *ngIf="resolution.steps" [resolution]="resolution" [selectedStep]="selectedStep">
                     </lib-utask-steps-list>
                 </div>
-                <div nz-col [nzSpan]="12">
+                <div nz-col [nzSpan]="16">
                     <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
                     </lib-utask-steps-viewer>
                 </div>
@@ -165,8 +163,7 @@
                 <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
                     <nz-form-item nz-row class="register-area">
                         <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
-                            <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
-                                [nzLoading]="loaders.resolveTask">Resolve</button>
+                            <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid" [nzLoading]="loaders.resolveTask">Resolve</button>
                         </nz-form-control>
                     </nz-form-item>
                 </form>
@@ -189,8 +186,7 @@
                     </nz-form-item>
                     <nz-form-item nz-row class="register-area">
                         <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
-                            <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
-                                [nzLoading]="loaders.rejectTask">Reject</button>
+                            <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid" [nzLoading]="loaders.rejectTask">Reject</button>
                         </nz-form-control>
                     </nz-form-item>
                 </form>
@@ -218,13 +214,11 @@
     <!-- Comments box -->
     <lib-utask-box [header]="{openable: true, init: display.comments, class: 'primary'}">
         <div app-box-header>
-            Comments - <span class="badge"
-                [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
+            Comments - <span class="badge" [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
             <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i nz-icon nzType="loading"></i></span>
         </div>
         <div app-box-content>
-            <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments"
-                [nzRenderItem]="comment" [nzItemLayout]="'horizontal'">
+            <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments" [nzRenderItem]="comment" [nzItemLayout]="'horizontal'">
                 <ng-template #comment let-comment>
                     <nz-comment [nzAuthor]="comment.username" [nzDatetime]="comment.created | utaskFromNow">
                         <nz-avatar nz-comment-avatar [nzText]="comment.username[0].toUpperCase()"></nz-avatar>
@@ -241,8 +235,7 @@
                         <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
                     </nz-form-item>
                     <nz-form-item>
-                        <button nz-button nzType="primary" [nzLoading]="loaders.addComment"
-                            [disabled]="!comment.content" (click)="addComment()">
+                        <button nz-button nzType="primary" [nzLoading]="loaders.addComment" [disabled]="!comment.content" (click)="addComment()">
                             Add Comment
                         </button>
                     </nz-form-item>

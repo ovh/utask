@@ -1,51 +1,53 @@
-<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
-  <nz-form-item>
-    <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="template">Template</nz-form-label>
-    <nz-form-control class="template-input" [nzSm]="14" [nzXs]="24" nzErrorTip="Please select a template!"
-      [nzExtra]="templateInfo">
-      <nz-select formControlName="template" id="template" (ngModelChange)="templateChange($event)">
-        <ng-template ngFor let-template [ngForOf]="templates">
-          <nz-option [nzDisabled]="template.blocked" [nzValue]="template" [nzLabel]="template.description">
-          </nz-option>
-        </ng-template>
-      </nz-select>
-      <ng-template #templateInfo>
-        <ng-container *ngIf="selectedTemplate">
-          <nz-alert *ngIf="selectedTemplate.long_description || selectedTemplate.doc_link" nzType="info"
-            [nzMessage]="templateInfoMessage" nzShowIcon></nz-alert>
-          <ng-template #templateInfoMessage>
-            <p *ngIf="selectedTemplate.long_description" style="white-space: pre-line;">
-              {{selectedTemplate.long_description}}
-              <ng-container *ngIf="selectedTemplate.doc_link">
-                <br /><a href="{{selectedTemplate.doc_link}}" target="_blank">{{selectedTemplate.doc_link}}</a>
-              </ng-container>
-            </p>
-          </ng-template>
-        </ng-container>
-      </ng-template>
-    </nz-form-control>
-  </nz-form-item>
-</form>
-<lib-utask-inputs-form *ngIf="selectedTemplate" [formGroup]="validateForm" [inputs]="selectedTemplate.inputs">
-</lib-utask-inputs-form>
-<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
-  <nz-form-item>
-    <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="watchers">
-      Watchers
-    </nz-form-label>
-    <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Please set a valid value for watchers!">
-      <nz-select formControlName="watchers" nzMode="tags" nzPlaceHolder="Usernames">
-      </nz-select>
-    </nz-form-control>
-  </nz-form-item>
+<div nz-row nzJustify="center">
+    <div nz-col [nzXs]="24" [nzSm]="20" [nzMd]="16">
+        <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" [nzLayout]="'vertical'">
+            <nz-form-item>
+                <nz-form-label nzRequired nzFor="template">Template</nz-form-label>
+                <nz-form-control class="template-input" nzErrorTip="Please select a template!" [nzExtra]="templateInfo">
+                    <nz-select formControlName="template" id="template" (ngModelChange)="templateChange($event)">
+                        <ng-template ngFor let-template [ngForOf]="templates">
+                            <nz-option [nzDisabled]="template.blocked" [nzValue]="template" [nzLabel]="template.description">
+                            </nz-option>
+                        </ng-template>
+                    </nz-select>
+                    <ng-template #templateInfo>
+                        <ng-container *ngIf="selectedTemplate">
+                            <nz-alert *ngIf="selectedTemplate.long_description || selectedTemplate.doc_link" nzType="info" [nzMessage]="templateInfoMessage" nzShowIcon></nz-alert>
+                            <ng-template #templateInfoMessage>
+                                <p *ngIf="selectedTemplate.long_description" style="white-space: pre-line;">
+                                    {{selectedTemplate.long_description}}
+                                    <ng-container *ngIf="selectedTemplate.doc_link">
+                                        <br /><a href="{{selectedTemplate.doc_link}}" target="_blank">{{selectedTemplate.doc_link}}</a>
+                                    </ng-container>
+                                </p>
+                            </ng-template>
+                        </ng-container>
+                    </ng-template>
+                </nz-form-control>
+            </nz-form-item>
+        </form>
+        <lib-utask-inputs-form *ngIf="selectedTemplate" [formGroup]="validateForm" [inputs]="selectedTemplate.inputs">
+        </lib-utask-inputs-form>
+        <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" [nzLayout]="'vertical'">
+            <nz-form-item>
+                <nz-form-label nzFor="watchers">
+                    Watchers
+                </nz-form-label>
+                <nz-form-control nzErrorTip="Please set a valid value for watchers!">
+                    <nz-select formControlName="watchers" nzMode="tags" nzPlaceHolder="Usernames">
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
 
-  <nz-form-item nz-row class="register-area">
-    <nz-form-control [nzSpan]="14" [nzOffset]="6">
-      <button nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit" nzType="primary">Submit</button>
-    </nz-form-control>
-  </nz-form-item>
-</form>
+            <nz-form-item class="register-area">
+                <nz-form-control>
+                    <button nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit" nzType="primary">Submit</button>
+                </nz-form-control>
+            </nz-form-item>
+        </form>
 
-<lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit"></lib-utask-error-message>
-<utask-loader *ngIf="loaders.templates"></utask-loader>
-<lib-utask-error-message [data]="errors.templates" *ngIf="errors.templates"></lib-utask-error-message>
+        <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit"></lib-utask-error-message>
+        <utask-loader *ngIf="loaders.templates"></utask-loader>
+        <lib-utask-error-message [data]="errors.templates" *ngIf="errors.templates"></lib-utask-error-message>
+    </div>
+</div>

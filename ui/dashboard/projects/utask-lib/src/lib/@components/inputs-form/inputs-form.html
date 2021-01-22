@@ -1,39 +1,31 @@
-<form *ngIf="formGroup && inputs" nz-form [formGroup]="formGroup">
-	<nz-form-item *ngFor="let input of inputs; trackBy: trackInput">
-		<nz-form-label *ngIf="input.regex" [nzSm]="6" [nzXs]="24" nzFor="input_{{input.name}}"
-			[nzRequired]="!input.optional" [nzTooltipTitle]="input.regex" nzTooltipIcon="info-circle">
-			{{input.name}}
-		</nz-form-label>
-		<nz-form-label *ngIf="!input.regex" [nzSm]="6" [nzXs]="24" nzFor="input_{{input.name}}"
-			[nzRequired]="!input.optional">
-			{{input.name}}
-		</nz-form-label>
-		<nz-form-control [nzExtra]="input.description" [nzSm]="14" [nzXs]="24"
-			nzErrorTip="Please set a valid value for {{input.name}}!">
-			<!-- Input text(regex), number, password -->
-			<ng-container *ngIf="!input.legal_values && input.type!='bool' && !input.collection">
-				<input type="number" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='number'"
-					placeholder="{{input.default}}">
-				<input type="password" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='password'">
-				<textarea formControlName="input_{{input.name}}" *ngIf="input.type!='number' && input.type!='password'"
-					[pattern]="input.regex" nz-input nzAutosize></textarea>
-			</ng-container>
-			<!-- Input multiple with strict values -->
-			<nz-select formControlName="input_{{input.name}}" *ngIf="input.legal_values && input.collection" nzMode="multiple"
-				nzPlaceHolder="Please select">
-				<nz-option *ngFor="let item of input.legal_values" [nzLabel]="item" [nzValue]="item"></nz-option>
-			</nz-select>
-			<!-- Input multiple with free values -->
-			<nz-select formControlName="input_{{input.name}}" *ngIf="!input.legal_values && input.collection" nzMode="tags"
-				nzPlaceHolder="Please add a value">
-			</nz-select>
-			<!-- Input simple with strict values -->
-			<nz-select formControlName="input_{{input.name}}" *ngIf="input.legal_values && !input.collection"
-				nzPlaceHolder="Please select">
-				<nz-option *ngFor="let item of input.legal_values" [nzLabel]="item" [nzValue]="item"></nz-option>
-			</nz-select>
-			<!-- Input boolean -->
-			<label formControlName="input_{{input.name}}" *ngIf="input.type=='bool'" nz-checkbox></label>
-		</nz-form-control>
-	</nz-form-item>
+<form *ngIf="formGroup && inputs" nz-form [formGroup]="formGroup" [nzLayout]="'vertical'">
+    <nz-form-item *ngFor="let input of inputs; trackBy: trackInput">
+        <nz-form-label *ngIf="input.regex" nzFor="input_{{input.name}}" [nzRequired]="!input.optional" [nzTooltipTitle]="input.regex" nzTooltipIcon="info-circle">
+            {{input.description ? input.description : input.name}}
+        </nz-form-label>
+        <nz-form-label *ngIf="!input.regex" nzFor="input_{{input.name}}" [nzRequired]="!input.optional">
+            {{input.description ? input.description : input.name}}
+        </nz-form-label>
+        <nz-form-control nzErrorTip="Please set a valid value for {{input.name}}!">
+            <!-- Input text(regex), number, password -->
+            <ng-container *ngIf="!input.legal_values && input.type!='bool' && !input.collection">
+                <input type="number" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='number'" placeholder="{{input.default}}">
+                <input type="password" formControlName="input_{{input.name}}" nz-input *ngIf="input.type=='password'">
+                <textarea formControlName="input_{{input.name}}" *ngIf="input.type!='number' && input.type!='password'" [pattern]="input.regex" nz-input nzAutosize></textarea>
+            </ng-container>
+            <!-- Input multiple with strict values -->
+            <nz-select formControlName="input_{{input.name}}" *ngIf="input.legal_values && input.collection" nzMode="multiple" nzPlaceHolder="Please select">
+                <nz-option *ngFor="let item of input.legal_values" [nzLabel]="item" [nzValue]="item"></nz-option>
+            </nz-select>
+            <!-- Input multiple with free values -->
+            <nz-select formControlName="input_{{input.name}}" *ngIf="!input.legal_values && input.collection" nzMode="tags" nzPlaceHolder="Please add a value">
+            </nz-select>
+            <!-- Input simple with strict values -->
+            <nz-select formControlName="input_{{input.name}}" *ngIf="input.legal_values && !input.collection" nzPlaceHolder="Please select">
+                <nz-option *ngFor="let item of input.legal_values" [nzLabel]="item" [nzValue]="item"></nz-option>
+            </nz-select>
+            <!-- Input boolean -->
+            <label formControlName="input_{{input.name}}" *ngIf="input.type=='bool'" nz-checkbox></label>
+        </nz-form-control>
+    </nz-form-item>
 </form>
