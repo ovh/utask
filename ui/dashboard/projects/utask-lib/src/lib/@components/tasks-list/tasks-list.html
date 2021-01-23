@@ -44,7 +44,7 @@
                 <td *ngIf="!options?.disableBulk" nzLeft [nzChecked]="!!bulkSelection[item.id]" (nzCheckedChange)="clickCheckTask(item.id, $event)">
                 </td>
                 <td>
-                    <a [routerLink]="options.routingTaskPath+'/task/'+item.id"
+                    <a [routerLink]="options.routingTaskPath+item.id"
                         title="{{item.title}}">{{item.title}}</a>
                     <br />
                     <small>{{item.id}}</small>

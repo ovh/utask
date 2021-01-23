@@ -74,7 +74,7 @@ export class TaskComponent implements OnInit, OnDestroy {
     private _options: UTaskLibOptions
   ) {
     this.uiBaseUrl = this._options.uiBaseUrl;
-    this.listOptions.routingTaskPath = this._options.uiBaseUrl;
+    this.listOptions.routingTaskPath = this._options.uiBaseUrl + '/task/';
   }
 
   ngOnDestroy() {
