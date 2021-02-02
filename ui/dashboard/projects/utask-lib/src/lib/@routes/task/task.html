@@ -17,6 +17,18 @@
         </nz-page-header-extra>
     </nz-page-header>
 
+    <!-- Template description -->
+    <nz-alert *ngIf="template.long_description ||template.doc_link" nzType="info" [nzMessage]="templateInfoMessage"
+        nzShowIcon class="template-description"></nz-alert>
+    <ng-template #templateInfoMessage>
+        <p *ngIf="template.long_description" style="white-space: pre-line;">
+            {{template.long_description}}
+            <ng-container *ngIf="template.doc_link">
+                <br /><a href="{{template.doc_link}}" target="_blank">{{template.doc_link}}</a>
+            </ng-container>
+        </p>
+    </ng-template>
+
     <!-- Task info -->
     <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
         <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent&nbsp;task">
@@ -100,7 +112,8 @@
         <div app-box-header>
             Execution -
             <small>{{resolution.id}}</small> -
-            <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state === 'ERROR' ? ' (retrying)' : ''}}</small>
+            <small
+                class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state === 'ERROR' ? ' (retrying)' : ''}}</small>
             <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
                 <button nz-button nzType="primary" title="Run" (click)="runResolution(resolution)"><i nz-icon
@@ -126,7 +139,7 @@
         </div>
         <div app-box-content>
             <div nz-row [nzGutter]="16">
-                <div nz-col [nzSpan]="12">
+                <div nz-col [nzSpan]="8">
                     <nz-descriptions nzBordered [nzSize]="'small'" [nzColumn]="1">
                         <nz-descriptions-item nzTitle="Execution instance">
                             #{{resolution.instance_id}} resolved by {{resolution.resolver_username}}
@@ -145,7 +158,7 @@
                         [selectedStep]="selectedStep">
                     </lib-utask-steps-list>
                 </div>
-                <div nz-col [nzSpan]="12">
+                <div nz-col [nzSpan]="16">
                     <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
                     </lib-utask-steps-viewer>
                 </div>
