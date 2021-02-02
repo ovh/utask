@@ -101,7 +101,7 @@ export class WorkflowService {
                 x2: 10,
                 y2: 10,
                 strokeWidth: 10,
-                stroke: '#a0da57'
+                stroke: '#28a745'
             }]
         }
     }, {
@@ -199,7 +199,7 @@ export class WorkflowService {
         error: true
     }, {
         key: 'DONE',
-        color: '#a0da57',
+        color: '#28a745',
         shape: 'shape_green',
         fontColor: 'white',
         isFinal: true,

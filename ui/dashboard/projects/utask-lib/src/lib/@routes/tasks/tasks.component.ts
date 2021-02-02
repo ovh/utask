@@ -31,7 +31,7 @@ export class TasksComponent implements OnInit {
   ) {
     this.listOptions.refreshTask = this._options.refresh.home.task;
     this.listOptions.refreshTasks = this._options.refresh.home.tasks;
-    this.listOptions.routingTaskPath = this._options.uiBaseUrl;
+    this.listOptions.routingTaskPath = this._options.uiBaseUrl + '/task/';
   }
 
   ngOnInit() {

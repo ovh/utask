@@ -6,18 +6,21 @@
                 <nz-form-control class="template-input" nzErrorTip="Please select a template!" [nzExtra]="templateInfo">
                     <nz-select formControlName="template" id="template" (ngModelChange)="templateChange($event)">
                         <ng-template ngFor let-template [ngForOf]="templates">
-                            <nz-option [nzDisabled]="template.blocked" [nzValue]="template" [nzLabel]="template.description">
+                            <nz-option [nzDisabled]="template.blocked" [nzValue]="template"
+                                [nzLabel]="template.description">
                             </nz-option>
                         </ng-template>
                     </nz-select>
                     <ng-template #templateInfo>
                         <ng-container *ngIf="selectedTemplate">
-                            <nz-alert *ngIf="selectedTemplate.long_description || selectedTemplate.doc_link" nzType="info" [nzMessage]="templateInfoMessage" nzShowIcon></nz-alert>
+                            <nz-alert *ngIf="selectedTemplate.long_description || selectedTemplate.doc_link"
+                                nzType="info" [nzMessage]="templateInfoMessage" nzShowIcon></nz-alert>
                             <ng-template #templateInfoMessage>
                                 <p *ngIf="selectedTemplate.long_description" style="white-space: pre-line;">
                                     {{selectedTemplate.long_description}}
                                     <ng-container *ngIf="selectedTemplate.doc_link">
-                                        <br /><a href="{{selectedTemplate.doc_link}}" target="_blank">{{selectedTemplate.doc_link}}</a>
+                                        <br /><a href="{{selectedTemplate.doc_link}}"
+                                            target="_blank">{{selectedTemplate.doc_link}}</a>
                                     </ng-container>
                                 </p>
                             </ng-template>
@@ -41,7 +44,8 @@
 
             <nz-form-item class="register-area">
                 <nz-form-control>
-                    <button nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit" nzType="primary">Submit</button>
+                    <button nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit"
+                        nzType="primary">Submit</button>
                 </nz-form-control>
             </nz-form-item>
         </form>
