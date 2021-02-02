@@ -139,7 +139,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
 
     ngAfterViewInit() {
-        let offsetWidth = (this.nzTableComponent as any).elementRef.nativeElement.offsetWidth;
+        const offsetWidth = (this.nzTableComponent as any).elementRef.nativeElement.offsetWidth;
         if (offsetWidth > 1100) {
             this.titleWidth = `${offsetWidth - 800}px`;
         } else {
@@ -206,7 +206,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
             .pipe(map(() => !!this.nzTableComponent.nzTableInnerScrollComponent))
             .pipe(filter(exists => exists))
             .pipe(first())
-            .toPromise()
+            .toPromise();
 
         // Handle first load usecase to call load tasks until the table is not full and there is more tasks available
         const scrollComponent = this.nzTableComponent.nzTableInnerScrollComponent;

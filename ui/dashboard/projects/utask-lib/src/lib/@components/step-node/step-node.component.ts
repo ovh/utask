@@ -61,6 +61,8 @@ export class StepNodeComponent implements OnInit, OnChanges {
                     break;
                 }
                 case 'TO_RETRY':
+                    this.styleClass = 'orange';
+                    break;
                 case 'RUNNING':
                 case 'EXPANDED': {
                     this.styleClass = 'blue';

@@ -12,42 +12,40 @@
         </span>
     </ng-template>
 </nz-select>
-<div>
-    <ng-container *ngFor="let stepName of filteredStepNames">
-        <lib-utask-box
-            [header]="{openable: resolution.steps[stepName].state !== 'TODO', init: false, class: 'primary', color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
-            <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}
-                <nz-button-group nzSize="small">
-                    <button nz-button [nzGhost]="true" title="View as code"
-                        (click)="previewStepDetails(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
-                            nzType="file-text"></i></button>
-                </nz-button-group>
+<div class="list">
+    <lib-utask-box *ngFor="let stepName of filteredStepNames"
+        [header]="{openable: resolution.steps[stepName].state !== 'TODO', init: false, class: 'primary', color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
+        <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}
+            <nz-button-group nzSize="small">
+                <button nz-button [nzGhost]="true" title="View as code"
+                    (click)="previewStepDetails(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
+                        nzType="file-text"></i></button>
+            </nz-button-group>
+        </div>
+        <div app-box-content>
+            <div *ngIf="resolution.steps[stepName].output">
+                Output:
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].output, null, 4)"
+                    ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigPayload">
+                </lib-utask-editor>
             </div>
-            <div app-box-content>
-                <div *ngIf="resolution.steps[stepName].output">
-                    Output:
-                    <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].output, null, 4)"
-                        ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigPayload">
-                    </lib-utask-editor>
-                </div>
-                <div *ngIf="resolution.steps[stepName].children">
-                    Children:
-                    <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].children, null, 4)"
-                        ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigChildren">
-                    </lib-utask-editor>
-                </div>
-                <div *ngIf="resolution.steps[stepName].error">
-                    <span *ngIf="resolution.steps[stepName].state !== 'DONE'">Error:</span>
-                    <span *ngIf="resolution.steps[stepName].state === 'DONE'">Message:</span>
-                    <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].error, null, 4)"
-                        ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigError">
-                    </lib-utask-editor>
-                </div>
-                <div
-                    *ngIf="resolution.steps[stepName].last_run && resolution.steps[stepName].last_run != '0001-01-01T00:00:00Z'">
-                    Last run: <strong>{{resolution.steps[stepName].last_run | utaskFromNow}}</strong>
-                </div>
+            <div *ngIf="resolution.steps[stepName].children">
+                Children:
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].children, null, 4)"
+                    ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="editorConfigChildren">
+                </lib-utask-editor>
             </div>
-        </lib-utask-box>
-    </ng-container>
+            <div *ngIf="resolution.steps[stepName].error">
+                <span *ngIf="resolution.steps[stepName].state !== 'DONE'">Error:</span>
+                <span *ngIf="resolution.steps[stepName].state === 'DONE'">Message:</span>
+                <lib-utask-editor [ngModel]="JSON.stringify(resolution.steps[stepName].error, null, 4)" ngDefaultControl
+                    [ngModelOptions]="{standalone: true}" [config]="editorConfigError">
+                </lib-utask-editor>
+            </div>
+            <div
+                *ngIf="resolution.steps[stepName].last_run && resolution.steps[stepName].last_run != '0001-01-01T00:00:00Z'">
+                Last run: <strong>{{resolution.steps[stepName].last_run | utaskFromNow}}</strong>
+            </div>
+        </div>
+    </lib-utask-box>
 </div>

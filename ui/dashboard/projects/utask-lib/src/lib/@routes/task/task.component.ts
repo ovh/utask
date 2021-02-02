@@ -316,7 +316,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   }
 
   loadTask() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this.loaders.task = true;
       Promise.all([
         this.api.task.get(this.taskId).toPromise(),
@@ -343,12 +343,12 @@ export class TaskComponent implements OnInit, OnDestroy {
         }
         this.taskIsResolvable = resolvable;
         if (this.task.resolution) {
-          this.loadResolution(this.task.resolution).then((data) => {
-            if (!this.resolution && data) {
+          this.loadResolution(this.task.resolution).then(rData => {
+            if (!this.resolution && rData) {
               this.display.execution = true;
               this.display.request = false;
             }
-            this.resolution = data;
+            this.resolution = rData;
             resolve();
           }).catch((err) => {
             reject(err);
@@ -368,10 +368,10 @@ export class TaskComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadResolution(resolutionId: string) {
+  loadResolution(resolutionId: string): any {
     return new Promise((resolve, reject) => {
       this.loaders.resolution = true;
-      this.api.resolution.get(resolutionId).subscribe((data) => {
+      this.api.resolution.get(resolutionId).subscribe(data => {
         resolve(data);
       }, (err: any) => {
         reject(err);

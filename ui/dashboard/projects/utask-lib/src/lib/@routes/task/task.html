@@ -30,7 +30,7 @@
 
     <!-- Task info -->
     <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
-        <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent&nbsp;task">
+        <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent task">
             <a [routerLink]="[uiBaseUrl, 'task', task.tags._utask_parent_task_id]">
                 {{task.tags._utask_parent_task_id}}
             </a>
@@ -115,12 +115,12 @@
                 'ERROR' ? ' (retrying)' : ''}}</small>
             <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
-                <button nz-button nzGhost nzType="primary" title="Run" (click)="runResolution(resolution)"><i nz-icon
+                <button nz-button nzGhost title="Run" (click)="runResolution(resolution)"><i nz-icon
                         nzType="caret-right"></i></button>
-                <button nz-button nzGhost nzType="primary" title="Cancel" (click)="cancelResolution(resolution)"><i
-                        nz-icon nzType="stop"></i></button>
+                <button nz-button nzGhost title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
+                        nzType="stop"></i></button>
                 <button nz-button nzGhost nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
-                    nzType="primary" (click)="$event.stopPropagation()">More</button>
+                    (click)="$event.stopPropagation()">More</button>
             </nz-button-group>
             <nz-dropdown-menu #menu="nzDropdownMenu">
                 <ul nz-menu>
@@ -213,16 +213,16 @@
     </div>
 
     <!-- Sub tasks box -->
-    <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
+    <lib-utask-box [header]="{openable: true, init: true, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
         <div app-box-header>
             Sub Tasks
         </div>
         <div app-box-content>
             <lib-utask-tasks-list [meta]="meta" [params]="{
-            page_size: 10,
-            type: meta.user_is_admin ? 'all' : 'own',
-            tag: '_utask_parent_task_id=' + taskId
-          }" (event)="eventUtask($event)" [options]="listOptions">
+                page_size: 10,
+                type: meta.user_is_admin ? 'all' : 'own',
+                tag: '_utask_parent_task_id=' + taskId
+            }" (event)="eventUtask($event)" [options]="listOptions">
             </lib-utask-tasks-list>
         </div>
     </lib-utask-box>
