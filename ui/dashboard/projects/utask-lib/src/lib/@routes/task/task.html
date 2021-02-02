@@ -17,8 +17,8 @@
     </nz-page-header>
 
     <!-- Template description -->
-    <nz-alert *ngIf="template.long_description ||template.doc_link" nzType="info" [nzMessage]="templateInfoMessage"
-        nzShowIcon class="template-description"></nz-alert>
+    <nz-alert *ngIf="template && (template.long_description || template.doc_link)" nzType="info"
+        [nzMessage]="templateInfoMessage" nzShowIcon class="template-description"></nz-alert>
     <ng-template #templateInfoMessage>
         <p *ngIf="template.long_description" style="white-space: pre-line;">
             {{template.long_description}}
