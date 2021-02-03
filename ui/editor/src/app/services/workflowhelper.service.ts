@@ -159,9 +159,9 @@ export class WorkflowHelper {
         }];
     states: any[] = [{
         key: "TO_RETRY",
-        color: "#32acff",
+        color: "#f09000",
         fontColor: "white",
-        shape: "shape_blue",
+        shape: "shape_orange",
         isFinal: false,
         icon: "fa-clock",
         error: false

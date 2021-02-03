@@ -1,15 +1,18 @@
 :host
-  display: block
+  display: flex
+  flex-direction: column
 
-div
-  overflow-y: auto
-  height: 100%
-
-lib-utask-box
-  [app-box-header]
-    nz-button-group
-      float: right
-
-nz-select
+  nz-select
     width: 100%
     margin-top: 15px
+
+  .list
+    overflow-y: auto
+    flex: 1
+
+    lib-utask-box
+      [app-box-header]
+        nz-button-group
+          float: right
+
+  

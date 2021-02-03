@@ -41,10 +41,9 @@
                     </nz-select>
                 </nz-form-control>
             </nz-form-item>
-
-            <nz-form-item class="register-area">
+            <nz-form-item>
                 <nz-form-control>
-                    <button nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit"
+                    <button type="submit" nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit"
                         nzType="primary">Submit</button>
                 </nz-form-control>
             </nz-form-item>

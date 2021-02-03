@@ -6,20 +6,19 @@
         <nz-page-header-title><span class="bloc_status task_state_{{task.state}}">{{task.state}}</span> {{task.title}}
         </nz-page-header-title>
         <nz-page-header-extra>
-            Autorefresh (5s)
+            <span>Autorefresh (5s)</span>
             <nz-switch [(ngModel)]="autorefresh.actif" [nzDisabled]="!autorefresh.enable"
-                (ngModelChange)="autorefresh.hasChanged = true"></nz-switch>
-            <nz-button-group>
-                <button nz-button (click)="loadTask();" title="Refresh tasks"
-                    [disabled]="loaders.task || loaders.resolution"><i nz-icon
-                        [nzType]="loaders.task ? 'loading' : 'sync'"></i>Refresh</button>
-            </nz-button-group>
+                (ngModelChange)="autorefresh.hasChanged = true">
+            </nz-switch>
+            <button type="button" nz-button nzType="primary" nzShape="circle" nzSize="small" (click)="loadTask()"
+                title="Refresh tasks" [nzLoading]="loaders.task || loaders.resolution" [disabled]="autorefresh.actif"><i
+                    nz-icon nzType="sync"></i></button>
         </nz-page-header-extra>
     </nz-page-header>
 
     <!-- Template description -->
-    <nz-alert *ngIf="template.long_description ||template.doc_link" nzType="info" [nzMessage]="templateInfoMessage"
-        nzShowIcon class="template-description"></nz-alert>
+    <nz-alert *ngIf="template && (template.long_description || template.doc_link)" nzType="info"
+        [nzMessage]="templateInfoMessage" nzShowIcon class="template-description"></nz-alert>
     <ng-template #templateInfoMessage>
         <p *ngIf="template.long_description" style="white-space: pre-line;">
             {{template.long_description}}
@@ -31,7 +30,7 @@
 
     <!-- Task info -->
     <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
-        <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent&nbsp;task">
+        <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent task">
             <a [routerLink]="[uiBaseUrl, 'task', task.tags._utask_parent_task_id]">
                 {{task.tags._utask_parent_task_id}}
             </a>
@@ -64,11 +63,11 @@
         <div app-box-header>
             Request - {{task.id}}
             <nz-button-group nzSize="small">
-                <button nz-button nzType="primary" title="View as code"
+                <button type="button" nz-button nzGhost title="View as code"
                     (click)="previewTask(); $event.stopPropagation();"><i nz-icon nzType="file-text"></i></button>
-                <button nz-button nzType="primary" title="Edit the task"
+                <button type="button" nz-button nzGhost title="Edit the task"
                     (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
-                <button nz-button nzType="primary" title="Delete the task"
+                <button type="button" nz-button nzGhost title="Delete the task"
                     (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
             </nz-button-group>
         </div>
@@ -112,16 +111,16 @@
         <div app-box-header>
             Execution -
             <small>{{resolution.id}}</small> -
-            <small
-                class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state === 'ERROR' ? ' (retrying)' : ''}}</small>
+            <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state ===
+                'ERROR' ? ' (retrying)' : ''}}</small>
             <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
-                <button nz-button nzType="primary" title="Run" (click)="runResolution(resolution)"><i nz-icon
+                <button type="button" nz-button nzGhost title="Run" (click)="runResolution(resolution)"><i nz-icon
                         nzType="caret-right"></i></button>
-                <button nz-button nzType="primary" title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
+                <button type="button" nz-button nzGhost title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
                         nzType="stop"></i></button>
-                <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" nzType="primary"
-                    (click)="$event.stopPropagation()">More</button>
+                <button type="button" nz-button nzGhost nz-dropdown [nzDropdownMenu]="menu"
+                    [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
             </nz-button-group>
             <nz-dropdown-menu #menu="nzDropdownMenu">
                 <ul nz-menu>
@@ -176,9 +175,9 @@
                 <lib-utask-inputs-form [formGroup]="validateResolveForm" [inputs]="resolverInputs">
                 </lib-utask-inputs-form>
                 <form nz-form [formGroup]="validateResolveForm" (ngSubmit)="resolveTask()">
-                    <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
-                            <button nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
+                    <nz-form-item nz-row>
+                        <nz-form-control>
+                            <button type="submit" nz-button nzType="primary" [disabled]="!validateResolveForm.valid"
                                 [nzLoading]="loaders.resolveTask">Resolve</button>
                         </nz-form-control>
                     </nz-form-item>
@@ -193,16 +192,16 @@
             </div>
             <div app-box-content>
                 <form nz-form [formGroup]="validateRejectForm" (ngSubmit)="rejectTask()">
-                    <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
+                    <nz-form-item nz-row>
+                        <nz-form-control>
                             <label formControlName="agree" nz-checkbox>
                                 Are you sure you want to reject this request ?
                             </label>
                         </nz-form-control>
                     </nz-form-item>
-                    <nz-form-item nz-row class="register-area">
-                        <nz-form-control [nzSpan]="14" [nzOffset]="resolverInputs ? 6 : 1">
-                            <button nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
+                    <nz-form-item nz-row>
+                        <nz-form-control>
+                            <button type="submit" nz-button nzType="danger" [disabled]="!validateRejectForm.valid"
                                 [nzLoading]="loaders.rejectTask">Reject</button>
                         </nz-form-control>
                     </nz-form-item>
@@ -214,16 +213,16 @@
     </div>
 
     <!-- Sub tasks box -->
-    <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
+    <lib-utask-box [header]="{openable: true, init: true, class: 'primary'}" *ngIf="haveAtLeastOneChilTask">
         <div app-box-header>
             Sub Tasks
         </div>
         <div app-box-content>
             <lib-utask-tasks-list [meta]="meta" [params]="{
-            page_size: 10,
-            type: meta.user_is_admin ? 'all' : 'own',
-            tag: '_utask_parent_task_id=' + taskId
-          }" (event)="eventUtask($event)" [options]="listOptions">
+                page_size: 10,
+                type: meta.user_is_admin ? 'all' : 'own',
+                tag: '_utask_parent_task_id=' + taskId
+            }" (event)="eventUtask($event)" [options]="listOptions">
             </lib-utask-tasks-list>
         </div>
     </lib-utask-box>
@@ -254,7 +253,7 @@
                         <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
                     </nz-form-item>
                     <nz-form-item>
-                        <button nz-button nzType="primary" [nzLoading]="loaders.addComment"
+                        <button type="submit" nz-button nzType="primary" [nzLoading]="loaders.addComment"
                             [disabled]="!comment.content" (click)="addComment()">
                             Add Comment
                         </button>
