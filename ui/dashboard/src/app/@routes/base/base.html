@@ -11,7 +11,7 @@
 			<li nz-menu-item nzMatchRouter routerLink="/stats">Stats</li>
 		</ul>
 		<nz-button-group>
-			<button nz-button nzType="primary" routerLink="/new"><i nz-icon nzType="plus"></i> New task</button>
+			<button type="button" nz-button nzType="primary" routerLink="/new"><i nz-icon nzType="plus"></i> New task</button>
 		</nz-button-group>
 		<nz-switch [ngModel]="darkThemeActive" (ngModelChange)="switchDarkTheme($event)" nzCheckedChildren="☾"
 			nzUnCheckedChildren="☾"></nz-switch>

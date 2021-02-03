@@ -1,8 +1,8 @@
 <lib-utask-error-message [data]="errors.tasks" *ngIf="errors.tasks"></lib-utask-error-message>
 
 <div class="send-request" *ngIf="!!bulkActions && !options?.disableBulk">
-    <button nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'" nzType="primary"
-        [nzTrigger]="'click'">Bulk
+    <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menuBulk" [nzPlacement]="'bottomLeft'"
+        nzType="primary" [nzTrigger]="'click'">Bulk
         actions</button>
     <nz-dropdown-menu #menuBulk="nzDropdownMenu">
         <ul nz-menu>
@@ -22,7 +22,8 @@
     nzSize="small" [nzLoading]="loadingTasks && tasks.length === 0">
     <thead>
         <tr>
-            <th *ngIf="!options?.disableBulk" nzLeft nzWidth="50px" [nzChecked]="!!bulkAllSelected" (nzCheckedChange)="clickCheckAll($event)">
+            <th *ngIf="!options?.disableBulk" nzLeft nzWidth="50px" [nzChecked]="!!bulkAllSelected"
+                (nzCheckedChange)="clickCheckAll($event)">
             </th>
             <th [nzWidth]="titleWidth">Title</th>
             <th nzWidth="150px">Status</th>
@@ -36,16 +37,17 @@
         <ng-container *ngFor="let item of virtualTable.data; let index = index; trackBy: trackInput">
             <tr *ngIf="index === 0 && newTasks.length > 0">
                 <td [nzAlign]="'center'" [attr.colspan]="options?.disableBulk ? 6 : 7">
-                    <button nz-button nzType="default" (click)="clickShowNewTasks()">Show {{newTasks.length}}
+                    <button type="button" nz-button nzType="default" (click)="clickShowNewTasks()">Show
+                        {{newTasks.length}}
                         new task{{newTasks.length > 1 ? 's': ''}}</button>
                 </td>
             </tr>
             <tr>
-                <td *ngIf="!options?.disableBulk" nzLeft [nzChecked]="!!bulkSelection[item.id]" (nzCheckedChange)="clickCheckTask(item.id, $event)">
+                <td *ngIf="!options?.disableBulk" nzLeft [nzChecked]="!!bulkSelection[item.id]"
+                    (nzCheckedChange)="clickCheckTask(item.id, $event)">
                 </td>
                 <td>
-                    <a [routerLink]="options.routingTaskPath+item.id"
-                        title="{{item.title}}">{{item.title}}</a>
+                    <a [routerLink]="options.routingTaskPath+item.id" title="{{item.title}}">{{item.title}}</a>
                     <br />
                     <small>{{item.id}}</small>
                 </td>
@@ -65,13 +67,15 @@
                 </td>
                 <td nzRight>
                     <nz-button-group>
-                        <button nz-button nzType="primary" title="Run" (click)="runResolution(item.resolution, item.id)"
-                            [disabled]="!tasksActions[index].run"><i nz-icon nzType="caret-right"></i></button>
-                        <button nz-button nzType="primary" title="Cancel"
+                        <button type="button" nz-button nzType="primary" title="Run"
+                            (click)="runResolution(item.resolution, item.id)" [disabled]="!tasksActions[index].run"><i
+                                nz-icon nzType="caret-right"></i></button>
+                        <button type="button" nz-button nzType="primary" title="Cancel"
                             (click)="cancelResolution(item.resolution, item.id)"
                             [disabled]="!tasksActions[index].cancel"><i nz-icon nzType="stop"></i></button>
-                        <button nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
-                            nzType="primary" [disabled]="!tasksActions[index].more">More</button>
+                        <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu"
+                            [nzPlacement]="'bottomRight'" nzType="primary"
+                            [disabled]="!tasksActions[index].more">More</button>
                     </nz-button-group>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                         <ul nz-menu>
@@ -90,7 +94,7 @@
             </tr>
             <tr *ngIf="index === tasks.length-1 && hasMore">
                 <td [nzAlign]="'center'" [attr.colspan]="options?.disableBulk ? 6 : 7">
-                    <button nz-button nzType="default" (click)="clickShowMore()">Show more</button>
+                    <button type="button" nz-button nzType="default" (click)="clickShowMore()">Show more</button>
                 </td>
             </tr>
         </ng-container>

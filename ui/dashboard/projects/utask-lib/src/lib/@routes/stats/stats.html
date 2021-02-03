@@ -18,7 +18,7 @@
                     <td [ngStyle]="{'background':state.color, 'color': 'white', 'width.px': 30}"></td>
                     <td>{{state.label}}</td>
                     <td>{{state.value}}</td>
-                    <td><button nz-button [routerLink]="[uiBaseUrl, 'tasks']"
+                    <td><button type="button" nz-button [routerLink]="[uiBaseUrl, 'tasks']"
                             [queryParams]="{state: state.key, type: 'all', page_size: 20}"><i nz-icon
                                 nzType="link"></i></button>
                     </td>

@@ -17,7 +17,7 @@
         [header]="{openable: resolution.steps[stepName].state !== 'TODO', init: false, class: 'primary', color: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].color : defaultState.color), fontColor: (states[resolution.steps[stepName].state] ? states[resolution.steps[stepName].state].fontColor : defaultState.fontColor)}">
         <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}
             <nz-button-group nzSize="small">
-                <button nz-button [nzGhost]="true" title="View as code"
+                <button type="button" nz-button [nzGhost]="true" title="View as code"
                     (click)="previewStepDetails(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
                         nzType="file-text"></i></button>
             </nz-button-group>
