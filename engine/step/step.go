@@ -358,7 +358,14 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		return
 	}
 
-	preHookValues := stepValues.Clone()
+	preHookValues, err := stepValues.Clone()
+	if err != nil {
+		st.State = StateFatalError
+		st.Error = err.Error()
+		go noopStep(st, stepChan)
+		return
+	}
+
 	var preHookWg sync.WaitGroup
 	if prehook != nil {
 		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, shutdownCtx)
