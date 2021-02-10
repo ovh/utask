@@ -12,8 +12,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/juju/errors"
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/pkg/utils"
 	"github.com/robertkrimen/otto"
-	"github.com/ybriffa/deepcopy"
 )
 
 // keys to store/retrieve data from a Values struct
@@ -47,7 +47,7 @@ type Variable struct {
 	Name             string      `json:"name"`
 	Expression       string      `json:"expression"`
 	Value            interface{} `json:"value"`
-	evalCachedResult interface{} `json:"-"`
+	evalCachedResult interface{}
 }
 
 // NewValues instantiates a new Values holder,
@@ -78,12 +78,38 @@ func NewValues() *Values {
 }
 
 // Clone duplicates the values object
-func (v *Values) Clone() *Values {
+func (v *Values) Clone() (*Values, error) {
 	n := NewValues()
-	for key, value := range v.m {
-		n.m[key] = deepcopy.Copy(value)
+
+	for key, val := range v.m {
+		if val == nil {
+			continue
+		}
+
+		ba, err := utils.JSONMarshal(val)
+		if err != nil {
+			return nil, err
+		}
+
+		switch key {
+		case VarKey:
+			newobj := &map[string]*Variable{}
+			err = utils.JSONnumberUnmarshal(bytes.NewReader(ba), newobj)
+			if err != nil {
+				return nil, err
+			}
+			n.m[key] = *newobj
+		default:
+			var newobj interface{}
+			err = utils.JSONnumberUnmarshal(bytes.NewReader(ba), &newobj)
+			if err != nil {
+				return nil, err
+			}
+			n.m[key] = newobj
+		}
 	}
-	return n
+
+	return n, nil
 }
 
 // SetInput stores a task's inputs in Values
