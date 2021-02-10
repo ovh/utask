@@ -139,3 +139,62 @@ steps:
               then:
                   this: LIST_NOMATCH
               message: List doesn't contains matching value
+
+    stepForeach:
+        description: validate foreach child works as expected
+        foreach: "[1,2,3,4]"
+        custom_states: [FOO1, FOO2]
+        conditions:
+            - type: check
+              if:
+                  - value: '{{.iterator}}'
+                    operator: EQ
+                    expected: "1"
+              then:
+                  this: FOO1
+            - type: check
+              if:
+                  - value: '{{.iterator}}'
+                    operator: EQ
+                    expected: "2"
+              then:
+                  this: FOO2
+            - type: check
+              if:
+                  - value: '{{.iterator}}'
+                    operator: EQ
+                    expected: "3"
+              then:
+                  this: PRUNE
+        action:
+            type: echo
+            configuration:
+                output:
+                    {
+                        concat: "hello {{.iterator}}",
+                    }
+    stepForeachValidation:
+        description: validate the dependant foreach step
+        dependencies: [stepForeach]
+        custom_states: [VALID]
+        conditions:
+            - type: check
+              if:
+                  - value: '{{ (index .step.stepForeach.children 0).state }}'
+                    operator: EQ
+                    expected: "FOO1"
+                  - value: '{{ (index .step.stepForeach.children 1).state }}'
+                    operator: EQ
+                    expected: "FOO2"
+                  - value: '{{ (index .step.stepForeach.children 2).state }}'
+                    operator: EQ
+                    expected: "DONE"
+              then:
+                  this: VALID
+        action:
+            type: echo
+            configuration:
+                output:
+                    {
+                        concat: "hello world",
+                    }

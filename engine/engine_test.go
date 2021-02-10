@@ -460,6 +460,10 @@ func TestStepConditionStates(t *testing.T) {
 
 	assert.Equal(t, "PRUNE", res.Steps["stepFive"].State)
 	assert.Equal(t, "LIST_NOMATCH", res.Steps["stepSix"].State)
+
+	assert.Equal(t, "DONE", res.Steps["stepForeach"].State)
+	assert.Len(t, res.Steps["stepForeach"].Children, 3)
+	assert.Equal(t, "VALID", res.Steps["stepForeachValidation"].State)
 }
 
 func TestResolutionStateCrashed(t *testing.T) {
