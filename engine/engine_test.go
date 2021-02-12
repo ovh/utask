@@ -945,6 +945,27 @@ func TestScriptPlugin(t *testing.T) {
 	assert.Equal(t, metadata, metadataOutput)
 }
 
+func TestScriptPluginEnvironmentVariables(t *testing.T) {
+	res, err := createResolution("execScriptWithEnvironment.yaml", map[string]interface{}{}, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	assert.NotNil(t, res.Steps["stepOne"].Output)
+
+	environment := res.Steps["stepOne"].Output.(map[string]interface{})
+
+	assert.NotNil(t, environment["UTASK_TASK_ID"])
+	assert.Equal(t, res.TaskPublicID, environment["UTASK_TASK_ID"])
+	assert.NotNil(t, environment["UTASK_RESOLUTION_ID"])
+	assert.Equal(t, res.PublicID, environment["UTASK_RESOLUTION_ID"])
+	assert.NotNil(t, environment["UTASK_STEP_NAME"])
+	assert.Equal(t, "stepOne", environment["UTASK_STEP_NAME"])
+}
+
 func TestBaseBaseConfiguration(t *testing.T) {
 	res, err := createResolution("base_configuration.yaml", nil, nil)
 	assert.NotNil(t, res)

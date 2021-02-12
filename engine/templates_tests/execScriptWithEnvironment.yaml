@@ -1,0 +1,32 @@
+name: exec-script-with-environment
+description: Executing a shell script that returns environment variables
+title_format: "[test] a simple task for script-plugin to verify environment variables"
+
+steps:
+    stepOne:
+        description: first step
+        action:
+            type: script
+            configuration:
+                #   ____________________
+                #  /                    \
+                # |  This is only for    |
+                # |   testing purpose    |
+                #  \____________________/
+                #          !  !
+                #          !  !
+                #          L_ !
+                #         / _)!
+                #        / /__L
+                #  _____/ (____)
+                #         (____)
+                #  _____  (____)
+                #       \_(____)
+                #          !  !
+                #          !  !
+                #          \__/
+                # This file param is valid only in a testing context
+                # In production, `file` will be prefixed by the utask.FScriptsFolder variable ("./scripts" by default)
+                # You can specify your file's path relative to that location
+                file_path: "./scripts_tests/env-vars.py"
+                timeout_seconds: "25"
