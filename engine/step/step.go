@@ -423,32 +423,36 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
 			st.Output, st.Metadata, st.Tags = output, metadata, tags
 
-			execution.generateOutput(st, preHookValues)
-
-			if err != nil {
-				if errors.IsBadRequest(err) {
-					st.State = StateClientError
-				} else if errors.IsNotProvisioned(err) {
-					st.State = StateToRetry
-				} else {
-					st.State = StateServerError
-				}
-				st.Error = err.Error()
-			} else if st.ResultValidate != nil {
-				if err := st.ResultValidate(st.Output); err != nil {
-					st.Error = err.Error()
-					st.State = StateFatalError
-				}
-			}
-			if _, err := utils.JSONMarshal(st.Output); err != nil {
-				st.Error = "plugin output can't be json.Marshal: " + err.Error()
+			outputErr := execution.generateOutput(st, preHookValues)
+			if outputErr != nil {
 				st.State = StateFatalError
-				st.Output = fmt.Sprint(st.Output)
-			}
+				st.Error = "unable to format output: " + outputErr.Error()
+			} else {
+				if err != nil {
+					if errors.IsBadRequest(err) {
+						st.State = StateClientError
+					} else if errors.IsNotProvisioned(err) {
+						st.State = StateToRetry
+					} else {
+						st.State = StateServerError
+					}
+					st.Error = err.Error()
+				} else if st.ResultValidate != nil {
+					if err := st.ResultValidate(st.Output); err != nil {
+						st.Error = err.Error()
+						st.State = StateFatalError
+					}
+				}
+				if _, err := utils.JSONMarshal(st.Output); err != nil {
+					st.Error = "plugin output can't be json.Marshal: " + err.Error()
+					st.State = StateFatalError
+					st.Output = fmt.Sprint(st.Output)
+				}
 
-			if st.State == StateRunning {
-				st.State = StateDone
-				st.Error = ""
+				if st.State == StateRunning {
+					st.State = StateDone
+					st.Error = ""
+				}
 			}
 
 			st.TryCount++

@@ -28,6 +28,7 @@ import (
 	functionrunner "github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/engine/step"
 	"github.com/ovh/utask/engine/step/condition"
+	"github.com/ovh/utask/engine/step/executor"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
@@ -900,6 +901,85 @@ func TestBaseOutputNoOutput(t *testing.T) {
 
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, "buzz", output["foobar"])
+}
+
+func TestOutputTemplatingError(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res.Steps["stepOne"].Action.Output.Strategy = executor.OutputStrategytemplate
+	res.Steps["stepOne"].Action.Output.Format = map[string]string{
+		"foo2": "{{ index .foo.unknown 3 }}",
+	}
+	err = updateResolution(res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
+	assert.Equal(t, step.StateFatalError, res.Steps["stepOne"].State)
+	assert.Contains(t, res.Steps["stepOne"].Error, "unable to format output: Templating error: template:")
+
+	res, err = createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res.Steps["stepOne"].Action.Output.Strategy = executor.OutputStrategymerge
+	res.Steps["stepOne"].Action.Output.Format = map[string]string{
+		"foo2": "{{ index .foo.unknown 3 }}",
+	}
+	err = updateResolution(res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
+	assert.Equal(t, step.StateFatalError, res.Steps["stepOne"].State)
+	assert.Contains(t, res.Steps["stepOne"].Error, "failed to template base output: Templating error: template:")
+
+	res, err = createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res.Steps["stepOne"].Action.Output.Strategy = executor.OutputStrategytemplate
+	res.Steps["stepOne"].Action.Output.Format = map[string]string{
+		"foo2": "{{ index .step.stepOne.output.foo.unknown 3 }}",
+	}
+	err = updateResolution(res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
+	assert.Equal(t, step.StateFatalError, res.Steps["stepOne"].State)
+	assert.Contains(t, res.Steps["stepOne"].Error, "unable to format output: Templating error: template:")
+
+	res, err = createResolution("no-output.yaml", input, nil)
+	require.NotNil(t, res)
+	require.Nil(t, err)
+
+	res.Steps["stepOne"].Action.Output.Strategy = executor.OutputStrategymerge
+	res.Steps["stepOne"].Action.Output.Format = map[string]string{
+		"foo2": "{{ index .step.stepOne.output.foo.unknown 3 }}",
+	}
+	err = updateResolution(res)
+	require.Nil(t, err)
+
+	res, err = runResolution(res)
+
+	require.Nilf(t, err, "got error %s", err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateBlockedFatal, res.State)
+	assert.Equal(t, step.StateFatalError, res.Steps["stepOne"].State)
+	assert.Contains(t, res.Steps["stepOne"].Error, "failed to template base output: Templating error: template:")
 }
 
 func TestBaseOutputNoOutputBackwardCompatibility(t *testing.T) {
