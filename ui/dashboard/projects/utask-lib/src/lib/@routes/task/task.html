@@ -63,11 +63,11 @@
         <div app-box-header>
             Request - {{task.id}}
             <nz-button-group nzSize="small">
-                <button type="button" nz-button nzGhost title="View as code"
+                <button type="button" nz-button title="View as code"
                     (click)="previewTask(); $event.stopPropagation();"><i nz-icon nzType="file-text"></i></button>
-                <button type="button" nz-button nzGhost title="Edit the task"
+                <button type="button" nz-button title="Edit the task"
                     (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
-                <button type="button" nz-button nzGhost title="Delete the task"
+                <button type="button" nz-button title="Delete the task"
                     (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
             </nz-button-group>
         </div>
@@ -115,12 +115,12 @@
                 'ERROR' ? ' (retrying)' : ''}}</small>
             <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
-                <button type="button" nz-button nzGhost title="Run" (click)="runResolution(resolution)"><i nz-icon
+                <button type="button" nz-button title="Run" (click)="runResolution(resolution)"><i nz-icon
                         nzType="caret-right"></i></button>
-                <button type="button" nz-button nzGhost title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
+                <button type="button" nz-button title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
                         nzType="stop"></i></button>
-                <button type="button" nz-button nzGhost nz-dropdown [nzDropdownMenu]="menu"
-                    [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
+                <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
+                    (click)="$event.stopPropagation()">More</button>
             </nz-button-group>
             <nz-dropdown-menu #menu="nzDropdownMenu">
                 <ul nz-menu>
