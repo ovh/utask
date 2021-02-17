@@ -156,10 +156,13 @@ Extending this basic authentication mechanism is possible by developing an "init
 Every task state change can be notified to a notification backend.
 µTask implements three differents notification backends: Slack, [TaT](https://github.com/ovh/tat), and generic webhooks.
 
-Default payload that will be sent for generic webhooks is :
+Default payload that will be sent for generic webhooks are:
+
+__task_state_update notifications:__
 ```json
 {
     "message": "string",
+    "notification_type": "task_state_update",
     "task_id": "public_task_uuid",
     "title": "task title string",
     "state": "current task state",
@@ -169,6 +172,20 @@ Default payload that will be sent for generic webhooks is :
     "steps": "14/20",
     "potential_resolvers": "user1,user2,admin",
     "resolution_id": "optional,public_resolution_uuid",
+    "tags": "{\"tag1\":\"value1\"}"
+}
+```
+__task_validation notifications:__
+```json
+{
+    "message": "string",
+    "notification_type": "task_validation",
+    "task_id": "public_task_uuid",
+    "title": "task title string",
+    "state": "TODO",
+    "template": "template_name",
+    "requester": "optional",
+    "potential_resolvers": "user1,user2,admin",
     "tags": "{\"tag1\":\"value1\"}"
 }
 ```

@@ -37,6 +37,7 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 	if !tt.IsAutoRunnable() && tt.AllowAllResolverUsernames {
 		return nil, errors.Errorf("invalid tasktemplate: %q should be auto_runnable", tt.Name)
 	} else if !tt.IsAutoRunnable() {
+		t.NotifyValidationRequired(tt)
 		return t, nil
 	}
 
@@ -45,6 +46,7 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
 
 	if !requester && !resolutionManager {
+		t.NotifyValidationRequired(tt)
 		return t, nil
 	}
 

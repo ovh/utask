@@ -19,8 +19,9 @@ const (
 
 // Message represents a generic message to be sent
 type Message struct {
-	MainMessage string
-	Fields      map[string]string
+	MainMessage      string
+	NotificationType string
+	Fields           map[string]string
 }
 
 // TaskStateUpdate holds a digest of data representing a task state change
@@ -43,6 +44,7 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	var m Message
 
 	m.MainMessage = fmt.Sprintf("#task #id:%s\n%s", tsu.PublicID, tsu.Title)
+	m.NotificationType = TaskStateUpdateKey
 
 	m.Fields = make(map[string]string)
 
@@ -80,15 +82,66 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	return &m
 }
 
+type TaskValidation struct {
+	Title              string
+	PublicID           string
+	State              string
+	TemplateName       string
+	RequesterUsername  string
+	PotentialResolvers []string
+	Tags               map[string]string
+}
+
+// WrapTaskValidation returns a Message struct formatted for a task requiring validation
+func WrapTaskValidation(tv *TaskValidation) *Message {
+	var m Message
+
+	m.MainMessage = fmt.Sprintf("#task #id:%s\n%s", tv.PublicID, tv.Title)
+	m.NotificationType = TaskValidationKey
+
+	m.Fields = make(map[string]string)
+
+	m.Fields["task_id"] = tv.PublicID
+	m.Fields["title"] = tv.Title
+	m.Fields["state"] = tv.State
+	m.Fields["template"] = tv.TemplateName
+	if tv.RequesterUsername != "" {
+		m.Fields["requester"] = tv.RequesterUsername
+	}
+	if tv.PotentialResolvers != nil && len(tv.PotentialResolvers) > 0 {
+		m.Fields["potential_resolvers"] = strings.Join(tv.PotentialResolvers, " ")
+	}
+
+	if tv.Tags != nil {
+		tags, err := json.Marshal(tv.Tags)
+		if err == nil {
+			m.Fields["tags"] = string(tags)
+		} else {
+			log.Printf("notify error: failed to marshal tags for task #%s: %s", tv.PublicID, err)
+		}
+	}
+
+	if cfg, err := utask.Config(nil); err == nil {
+		m.Fields["url"] = cfg.BaseURL + cfg.DashboardPathPrefix + dashboardUriTaskView + tv.PublicID
+	}
+
+	return &m
+}
+
 func checkIfDeliverMessage(m *Message, b *notificationBackend) bool {
-	send := checkIfDeliverMessageFromState(m, b.defaultNotificationStrategy)
+	send := checkIfDeliverMessageFromState(m, b.defaultNotificationStrategy[m.NotificationType])
 
 	templateName, ok := m.Fields["template"]
 	if !ok {
 		return send
 	}
 
-	for _, strat := range b.templateNotificationStrategies {
+	actionStrat, ok := b.templateNotificationStrategies[m.NotificationType]
+	if !ok {
+		return send
+	}
+
+	for _, strat := range actionStrat {
 		for _, t := range strat.Templates {
 			if t != templateName {
 				continue

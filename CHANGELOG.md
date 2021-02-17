@@ -6,6 +6,11 @@ We will list in this document any breaking changes between versions, that requir
 
 ## Breaking changes
 
+### v1.13.0
+#### Notifications
+- Added a new `notification_type` : `task_validation` that fires every time a new task need a human validation. To integrate different `notification_strategy`, all `notification_strategy` are scopped to the `notification_type`. Then, `default_notification_strategy` is now an object containing the `notification_type` as key, and the `strategy` as value ; and `template_notification_strategies` is now an object containing the `notification_type` as key, and the strategies array as value.
+- Changed the configuration key `task_state_action` (in the `notify_action` section) to the new value `task_state_update` (to match the `notification_type` value).
+
 ### v1.10.0
 #### SQL
 - `005_resolution_creation_timestamp.sql` migration file should be applied while upgrading. It adds a column `created` in the `resolution` table to keep track of the resolution creation timestamp.

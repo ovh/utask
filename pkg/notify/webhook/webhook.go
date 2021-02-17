@@ -41,7 +41,8 @@ func NewWebhookNotificationSender(webhookURL, username, password string, headers
 // Send is the implementation for triggering a webhook to send the notification
 func (w *NotificationSender) Send(m *notify.Message, name string) {
 	msg := map[string]string{
-		"message": m.MainMessage,
+		"message":           m.MainMessage,
+		"notification_type": m.NotificationType,
 	}
 
 	for k, v := range m.Fields {

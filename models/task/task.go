@@ -620,6 +620,31 @@ func (t *Task) notifyState(potentialResolvers []string) {
 
 	notify.Send(
 		notify.WrapTaskStateUpdate(tsu),
-		notify.ListActions().TaskStateAction,
+		notify.ListActions().TaskStateUpdateAction,
+	)
+}
+
+func (t *Task) NotifyValidationRequired(tt *tasktemplate.TaskTemplate) {
+	notificationAllowedResolverUsernames := []string{}
+	if tt != nil {
+		notificationAllowedResolverUsernames = append(notificationAllowedResolverUsernames, tt.AllowedResolverUsernames...)
+	}
+	if tt.AllowAllResolverUsernames {
+		notificationAllowedResolverUsernames = append(notificationAllowedResolverUsernames, t.RequesterUsername)
+	}
+
+	tv := &notify.TaskValidation{
+		Title:              t.Title,
+		PublicID:           t.PublicID,
+		State:              t.State,
+		TemplateName:       t.TemplateName,
+		PotentialResolvers: notificationAllowedResolverUsernames,
+		RequesterUsername:  t.RequesterUsername,
+		Tags:               t.Tags,
+	}
+
+	notify.Send(
+		notify.WrapTaskValidation(tv),
+		notify.ListActions().TaskValidationAction,
 	)
 }

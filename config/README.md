@@ -61,18 +61,27 @@ postgres://user:pass@db/utask?sslmode=disable
                 "url": "http://localhost:9999/tat",
                 "topic": "utask.notifications"
             },
-            "default_notification_strategy":"silent",
-            "template_notification_strategies": [{
-                "templates": ["hello-world", "hello-world-2"],
-                "notification_strategy": "always"
-            }]
+            "default_notification_strategy": {
+                "task_state_update": "silent",
+                "task_validation": "always"
+            },
+            "template_notification_strategies": {
+                "task_state_update": [
+                    {
+                        "templates": ["hello-world", "hello-world-2"],
+                        "notification_strategy": "always"
+                    }
+                ]
+            }
         },
         "slack-webhook": {
             "type": "slack",
             "config": {
                 "webhook_url": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
             },
-            "default_notification_strategy":"failure_only"
+            "default_notification_strategy": {
+                "task_state_update": "failure_only"
+            },
         },
         "webhook-example.org": {
             "type": "webhook",
@@ -89,10 +98,15 @@ postgres://user:pass@db/utask?sslmode=disable
     // notify_actions specifies a notification config for existing events in µTask
     // existing events are:
     // - task_state_action (fired every time a task's state changes)
+    // - task_validation_action (fired every time a new task is created and requires a human validation)
     "notify_actions": {
         "task_state_action": {
             "disabled": false, // set to true to avoid sending out notification
             "notify_backends": ["tat-internal", "slack-webhook"] // choose among the named configs in notify_config, leave empty to broadcast on any notification backend
+        },
+        "task_validation_action": {
+            "disabled": false, // set to true to avoid sending out notification
+            "notify_backends": ["slack-webhook"] // choose among the named configs in notify_config, leave empty to broadcast on any notification backend
         }
     },
     // database_config holds configuration to fine-tune DB connection
