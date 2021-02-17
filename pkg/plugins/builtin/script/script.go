@@ -22,6 +22,7 @@ import (
 var (
 	Plugin = taskplugin.New("script", "0.2", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
+		taskplugin.WithContextFunc(ctx),
 		taskplugin.WithResources(resourcesscript),
 	)
 )
@@ -52,6 +53,19 @@ type Config struct {
 	OutputMode             string   `json:"output_mode"`
 	OutputManualDelimiters []string `json:"output_manual_delimiters"`
 	ExitCodesUnrecoverable []string `json:"exit_codes_unrecoverable"`
+}
+
+// ScriptContext is the metadata inherited from the task
+type ScriptContext struct {
+	TaskID       string `json:"task_id"`
+	ResolutionID string `json:"resolution_id"`
+}
+
+func ctx(stepName string) interface{} {
+	return &ScriptContext{
+		TaskID:       "{{ .task.task_id }}",
+		ResolutionID: "{{ .task.resolution_id }}",
+	}
 }
 
 func resourcesscript(i interface{}) []string {
@@ -126,6 +140,7 @@ func validConfig(config interface{}) error {
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*Config)
+	scriptContext := ctx.(*ScriptContext)
 
 	var timeout time.Duration
 
@@ -144,6 +159,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	defer cancel()
 
 	cmd := gexec.CommandContext(ctxe, fmt.Sprintf("./%s", cfg.File), cfg.Argv...)
+	cmd.Env = append(
+		os.Environ(),
+		fmt.Sprintf("UTASK_TASK_ID=%s", scriptContext.TaskID),
+		fmt.Sprintf("UTASK_RESOLUTION_ID=%s", scriptContext.ResolutionID),
+		fmt.Sprintf("UTASK_STEP_NAME=%s", stepName),
+	)
 	cmd.Dir = utask.FScriptsFolder
 	cmd.Stdin = strings.NewReader(cfg.Stdin)
 
