@@ -156,10 +156,14 @@ func resourceshttp(i interface{}) []string {
 	var host string
 	if cfg.Host == "" {
 		uri, _ := url.Parse(cfg.URL)
-		host = uri.Host
+		if uri != nil {
+			host = uri.Host
+		}
 	} else {
 		uri, _ := url.Parse(cfg.Host)
-		host = uri.Host
+		if uri != nil {
+			host = uri.Host
+		}
 	}
 
 	if host == "" {
