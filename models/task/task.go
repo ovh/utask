@@ -269,16 +269,17 @@ func loadDetails(dbp zesty.DBProvider, t *Task, withComments bool) (err error) {
 
 // ListFilter holds parameters for filtering a list of tasks
 type ListFilter struct {
-	RequesterUser         *string
-	PotentialResolverUser *string
-	Last                  *string
-	State                 *string
-	Batch                 *Batch
-	PageSize              uint64
-	Before                *time.Time
-	After                 *time.Time
-	Tags                  map[string]string
-	Template              *string
+	RequesterUser                    *string
+	PotentialResolverUser            *string
+	RequesterOrPotentialResolverUser *string
+	Last                             *string
+	State                            *string
+	Batch                            *Batch
+	PageSize                         uint64
+	Before                           *time.Time
+	After                            *time.Time
+	Tags                             map[string]string
+	Template                         *string
 }
 
 // ListTasks returns a list of tasks, optionally filtered on one or several criteria
@@ -317,6 +318,16 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 	if filter.PotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.PotentialResolverUser)
 		sel = sel.Where(squirrel.Or{
+			squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg),
+			squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, arg),
+		})
+	}
+
+	if filter.RequesterOrPotentialResolverUser != nil {
+		arg := strconv.Quote(*filter.RequesterOrPotentialResolverUser)
+		sel = sel.Where(squirrel.Or{
+			squirrel.Eq{`"task".requester_username`: *filter.RequesterOrPotentialResolverUser},
+			squirrel.Expr(`"task".watcher_usernames @> ?::jsonb`, arg),
 			squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg),
 			squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, arg),
 		})
