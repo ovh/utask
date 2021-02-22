@@ -54,11 +54,9 @@ func ValidateTags(tags map[string]string) error {
 
 // ListContainsString asserts that a string slice contains a given string
 func ListContainsString(list []string, item string) bool {
-	if list != nil {
-		for _, i := range list {
-			if i == item {
-				return true
-			}
+	for _, i := range list {
+		if i == item {
+			return true
 		}
 	}
 	return false

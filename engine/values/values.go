@@ -332,7 +332,7 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 var zero reflect.Value
 
 func (v *Values) fieldTmpl(key ...string) reflect.Value {
-	var i interface{}
+	var i interface{} //nolint:gosimple
 
 	i = map[string]interface{}(v.m)
 	return fieldFn(i, key)
@@ -342,7 +342,7 @@ func fieldFn(i interface{}, keys []string) reflect.Value {
 	var ok bool
 
 	for _, k := range keys {
-		switch i.(type) {
+		switch i.(type) { //nolint:gosimple
 		case map[string]interface{}:
 			i, ok = i.(map[string]interface{})[k]
 			if !ok {

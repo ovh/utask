@@ -73,18 +73,15 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 
 func conjMap(common, particular map[string]interface{}) (map[string]interface{}, error) {
 	conj := make(map[string]interface{})
-	if particular != nil {
-		for key, value := range particular {
-			conj[key] = value
-		}
+	for key, value := range particular {
+		conj[key] = value
 	}
-	if common != nil {
-		for key, value := range common {
-			if _, ok := conj[key]; ok {
-				return nil, errors.NewBadRequest(nil, "Conflicting keys in input maps")
-			}
-			conj[key] = value
+
+	for key, value := range common {
+		if _, ok := conj[key]; ok {
+			return nil, errors.NewBadRequest(nil, "Conflicting keys in input maps")
 		}
+		conj[key] = value
 	}
 	return conj, nil
 }

@@ -5,13 +5,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/juju/errors"
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/input"
-	"github.com/ovh/utask/models/task"
-	"github.com/ovh/utask/pkg/auth"
-	"github.com/ovh/utask/pkg/utils"
 )
 
 const (
@@ -98,28 +93,4 @@ func normalizePageSize(pageSize uint64) uint64 {
 		return utask.MaxPageSize
 	}
 	return pageSize
-}
-
-func isRequester(t *task.Task, c *gin.Context) error {
-	callUser := auth.GetIdentity(c)
-	if t.RequesterUsername != callUser {
-		return errors.Forbiddenf("Not requester")
-	}
-	return nil
-}
-
-func isResolver(t *task.Task, c *gin.Context) error {
-	callUser := auth.GetIdentity(c)
-	if t.ResolverUsername != nil && *t.ResolverUsername != callUser {
-		return errors.Forbiddenf("Not resolver")
-	}
-	return nil
-}
-
-func isWatcher(t *task.Task, c *gin.Context) error {
-	callUser := auth.GetIdentity(c)
-	if !utils.ListContainsString(t.WatcherUsernames, callUser) {
-		return errors.Forbiddenf("Not watcher")
-	}
-	return nil
 }

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/juju/errors"
@@ -30,7 +31,9 @@ func InstanceCollector(ctx context.Context, maxConcurrentExecutions int, waitDur
 
 	go func() {
 		// Start immediately
-		collect(dbp, sm, waitDuration)
+		if err := collect(dbp, sm, waitDuration); err != nil {
+			log.Printf("InstanceCollector: failed to collect resolution: %s", err)
+		}
 
 		for running := true; running; {
 			// wake up every minute
@@ -40,7 +43,9 @@ func InstanceCollector(ctx context.Context, maxConcurrentExecutions int, waitDur
 			case <-ctx.Done():
 				running = false
 			default:
-				collect(dbp, sm, waitDuration)
+				if err := collect(dbp, sm, waitDuration); err != nil {
+					log.Printf("InstanceCollector: failed to collect resolution: %s", err)
+				}
 			}
 		}
 	}()
@@ -78,7 +83,9 @@ func collect(dbp zesty.DBProvider, sm *semaphore.Weighted, waitDuration time.Dur
 			// no resolutions left to retry, delete instance
 			if remaining, err := getRemainingResolution(dbp, i); err == nil && remaining == 0 {
 				log.Infof("collected all resolution from %d, deleting instance from instance list", i.ID)
-				i.Delete(dbp)
+				if err := i.Delete(dbp); err != nil {
+					log.Printf("InstanceCollector: failed to delete instance from instance list: %s", err)
+				}
 			}
 		}
 	}

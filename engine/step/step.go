@@ -745,8 +745,8 @@ func (st *Step) ExecutorMetadata() json.RawMessage {
 	return runner.MetadataSchema()
 }
 
-func (s *Step) walkThroughFunctions(f func(*functions.Function)) error {
-	var runnerName = s.Action.Type
+func (st *Step) walkThroughFunctions(f func(*functions.Function)) error {
+	var runnerName = st.Action.Type
 	for {
 		runner, err := getRunner(runnerName)
 		if err != nil {
@@ -764,10 +764,10 @@ func (s *Step) walkThroughFunctions(f func(*functions.Function)) error {
 }
 
 // GetConditions returns the list of conditions of this step resolved (functions included)
-func (s *Step) GetConditions() ([]*condition.Condition, error) {
-	conditions := s.Conditions
+func (st *Step) GetConditions() ([]*condition.Condition, error) {
+	conditions := st.Conditions
 
-	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
+	if err := st.walkThroughFunctions(func(functionRunner *functions.Function) {
 		conditions = append(functionRunner.Conditions, conditions...)
 	}); err != nil {
 		return nil, err
@@ -776,10 +776,10 @@ func (s *Step) GetConditions() ([]*condition.Condition, error) {
 }
 
 // GetCustomStates returns the list of custom states of the Step (functions included)
-func (s *Step) GetCustomStates() ([]string, error) {
-	states := s.CustomStates
+func (st *Step) GetCustomStates() ([]string, error) {
+	states := st.CustomStates
 
-	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
+	if err := st.walkThroughFunctions(func(functionRunner *functions.Function) {
 		states = utils.AppendUniq(states, functionRunner.CustomStates...)
 	}); err != nil {
 		return nil, err
@@ -788,10 +788,10 @@ func (s *Step) GetCustomStates() ([]string, error) {
 }
 
 // GetPreHook returns the prehook that need to be executed (function included)
-func (s *Step) GetPreHook() (*executor.Executor, error) {
-	preHook := s.PreHook
+func (st *Step) GetPreHook() (*executor.Executor, error) {
+	preHook := st.PreHook
 
-	if err := s.walkThroughFunctions(func(functionRunner *functions.Function) {
+	if err := st.walkThroughFunctions(func(functionRunner *functions.Function) {
 		if functionRunner.PreHook != nil {
 			preHook = functionRunner.PreHook
 		}
@@ -802,20 +802,20 @@ func (s *Step) GetPreHook() (*executor.Executor, error) {
 
 }
 
-func (s *Step) CheckIfValidState() (bool, error) {
+func (st *Step) CheckIfValidState() (bool, error) {
 	for _, state := range builtinStates {
-		if state == s.State {
+		if state == st.State {
 			return true, nil
 		}
 	}
 
-	states, err := s.GetCustomStates()
+	states, err := st.GetCustomStates()
 	if err != nil {
 		return false, err
 	}
 
 	for _, state := range states {
-		if state == s.State {
+		if state == st.State {
 			return true, nil
 		}
 	}

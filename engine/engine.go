@@ -852,7 +852,7 @@ func pruneSteps(res *resolution.Resolution, modifiedSteps map[string]bool) {
 	}
 	if len(recursiveModif) > 0 {
 		pruneSteps(res, recursiveModif)
-		// all recursive pruned steps should be commited back to the parent modifiedSteps, to be picked by next availableSteps() call
+		// all recursive pruned steps should be committed back to the parent modifiedSteps, to be picked by next availableSteps() call
 		for stepName := range recursiveModif {
 			modifiedSteps[stepName] = true
 		}

@@ -30,7 +30,9 @@ func ExecutorsFromFolder(path string) error {
 		if !ok {
 			return fmt.Errorf("failed to assert type of plugin '%s': expected TaskPlugin got %T", fileName, p)
 		}
-		step.RegisterRunner(plugExec.PluginName(), plugExec)
+		if err := step.RegisterRunner(plugExec.PluginName(), plugExec); err != nil {
+			return err
+		}
 		logrus.Infof("Registered plugin '%s' (%s)", plugExec.PluginName(), plugExec.PluginVersion())
 		return nil
 	})
