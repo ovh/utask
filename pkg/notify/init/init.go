@@ -25,9 +25,13 @@ func Init(store *configstore.Store) error {
 	}
 
 	for name, ncfg := range cfg.NotifyConfig {
-		if err := validateNotificationStrategy(&ncfg); err != nil {
+		newncfg, err := validateAndNormalizeNotificationStrategy(ncfg)
+		if err != nil {
 			return err
 		}
+
+		// save normalisation modifications
+		ncfg.DefaultNotificationStrategy = newncfg.DefaultNotificationStrategy
 
 		switch ncfg.Type {
 		case tat.Type:
@@ -72,16 +76,18 @@ func Init(store *configstore.Store) error {
 	return nil
 }
 
-func validateNotificationStrategy(ncfg *utask.NotifyBackend) error {
+func validateAndNormalizeNotificationStrategy(ncfg utask.NotifyBackend) (utask.NotifyBackend, error) {
 	for action := range ncfg.DefaultNotificationStrategy {
-		switch action {
-		case notify.TaskValidationKey, notify.TaskStateUpdateKey:
-		default:
-			return fmt.Errorf("invalid action in default_notification_strategy: %q is not allowed value", action)
+		if !validateActionName(action) {
+			return ncfg, fmt.Errorf("invalid action in default_notification_strategy: %q is not allowed value", action)
 		}
 	}
 
-	for _, action := range []string{notify.TaskValidationKey, notify.TaskStateUpdateKey} {
+	for _, action := range []string{notify.TaskValidationKey, notify.TaskStateUpdateKey, notify.TaskStepUpdateKey} {
+		if ncfg.DefaultNotificationStrategy == nil {
+			ncfg.DefaultNotificationStrategy = make(map[string]string)
+		}
+
 		defaultStrategy, ok := ncfg.DefaultNotificationStrategy[action]
 		if !ok {
 			ncfg.DefaultNotificationStrategy[action] = utask.NotificationStrategyAlways
@@ -90,27 +96,27 @@ func validateNotificationStrategy(ncfg *utask.NotifyBackend) error {
 
 		switch validateStrategyForAction(action, defaultStrategy) {
 		case errNotAllowed:
-			return fmt.Errorf("invalid default_notification_strategy for action %q: %q is not allowed for this action", action, defaultStrategy)
+			return ncfg, fmt.Errorf("invalid default_notification_strategy for action %q: %q is not allowed for this action", action, defaultStrategy)
 		case errUnknown:
-			return fmt.Errorf("invalid default_notification_strategy: %q is not a valid value", ncfg.DefaultNotificationStrategy)
+			return ncfg, fmt.Errorf("invalid default_notification_strategy: %q is not a valid value", ncfg.DefaultNotificationStrategy)
 		}
 
 		for action, strats := range ncfg.TemplateNotificationStrategies {
 			if !validateActionName(action) {
-				return fmt.Errorf("invalid action name %q found in notification_strategy: %q is not a valid value", action, action)
+				return ncfg, fmt.Errorf("invalid action name %q found in notification_strategy: %q is not a valid value", action, action)
 			}
-			for _, strat := range strats {
+			for _, strat := range strats { //nolint:misspell // misspell believes that we wanted to use start instead of strat
 				switch validateStrategyForAction(action, strat.NotificationStrategy) {
 				case errNotAllowed:
-					return fmt.Errorf("invalid notification_strategy for templates %#v and action %q: %q is not allowed for this action", strat.Templates, action, strat.NotificationStrategy)
+					return ncfg, fmt.Errorf("invalid notification_strategy for templates %#v and action %q: %q is not allowed for this action", strat.Templates, action, strat.NotificationStrategy)
 				case errUnknown:
-					return fmt.Errorf("invalid notification_strategy for templates %#v: %q is not a valid value", strat.Templates, strat.NotificationStrategy)
+					return ncfg, fmt.Errorf("invalid notification_strategy for templates %#v: %q is not a valid value", strat.Templates, strat.NotificationStrategy)
 				}
 			}
 		}
 	}
 
-	return nil
+	return ncfg, nil
 }
 
 var (
@@ -134,7 +140,7 @@ func validateStrategyForAction(action, strategy string) error {
 
 func validateActionName(action string) bool {
 	switch action {
-	case notify.TaskValidationKey, notify.TaskStateUpdateKey:
+	case notify.TaskValidationKey, notify.TaskStateUpdateKey, notify.TaskStepUpdateKey:
 		return true
 	default:
 		return false

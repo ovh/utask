@@ -169,6 +169,7 @@ type NotifyBackendWebhook struct {
 type NotifyActions struct {
 	TaskStateUpdateAction NotifyActionsParameters `json:"task_state_update,omitempty"`
 	TaskValidationAction  NotifyActionsParameters `json:"task_validation,omitempty"`
+	TaskStepUpdateAction  NotifyActionsParameters `json:"task_step_update,omitempty"`
 }
 
 // NotifyActionsParameters holds configuration needed to define each Notify actions

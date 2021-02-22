@@ -175,6 +175,26 @@ __task_state_update notifications:__
     "tags": "{\"tag1\":\"value1\"}"
 }
 ```
+
+__task_step_update notifications:__
+```json
+{
+    "message": "string",
+    "notification_type": "task_step_update",
+    "task_id": "public_task_uuid",
+    "title": "task title string",
+    "state": "current task state",
+    "template": "template_name",
+    "step_name": "string",
+    "step_state": "string",
+    "requester": "string",
+    "resolver": "string",
+    "steps": "14/20",
+    "resolution_id": "public_resolution_uuid",
+    "tags": "{\"tag1\":\"value1\"}"
+}
+```
+
 __task_validation notifications:__
 ```json
 {
@@ -228,7 +248,7 @@ The following templating functions are available:
 | **`Golang`**       | Builtin functions from Golang text template                                                                                                                                                                                                                                                                                                                     | [Doc](https://golang.org/pkg/text/template/#hdr-Actions) |
 | **`Sprig`**        | Extended set of functions from the Sprig project                                                                                                                                                                                                                                                                                                                | [Doc](https://masterminds.github.io/sprig/)              |
 | **`field`**        | Equivalent to the dot notation, for entries with forbidden characters                                                                                                                                                                                                                                                                                           | ``{{field `config` `foo.bar`}}``                         |
-| **`fieldFrom`**    | Equivalent to the dot notation, for entries with forbidden characters. It takes the previous template expression as source for the templating values. Example: ```{{ `{"foo.foo":"bar"}` | fromJson | fieldFrom `foo.foo` }}```                                                                                                                                   | ```{{expr | fieldFrom `config` `foo.bar`}}```              |
+| **`fieldFrom`**    | Equivalent to the dot notation, for entries with forbidden characters. It takes the previous template expression as source for the templating values. Example: ```{{ `{"foo.foo":"bar"}` | fromJson | fieldFrom `foo.foo` }}```                                                                                                                                 | ```{{expr | fieldFrom `config` `foo.bar`}}```            |
 | **`eval`**         | Evaluates the value of a template variable                                                                                                                                                                                                                                                                                                                      | ``{{eval `var1`}}``                                      |
 | **`evalCache`**    | Evaluates the value of a template variable, and cache for future usage (to avoid further computation)                                                                                                                                                                                                                                                           | ``{{evalCache `var1`}}``                                 |
 | **`fromJson`**     | Decodes a JSON document into a structure. If the input cannot be decoded as JSON, the function will return an empty string                                                                                                                                                                                                                                      | ``{{fromJson `{"a":"b"}`}}``                             |

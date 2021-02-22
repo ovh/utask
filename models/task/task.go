@@ -533,8 +533,16 @@ func applyTemplateToMap(m map[string]interface{}, values *values.Values) error {
 
 // SetState updates the task's state
 func (t *Task) SetState(s string) {
+	var notify bool
+	if t.State != s {
+		notify = true
+	}
+
 	t.State = s
-	t.notifyState(nil)
+
+	if notify {
+		t.notifyState(nil)
+	}
 }
 
 func (t *Task) SetTags(tags map[string]string, values *values.Values) error {
@@ -646,5 +654,32 @@ func (t *Task) NotifyValidationRequired(tt *tasktemplate.TaskTemplate) {
 	notify.Send(
 		notify.WrapTaskValidation(tv),
 		notify.ListActions().TaskValidationAction,
+	)
+}
+
+func (t *Task) NotifyStepState(stepName, stepState string) {
+	if t.Resolution == nil || t.ResolverUsername == nil {
+		// matches mainly the period where the task is getting created and all steps states are assigned to TODO
+		return
+	}
+
+	tsu := &notify.TaskStepUpdate{
+		Title:              t.Title,
+		PublicID:           t.PublicID,
+		State:              t.State,
+		TemplateName:       t.TemplateName,
+		RequesterUsername:  t.RequesterUsername,
+		ResolverUsername:   *t.ResolverUsername,
+		StepsDone:          t.StepsDone,
+		StepsTotal:         t.StepsTotal,
+		Tags:               t.Tags,
+		StepName:           stepName,
+		StepState:          stepState,
+		ResolutionPublicID: *t.Resolution,
+	}
+
+	notify.Send(
+		notify.WrapTaskStepUpdate(tsu),
+		notify.ListActions().TaskStepUpdateAction,
 	)
 }

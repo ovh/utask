@@ -14,6 +14,7 @@ var (
 
 const (
 	TaskStateUpdateKey = "task_state_update"
+	TaskStepUpdateKey  = "task_step_update"
 	TaskValidationKey  = "task_validation"
 )
 

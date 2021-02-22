@@ -489,7 +489,18 @@ func (r *Resolution) setSteps(st map[string]*step.Step) {
 }
 
 func (r *Resolution) SetStepState(stepName, state string) {
+	oldState := r.Steps[stepName].State
 	r.Steps[stepName].State = state
+
+	// notify about step state modification
+	if oldState != state {
+		if dbp, err := zesty.NewDBProvider(utask.DBName); err == nil {
+			if t, err := task.LoadFromID(dbp, r.TaskID); err == nil {
+				t.NotifyStepState(stepName, state)
+			}
+		}
+	}
+
 	if r.Values == nil {
 		return
 	}

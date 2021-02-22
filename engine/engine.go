@@ -406,6 +406,11 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 				}
 			}
 
+			var oldState string
+			if oldStep, ok := res.Steps[s.Name]; ok {
+				oldState = oldStep.State
+			}
+
 			// "commit" step back into resolution
 			res.SetStep(s.Name, s)
 			// consolidate its result into live values
@@ -428,6 +433,10 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 			}
 
 			debugLogger.Debugf("Engine: resolve() %s loop, step %s (#%d) result: %s", res.PublicID, s.Name, s.TryCount, s.State)
+
+			if newStep, ok := res.Steps[s.Name]; ok && newStep.State != oldState {
+				t.NotifyStepState(s.Name, newStep.State)
+			}
 
 			// update done step count
 			// ignore foreach iterations for global done count

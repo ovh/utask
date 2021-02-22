@@ -97,16 +97,20 @@ postgres://user:pass@db/utask?sslmode=disable
     },
     // notify_actions specifies a notification config for existing events in µTask
     // existing events are:
-    // - task_state_action (fired every time a task's state changes)
-    // - task_validation_action (fired every time a new task is created and requires a human validation)
+    // - task_state_update: fired every time a task's state changes
+    // - task_validation: fired every time a new task is created and requires a human validation
+    // - task_step_update: fired every time a step's state changes
     "notify_actions": {
-        "task_state_action": {
+        "task_state_update": {
             "disabled": false, // set to true to avoid sending out notification
             "notify_backends": ["tat-internal", "slack-webhook"] // choose among the named configs in notify_config, leave empty to broadcast on any notification backend
         },
-        "task_validation_action": {
+        "task_validation": {
             "disabled": false, // set to true to avoid sending out notification
             "notify_backends": ["slack-webhook"] // choose among the named configs in notify_config, leave empty to broadcast on any notification backend
+        },
+        "task_step_update": {
+            "disabled": true // set to true to avoid sending out notification
         }
     },
     // database_config holds configuration to fine-tune DB connection
