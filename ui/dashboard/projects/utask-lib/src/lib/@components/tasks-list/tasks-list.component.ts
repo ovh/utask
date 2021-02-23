@@ -31,6 +31,7 @@ import {
     tap
 } from 'rxjs/operators';
 import get from 'lodash-es/get';
+import cloneDeep from 'lodash-es/cloneDeep';
 import * as moment_ from 'moment';
 const moment = moment_;
 import Task, { TaskType } from '../../@models/task.model';
@@ -133,7 +134,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     ) {
         this.registrerScroll
             .pipe(filter(data => !this._params || !ParamsListTasks.equals(this._params, data)))
-            .pipe(tap(data => this._params = { ...data }))
+            .pipe(tap(data => this._params = cloneDeep(data)))
             .pipe(concatMap(() => this.registerInfiniteScroll()))
             .subscribe();
     }
