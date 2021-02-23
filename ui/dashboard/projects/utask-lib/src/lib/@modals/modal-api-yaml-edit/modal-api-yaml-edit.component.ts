@@ -7,7 +7,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
         <div>
             <utask-loader *ngIf="loaders.main"></utask-loader>
             <lib-utask-error-message [data]="errors.main" *ngIf="errors.main && !loaders.main"></lib-utask-error-message>
-            <lib-utask-editor *ngIf="!loaders.main && !errors.main" [(ngModel)]="text" ngDefaultControl [ngModelOptions]="{standalone: true}" [config]="{ language: 'yaml', readOnly: false, wordWrap: 'on' }"></lib-utask-editor>
+            <lib-utask-input-editor [config]="{ language: 'yaml', wordWrap: 'on' }" [(ngModel)]="text"></lib-utask-input-editor>
             <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
         </div>
         <div *nzModalFooter>
@@ -25,8 +25,9 @@ export class ModalApiYamlEditComponent implements OnInit {
     errors: { [key: string]: any } = {};
     result: any;
 
-    constructor(public modal: NzModalRef) {
-    }
+    constructor(
+        public modal: NzModalRef
+    ) { }
 
     ngOnInit() {
         this.loaders.main = true;

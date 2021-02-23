@@ -16,7 +16,7 @@ export class RequestService {
     edit(task: Task) {
         return new Promise((resolve, reject) => {
             this.modal.create({
-                nzTitle: 'Resolution preview',
+                nzTitle: 'Request preview',
                 nzContent: ModalApiYamlEditComponent,
                 nzWidth: '80%',
                 nzComponentParams: {
