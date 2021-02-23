@@ -51,7 +51,7 @@ export class NewComponent implements OnInit {
               (isArray(values.watcher_usernames) ? values.watcher_usernames : [values.watcher_usernames])
               : []
           };
-          get(template, 'inputs', []).forEach(input => {
+          (template.inputs ?? []).forEach(input => {
             if (input.collection && !isArray(values[input.name])) {
               inputs['input_' + input.name] = values[input.name] ? [values[input.name]] : [];
             } else if (input.type === 'number' && get(values, input.name)) {
@@ -76,14 +76,14 @@ export class NewComponent implements OnInit {
   templateChange(t: Template): void {
     this.inputControls.forEach(key => this.validateForm.removeControl(key));
     if (t) {
-      t.inputs.forEach(input => {
+      (t.inputs ?? []).forEach(input => {
         const validators: Array<ValidatorFn> = [];
         if (!input.optional) {
           validators.push(Validators.required);
         }
         this.validateForm.addControl('input_' + input.name, new FormControl(null, validators))
       });
-      this.inputControls = t.inputs.map(input => 'input_' + input.name);
+      this.inputControls = (t.inputs ?? []).map(input => 'input_' + input.name);
       this.selectedTemplate = t;
       this._cd.markForCheck();
     }
