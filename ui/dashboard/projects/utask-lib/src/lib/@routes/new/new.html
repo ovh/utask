@@ -4,7 +4,8 @@
             <nz-form-item>
                 <nz-form-label nzRequired nzFor="template">Template</nz-form-label>
                 <nz-form-control class="template-input" nzErrorTip="Please select a template!" [nzExtra]="templateInfo">
-                    <nz-select formControlName="template" id="template" (ngModelChange)="templateChange($event)">
+                    <nz-select nzShowSearch formControlName="template" id="template"
+                        (ngModelChange)="templateChange($event)">
                         <ng-template ngFor let-template [ngForOf]="templates">
                             <nz-option [nzDisabled]="template.blocked" [nzValue]="template"
                                 [nzLabel]="template.description">
