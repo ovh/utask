@@ -268,26 +268,10 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     }
 
     loadTasks(paramLast: string = ''): Observable<Array<Task>> {
-        // Trick to get both own and resolvable task for non admin user
-        // We ignore the last param for resolvable tasks so we will only get the first ones
-        if (this.params.type === TaskType.both) {
-            return forkJoin({
-                resolvable: this._api.task.list({
-                    ...this.params,
-                    type: TaskType.resolvable
-                }),
-                own: this._api.task.list({
-                    ...this.params,
-                    type: TaskType.own,
-                    last: paramLast
-                })
-            }).pipe(map(r => r.own.body.concat(r.resolvable.body)));
-        } else {
-            return this._api.task.list({
-                ...this.params,
-                last: paramLast
-            }).pipe(map(res => res.body));
-        }
+        return this._api.task.list({
+            ...this.params,
+            last: paramLast
+        }).pipe(map(res => res.body));
     }
 
     clickShowMore(): void {

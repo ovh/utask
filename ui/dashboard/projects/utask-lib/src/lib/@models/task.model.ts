@@ -24,7 +24,6 @@ export class ResolutionStep {
 export enum TaskType {
     all = 'all',
     own = 'own',
-    both = 'both',
     resolvable = 'resolvable'
 };
 
