@@ -138,13 +138,13 @@ func (f *Function) Resources(baseConfig json.RawMessage, config json.RawMessage)
 
 // Context is the implementation of the runner.Context function but does nothing: function runners
 // are just place holders to resolve to actual plugin/builtin.
-func (s *Function) Context(stepName string) interface{} {
+func (f *Function) Context(stepName string) interface{} {
 	return nil
 }
 
 // MetadataSchema returns the configuration schemas of the function
-func (s *Function) MetadataSchema() json.RawMessage {
-	return s.rawFunction
+func (f *Function) MetadataSchema() json.RawMessage {
+	return f.rawFunction
 }
 
 // LoadFromDir loads recursively all the function from a given directory.

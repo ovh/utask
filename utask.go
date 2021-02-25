@@ -278,7 +278,7 @@ func AcquireResources(ctx context.Context, names []string) error {
 		acquiredList = append(acquiredList, name)
 	}
 	if globalerr != nil {
-		for _, name := range names {
+		for _, name := range acquiredList {
 			ReleaseResource(name)
 		}
 	}

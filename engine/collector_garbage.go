@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/loopfz/gadgeto/zesty"
@@ -34,7 +35,9 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 	// delete old completed/blocked/cancelled/wontfix tasks
 	go func() {
 		// Run it immediately and wait for new tick
-		deleteOldTasks(dbp, threshold)
+		if err := deleteOldTasks(dbp, threshold); err != nil {
+			log.Printf("GarbageCollector: failed to trash old tasks: %s", err)
+		}
 
 		for running := true; running; {
 			time.Sleep(24 * time.Hour)
@@ -43,7 +46,9 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 			case <-ctx.Done():
 				running = false
 			default:
-				deleteOldTasks(dbp, threshold)
+				if err := deleteOldTasks(dbp, threshold); err != nil {
+					log.Printf("GarbageCollector: failed to trash old tasks: %s", err)
+				}
 			}
 		}
 	}()
@@ -51,7 +56,9 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 	// delete un-referenced batches
 	go func() {
 		// Run it immediately and wait for new tick
-		deleteOrphanBatches(dbp)
+		if err := deleteOrphanBatches(dbp); err != nil {
+			log.Printf("GarbageCollector: failed to trash old batches: %s", err)
+		}
 
 		for running := true; running; {
 			time.Sleep(24 * time.Hour)
@@ -60,7 +67,9 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 			case <-ctx.Done():
 				running = false
 			default:
-				deleteOrphanBatches(dbp)
+				if err := deleteOrphanBatches(dbp); err != nil {
+					log.Printf("GarbageCollector: failed to trash old batches: %s", err)
+				}
 			}
 		}
 	}()

@@ -36,6 +36,8 @@ func TestApply(t *testing.T) {
 }
 
 func TestApplyNested(t *testing.T) {
+	assert, require := td.AssertRequire(t)
+
 	v := values.NewValues()
 
 	v.SetInput(map[string]interface{}{
@@ -47,16 +49,38 @@ func TestApplyNested(t *testing.T) {
 
 	h := json.RawMessage(`{"fooo":{"foo": "{{ .input.ifoo1}} -> {{.input.ifoo3 }}","array":["{{.input.ifoo2}}"]}}`)
 	result, err := resolveObject(v, h, nil, "")
-	if !td.CmpNoError(t, err) {
-		return
-	}
+	require.CmpNoError(err)
+
 	expected := `{"fooo":{"array":["true"],"foo":"Hello -> 12"}}`
-	td.Cmp(t, string(result), expected)
+	assert.Cmp(string(result), expected)
 
 	h = json.RawMessage(`{"fooo":{"foo": "{{ .input.ifoo1}} -> {{.input.ifoo3.notexisting }}"}}`)
 	result, err = resolveObject(v, h, nil, "")
-	if !td.CmpError(t, err) {
-		return
-	}
-	td.CmpContains(t, err.Error(), "can't evaluate field notexisting in type interface")
+	require.CmpError(err)
+	assert.Contains(err.Error(), "can't evaluate field notexisting in type interface")
+}
+
+func TestApplyArray(t *testing.T) {
+	assert, require := td.AssertRequire(t)
+
+	v := values.NewValues()
+
+	v.SetInput(map[string]interface{}{
+		"ifoo1": "Hello",
+		"ifoo2": true,
+		"ifoo3": 12,
+		"ifoo4": []string{"Hello", "you!"},
+	})
+
+	h := json.RawMessage(`["fooo",{"foo": "{{ .input.ifoo1}} -> {{.input.ifoo3 }}","array":["{{.input.ifoo2}}"]}]`)
+	result, err := resolveObject(v, h, nil, "")
+	require.CmpNoError(err)
+
+	expected := `["fooo",{"array":["true"],"foo":"Hello -> 12"}]`
+	assert.Cmp(string(result), expected)
+
+	h = json.RawMessage(`["fooo",{"foo": "{{ .input.ifoo1}} -> {{.input.ifoo3.notexisting }}"}]`)
+	result, err = resolveObject(v, h, nil, "")
+	require.CmpError(err)
+	assert.Contains(err.Error(), "can't evaluate field notexisting in type interface")
 }

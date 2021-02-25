@@ -515,13 +515,13 @@ func applyTemplateToMap(m map[string]interface{}, values *values.Values) error {
 	}
 	// templating on map values
 	for k, v := range m {
-		switch v.(type) {
+		switch v := v.(type) {
 		case map[string]interface{}:
-			if err := applyTemplateToMap(v.(map[string]interface{}), values); err != nil {
+			if err := applyTemplateToMap(v, values); err != nil {
 				return err
 			}
 		case string:
-			tempv, err := values.Apply(v.(string), nil, "")
+			tempv, err := values.Apply(v, nil, "")
 			if err != nil {
 				return fmt.Errorf("failed to template: %s", err.Error())
 			}

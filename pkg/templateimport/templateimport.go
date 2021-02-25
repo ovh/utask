@@ -17,7 +17,7 @@ func AddTemplate(templateName string) {
 }
 
 // GetTemplates returns template names currently being imported.
-// Used when template needs to validate dependency with others templates (check existance, ...)
+// Used when template needs to validate dependency with others templates (check existence, ...)
 func GetTemplates() []string {
 	mu.Lock()
 	defer mu.Unlock()

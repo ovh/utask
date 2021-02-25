@@ -22,7 +22,7 @@ func Init() error {
 		return err
 	}
 
-	timeDelta = dbNow.Sub(time.Now())
+	timeDelta = time.Until(*dbNow)
 
 	return nil
 }

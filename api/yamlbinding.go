@@ -13,7 +13,7 @@ import (
 
 const (
 	// default max body bytes: 256KB
-	// this can be overriden via configuration
+	// this can be overridden via configuration
 	defaultMaxBodyBytes = 256 * 1024
 
 	// absolute upper limit for configuration max body bytes: 10MB

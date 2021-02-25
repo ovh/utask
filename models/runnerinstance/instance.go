@@ -39,7 +39,7 @@ func Create(dbp zesty.DBProvider) (id uint64, err error) {
 	go func() {
 		for {
 			time.Sleep(HeartbeatInterval)
-			i.heartBeat(dbp)
+			_ = i.heartBeat(dbp)
 		}
 	}()
 

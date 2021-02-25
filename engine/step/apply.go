@@ -93,11 +93,12 @@ func applySlice(val *values.Values, v reflect.Value, item interface{}, stepName 
 			elem = elem.Elem()
 		}
 
+		var err error
 		switch elem.Kind() {
 		case reflect.Map:
-			applyMap(val, elem, item, stepName)
+			err = applyMap(val, elem, item, stepName)
 		case reflect.Slice:
-			applySlice(val, elem, item, stepName)
+			err = applySlice(val, elem, item, stepName)
 		case reflect.String:
 			newValue, err := applyString(val, elem, item, stepName)
 			switch err {
@@ -109,6 +110,10 @@ func applySlice(val *values.Values, v reflect.Value, item interface{}, stepName 
 			default:
 				return err
 			}
+		}
+
+		if err != nil {
+			return err
 		}
 	}
 

@@ -290,7 +290,9 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		return nil, errors.BadRequestf("tag %s is read-only and cannot be modified", constants.SubtaskTagParentTaskID)
 	}
 
-	t.SetTags(in.Tags, nil)
+	if err := t.SetTags(in.Tags, nil); err != nil {
+		return nil, errors.BadRequestf("failed to set tags: %s", err)
+	}
 
 	if err := t.Update(dbp,
 		false, // do validate task contents
