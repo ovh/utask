@@ -95,7 +95,7 @@ func resourcesapiovh(i interface{}) []string {
 	}
 	if host, ok := ovh.Endpoints[endpoint]; ok {
 		uri, _ := url.Parse(host)
-		if uri.Host != "" {
+		if uri != nil && uri.Host != "" {
 			resources = append(resources, "url:"+uri.Host)
 		}
 	}
