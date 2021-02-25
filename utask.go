@@ -131,16 +131,16 @@ type ServerOpt struct {
 
 // NotifyBackend holds configuration for instantiating a notify client
 type NotifyBackend struct {
-	Type                           string                         `json:"type"`
-	Config                         json.RawMessage                `json:"config"`
-	TemplateNotificationStrategies []TemplateNotificationStrategy `json:"template_notification_strategies"`
-	DefaultNotificationStrategy    string                         `json:"default_notification_strategy"` // can be `always`, `failure_only`, `silent`
+	Type                           string                                    `json:"type"`
+	Config                         json.RawMessage                           `json:"config"`
+	TemplateNotificationStrategies map[string][]TemplateNotificationStrategy `json:"template_notification_strategies"` // keys expected to be a notification_type (task_state_update or task_validation)
+	DefaultNotificationStrategy    map[string]string                         `json:"default_notification_strategy"`    // keys expected to be a notification_type (task_state_update or task_validation) ; value can be `always`, `failure_only`, `silent`
 }
 
 // TemplateNotificationStrategy configures how a NotifyBackend should behave for a given set of templates
 type TemplateNotificationStrategy struct {
 	Templates            []string `json:"templates"`
-	NotificationStrategy string   `json:"notification_strategy"` // can be `always`, `failure_only`, `silent`
+	NotificationStrategy string   `json:"notification_strategy"` // value can be `always`, `failure_only`, `silent`
 }
 
 // NotifyBackendTat holds configuration for instantiating a Tat notify client
@@ -167,7 +167,9 @@ type NotifyBackendWebhook struct {
 // NotifyActions holds configuration of each actions
 // By default all the actions are enabled /w any config name registered
 type NotifyActions struct {
-	TaskStateAction NotifyActionsParameters `json:"task_state_action,omitempty"`
+	TaskStateUpdateAction NotifyActionsParameters `json:"task_state_update,omitempty"`
+	TaskValidationAction  NotifyActionsParameters `json:"task_validation,omitempty"`
+	TaskStepUpdateAction  NotifyActionsParameters `json:"task_step_update,omitempty"`
 }
 
 // NotifyActionsParameters holds configuration needed to define each Notify actions

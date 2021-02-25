@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/engine/step"
 )
 
 const (
@@ -19,8 +20,9 @@ const (
 
 // Message represents a generic message to be sent
 type Message struct {
-	MainMessage string
-	Fields      map[string]string
+	MainMessage      string
+	NotificationType string
+	Fields           map[string]string
 }
 
 // TaskStateUpdate holds a digest of data representing a task state change
@@ -43,6 +45,7 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	var m Message
 
 	m.MainMessage = fmt.Sprintf("#task #id:%s\n%s", tsu.PublicID, tsu.Title)
+	m.NotificationType = TaskStateUpdateKey
 
 	m.Fields = make(map[string]string)
 
@@ -80,28 +83,137 @@ func WrapTaskStateUpdate(tsu *TaskStateUpdate) *Message {
 	return &m
 }
 
+type TaskValidation struct {
+	Title              string
+	PublicID           string
+	State              string
+	TemplateName       string
+	RequesterUsername  string
+	PotentialResolvers []string
+	Tags               map[string]string
+}
+
+// WrapTaskValidation returns a Message struct formatted for a task requiring validation
+func WrapTaskValidation(tv *TaskValidation) *Message {
+	var m Message
+
+	m.MainMessage = fmt.Sprintf("#task #id:%s\n%s", tv.PublicID, tv.Title)
+	m.NotificationType = TaskValidationKey
+
+	m.Fields = make(map[string]string)
+
+	m.Fields["task_id"] = tv.PublicID
+	m.Fields["title"] = tv.Title
+	m.Fields["state"] = tv.State
+	m.Fields["template"] = tv.TemplateName
+	if tv.RequesterUsername != "" {
+		m.Fields["requester"] = tv.RequesterUsername
+	}
+	if tv.PotentialResolvers != nil && len(tv.PotentialResolvers) > 0 {
+		m.Fields["potential_resolvers"] = strings.Join(tv.PotentialResolvers, " ")
+	}
+
+	if tv.Tags != nil {
+		tags, err := json.Marshal(tv.Tags)
+		if err == nil {
+			m.Fields["tags"] = string(tags)
+		} else {
+			log.Printf("notify error: failed to marshal tags for task #%s: %s", tv.PublicID, err)
+		}
+	}
+
+	if cfg, err := utask.Config(nil); err == nil {
+		m.Fields["url"] = cfg.BaseURL + cfg.DashboardPathPrefix + dashboardUriTaskView + tv.PublicID
+	}
+
+	return &m
+}
+
+// TaskStepUpdate holds a digest of data representing a task step update
+type TaskStepUpdate struct {
+	Title              string
+	PublicID           string
+	ResolutionPublicID string
+	State              string
+	TemplateName       string
+	RequesterUsername  string
+	ResolverUsername   string
+	StepsDone          int
+	StepsTotal         int
+	StepName           string
+	StepState          string
+	Tags               map[string]string
+}
+
+// WrapTaskStepUpdate returns a Message struct formatted for a task step update
+func WrapTaskStepUpdate(tsu *TaskStepUpdate) *Message {
+	var m Message
+
+	m.MainMessage = fmt.Sprintf("#task #id:%s\n%s", tsu.PublicID, tsu.Title)
+	m.NotificationType = TaskStepUpdateKey
+
+	m.Fields = make(map[string]string)
+
+	m.Fields["task_id"] = tsu.PublicID
+	m.Fields["title"] = tsu.Title
+	m.Fields["state"] = tsu.State
+	m.Fields["template"] = tsu.TemplateName
+	m.Fields["requester"] = tsu.RequesterUsername
+	m.Fields["resolver"] = tsu.ResolverUsername
+	m.Fields["steps"] = fmt.Sprintf("%d/%d", tsu.StepsDone, tsu.StepsTotal)
+	m.Fields["resolution_id"] = tsu.ResolutionPublicID
+
+	if tsu.Tags != nil {
+		tags, err := json.Marshal(tsu.Tags)
+		if err == nil {
+			m.Fields["tags"] = string(tags)
+		} else {
+			log.Printf("notify error: failed to marshal tags for task #%s: %s", tsu.PublicID, err)
+		}
+	}
+
+	m.Fields["step_name"] = tsu.StepName
+	m.Fields["step_state"] = tsu.StepState
+
+	if cfg, err := utask.Config(nil); err == nil {
+		m.Fields["url"] = cfg.BaseURL + cfg.DashboardPathPrefix + dashboardUriTaskView + tsu.PublicID
+	}
+
+	return &m
+}
+
 func checkIfDeliverMessage(m *Message, b *notificationBackend) bool {
-	send := checkIfDeliverMessageFromState(m, b.defaultNotificationStrategy)
+	send := checkIfDeliverMessageFromTaskState(m, b.defaultNotificationStrategy[m.NotificationType])
 
 	templateName, ok := m.Fields["template"]
 	if !ok {
 		return send
 	}
 
-	for _, strat := range b.templateNotificationStrategies {
+	actionStrat, ok := b.templateNotificationStrategies[m.NotificationType]
+	if !ok {
+		return send
+	}
+
+	for _, strat := range actionStrat { //nolint:misspell // misspell believes that we wanted to use start instead of strat
 		for _, t := range strat.Templates {
 			if t != templateName {
 				continue
 			}
 
-			return checkIfDeliverMessageFromState(m, strat.NotificationStrategy)
+			switch m.NotificationType {
+			case TaskStepUpdateKey:
+				return checkIfDeliverMessageFromStepState(m, strat.NotificationStrategy)
+			default:
+				return checkIfDeliverMessageFromTaskState(m, strat.NotificationStrategy)
+			}
 		}
 	}
 
 	return send
 }
 
-func checkIfDeliverMessageFromState(m *Message, strategy string) bool {
+func checkIfDeliverMessageFromTaskState(m *Message, strategy string) bool {
 	var send bool
 	switch strategy {
 	case utask.NotificationStrategyAlways:
@@ -109,6 +221,24 @@ func checkIfDeliverMessageFromState(m *Message, strategy string) bool {
 	case utask.NotificationStrategyFailureOnly:
 		if v, ok := m.Fields["state"]; ok && v == stateBlocked {
 			send = true
+		}
+	case utask.NotificationStrategySilent:
+	}
+
+	return send
+}
+
+func checkIfDeliverMessageFromStepState(m *Message, strategy string) bool {
+	var send bool
+	switch strategy {
+	case utask.NotificationStrategyAlways:
+		send = true
+	case utask.NotificationStrategyFailureOnly:
+		if v, ok := m.Fields["step_state"]; ok {
+			switch v {
+			case step.StateFatalError, step.StateCrashed, step.StateAfterrunError:
+				send = true
+			}
 		}
 	case utask.NotificationStrategySilent:
 	}

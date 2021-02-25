@@ -12,6 +12,12 @@ var (
 	actions utask.NotifyActions
 )
 
+const (
+	TaskStateUpdateKey = "task_state_update"
+	TaskStepUpdateKey  = "task_step_update"
+	TaskValidationKey  = "task_validation"
+)
+
 // NotificationSender is an object capable of sending a Message struct
 // over a notification channel, as determined by its implementation
 type NotificationSender interface {
@@ -20,12 +26,12 @@ type NotificationSender interface {
 
 type notificationBackend struct {
 	sender                         NotificationSender
-	defaultNotificationStrategy    string
-	templateNotificationStrategies []utask.TemplateNotificationStrategy
+	defaultNotificationStrategy    map[string]string
+	templateNotificationStrategies map[string][]utask.TemplateNotificationStrategy
 }
 
 // RegisterSender adds a NotificationSender to the pool of available senders
-func RegisterSender(name string, s NotificationSender, defaultNotificationStrategy string, templateNotificationStrategies []utask.TemplateNotificationStrategy) {
+func RegisterSender(name string, s NotificationSender, defaultNotificationStrategy map[string]string, templateNotificationStrategies map[string][]utask.TemplateNotificationStrategy) {
 	senders[name] = notificationBackend{
 		sender:                         s,
 		defaultNotificationStrategy:    defaultNotificationStrategy,

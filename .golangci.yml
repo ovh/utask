@@ -1,0 +1,62 @@
+# This file contains all available configuration options
+# with their default values.
+
+# options for analysis running
+run:
+  # include test files or not, default is true
+  tests: false
+  # timeout for running linters, default is 1m
+  timeout: 4m
+
+linters:
+  enable:
+    - govet
+    - megacheck
+    - staticcheck
+    - deadcode
+    - structcheck
+    - typecheck
+    - gosimple
+    - varcheck
+    - ineffassign
+    - bodyclose
+    - asciicheck
+    - exportloopref
+    - goconst
+    - misspell
+    - gofmt
+    - goimports
+    - predeclared
+    - gosec
+    - golint
+    - nolintlint
+    - unconvert
+    - errcheck
+    - scopelint
+    - unparam
+    - unused
+
+  disable:
+    - maligned
+
+    # cosmetic
+    - lll
+    - gochecknoglobals
+    - gochecknoinits
+
+linters-settings:
+  maligned:
+    # print struct with more effective memory layout or not, false by default
+    suggest-new: true
+
+issues:
+  # only reports issues that have been introduced in commits ahead of origin/master
+  new-from-rev: origin/master
+  # exclude some irrelevant issues for us
+  exclude:
+    - '^G401: Use of weak cryptographic primitive'
+    - '^G402: TLS InsecureSkipVerify'
+    - '^G404: Use of weak random number generator'
+    - '^G501: Blocklisted import crypto/md5: weak cryptographic primitive'
+    - '^G505: Blocklisted import crypto/sha1: weak cryptographic primitive'
+    - '^G601: Implicit memory aliasing in for loop'
