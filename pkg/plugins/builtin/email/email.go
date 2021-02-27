@@ -45,7 +45,7 @@ func validConfig(config interface{}) error {
 		return errors.New("smtp_port is missing")
 	}
 
-	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 64); err != nil {
+	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 16); err != nil {
 		return fmt.Errorf("can't parse smtp_port field %q: %s", cfg.SMTPPort, err.Error())
 	}
 
@@ -102,7 +102,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 	// port and skipTLS already checked at validConfig() lvl
 	// values must be correct so errors are not evaluated
-	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 64)     // no defaults, must be set by user
+	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 16)     // no defaults, must be set by user
 	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify) // defaults to false
 
 	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
