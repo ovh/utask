@@ -106,7 +106,7 @@ func ParseOutput(outStr, outputMode string, outputManualDelimiters []string) (re
 		resultLine, lastIndex = retrieveLastLine(outStr)
 		if resultLine == "" && lastIndex != -1 {
 			// a lot of programs are returning a new line at the end of output, we need to strip it if exists
-			resultLine, lastIndex = retrieveLastLine(outStr[0:lastIndex])
+			resultLine, _ = retrieveLastLine(outStr[0:lastIndex])
 		}
 	}
 
