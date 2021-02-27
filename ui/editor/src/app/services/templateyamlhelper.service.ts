@@ -73,7 +73,7 @@ export class TemplateYamlHelper {
 
     getEndStep(text: string, row: number): number {
         const arrayStr = text.split('\n');
-        const reg = new RegExp(`^\\s{${this.minimumSpacing},${this.minimumSpacing + this.spacing}}"{0,1}[a-zA-Z\\-\\_0-9]+"{0,1}\s*:`);
+        const reg = new RegExp(`^\\s{${this.minimumSpacing},${this.minimumSpacing + this.spacing}}"{0,1}[a-zA-Z\\-\\_0-9]+"{0,1}\\s*:`);
         let i = row + 1;
         for (i; i < arrayStr.length; i++) {
             if (arrayStr[i].match(reg)) {
@@ -85,7 +85,7 @@ export class TemplateYamlHelper {
 
     getStepRow(text: string, stepname: string) {
         const arrayStr = text.split('\n');
-        const reg = new RegExp(`^\\s{${this.minimumSpacing + this.spacing}}"{0,1}${stepname}"{0,1}\s*`);
+        const reg = new RegExp(`^\\s{${this.minimumSpacing + this.spacing}}"{0,1}${stepname}"{0,1}\\s*`);
         let stepPosition = -1;
         const breakException = {};
         try {
