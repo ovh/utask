@@ -5,7 +5,7 @@
                 <nz-form-label>Type</nz-form-label>
                 <nz-form-control>
                     <nz-select [ngModel]="pagination.type" (ngModelChange)="paginationTypeChange($event)">
-                        <nz-option [nzValue]="meta.user_is_admin ? 'all' : 'both'" nzLabel="All"></nz-option>
+                        <nz-option nzValue="all" nzLabel="All"></nz-option>
                         <nz-option nzValue="own" nzLabel="As a requester"></nz-option>
                         <nz-option nzValue="resolvable" nzLabel="As a resolver"></nz-option>
                     </nz-select>
