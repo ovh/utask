@@ -561,7 +561,7 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	}
 	preHook, err := st.GetPreHook()
 	if err != nil {
-		return errors.NewNotValid(err, "Invalid  prehook action")
+		return errors.NewNotValid(err, "Invalid prehook action")
 	}
 	if preHook != nil {
 		ph, err := validExecutor(baseConfigs, *preHook, nil)
@@ -571,52 +571,6 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 		if err != nil {
 			return errors.NewNotValid(err, "Invalid prehook action")
 		}
-	}
-
-	// check that we don't set restricted field from the template
-	if st.State != "" {
-		return errors.NewNotValid(nil, "step state must not be set")
-	}
-
-	if st.ChildrenSteps != nil {
-		return errors.NewNotValid(nil, "step children_steps must not be set")
-	}
-
-	if st.ChildrenStepMap != nil {
-		return errors.NewNotValid(nil, "step children_steps_map must not be set")
-	}
-
-	if st.Output != nil {
-		return errors.NewNotValid(nil, "step output must not be set")
-	}
-
-	if st.Metadata != nil {
-		return errors.NewNotValid(nil, "step metadatas must not be set")
-	}
-
-	if st.Tags != nil {
-		return errors.NewNotValid(nil, "step tags must not be set")
-	}
-
-	if st.Children != nil {
-		return errors.NewNotValid(nil, "step children must not be set")
-	}
-
-	if st.Error != "" {
-		return errors.NewNotValid(nil, "step error must not be set")
-	}
-
-	if st.TryCount != 0 {
-		return errors.NewNotValid(nil, "step try_count must not be set")
-	}
-
-	t := time.Time{}
-	if st.LastRun != t {
-		return errors.NewNotValid(nil, "step last_time must not be set")
-	}
-
-	if st.Item != nil {
-		return errors.NewNotValid(nil, "step item must not be set")
 	}
 
 	if st.ForEachStrategy != "" && st.ForEach == "" {
@@ -706,6 +660,58 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	sourceChain := dependenciesChain(steps, st.Dependencies)
 	if utils.ListContainsString(sourceChain, name) {
 		return errors.BadRequestf("Invalid: circular dependency %v <-> %s", sourceChain, st.Name)
+	}
+
+	return nil
+}
+
+// ValidAndNormalizeNewStep will validate that a given step doesn't have extragenous fields defined
+// when coming from a task_template.
+func (st *Step) ValidAndNormalizeNewStep() error {
+	// check that we don't set restricted field from the template
+	if st.State != "" {
+		return errors.NewNotValid(nil, "step state must not be set")
+	}
+
+	if st.ChildrenSteps != nil {
+		return errors.NewNotValid(nil, "step children_steps must not be set")
+	}
+
+	if st.ChildrenStepMap != nil {
+		return errors.NewNotValid(nil, "step children_steps_map must not be set")
+	}
+
+	if st.Output != nil {
+		return errors.NewNotValid(nil, "step output must not be set")
+	}
+
+	if st.Metadata != nil {
+		return errors.NewNotValid(nil, "step metadatas must not be set")
+	}
+
+	if st.Tags != nil {
+		return errors.NewNotValid(nil, "step tags must not be set")
+	}
+
+	if st.Children != nil {
+		return errors.NewNotValid(nil, "step children must not be set")
+	}
+
+	if st.Error != "" {
+		return errors.NewNotValid(nil, "step error must not be set")
+	}
+
+	if st.TryCount != 0 {
+		return errors.NewNotValid(nil, "step try_count must not be set")
+	}
+
+	t := time.Time{}
+	if st.LastRun != t {
+		return errors.NewNotValid(nil, "step last_time must not be set")
+	}
+
+	if st.Item != nil {
+		return errors.NewNotValid(nil, "step item must not be set")
 	}
 
 	return nil

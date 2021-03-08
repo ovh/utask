@@ -345,6 +345,10 @@ func (tt *TaskTemplate) Valid() (err error) {
 		if err := st.ValidAndNormalize(name, tt.BaseConfigurations, tt.Steps); err != nil {
 			return errors.NewNotValid(err, fmt.Sprintf("Invalid step %s", name))
 		}
+
+		if err := st.ValidAndNormalizeNewStep(); err != nil {
+			return errors.NewNotValid(err, fmt.Sprintf("Invalid step %s", name))
+		}
 	}
 
 	// MarshalIndent as it's easier to read line by line
