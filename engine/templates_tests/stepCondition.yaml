@@ -41,8 +41,23 @@ steps:
               then:
                   this: REGEXP_MATCH
               message: email address belongs to example.com
+    stepTwoBis:
+        description: a NOTREGEXP condition is applied
+        custom_states: [NOTREGEXP_MATCH]
+        action:
+            type: echo
+            configuration: { output: { email: "foobar" } }
+        conditions:
+            - type: check
+              if:
+                  - value: "{{.step.this.output.email}}"
+                    operator: NOTREGEXP
+                    expected: '[a-z\.]+@example\.com$'
+              then:
+                  this: NOTREGEXP_MATCH
+              message: provided input doesn't match an email address from example.com
     stepThree:
-        dependencies: [stepTwo:ANY]
+        dependencies: [stepTwo:ANY, stepTwoBis:ANY]
         description: multiple conditions changing state
         custom_states: [FOO, BAR, FUZZ]
         action:

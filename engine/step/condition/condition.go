@@ -12,15 +12,16 @@ import (
 
 // accepted condition operators
 const (
-	EQ     = "EQ"
-	NE     = "NE"
-	GT     = "GT"
-	LT     = "LT"
-	GE     = "GE"
-	LE     = "LE"
-	REGEXP = "REGEXP"
-	IN     = "IN"
-	NOTIN  = "NOTIN"
+	EQ        = "EQ"
+	NE        = "NE"
+	GT        = "GT"
+	LT        = "LT"
+	GE        = "GE"
+	LE        = "LE"
+	REGEXP    = "REGEXP"
+	NOTREGEXP = "NOTREGEXP"
+	IN        = "IN"
+	NOTIN     = "NOTIN"
 
 	defaultSeparator = ","
 )
@@ -96,6 +97,10 @@ func (a *Assert) Eval(v *values.Values, item interface{}, stepName string) error
 			if !regexp.MustCompile(expStr).MatchString(valStr) {
 				return ErrConditionNotMet(fmt.Sprintf("Condition not met: %s does not match regular expression %s", valStr, expStr))
 			}
+		case NOTREGEXP:
+			if regexp.MustCompile(expStr).MatchString(valStr) {
+				return ErrConditionNotMet(fmt.Sprintf("Condition not met: %s match regular expression %s and expected that it shouldn't", valStr, expStr))
+			}
 		case IN:
 			if !matchList(valStr, expStr, a.ListSeparator) {
 				return ErrConditionNotMet(fmt.Sprintf("Condition not met: expected %s to be found in list of acceptable values", valStr))
@@ -115,7 +120,7 @@ func (a *Assert) Valid() error {
 	if a != nil {
 		switch strings.ToUpper(a.Operator) {
 		case EQ, NE, GT, LT, GE, LE, IN, NOTIN:
-		case REGEXP:
+		case REGEXP, NOTREGEXP:
 			if _, err := regexp.Compile(a.Expected); err != nil {
 				return err
 			}
