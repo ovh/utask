@@ -33,7 +33,7 @@ func auditLogsMiddleware(c *gin.Context) {
 		"query":           q,
 		"user_agent":      c.Request.UserAgent(),
 		"duration":        requestDuration.Seconds(),
-		"duration_ms":     requestDuration.Seconds() * 1e3,
+		"duration_ms":     requestDuration.Milliseconds(),
 		"host":            c.Request.Host,
 		"remote_ip":       c.ClientIP(),
 		"runner_instance": utask.InstanceID,
