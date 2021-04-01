@@ -38,6 +38,7 @@ func auditLogsMiddleware(c *gin.Context) {
 		"remote_ip":       c.ClientIP(),
 		"runner_instance": utask.InstanceID,
 		"request_id":      c.Request.Header.Get(requestIDHeader),
+		"log_type":        "api",
 	}
 	if op, _ := fizz.OperationFromContext(c); op != nil {
 		fields["action"] = op.ID

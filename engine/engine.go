@@ -189,7 +189,7 @@ func (e Engine) SyncResolve(publicID string, sm *semaphore.Weighted) (*resolutio
 func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weighted) (*resolution.Resolution, error) {
 	e.wg.Add(1)
 	defer e.wg.Done()
-	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID})
+	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID, "log_type": "engine"})
 	debugLogger.Debugf("Engine: Resolve() starting for %s", publicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
