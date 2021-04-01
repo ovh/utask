@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	formatters "github.com/fabienm/go-logrus-formatters"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
@@ -38,6 +39,7 @@ const (
 	defaultScriptsFolder      = "./scripts"
 	defaultRegion             = "default"
 	defaultPort               = 8081
+	defaultLogsFormat         = "text"
 
 	envInit        = "INIT"
 	envPlugins     = "PLUGINS"
@@ -48,6 +50,7 @@ const (
 	envHTTPPort    = "SERVER_PORT"
 	envDebug       = "DEBUG"
 	envMaintenance = "MAINTENANCE_MODE"
+	envLogsFormat  = "LOGS_FORMAT"
 
 	basicAuthKey = "basic-auth"
 )
@@ -57,6 +60,7 @@ var (
 	server *api.Server
 )
 
+//nolint:errcheck
 func init() {
 	viper.BindEnv(envInit)
 	viper.BindEnv(envPlugins)
@@ -67,13 +71,7 @@ func init() {
 	viper.BindEnv(envHTTPPort)
 	viper.BindEnv(envDebug)
 	viper.BindEnv(envMaintenance)
-
-	// Logger
-	formatter := new(log.TextFormatter)
-	formatter.TimestampFormat = time.RFC3339
-	formatter.FullTimestamp = true
-	log.SetFormatter(formatter)
-	log.SetOutput(os.Stdout)
+	viper.BindEnv(envLogsFormat)
 
 	flags := rootCmd.Flags()
 
@@ -86,6 +84,7 @@ func init() {
 	flags.UintVar(&utask.FPort, "http-port", defaultPort, "HTTP port to expose")
 	flags.BoolVar(&utask.FDebug, "debug", false, "Run engine in debug mode")
 	flags.BoolVar(&utask.FMaintenanceMode, "maintenance-mode", false, "Switch API to maintenance mode")
+	flags.StringVar(&utask.FLogsFormat, "logs-format", defaultLogsFormat, "Format of the logs (text or gelf)")
 
 	viper.BindPFlag(envInit, rootCmd.Flags().Lookup("init-path"))
 	viper.BindPFlag(envPlugins, rootCmd.Flags().Lookup("plugins-path"))
@@ -96,6 +95,7 @@ func init() {
 	viper.BindPFlag(envHTTPPort, rootCmd.Flags().Lookup("http-port"))
 	viper.BindPFlag(envDebug, rootCmd.Flags().Lookup("debug"))
 	viper.BindPFlag(envMaintenance, rootCmd.Flags().Lookup("maintenance-mode"))
+	viper.BindPFlag(envLogsFormat, rootCmd.Flags().Lookup("logs-format"))
 }
 
 var rootCmd = &cobra.Command{
@@ -114,6 +114,22 @@ var rootCmd = &cobra.Command{
 		utask.FPort = viper.GetUint(envHTTPPort)
 		utask.FDebug = viper.GetBool(envDebug)
 		utask.FMaintenanceMode = viper.GetBool(envMaintenance)
+		utask.FLogsFormat = viper.GetString(envLogsFormat)
+
+		// Logger.
+		var formatter log.Formatter
+		switch utask.FLogsFormat {
+		case "text":
+			textFormatter := new(log.TextFormatter)
+			textFormatter.TimestampFormat = time.RFC3339
+			textFormatter.FullTimestamp = true
+			formatter = textFormatter
+		case "gelf":
+			hostname, _ := os.Hostname()
+			formatter = formatters.NewGelf(hostname)
+		}
+		log.SetOutput(os.Stdout)
+		log.SetFormatter(formatter)
 
 		store = configstore.DefaultStore
 		store.InitFromEnvironment()
