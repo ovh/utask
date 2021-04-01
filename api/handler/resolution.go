@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/metadata"
 )
 
 type createResolutionIn struct {
@@ -27,6 +28,8 @@ type createResolutionIn struct {
 // the creator of the resolution (aka "resolver") might have to provide extra inputs
 // depending on the task's template definition
 func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resolution, error) {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -99,6 +102,11 @@ type listResolutionsIn struct {
 // type=all returns every resolution, provided that the user is an administrator
 // the resolutions are simplified and do not include the content of steps
 func ListResolutions(c *gin.Context, in *listResolutionsIn) (rr []*resolution.Resolution, err error) {
+	metadata.AddActionMetadata(c, "resolution_type", in.Type)
+	if in.State != nil {
+		metadata.AddActionMetadata(c, "resolution_state", *in.State)
+	}
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -142,6 +150,8 @@ type getResolutionIn struct {
 
 // GetResolution returns a single resolution, with its full content (all step outputs included)
 func GetResolution(c *gin.Context, in *getResolutionIn) (*resolution.Resolution, error) {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -180,6 +190,8 @@ type updateResolutionIn struct {
 // use sparingly, this opens the door to completely breaking execution
 // can only be called when resolution is in state PAUSED
 func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -248,6 +260,8 @@ type runResolutionIn struct {
 // RunResolution launches the asynchronous execution of a resolution
 // the engine determines if resolution is eligible for execution
 func RunResolution(c *gin.Context, in *runResolutionIn) error {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -308,6 +322,8 @@ type extendResolutionIn struct {
 // ExtendResolution increments a resolution's remaining execution retries
 // in case it has reached state BLOCKED_MAXRETRIES
 func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -381,6 +397,8 @@ type cancelResolutionIn struct {
 // CancelResolution "kills" a live resolution and its corresponding task,
 // rendering it non-runnable (and garbage-collectable)
 func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -458,6 +476,8 @@ type pauseResolutionIn struct {
 // this action can only be performed by administrators
 // and can be "forced" when dealing with exceptions in which a resolution doesn't exit RUNNING state
 func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -534,6 +554,8 @@ type getResolutionStepIn struct {
 
 // GetResolutionStep returns a single step resolution, with its full content (output included)
 func GetResolutionStep(c *gin.Context, in *getResolutionStepIn) (*step.Step, error) {
+	metadata.AddActionMetadata(c, "resolution_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -577,6 +599,8 @@ type updateResolutionStepIn struct {
 // instead of live patch the whole resolution.
 // can only be called when resolution is in state PAUSED
 func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
+	metadata.AddActionMetadata(c, "task_id", in.TaskPublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -657,6 +681,9 @@ type updateResolutionStepStateIn struct {
 // UpdateResolutionStepState allows the edition of a step state.
 // Can only be called when the resolution is in state PAUSED, and by a resolution manager.
 func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) error {
+	metadata.AddActionMetadata(c, "task_id", in.TaskPublicID)
+	metadata.AddActionMetadata(c, "step_name", in.StepName)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err

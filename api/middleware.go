@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/metadata"
 	"github.com/wI2L/fizz"
 )
 
@@ -43,6 +44,9 @@ func auditLogsMiddleware(c *gin.Context) {
 	}
 	if user := c.GetString(auth.IdentityProviderCtxKey); user != "" {
 		fields["user"] = user
+	}
+	for k, v := range metadata.GetActionMetadata(c) {
+		fields["action_metadata_"+k] = v
 	}
 
 	errs := c.Errors.Errors()

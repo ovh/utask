@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/metadata"
 )
 
 type listTemplatesIn struct {
@@ -50,6 +51,8 @@ type getTemplateIn struct {
 
 // GetTemplate returns the full representation of a template, steps included
 func GetTemplate(c *gin.Context, in *getTemplateIn) (*tasktemplate.TaskTemplate, error) {
+	metadata.AddActionMetadata(c, "template_name", in.Name)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err

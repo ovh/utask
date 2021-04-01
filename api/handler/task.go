@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/constants"
+	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -39,6 +40,8 @@ type createTaskIn struct {
 // each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 // Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
+	metadata.AddActionMetadata(c, "template_name", in.TemplateName)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -95,6 +98,9 @@ type listTasksIn struct {
 // type=resolvable returns tasks for which the user is a potential resolver
 // type=all returns every task (only available to administrator users)
 func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
+	if in.Template != nil {
+		metadata.AddActionMetadata(c, "template_name", *in.Template)
+	}
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -167,12 +173,14 @@ func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 }
 
 type getTaskIn struct {
-	PublicID string `path:"id, required"`
+	PublicID string `path:"id,required"`
 }
 
 // GetTask returns a single task
 // inputs of type password are obfuscated to every user except administrators
 func GetTask(c *gin.Context, in *getTaskIn) (*task.Task, error) {
+	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -232,6 +240,8 @@ type updateTaskIn struct {
 // UpdateTask modifies a task, allowing it's requester or an administrator
 // to fix a broken input, or to add/remove watchers
 func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
+	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -318,11 +328,13 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 }
 
 type deleteTaskIn struct {
-	PublicID string `path:"id, required"`
+	PublicID string `path:"id,required"`
 }
 
 // DeleteTask removes a task from the data backend
 func DeleteTask(c *gin.Context, in *deleteTaskIn) error {
+	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -346,11 +358,13 @@ func DeleteTask(c *gin.Context, in *deleteTaskIn) error {
 }
 
 type wontfixTaskIn struct {
-	PublicID string `path:"id, required"`
+	PublicID string `path:"id,required"`
 }
 
 // WontfixTask changes a task's state to prevent it from ever being resolved
 func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
+	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err

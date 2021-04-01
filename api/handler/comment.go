@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/metadata"
 )
 
 type createCommentIn struct {
@@ -19,6 +20,8 @@ type createCommentIn struct {
 
 // CreateComment create a comment related to a task
 func CreateComment(c *gin.Context, in *createCommentIn) (*task.Comment, error) {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -67,6 +70,8 @@ type getCommentIn struct {
 
 // GetComment return a specific comment related to a task
 func GetComment(c *gin.Context, in *getCommentIn) (*task.Comment, error) {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -112,6 +117,8 @@ type listCommentsIn struct {
 
 // ListComments return a list of comments related to a task
 func ListComments(c *gin.Context, in *listCommentsIn) ([]*task.Comment, error) {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -159,6 +166,9 @@ type updateCommentIn struct {
 
 // UpdateComment update a specific comment related to a task
 func UpdateComment(c *gin.Context, in *updateCommentIn) (*task.Comment, error) {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+	metadata.AddActionMetadata(c, "comment_id", in.CommentID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -199,6 +209,9 @@ type deleteCommentIn struct {
 
 // DeleteComment delete a specific comment related to a task
 func DeleteComment(c *gin.Context, in *deleteCommentIn) error {
+	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+	metadata.AddActionMetadata(c, "comment_id", in.CommentID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
