@@ -186,7 +186,7 @@ func (s *Server) build(ctx context.Context) {
 		})
 
 		router.Use(s.customMiddlewares...)
-		router.Use(ajaxHeadersMiddleware, errorLogMiddleware)
+		router.Use(ajaxHeadersMiddleware, auditLogsMiddleware)
 
 		tonic.SetErrorHook(jujerr.ErrHook)
 		tonic.SetBindHook(yamlBindHook(s.maxBodyBytes))
@@ -199,11 +199,13 @@ func (s *Server) build(ctx context.Context) {
 				// public template listing
 				templateRoutes.GET("/template",
 					[]fizz.OperationOption{
+						fizz.ID("ListTemplates"),
 						fizz.Summary("List task templates"),
 					},
 					tonic.Handler(handler.ListTemplates, 200))
 				templateRoutes.GET("/template/:name",
 					[]fizz.OperationOption{
+						fizz.ID("GetTemplate"),
 						fizz.Summary("Get task template details"),
 					},
 					tonic.Handler(handler.GetTemplate, 200))
@@ -214,11 +216,13 @@ func (s *Server) build(ctx context.Context) {
 				// public function listing
 				functionRoutes.GET("/function",
 					[]fizz.OperationOption{
+						fizz.ID("ListFunctions"),
 						fizz.Summary("List task functions"),
 					},
 					tonic.Handler(handler.ListFunctions, 200))
 				functionRoutes.GET("/function/:name",
 					[]fizz.OperationOption{
+						fizz.ID("GetFunction"),
 						fizz.Summary("Get task function details"),
 					},
 					tonic.Handler(handler.GetFunction, 200))
@@ -230,40 +234,47 @@ func (s *Server) build(ctx context.Context) {
 				// task creation in batches
 				taskRoutes.POST("/batch",
 					[]fizz.OperationOption{
+						fizz.ID("BatchCreateTask"),
 						fizz.Summary("Create a batch of tasks"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CreateBatch, 201))
 				taskRoutes.POST("/task",
 					[]fizz.OperationOption{
+						fizz.ID("CreateTask"),
 						fizz.Summary("Create new task"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CreateTask, 201))
 				taskRoutes.GET("/task",
 					[]fizz.OperationOption{
+						fizz.ID("ListTasks"),
 						fizz.Summary("List tasks"),
 					},
 					tonic.Handler(handler.ListTasks, 200))
 				taskRoutes.GET("/task/:id",
 					[]fizz.OperationOption{
+						fizz.ID("GetTask"),
 						fizz.Summary("Get task details"),
 					},
 					tonic.Handler(handler.GetTask, 200))
 				taskRoutes.PUT("/task/:id",
 					[]fizz.OperationOption{
+						fizz.ID("EditTask"),
 						fizz.Summary("Edit task"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.UpdateTask, 200))
 				taskRoutes.POST("/task/:id/wontfix",
 					[]fizz.OperationOption{
+						fizz.ID("CancelTask"),
 						fizz.Summary("Cancel task"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.WontfixTask, 204))
 				taskRoutes.DELETE("/task/:id",
 					[]fizz.OperationOption{
+						fizz.ID("DeleteTask"),
 						fizz.Summary("Delete task"),
 						fizz.Description("Admin rights required"),
 					},
@@ -277,28 +288,33 @@ func (s *Server) build(ctx context.Context) {
 			{
 				commentsRoutes.POST("/task/:id/comment",
 					[]fizz.OperationOption{
+						fizz.ID("AddTaskComment"),
 						fizz.Summary("Post new comment on task"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CreateComment, 201))
 				commentsRoutes.GET("/task/:id/comment",
 					[]fizz.OperationOption{
+						fizz.ID("ListTaskComments"),
 						fizz.Summary("List task comments"),
 					},
 					tonic.Handler(handler.ListComments, 200))
 				commentsRoutes.GET("/task/:id/comment/:commentid",
 					[]fizz.OperationOption{
+						fizz.ID("GetTaskComment"),
 						fizz.Summary("Get single task comment"),
 					},
 					tonic.Handler(handler.GetComment, 200))
 				commentsRoutes.PUT("/task/:id/comment/:commentid",
 					[]fizz.OperationOption{
+						fizz.ID("EditTaskComment"),
 						fizz.Summary("Edit task comment"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.UpdateComment, 200))
 				commentsRoutes.DELETE("/task/:id/comment/:commentid",
 					[]fizz.OperationOption{
+						fizz.ID("DeleteTaskComment"),
 						fizz.Summary("Delete task comment"),
 					},
 					maintenanceMode,
@@ -310,6 +326,7 @@ func (s *Server) build(ctx context.Context) {
 			{
 				resolutionRoutes.POST("/resolution",
 					[]fizz.OperationOption{
+						fizz.ID("CreateTaskResolution"),
 						fizz.Summary("Create task resolution"),
 						fizz.Summary("This action instantiates a holder for the task's execution state. Only an approved resolver or admin user can perform this action."),
 					},
@@ -317,12 +334,14 @@ func (s *Server) build(ctx context.Context) {
 					tonic.Handler(handler.CreateResolution, 201))
 				resolutionRoutes.GET("/resolution/:id",
 					[]fizz.OperationOption{
+						fizz.ID("GetTaskResolution"),
 						fizz.Summary("Get the details of a task resolution"),
 						fizz.Description("Details include the intermediate results of every step. Admin users can view any resolution's details."),
 					},
 					tonic.Handler(handler.GetResolution, 200))
 				resolutionRoutes.PUT("/resolution/:id",
 					[]fizz.OperationOption{
+						fizz.ID("EditTaskResolution"),
 						fizz.Summary("Edit a task's resolution during execution."),
 						fizz.Description("Action of last resort if a task needs fixing. Admin users only."),
 					},
@@ -331,12 +350,14 @@ func (s *Server) build(ctx context.Context) {
 					tonic.Handler(handler.UpdateResolution, 204))
 				resolutionRoutes.POST("/resolution/:id/run",
 					[]fizz.OperationOption{
+						fizz.ID("ExecuteTask"),
 						fizz.Summary("Execute a task"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.RunResolution, 204))
 				resolutionRoutes.POST("/resolution/:id/pause",
 					[]fizz.OperationOption{
+						fizz.ID("PauseTaskExecution"),
 						fizz.Summary("Pause a task's execution"),
 						fizz.Description("This action takes a task out of the execution pipeline, it will not be considered for automatic retry until it is re-run manually."),
 					},
@@ -344,24 +365,28 @@ func (s *Server) build(ctx context.Context) {
 					tonic.Handler(handler.PauseResolution, 204))
 				resolutionRoutes.POST("/resolution/:id/extend",
 					[]fizz.OperationOption{
+						fizz.ID("ExtendTaskResolution"),
 						fizz.Summary("Extend max retry limit for a task's execution"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.ExtendResolution, 204))
 				resolutionRoutes.POST("/resolution/:id/cancel",
 					[]fizz.OperationOption{
+						fizz.ID("CancelTaskResolution"),
 						fizz.Summary("Cancel a task's execution"),
 					},
 					maintenanceMode,
 					tonic.Handler(handler.CancelResolution, 204))
 				resolutionRoutes.GET("/resolution/:id/step/:stepName",
 					[]fizz.OperationOption{
+						fizz.ID("GetTaskResolutionStep"),
 						fizz.Summary("Get the details of the step of a task resolution"),
 						fizz.Description("Returns the current implementation of the step, including the output of the step."),
 					},
 					tonic.Handler(handler.GetResolutionStep, 200))
 				resolutionRoutes.PUT("/resolution/:id/step/:stepName",
 					[]fizz.OperationOption{
+						fizz.ID("EditTaskResolutionStep"),
 						fizz.Summary("Edit the details of the step of a task resolution"),
 						fizz.Description("Allow the edition of a step, if a step needs fixing. Admin users only."),
 					},
@@ -370,6 +395,7 @@ func (s *Server) build(ctx context.Context) {
 					tonic.Handler(handler.UpdateResolutionStep, 204))
 				resolutionRoutes.PUT("/resolution/:id/step/:stepName/state",
 					[]fizz.OperationOption{
+						fizz.ID("EditTaskResolutionStepState"),
 						fizz.Summary("Edit the state of the step of a task resolution"),
 						fizz.Description("Allow the edition of the step state, if a step needs to be re-run or skipped manually. Resolution managers only."),
 					},
@@ -393,6 +419,7 @@ func (s *Server) build(ctx context.Context) {
 
 			authRoutes.GET("/meta",
 				[]fizz.OperationOption{
+					fizz.ID("GetMetadata"),
 					fizz.Summary("Display service name and user's status"),
 				},
 				tonic.Handler(rootHandler, 200))
@@ -400,6 +427,7 @@ func (s *Server) build(ctx context.Context) {
 			// admin
 			authRoutes.POST("/key-rotate",
 				[]fizz.OperationOption{
+					fizz.ID("ReencryptData"),
 					fizz.Summary("Re-encrypt all data with latest storage key"),
 				},
 				requireAdmin,

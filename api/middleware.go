@@ -2,6 +2,9 @@ package api
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
@@ -9,18 +12,49 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/wI2L/fizz"
 )
 
-func errorLogMiddleware(c *gin.Context) {
-	c.Next()
+var requestIDHeader = http.CanonicalHeaderKey("X-Request-Id")
 
-	for _, err := range c.Errors.Errors() {
-		logrus.WithFields(logrus.Fields{
-			"status":          c.Writer.Status(),
-			"method":          c.Request.Method,
-			"path":            c.Request.URL.Path,
-			"runner_instance": utask.InstanceID,
-		}).Error(err)
+func auditLogsMiddleware(c *gin.Context) {
+	now := time.Now()
+	c.Next()
+	requestDuration := time.Since(now)
+
+	// Unescape the querystring for readability.
+	q, _ := url.QueryUnescape(c.Request.URL.RawQuery)
+
+	fields := logrus.Fields{
+		"status":          c.Writer.Status(),
+		"method":          c.Request.Method,
+		"path":            c.Request.URL.Path,
+		"query":           q,
+		"user_agent":      c.Request.UserAgent(),
+		"duration":        requestDuration.Seconds(),
+		"duration_ms":     requestDuration.Seconds() * 1e3,
+		"host":            c.Request.Host,
+		"remote_ip":       c.ClientIP(),
+		"runner_instance": utask.InstanceID,
+		"request_id":      c.Request.Header.Get(requestIDHeader),
+	}
+	if op, _ := fizz.OperationFromContext(c); op != nil {
+		fields["action"] = op.ID
+	}
+	if user := c.GetString(auth.IdentityProviderCtxKey); user != "" {
+		fields["user"] = user
+	}
+
+	errs := c.Errors.Errors()
+
+	if len(errs) > 0 {
+		fields["success"] = false
+		logrus.WithFields(fields).WithError(
+			errors.New(strings.Join(errs, "\n")),
+		).Error("error")
+	} else {
+		fields["success"] = true
+		logrus.WithFields(fields).Info("success")
 	}
 }
 
