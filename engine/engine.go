@@ -211,6 +211,8 @@ func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weig
 		return nil, nil
 	}
 
+	debugLogger = debugLogger.WithFields(logrus.Fields{"template_name": t.TemplateName, "task_id": t.PublicID})
+
 	res.Values.SetConfig(e.config)
 
 	// check if all resources are available before starting the resolution
@@ -432,6 +434,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 				executedSteps[s.Name] = true
 			}
 
+			debugLogger := debugLogger.WithFields(logrus.Fields{"step_name": s.Name, "step_state": s.State})
 			debugLogger.Debugf("Engine: resolve() %s loop, step %s (#%d) result: %s", res.PublicID, s.Name, s.TryCount, s.State)
 
 			if newStep, ok := res.Steps[s.Name]; ok && newStep.State != oldState {
@@ -559,6 +562,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 	bkoff.Reset()
 
 	for {
+		debugLogger := debugLogger.WithField("resolution_state", res.State)
 		err := commit(dbp, res, t)
 		if err != nil {
 			debugLogger.Debugf("Engine: resolve() %s final commit error: %s", res.PublicID, err)
@@ -610,6 +614,7 @@ func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphor
 	}
 
 	debugLogger.Debugf("resuming parent task %q resolution %q", parentTask.PublicID, *parentTask.Resolution)
+	debugLogger.WithFields(logrus.Fields{"task_id": parentTask.PublicID, "resolution_id": *parentTask.Resolution}).Debugf("resuming resolution %q as child task %q state changed", *parentTask.Resolution, currentTask.PublicID)
 	return GetEngine().Resolve(*parentTask.Resolution, sm)
 }
 
