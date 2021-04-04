@@ -40,7 +40,7 @@ type createTaskIn struct {
 // each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 // Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
-	metadata.AddActionMetadata(c, "template_name", in.TemplateName)
+	metadata.AddActionMetadata(c, metadata.TemplateName, in.TemplateName)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -71,6 +71,8 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	return t, nil
 }
 
@@ -99,8 +101,9 @@ type listTasksIn struct {
 // type=all returns every task (only available to administrator users)
 func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 	if in.Template != nil {
-		metadata.AddActionMetadata(c, "template_name", *in.Template)
+		metadata.AddActionMetadata(c, metadata.TemplateName, *in.Template)
 	}
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -179,7 +182,7 @@ type getTaskIn struct {
 // GetTask returns a single task
 // inputs of type password are obfuscated to every user except administrators
 func GetTask(c *gin.Context, in *getTaskIn) (*task.Task, error) {
-	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.PublicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -195,6 +198,8 @@ func GetTask(c *gin.Context, in *getTaskIn) (*task.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
 
 	var res *resolution.Resolution
 	if t.Resolution != nil {
@@ -240,7 +245,7 @@ type updateTaskIn struct {
 // UpdateTask modifies a task, allowing it's requester or an administrator
 // to fix a broken input, or to add/remove watchers
 func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
-	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.PublicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -263,6 +268,8 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	admin := auth.IsAdmin(c) == nil
 	requester := (auth.IsRequester(c, t) == nil && t.Resolution == nil)
 	templateOwner := auth.IsTemplateOwner(c, tt) == nil
@@ -270,6 +277,8 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	if !admin && !requester && !templateOwner {
 		dbp.Rollback()
 		return nil, errors.Forbiddenf("Can't update task")
+	} else if !requester && !templateOwner {
+		metadata.SetSUDO(c)
 	}
 
 	var res *resolution.Resolution
@@ -333,7 +342,7 @@ type deleteTaskIn struct {
 
 // DeleteTask removes a task from the data backend
 func DeleteTask(c *gin.Context, in *deleteTaskIn) error {
-	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.PublicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -345,9 +354,18 @@ func DeleteTask(c *gin.Context, in *deleteTaskIn) error {
 		return err
 	}
 
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return err
+	}
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	if err := auth.IsAdmin(c); err != nil {
 		return err
 	}
+
+	metadata.SetSUDO(c)
 
 	switch t.State {
 	case task.StateRunning, task.StateBlocked:
@@ -363,7 +381,7 @@ type wontfixTaskIn struct {
 
 // WontfixTask changes a task's state to prevent it from ever being resolved
 func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
-	metadata.AddActionMetadata(c, "task_id", in.PublicID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.PublicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -391,6 +409,8 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	admin := auth.IsAdmin(c) == nil
 	requester := auth.IsRequester(c, t) == nil
 	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
@@ -398,6 +418,8 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 	if !admin && !requester && !resolutionManager {
 		dbp.Rollback()
 		return errors.Forbiddenf("Can't set task's state to %s", task.StateWontfix)
+	} else if !requester && !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	t.SetState(task.StateWontfix)

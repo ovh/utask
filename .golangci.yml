@@ -32,7 +32,7 @@ linters:
     - nolintlint
     - unconvert
     - errcheck
-    - scopelint
+    - exportloopref
     - unparam
     - unused
 

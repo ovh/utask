@@ -58,7 +58,7 @@ type getFunctionIn struct {
 
 // GetFunction returns the full representation of a function, steps included
 func GetFunction(c *gin.Context, in *getFunctionIn) (*functions.Function, error) {
-	metadata.AddActionMetadata(c, "function_name", in.Name)
+	metadata.AddActionMetadata(c, metadata.FunctionName, in.Name)
 
 	function, exists := functions.Get(in.Name)
 	if !exists {

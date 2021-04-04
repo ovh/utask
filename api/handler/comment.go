@@ -20,7 +20,7 @@ type createCommentIn struct {
 
 // CreateComment create a comment related to a task
 func CreateComment(c *gin.Context, in *createCommentIn) (*task.Comment, error) {
-	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -37,20 +37,27 @@ func CreateComment(c *gin.Context, in *createCommentIn) (*task.Comment, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	var res *resolution.Resolution
 	if t.Resolution != nil {
 		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
 		if err != nil {
 			return nil, err
 		}
+
+		metadata.AddActionMetadata(c, metadata.ResolutionID, res.PublicID)
 	}
 
+	admin := auth.IsAdmin(c) == nil
 	requester := auth.IsRequester(c, t) == nil
 	watcher := auth.IsWatcher(c, t) == nil
 	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
 
-	if !requester && !watcher && !resolutionManager {
+	if !requester && !watcher && !resolutionManager && !admin {
 		return nil, errors.Forbiddenf("Can't create comment")
+	} else if !requester && !watcher && !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	reqUsername := auth.GetIdentity(c)
@@ -70,7 +77,7 @@ type getCommentIn struct {
 
 // GetComment return a specific comment related to a task
 func GetComment(c *gin.Context, in *getCommentIn) (*task.Comment, error) {
-	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -82,6 +89,8 @@ func GetComment(c *gin.Context, in *getCommentIn) (*task.Comment, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.CommentID, comment.PublicID)
+
 	t, err := task.LoadFromPublicID(dbp, in.TaskID)
 	if err != nil {
 		return nil, err
@@ -92,20 +101,27 @@ func GetComment(c *gin.Context, in *getCommentIn) (*task.Comment, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	var res *resolution.Resolution
 	if t.Resolution != nil {
 		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
 		if err != nil {
 			return nil, err
 		}
+
+		metadata.AddActionMetadata(c, metadata.ResolutionID, res.PublicID)
 	}
 
+	admin := auth.IsAdmin(c) == nil
 	requester := auth.IsRequester(c, t) == nil
 	watcher := auth.IsWatcher(c, t) == nil
 	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
 
-	if !requester && !watcher && !resolutionManager {
+	if !requester && !watcher && !resolutionManager && !admin {
 		return nil, errors.Forbiddenf("Can't get comment")
+	} else if !requester && !watcher && !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	return comment, nil
@@ -117,7 +133,7 @@ type listCommentsIn struct {
 
 // ListComments return a list of comments related to a task
 func ListComments(c *gin.Context, in *listCommentsIn) ([]*task.Comment, error) {
-	metadata.AddActionMetadata(c, "task_id", in.TaskID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -134,20 +150,27 @@ func ListComments(c *gin.Context, in *listCommentsIn) ([]*task.Comment, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	var res *resolution.Resolution
 	if t.Resolution != nil {
 		res, err = resolution.LoadFromPublicID(dbp, *t.Resolution)
 		if err != nil {
 			return nil, err
 		}
+
+		metadata.AddActionMetadata(c, metadata.ResolutionID, res.PublicID)
 	}
 
+	admin := auth.IsAdmin(c) == nil
 	requester := auth.IsRequester(c, t) == nil
 	watcher := auth.IsWatcher(c, t) == nil
 	resolutionManager := auth.IsResolutionManager(c, tt, t, res) == nil
 
-	if !requester && !watcher && !resolutionManager {
+	if !requester && !watcher && !resolutionManager && !admin {
 		return nil, errors.Forbiddenf("Can't list comment")
+	} else if !requester && !watcher && !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	comments, err := task.LoadCommentsFromTaskID(dbp, t.ID)
@@ -166,8 +189,8 @@ type updateCommentIn struct {
 
 // UpdateComment update a specific comment related to a task
 func UpdateComment(c *gin.Context, in *updateCommentIn) (*task.Comment, error) {
-	metadata.AddActionMetadata(c, "task_id", in.TaskID)
-	metadata.AddActionMetadata(c, "comment_id", in.CommentID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
+	metadata.AddActionMetadata(c, metadata.CommentID, in.CommentID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -186,8 +209,22 @@ func UpdateComment(c *gin.Context, in *updateCommentIn) (*task.Comment, error) {
 
 	reqUsername := auth.GetIdentity(c)
 
-	if auth.IsAdmin(c) != nil && reqUsername != comment.Username {
-		return nil, errors.Forbiddenf("Can't update comment")
+	admin := auth.IsAdmin(c) == nil
+	commentAuthor := reqUsername == comment.Username
+
+	if !commentAuthor && !admin {
+		return nil, errors.Forbiddenf("Not allowed to update comment")
+	} else if !commentAuthor {
+		metadata.SetSUDO(c)
+	}
+
+	if t.Resolution != nil {
+		res, err := resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return nil, err
+		}
+
+		metadata.AddActionMetadata(c, metadata.ResolutionID, res.PublicID)
 	}
 
 	if comment.TaskID != t.ID {
@@ -209,8 +246,8 @@ type deleteCommentIn struct {
 
 // DeleteComment delete a specific comment related to a task
 func DeleteComment(c *gin.Context, in *deleteCommentIn) error {
-	metadata.AddActionMetadata(c, "task_id", in.TaskID)
-	metadata.AddActionMetadata(c, "comment_id", in.CommentID)
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
+	metadata.AddActionMetadata(c, metadata.CommentID, in.CommentID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
@@ -227,10 +264,24 @@ func DeleteComment(c *gin.Context, in *deleteCommentIn) error {
 		return err
 	}
 
+	if t.Resolution != nil {
+		res, err := resolution.LoadFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			return err
+		}
+
+		metadata.AddActionMetadata(c, metadata.ResolutionID, res.PublicID)
+	}
+
 	reqUsername := auth.GetIdentity(c)
 
-	if auth.IsAdmin(c) != nil && reqUsername != comment.Username {
-		return errors.Forbiddenf("Can't update comment")
+	admin := auth.IsAdmin(c) == nil
+	commentAuthor := reqUsername == comment.Username
+
+	if !commentAuthor && !admin {
+		return errors.Forbiddenf("Not allowed to delete comment")
+	} else if !commentAuthor {
+		metadata.SetSUDO(c)
 	}
 
 	if comment.TaskID != t.ID {

@@ -30,7 +30,8 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 	if err != nil {
 		return nil, err
 	}
-	metadata.AddActionMetadata(c, "template_name", in.TemplateName)
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, in.TemplateName)
 
 	tt, err := tasktemplate.LoadFromName(dbp, in.TemplateName)
 	if err != nil {
@@ -50,6 +51,8 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 		dbp.Rollback()
 		return nil, err
 	}
+
+	metadata.AddActionMetadata(c, metadata.BatchID, b.PublicID)
 
 	for _, inp := range in.Inputs {
 		input, err := conjMap(in.CommonInput, inp)

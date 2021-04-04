@@ -51,7 +51,7 @@ type getTemplateIn struct {
 
 // GetTemplate returns the full representation of a template, steps included
 func GetTemplate(c *gin.Context, in *getTemplateIn) (*tasktemplate.TaskTemplate, error) {
-	metadata.AddActionMetadata(c, "template_name", in.Name)
+	metadata.AddActionMetadata(c, metadata.TemplateName, in.Name)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {

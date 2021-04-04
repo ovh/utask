@@ -2,7 +2,19 @@ package metadata
 
 import "github.com/gin-gonic/gin"
 
-const ActionMetadataKey = "action-metadata"
+const (
+	ActionMetadataKey = "action-metadata"
+
+	TaskID       = "task_id"
+	TemplateName = "template_name"
+	ResolutionID = "resolution_id"
+	StepName     = "step_name"
+	OldState     = "old_state"
+	NewState     = "new_state"
+	FunctionName = "function_name"
+	CommentID    = "comment_id"
+	BatchID      = "batch_id"
+)
 
 func AddActionMetadata(c *gin.Context, name string, value interface{}) {
 	addMetadata(c, ActionMetadataKey, name, value)

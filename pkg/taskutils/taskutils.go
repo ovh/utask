@@ -42,10 +42,11 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 	}
 
 	// task is AutoRunnable, creating resolution
+	admin := auth.IsAdmin(c) == nil
 	requester := (auth.IsRequester(c, t) == nil && tt.AllowAllResolverUsernames)
 	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
 
-	if !requester && !resolutionManager {
+	if !requester && !resolutionManager && !admin {
 		t.NotifyValidationRequired(tt)
 		return t, nil
 	}

@@ -49,6 +49,9 @@ func auditLogsMiddleware(c *gin.Context) {
 	for k, v := range metadata.GetActionMetadata(c) {
 		fields["action_metadata_"+k] = v
 	}
+	if metadata.IsSUDO(c) {
+		fields["sudo"] = true
+	}
 
 	errs := c.Errors.Errors()
 
