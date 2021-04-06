@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/jsonschema"
+	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -211,7 +212,7 @@ func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weig
 		return nil, nil
 	}
 
-	debugLogger = debugLogger.WithFields(logrus.Fields{"template_name": t.TemplateName, "task_id": t.PublicID})
+	debugLogger = debugLogger.WithFields(logrus.Fields{metadata.TemplateName: t.TemplateName, metadata.TaskID: t.PublicID})
 
 	res.Values.SetConfig(e.config)
 

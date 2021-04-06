@@ -210,11 +210,11 @@ func UpdateComment(c *gin.Context, in *updateCommentIn) (*task.Comment, error) {
 	reqUsername := auth.GetIdentity(c)
 
 	admin := auth.IsAdmin(c) == nil
-	commentAuthor := reqUsername == comment.Username
+	isCommentAuthor := reqUsername == comment.Username
 
-	if !commentAuthor && !admin {
+	if !isCommentAuthor && !admin {
 		return nil, errors.Forbiddenf("Not allowed to update comment")
-	} else if !commentAuthor {
+	} else if !isCommentAuthor {
 		metadata.SetSUDO(c)
 	}
 
@@ -276,11 +276,11 @@ func DeleteComment(c *gin.Context, in *deleteCommentIn) error {
 	reqUsername := auth.GetIdentity(c)
 
 	admin := auth.IsAdmin(c) == nil
-	commentAuthor := reqUsername == comment.Username
+	isCommentAuthor := reqUsername == comment.Username
 
-	if !commentAuthor && !admin {
+	if !isCommentAuthor && !admin {
 		return errors.Forbiddenf("Not allowed to delete comment")
-	} else if !commentAuthor {
+	} else if !isCommentAuthor {
 		metadata.SetSUDO(c)
 	}
 
