@@ -1,12 +1,18 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, Output, SimpleChanges, EventEmitter } from '@angular/core';
 import map from 'lodash-es/map';
 import uniq from 'lodash-es/uniq';
+import omit from 'lodash-es/omit';
 import compact from 'lodash-es/compact';
 import { WorkflowService } from '../../@services/workflow.service';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import JSToYaml from 'convert-yaml';
 import { EditorOptions } from 'ng-zorro-antd/code-editor';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { ModalEditResolutionStepStateComponent } from '../../@modals/modal-edit-resolution-step-state/modal-edit-resolution-step-state.component';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import Step from '../../@models/step.model';
+import { ModalApiYamlEditComponent } from '../../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
+import { ApiService } from '../../@services/api.service';
 
 @Component({
     selector: 'lib-utask-steps-list',
@@ -16,6 +22,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 export class StepsListComponent implements OnChanges {
     @Input() resolution: any;
     @Input() selectedStep: string;
+    @Output() stepChanged = new EventEmitter<Step>();
     displayDetails: { [key: string]: boolean } = {};
     filter: any = {
         tags: []
@@ -40,7 +47,9 @@ export class StepsListComponent implements OnChanges {
 
     constructor(
         private _modal: NzModalService,
-        private _workflowService: WorkflowService
+        private _workflowService: WorkflowService,
+        private _notif: NzNotificationService,
+        private _api: ApiService
     ) {
         this.defaultState = this._workflowService.defaultState;
         this.states = this._workflowService.getMapStates();
@@ -76,6 +85,47 @@ export class StepsListComponent implements OnChanges {
                         resolve(JSToYaml.stringify(step).value);
                     });
                 }
+            }
+        });
+    }
+
+    updateStepState(step: Step) {
+        this._modal.create({
+            nzTitle: `Edit ${step.name} state`,
+            nzContent: ModalEditResolutionStepStateComponent,
+            nzWidth: '80%',
+            nzComponentParams: {
+                step,
+                resolution: this.resolution,
+            },
+            nzOnOk: async (data) => {
+                this._notif.info('', `The step state has been edited to ${data.result}.`);
+                step.state = data.result;
+                this.stepChanged.emit(step);
+            }
+        });
+    }
+
+    updateStep(step: Step) {
+        this._modal.create({
+            nzTitle: 'Request preview',
+            nzContent: ModalApiYamlEditComponent,
+            nzWidth: '80%',
+            nzComponentParams: {
+                apiCall: () => this._api.resolution.getStep(this.resolution.id, step.name).toPromise().then((d: any) => {
+                    JSToYaml.spacingStart = ' '.repeat(0);
+                    JSToYaml.spacing = ' '.repeat(4);
+                    return JSToYaml.stringify(
+                        omit(d, ['state', 'children_steps', 'children_steps_map', 'output', 'metadatas', 'tags', 'children', 'error', 'try_count', 'last_time', 'item'])
+                    ).value
+                }).catch(err => {
+                    throw err;
+                }),
+                apiCallSubmit: (data: any) => this._api.resolution.updateStepAsYaml(this.resolution.id, step.name, data).toPromise()
+            },
+            nzOnOk: (data: ModalApiYamlEditComponent) => {
+                this._notif.info('', `The step has been edited.`);
+                this.stepChanged.emit(data.result);
             }
         });
     }

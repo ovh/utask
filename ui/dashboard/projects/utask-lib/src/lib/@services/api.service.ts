@@ -253,6 +253,47 @@ export class ApiServiceResolution {
         );
     }
 
+    updateStepState(id: string, stepName: string, stepState: string) {
+        return this.http.put(
+            `${this.base}resolution/${id}/step/${stepName}/state`,
+            {
+                state: stepState
+            }
+        );
+    }
+
+    updateStepAsYaml(id: string, stepName: string, yaml: string) {
+        return this.http.put(
+            `${this.base}resolution/${id}/step/${stepName}`,
+            yaml,
+            {
+                headers: {
+                    accept: 'application/x-yaml',
+                },
+                responseType: 'text',
+                observe: 'body'
+            }
+        );
+    }
+
+    getStep(id: string, stepName: string) {
+        return this.http.get(
+            `${this.base}resolution/${id}/step/${stepName}`
+        );
+    }
+
+    getStepAsYaml(id: string, stepName: string) {
+        return this.http.get(
+            `${this.base}resolution/${id}/step/${stepName}`, {
+            headers: {
+                accept: 'application/x-yaml',
+            },
+            responseType: 'text',
+            observe: 'body'
+        }
+        );
+    }
+
     updateAsYaml(id: string, yaml: string) {
         return this.http.put(
             `${this.base}resolution/${id}`,

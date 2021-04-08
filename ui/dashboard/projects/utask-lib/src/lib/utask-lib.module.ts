@@ -17,6 +17,7 @@ import { InputEditorComponent } from './@components/input-editor/input-editor.co
 import { LoaderComponent } from './@components/loader/loader.component';
 import { MetaResolve } from './@resolves/meta.resolve';
 import { ModalApiYamlComponent } from './@modals/modal-api-yaml/modal-api-yaml.component';
+import { ModalEditResolutionStepStateComponent } from './@modals/modal-edit-resolution-step-state/modal-edit-resolution-step-state.component';
 import { ModalApiYamlEditComponent } from './@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ModalService } from './@services/modal.service';
 import { NgModule } from '@angular/core';
@@ -72,6 +73,7 @@ const components: any[] = [
   InputTagsComponent,
   LoaderComponent,
   ModalApiYamlComponent,
+  ModalEditResolutionStepStateComponent,
   ModalApiYamlEditComponent,
   NzModalContentWithErrorComponent,
   StepNodeComponent,
@@ -130,6 +132,7 @@ const components: any[] = [
   bootstrap: [],
   entryComponents: [
     ModalApiYamlComponent,
+    ModalEditResolutionStepStateComponent,
     ModalApiYamlEditComponent,
     NzModalContentWithErrorComponent
   ],

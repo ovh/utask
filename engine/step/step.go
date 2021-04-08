@@ -606,10 +606,6 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 		return errors.NewNotValid(nil, "step error must not be set")
 	}
 
-	if st.Metadata != nil {
-		return errors.NewNotValid(nil, "step metadatas must not be set")
-	}
-
 	if st.TryCount != 0 {
 		return errors.NewNotValid(nil, "step try_count must not be set")
 	}

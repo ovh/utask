@@ -215,8 +215,8 @@ export class WorkflowHelper {
         error: false
     }, {
         key: "SERVER_ERROR",
-        color: "#b04020",
-        shape: "shape_red",
+        color: "#f09000",
+        shape: "shape_orange",
         fontColor: "white",
         isFinal: false,
         icon: "fa-ban",
