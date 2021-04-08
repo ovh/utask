@@ -380,6 +380,7 @@ A condition can use one of the following operators:
 - `GE`: greater or equal
 - `LE`: less than or equal
 - `REGEXP`: match a regexp
+- `NOTREGEXP`: doesn't match a regexp
 - `IN`: found in a list of values
 - `NOTIN`: not found in a list of values
 
