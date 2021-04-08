@@ -60,10 +60,6 @@ func IsAdmin(ctx context.Context) error {
 // IsRequester asserts that identity data found in context represents
 // the requester of the given task
 func IsRequester(ctx context.Context, t *task.Task) error {
-	if err := IsAdmin(ctx); err == nil {
-		return nil
-	}
-
 	id := GetIdentity(ctx)
 	if t.RequesterUsername != id {
 		return errors.Forbiddenf("User is not requester of this task")
@@ -74,29 +70,10 @@ func IsRequester(ctx context.Context, t *task.Task) error {
 // IsWatcher asserts that identity data found in context represents
 // a watcher of the given task
 func IsWatcher(ctx context.Context, t *task.Task) error {
-	if err := IsAdmin(ctx); err == nil {
-		return nil
-	}
-
 	id := GetIdentity(ctx)
 	if !utils.ListContainsString(t.WatcherUsernames, id) {
 		return errors.Forbiddenf("User is not watcher of this task")
 	}
-	return nil
-}
-
-// IsResolver asserts that identity data found in context is the actual resolver of a given resolution
-func IsResolver(ctx context.Context, r *resolution.Resolution) error {
-	if err := IsAdmin(ctx); err == nil {
-		return nil
-	}
-
-	id := GetIdentity(ctx)
-
-	if id != r.ResolverUsername {
-		return errors.Forbiddenf("User not authorized on this resolution")
-	}
-
 	return nil
 }
 
@@ -105,10 +82,6 @@ func IsResolver(ctx context.Context, r *resolution.Resolution) error {
 // - a task resolver (resolver_usernames)
 // - this task resolver (resolver_username)
 func IsResolutionManager(ctx context.Context, tt *tasktemplate.TaskTemplate, t *task.Task, r *resolution.Resolution) error {
-	if err := IsAdmin(ctx); err == nil {
-		return nil
-	}
-
 	id := GetIdentity(ctx)
 
 	if t == nil {
@@ -132,10 +105,6 @@ func IsResolutionManager(ctx context.Context, tt *tasktemplate.TaskTemplate, t *
 
 // IsTemplateOwner asserts that identity data found in context is a template allowed_resolver_usernames
 func IsTemplateOwner(ctx context.Context, tt *tasktemplate.TaskTemplate) error {
-	if err := IsAdmin(ctx); err == nil {
-		return nil
-	}
-
 	id := GetIdentity(ctx)
 
 	if tt == nil {

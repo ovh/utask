@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -30,6 +31,8 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TemplateName, in.TemplateName)
+
 	tt, err := tasktemplate.LoadFromName(dbp, in.TemplateName)
 	if err != nil {
 		return nil, err
@@ -48,6 +51,8 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 		dbp.Rollback()
 		return nil, err
 	}
+
+	metadata.AddActionMetadata(c, metadata.BatchID, b.PublicID)
 
 	for _, inp := range in.Inputs {
 		input, err := conjMap(in.CommonInput, inp)

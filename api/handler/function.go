@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/ovh/utask/engine/functions"
+	"github.com/ovh/utask/pkg/metadata"
 )
 
 type listFunctionsIn struct {
@@ -57,6 +58,8 @@ type getFunctionIn struct {
 
 // GetFunction returns the full representation of a function, steps included
 func GetFunction(c *gin.Context, in *getFunctionIn) (*functions.Function, error) {
+	metadata.AddActionMetadata(c, metadata.FunctionName, in.Name)
+
 	function, exists := functions.Get(in.Name)
 	if !exists {
 		return nil, errors.NewNotFound(nil, "function not found")

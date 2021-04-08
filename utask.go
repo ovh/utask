@@ -46,6 +46,8 @@ var (
 	// FMaintenanceMode is a flag to prevent all write operations on the API,
 	// except for admin actions (key rotation)
 	FMaintenanceMode bool
+	// FLogsFormat represents the format used by the Logrus formatter.
+	FLogsFormat string
 )
 
 // AppName returns the name of the application (from config)

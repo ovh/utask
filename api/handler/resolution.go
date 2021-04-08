@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/metadata"
 )
 
 type createResolutionIn struct {
@@ -27,6 +28,8 @@ type createResolutionIn struct {
 // the creator of the resolution (aka "resolver") might have to provide extra inputs
 // depending on the task's template definition
 func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resolution, error) {
+	metadata.AddActionMetadata(c, metadata.TaskID, in.TaskID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -48,9 +51,14 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		return nil, err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, nil); err != nil {
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
+
+	if !admin && !resolutionManager {
 		dbp.Rollback()
 		return nil, errors.Forbiddenf("You are not allowed to resolve this task")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	resUser := auth.GetIdentity(c)
@@ -71,6 +79,7 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.ResolutionID, r.PublicID)
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler CreateResolution: created resolution %s", r.PublicID)
 
 	if err := dbp.Commit(); err != nil {
@@ -142,6 +151,8 @@ type getResolutionIn struct {
 
 // GetResolution returns a single resolution, with its full content (all step outputs included)
 func GetResolution(c *gin.Context, in *getResolutionIn) (*resolution.Resolution, error) {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -157,13 +168,30 @@ func GetResolution(c *gin.Context, in *getResolutionIn) (*resolution.Resolution,
 		return nil, err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !requester && !watcher && !resolutionManager {
+		return nil, errors.Forbiddenf("Can't display resolution details")
+	}
+
+	if !resolutionManager && !admin {
 		r.ClearOutputs()
+	}
+
+	if !resolutionManager && !requester && !watcher {
+		metadata.SetSUDO(c)
 	}
 
 	return r, nil
@@ -180,6 +208,8 @@ type updateResolutionIn struct {
 // use sparingly, this opens the door to completely breaking execution
 // can only be called when resolution is in state PAUSED
 func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -201,6 +231,16 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		_ = dbp.Rollback()
+		return err
+	}
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
 	if r.State != resolution.StatePaused {
 		dbp.Rollback()
 		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
@@ -210,6 +250,8 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		dbp.Rollback()
 		return err
 	}
+
+	metadata.SetSUDO(c)
 
 	if in.Steps != nil {
 		r.Steps = in.Steps
@@ -248,6 +290,8 @@ type runResolutionIn struct {
 // RunResolution launches the asynchronous execution of a resolution
 // the engine determines if resolution is eligible for execution
 func RunResolution(c *gin.Context, in *runResolutionIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -264,13 +308,22 @@ func RunResolution(c *gin.Context, in *runResolutionIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		return err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !resolutionManager {
 		return errors.Forbiddenf("You are not allowed to resolve this task")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	reqUsername := auth.GetIdentity(c)
@@ -308,6 +361,8 @@ type extendResolutionIn struct {
 // ExtendResolution increments a resolution's remaining execution retries
 // in case it has reached state BLOCKED_MAXRETRIES
 func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -329,15 +384,24 @@ func ExtendResolution(c *gin.Context, in *extendResolutionIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		dbp.Rollback()
 		return err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !resolutionManager {
 		dbp.Rollback()
-		return err
+		return errors.Forbiddenf("Not allowed to extend resolution")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	if r.State != resolution.StateBlockedMaxRetries {
@@ -381,6 +445,8 @@ type cancelResolutionIn struct {
 // CancelResolution "kills" a live resolution and its corresponding task,
 // rendering it non-runnable (and garbage-collectable)
 func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -402,15 +468,24 @@ func CancelResolution(c *gin.Context, in *cancelResolutionIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		dbp.Rollback()
 		return err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !resolutionManager {
 		dbp.Rollback()
-		return err
+		return errors.Forbiddenf("You are not allowed to cancel this task")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	switch r.State {
@@ -458,6 +533,8 @@ type pauseResolutionIn struct {
 // this action can only be performed by administrators
 // and can be "forced" when dealing with exceptions in which a resolution doesn't exit RUNNING state
 func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -479,15 +556,24 @@ func PauseResolution(c *gin.Context, in *pauseResolutionIn) error {
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		dbp.Rollback()
 		return err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !resolutionManager {
 		dbp.Rollback()
-		return errors.Forbiddenf("You are not allowed to resolve this task")
+		return errors.Forbiddenf("You are not allowed to pause this task")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	if in.Force {
@@ -534,6 +620,8 @@ type getResolutionStepIn struct {
 
 // GetResolutionStep returns a single step resolution, with its full content (output included)
 func GetResolutionStep(c *gin.Context, in *getResolutionStepIn) (*step.Step, error) {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return nil, err
@@ -549,18 +637,37 @@ func GetResolutionStep(c *gin.Context, in *getResolutionStepIn) (*step.Step, err
 		return nil, errors.NotFoundf("given stepName %q for this resolution", in.StepName)
 	}
 
+	metadata.AddActionMetadata(c, metadata.StepName, in.StepName)
+
 	t, err := task.LoadFromID(dbp, r.TaskID)
 	if err != nil {
 		return nil, err
 	}
+
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
 
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	requester := auth.IsRequester(c, t) == nil
+	watcher := auth.IsWatcher(c, t) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !requester && !watcher && !resolutionManager {
+		return nil, errors.Forbiddenf("Can't display resolution details")
+	}
+
+	if !resolutionManager && !admin {
 		r.ClearOutputs()
+	}
+
+	if !resolutionManager && !requester && !watcher {
+		metadata.SetSUDO(c)
 	}
 
 	return step, nil
@@ -568,8 +675,8 @@ func GetResolutionStep(c *gin.Context, in *getResolutionStepIn) (*step.Step, err
 
 type updateResolutionStepIn struct {
 	step.Step
-	TaskPublicID string `path:"id" validate:"required"`
-	StepName     string `path:"stepName" validate:"required"`
+	PublicID string `path:"id" validate:"required"`
+	StepName string `path:"stepName" validate:"required"`
 }
 
 // UpdateResolutionStep is a special handler reserved to administrators, which allows the
@@ -577,6 +684,8 @@ type updateResolutionStepIn struct {
 // instead of live patch the whole resolution.
 // can only be called when resolution is in state PAUSED
 func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -586,7 +695,7 @@ func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
 		return err
 	}
 
-	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.TaskPublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -597,11 +706,15 @@ func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
 		return errors.NotFoundf("given stepName %q for this resolution", in.StepName)
 	}
 
+	metadata.AddActionMetadata(c, metadata.StepName, in.StepName)
+
 	t, err := task.LoadFromID(dbp, r.TaskID)
 	if err != nil {
 		dbp.Rollback()
 		return err
 	}
+
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
 
 	if r.State != resolution.StatePaused {
 		dbp.Rollback()
@@ -613,11 +726,15 @@ func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
 		return err
 	}
 
+	metadata.SetSUDO(c)
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
 		dbp.Rollback()
 		return err
 	}
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
 
 	r.Steps[in.StepName] = &in.Step
 
@@ -649,14 +766,17 @@ func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
 }
 
 type updateResolutionStepStateIn struct {
-	TaskPublicID string `path:"id" validate:"required"`
-	StepName     string `path:"stepName" validate:"required"`
-	State        string `json:"state" validate:"required"`
+	PublicID string `path:"id" validate:"required"`
+	StepName string `path:"stepName" validate:"required"`
+	State    string `json:"state" validate:"required"`
 }
 
 // UpdateResolutionStepState allows the edition of a step state.
 // Can only be called when the resolution is in state PAUSED, and by a resolution manager.
 func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) error {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+	metadata.AddActionMetadata(c, metadata.StepName, in.StepName)
+
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
 		return err
@@ -666,7 +786,7 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 		return err
 	}
 
-	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.TaskPublicID)
+	r, err := resolution.LoadLockedNoWaitFromPublicID(dbp, in.PublicID)
 	if err != nil {
 		dbp.Rollback()
 		return err
@@ -683,6 +803,8 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 		return err
 	}
 
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
 	if r.State != resolution.StatePaused {
 		dbp.Rollback()
 		return errors.BadRequestf("Cannot update a resolution which is not in state '%s'", resolution.StatePaused)
@@ -694,9 +816,16 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 		return err
 	}
 
-	if err := auth.IsResolutionManager(c, tt, t, r); err != nil {
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+
+	if !admin && !resolutionManager {
 		dbp.Rollback()
-		return err
+		return errors.Forbiddenf("Can't update resolution step state")
+	} else if !resolutionManager {
+		metadata.SetSUDO(c)
 	}
 
 	s := r.Steps[in.StepName]
@@ -715,6 +844,8 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 	}
 
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler UpdateResolutionStepState: manual update of resolution %s step %s state switched from %s to %s", r.PublicID, in.StepName, oldState, in.State)
+	metadata.AddActionMetadata(c, metadata.OldState, oldState)
+	metadata.AddActionMetadata(c, metadata.NewState, s.State)
 
 	if err := r.Update(dbp); err != nil {
 		dbp.Rollback()

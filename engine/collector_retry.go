@@ -32,7 +32,10 @@ func RetryCollector(ctx context.Context) error {
 				r, _ := getUpdateErrorResolution(dbp)
 				if r != nil {
 					sl.wakeup()
-					logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Retry Collector: collected resolution %s", r.PublicID)
+					logrus.WithFields(logrus.Fields{
+						"resolution_id": r.PublicID,
+						"log_type":      "engine",
+					}).Debugf("Retry Collector: collected resolution %s", r.PublicID)
 					_ = GetEngine().Resolve(r.PublicID, nil)
 				}
 			}
@@ -67,6 +70,7 @@ func getUpdateErrorResolution(dbp zesty.DBProvider) (*resolution.Resolution, err
 	logrus.WithFields(logrus.Fields{
 		"resolution_id": r.PublicID,
 		"instance_id":   instanceID,
+		"log_type":      "engine",
 	}).Debugf("Retry Collector: set resolution %s with instanceID %d", r.PublicID, instanceID)
 	return &r, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/jsonschema"
+	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -189,7 +190,7 @@ func (e Engine) SyncResolve(publicID string, sm *semaphore.Weighted) (*resolutio
 func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weighted) (*resolution.Resolution, error) {
 	e.wg.Add(1)
 	defer e.wg.Done()
-	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID})
+	debugLogger := logrus.WithFields(logrus.Fields{"resolution_id": publicID, "log_type": "engine"})
 	debugLogger.Debugf("Engine: Resolve() starting for %s", publicID)
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
@@ -210,6 +211,8 @@ func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weig
 		debugLogger.Debugf("Engine: Resolve() %s nil res, abort", publicID)
 		return nil, nil
 	}
+
+	debugLogger = debugLogger.WithFields(logrus.Fields{metadata.TemplateName: t.TemplateName, metadata.TaskID: t.PublicID})
 
 	res.Values.SetConfig(e.config)
 
@@ -432,6 +435,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 				executedSteps[s.Name] = true
 			}
 
+			debugLogger := debugLogger.WithFields(logrus.Fields{"step_name": s.Name, "step_state": s.State})
 			debugLogger.Debugf("Engine: resolve() %s loop, step %s (#%d) result: %s", res.PublicID, s.Name, s.TryCount, s.State)
 
 			if newStep, ok := res.Steps[s.Name]; ok && newStep.State != oldState {
@@ -559,6 +563,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 	bkoff.Reset()
 
 	for {
+		debugLogger := debugLogger.WithField("resolution_state", res.State)
 		err := commit(dbp, res, t)
 		if err != nil {
 			debugLogger.Debugf("Engine: resolve() %s final commit error: %s", res.PublicID, err)
@@ -610,6 +615,7 @@ func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphor
 	}
 
 	debugLogger.Debugf("resuming parent task %q resolution %q", parentTask.PublicID, *parentTask.Resolution)
+	debugLogger.WithFields(logrus.Fields{"task_id": parentTask.PublicID, "resolution_id": *parentTask.Resolution}).Debugf("resuming resolution %q as child task %q state changed", *parentTask.Resolution, currentTask.PublicID)
 	return GetEngine().Resolve(*parentTask.Resolution, sm)
 }
 

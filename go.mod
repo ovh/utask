@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.4.0
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/fabienm/go-logrus-formatters v1.0.0
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
 	github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe // indirect

@@ -32,7 +32,10 @@ func AutorunCollector(ctx context.Context) error {
 				r, _ := getUpdateAutorunResolution(dbp)
 				if r != nil {
 					sl.wakeup()
-					logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Autorun Collector: collected resolution %s", r.PublicID)
+					logrus.WithFields(logrus.Fields{
+						"resolution_id": r.PublicID,
+						"log_type":      "engine",
+					}).Debugf("Autorun Collector: collected resolution %s", r.PublicID)
 					_ = GetEngine().Resolve(r.PublicID, nil)
 				}
 			}
