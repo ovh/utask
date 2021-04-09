@@ -154,7 +154,7 @@
                         </nz-descriptions-item>
                     </nz-descriptions>
                     <lib-utask-steps-list *ngIf="resolution.steps" [resolution]="resolution"
-                        [selectedStep]="selectedStep">
+                        [selectedStep]="selectedStep" (stepChanged)="loadTask()">
                     </lib-utask-steps-list>
                 </div>
                 <div nz-col [nzSpan]="16">

@@ -1,0 +1,20 @@
+<form nz-form [formGroup]="modalForm" (submit)="submit()" *ngIf="!loaders.form" [nzLayout]="'vertical'">
+    <nz-form-item>
+        <nz-form-label nzFor="stepState">State</nz-form-label>
+        <nz-form-control>
+            <nz-select formControlName="stepState">
+                <nz-option *ngFor="let s of states" [nzLabel]="s" [nzValue]="s"></nz-option>
+            </nz-select>
+        </nz-form-control>
+    </nz-form-item>
+
+    <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
+</form>
+
+<ng-template [nzModalFooter]>
+    <form nz-form [formGroup]="modalForm" (submit)="submit()">
+        <button type="button" nz-button nzType="warning" (click)="modal.triggerCancel()">Close</button>
+        <button type="submit" nz-button nzType="primary"
+            [disabled]="loaders.submit || errors.submit || modalForm.invalid || loaders.submit">Save</button>
+    </form>
+</ng-template>

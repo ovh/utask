@@ -24,6 +24,7 @@ export class StepNodeComponent implements OnInit, OnChanges {
                 break;
             }
             case 'TO_RETRY':
+            case 'SERVER_ERROR':
                 this.styleClass = 'orange';
                 break;
             case 'RUNNING':
@@ -40,7 +41,6 @@ export class StepNodeComponent implements OnInit, OnChanges {
                 break;
             }
             case 'CLIENT_ERROR':
-            case 'SERVER_ERROR':
             case 'FATAL_ERROR':
                 {
                     this.styleClass = 'red';

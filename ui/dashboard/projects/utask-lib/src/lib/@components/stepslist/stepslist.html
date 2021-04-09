@@ -18,8 +18,15 @@
         <div app-box-header>{{resolution.steps[stepName].state}} - {{stepName}}
             <nz-button-group nzSize="small">
                 <button type="button" nz-button [nzGhost]="true" title="View as code"
-                    (click)="previewStepDetails(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
-                        nzType="file-text"></i></button>
+                    (click)="previewStepDetails(resolution.steps[stepName]); $event.stopPropagation();"
+                    nzTooltipTitle="View as code" nz-tooltip><i nz-icon nzType="file-text"></i></button>
+                <button type="button" nz-button [nzGhost]="true" [disabled]="resolution.state != 'PAUSED'"
+                    (click)="updateStepState(resolution.steps[stepName]); $event.stopPropagation();"
+                    nzTooltipTitle="Edit step state" nz-tooltip><i nz-icon nzType="edit"></i></button>
+                <button type="button" nz-button [nzGhost]="true" [disabled]="resolution.state != 'PAUSED'"
+                    nzTooltipTitle="Edit step" nz-tooltip
+                    (click)="updateStep(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
+                        nzType="form"></i></button>
             </nz-button-group>
         </div>
         <div app-box-content>
