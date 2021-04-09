@@ -52,7 +52,7 @@ export class BoxComponent implements OnChanges, AfterViewInit {
             class: 'primary',
             ...this.header
         };
-        if (this.headerConfig.color && this.headerConfig.color) {
+        if (this.headerConfig.color && this.headerConfig.fontColor) {
             this.customStyle = {
                 'border-color': this.headerConfig.color,
                 'background-color': this.headerConfig.color
