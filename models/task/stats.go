@@ -1,6 +1,7 @@
 package task
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/juju/errors"
@@ -46,13 +47,22 @@ func RegisterTaskTime(templateName string, taskCreation, resCreation time.Time) 
 }
 
 // LoadStateCount returns a map containing the count of tasks grouped by state
-func LoadStateCount(dbp zesty.DBProvider) (sc map[string]float64, err error) {
+func LoadStateCount(dbp zesty.DBProvider, tags map[string]string) (sc map[string]float64, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to load task stats")
 
-	query, params, err := sqlgenerator.PGsql.Select(`state, count(state) as state_count`).
+	sel := sqlgenerator.PGsql.Select(`state, count(state) as state_count`).
 		From(`"task"`).
-		GroupBy(`state`).
-		ToSql()
+		GroupBy(`state`)
+
+	if len(tags) > 0 {
+		b, err := json.Marshal(tags)
+		if err != nil {
+			return nil, err
+		}
+		sel = sel.Where(`"task".tags @> ?::jsonb`, string(b))
+	}
+
+	query, params, err := sel.ToSql()
 	if err != nil {
 		return nil, err
 	}
