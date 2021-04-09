@@ -255,6 +255,30 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 
 	if in.Steps != nil {
 		r.Steps = in.Steps
+
+		tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+		if err != nil {
+			_ = dbp.Rollback()
+			return err
+		}
+
+		// valid and normalize steps
+		for name, st := range r.Steps {
+			if err := st.ValidAndNormalize(name, tt.BaseConfigurations, r.Steps); err != nil {
+				return errors.NewNotValid(err, fmt.Sprintf("invalid step %s", name))
+			}
+
+			valid, err := st.CheckIfValidState()
+			if err != nil {
+				_ = dbp.Rollback()
+				return err
+			}
+
+			if !valid {
+				_ = dbp.Rollback()
+				return errors.NewBadRequest(nil, fmt.Sprintf("step %q: invalid state provided: %q is not allowed", name, st.State))
+			}
+		}
 	}
 
 	if in.ResolverInputs != nil {
@@ -741,6 +765,17 @@ func UpdateResolutionStep(c *gin.Context, in *updateResolutionStepIn) error {
 	if err := r.Steps[in.StepName].ValidAndNormalize(in.StepName, tt.BaseConfigurations, r.Steps); err != nil {
 		dbp.Rollback()
 		return err
+	}
+
+	valid, err := r.Steps[in.StepName].CheckIfValidState()
+	if err != nil {
+		_ = dbp.Rollback()
+		return err
+	}
+
+	if !valid {
+		_ = dbp.Rollback()
+		return errors.NewBadRequest(nil, fmt.Sprintf("invalid state provided: %q is not allowed", in.State))
 	}
 
 	logrus.WithFields(logrus.Fields{"resolution_id": r.PublicID}).Debugf("Handler UpdateResolutionStep: manual update of resolution %s step %s", r.PublicID, in.StepName)
