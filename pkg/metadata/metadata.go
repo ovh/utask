@@ -30,13 +30,13 @@ func addMetadata(c *gin.Context, metadataKey, name string, value interface{}) {
 	c.Set(metadataKey, m)
 }
 
-func GetActionMetadata(c *gin.Context) map[string]string {
+func GetActionMetadata(c *gin.Context) map[string]interface{} {
 	return getMetadata(c, ActionMetadataKey)
 }
 
-func getMetadata(c *gin.Context, metadataKey string) map[string]string {
+func getMetadata(c *gin.Context, metadataKey string) map[string]interface{} {
 	i, _ := c.Get(metadataKey)
-	m, ok := i.(map[string]string)
+	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
 	}
