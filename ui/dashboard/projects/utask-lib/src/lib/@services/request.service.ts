@@ -36,7 +36,9 @@ export class RequestService {
     isResolvable(task: Task, meta: Meta, allowedResolverUsernames: string[]): boolean {
         return !task.resolution && task.state !== 'WONTFIX' &&
             (
-                meta.user_is_admin || (allowedResolverUsernames || []).indexOf(meta.username) > -1 || (task.resolver_usernames || []).indexOf(meta.username) > -1
+                meta.user_is_admin ||
+                (allowedResolverUsernames ?? []).indexOf(meta.username) > -1 ||
+                (task.resolver_usernames ?? []).indexOf(meta.username) > -1
             );
     }
 }
