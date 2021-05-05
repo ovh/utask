@@ -11,7 +11,7 @@
     <lib-utask-error-message [data]="errors.submit" *ngIf="errors.submit && !loaders.submit"></lib-utask-error-message>
 </form>
 
-<ng-template [nzModalFooter]>
+<ng-template *nzModalFooter>
     <form nz-form [formGroup]="modalForm" (submit)="submit()">
         <button type="button" nz-button nzType="warning" (click)="modal.triggerCancel()">Close</button>
         <button type="submit" nz-button nzType="primary"
