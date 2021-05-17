@@ -18,6 +18,7 @@ import difference from 'lodash-es/difference';
 import Resolution from '../../@models/resolution.model';
 import Step from '../../@models/step.model';
 import { StepNodeComponent } from '../step-node/step-node.component';
+import isEqual from 'lodash-es/isEqual';
 
 interface Edge {
     v: string;
@@ -119,7 +120,7 @@ export class StepsViewerComponent implements AfterViewInit, OnChanges {
             this.item.g.setGraph({
                 nodesep: 70,
                 ranksep: 50,
-                rankdir: "TB",
+                rankdir: 'TB',
                 marginx: 20,
                 marginy: 20
             });
@@ -157,7 +158,7 @@ export class StepsViewerComponent implements AfterViewInit, OnChanges {
                     return selection.transition().duration(500);
                 };
                 this.draw(false);
-            } else {
+            } else if (!isEqual(diff.resolution.previousValue, diff.resolution.currentValue)) {
                 this.draw(true);
             }
         }
@@ -244,8 +245,8 @@ export class StepsViewerComponent implements AfterViewInit, OnChanges {
     }
 
     createNodeComponent(key: string, step: Step): ComponentRef<StepNodeComponent> {
-        let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(StepNodeComponent);
-        let componentRef = nodeComponentFactory.create(this.svg.parentInjector);
+        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(StepNodeComponent);
+        const componentRef = nodeComponentFactory.create(this.svg.parentInjector);
         componentRef.instance.step = step;
         componentRef.instance.key = key;
         componentRef.instance.click.subscribe(v => this.selectStep(v));

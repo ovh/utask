@@ -34,7 +34,7 @@
         "lodash-es": "4.17.15",
         "moment": "2.29.1",
         "monaco-editor": "0.21.2",
-        "ng-zorro-antd": "10.1.2",
+        "ng-zorro-antd": "11.4.1",
         "rxjs": "6.6.3",
         "tslib": "2.0.3",
         "zone.js": "0.11.3"

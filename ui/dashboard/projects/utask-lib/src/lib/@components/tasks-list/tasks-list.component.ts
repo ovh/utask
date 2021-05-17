@@ -122,6 +122,7 @@ export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterVi
     scroll = new Subject<void>();
     scrollSub: Subscription;
     registrerScroll = new Subject<ParamsListTasks>();
+    objectKeys = Object.keys;
 
     titleWidth: string;
 

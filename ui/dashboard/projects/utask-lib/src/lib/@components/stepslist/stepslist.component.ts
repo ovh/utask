@@ -72,17 +72,21 @@ export class StepsListComponent implements OnChanges {
         }
     }
 
-    previewStepDetails(step: any) {
+    preview(title: string, item: any) {
         this._modal.create({
-            nzTitle: `Step - ${step.name}`,
+            nzTitle: title,
             nzContent: ModalApiYamlComponent,
             nzWidth: '80%',
             nzComponentParams: {
                 apiCall: () => {
                     return new Promise((resolve) => {
-                        JSToYaml.spacingStart = ' '.repeat(0);
-                        JSToYaml.spacing = ' '.repeat(4);
-                        resolve(JSToYaml.stringify(step).value);
+                        if (typeof (item) === 'string') {
+                            resolve(item);
+                        } else {
+                            JSToYaml.spacingStart = ' '.repeat(0);
+                            JSToYaml.spacing = ' '.repeat(4);
+                            resolve(JSToYaml.stringify(item).value);
+                        }
                     });
                 }
             }
@@ -180,5 +184,13 @@ export class StepsListComponent implements OnChanges {
             }
             return null;
         }));
+    }
+
+    lineStyle(stepName: string) {
+        const state = this.states[this.resolution.steps[stepName].state];
+        return {
+            color: state?.fontColor ?? this.defaultState.fontColor,
+            'background-color': state?.color ?? this.defaultState.color
+        }
     }
 }
