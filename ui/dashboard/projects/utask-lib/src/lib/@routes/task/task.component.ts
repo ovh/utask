@@ -331,7 +331,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
         this.item.task_id = this.task.id;
         this.templateChange(this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name));
-        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template?.allowed_resolver_usernames || []);
+        this.taskIsResolvable = this.requestService.isResolvable(this.task, this.meta, this.template);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;
           this.autorefresh.actif = false;
@@ -341,7 +341,7 @@ export class TaskComponent implements OnInit, OnDestroy {
             this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN'].indexOf(this.task.state) > -1;
           }
         }
-        this.taskIsResolvable = resolvable;
+
         if (this.task.resolution) {
           this.loadResolution(this.task.resolution).then(rData => {
             if (!this.resolution && rData) {
