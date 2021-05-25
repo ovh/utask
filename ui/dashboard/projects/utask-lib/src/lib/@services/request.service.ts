@@ -35,13 +35,6 @@ export class RequestService {
     }
 
     isResolvable(task: Task, meta: Meta, template: Template): boolean {
-        console.log(task, meta, template.allowed_resolver_usernames);
-        console.log((!task.resolution && task.state !== 'WONTFIX' &&
-            (
-                meta.user_is_admin ||
-                (template.allowed_resolver_usernames ?? []).indexOf(meta.username) > -1 ||
-                (task.resolver_usernames ?? []).indexOf(meta.username) > -1
-            )));
         return !task.resolution && task.state !== 'WONTFIX' &&
             (
                 meta.user_is_admin ||

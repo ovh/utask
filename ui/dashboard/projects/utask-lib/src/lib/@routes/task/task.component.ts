@@ -282,37 +282,53 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.selectedStep = step || '';
   }
 
-  templateChange(t: Template): void {
-    if (t) {
-      if (this.template && t.name === this.template.name) {
-        return;
-      }
-      this.template = t;
-      this.resolverInputs = t.resolver_inputs;
-    } else {
-      if (this.task.resolver_inputs && this.resolverInputs && this.task.resolver_inputs.length === this.resolverInputs.length) {
-        return;
-      }
-      this.resolverInputs = this.task.resolver_inputs;
-    }
-
-    this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
-    if (this.resolverInputs) {
-      this.resolverInputs.forEach(input => {
-        const validators: Array<ValidatorFn> = [];
-        if (!input.optional && input.type !== 'bool') {
-          validators.push(Validators.required);
-        }
-        let defaultValue: any;
-        if (input.type === 'bool') {
-          defaultValue = !!input.default;
+  async getTemplate(templateName): Promise<Template> {
+    return new Promise((resolve, reject) => {
+      if (this.template?.name === templateName) {
+        resolve(this.template);
+      } else {
+        const template = this.route.parent.snapshot.data.templates.find(t => t.name === templateName);
+        if (template) {
+          resolve(template);
         } else {
-          defaultValue = input.default;
+          this.api.template.get(templateName).toPromise().then((t) => {
+            resolve(t);
+          }).catch((err) => {
+            reject(err);
+          });
         }
-        this.validateResolveForm.addControl('input_' + input.name, new FormControl(defaultValue, validators));
+      }
+    });
+  }
+
+  async templateChange(templateName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.getTemplate(templateName).then((template) => {
+        this.template = template;
+        this.resolverInputs = this.template.resolver_inputs;
+
+        this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
+        if (this.resolverInputs) {
+          this.resolverInputs.forEach(input => {
+            const validators: Array<ValidatorFn> = [];
+            if (!input.optional && input.type !== 'bool') {
+              validators.push(Validators.required);
+            }
+            let defaultValue: any;
+            if (input.type === 'bool') {
+              defaultValue = !!input.default;
+            } else {
+              defaultValue = input.default;
+            }
+            this.validateResolveForm.addControl('input_' + input.name, new FormControl(defaultValue, validators));
+          });
+          this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
+        }
+        resolve();
+      }).catch((err) => {
+        reject(err);
       });
-      this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
-    }
+    });
   }
 
   loadTask() {
@@ -325,12 +341,12 @@ export class TaskComponent implements OnInit, OnDestroy {
           type: this.meta.user_is_admin ? 'all' : 'own',
           tag: '_utask_parent_task_id=' + this.taskId
         } as any).toPromise(),
-      ]).then((data) => {
+      ]).then(async (data) => {
         this.task = data[0];
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
         this.item.task_id = this.task.id;
-        this.templateChange(this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name));
+        await this.templateChange(this.task.template_name);
         this.taskIsResolvable = this.requestService.isResolvable(this.task, this.meta, this.template);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;
