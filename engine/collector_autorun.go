@@ -54,9 +54,8 @@ func getUpdateAutorunResolution(dbp zesty.DBProvider) (*resolution.Resolution, e
 			FROM "resolution"
 			WHERE (state = $3 OR
 				  (instance_id = $1 AND state = $2))
-			AND pg_try_advisory_xact_lock(id)
 			LIMIT 1
-			FOR UPDATE
+			FOR UPDATE SKIP LOCKED
 		)
 		RETURNING id, public_id`
 

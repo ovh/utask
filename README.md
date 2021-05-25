@@ -124,6 +124,10 @@ A task will keep running as long as its steps are successfully executed. If a ta
 7. De-activate maintenance mode.
 8. Reboot API.
 
+### Dependencies
+
+The only dependency for µTask is a Postgres database server. The minimum version for the Postgres database is 9.5
+
 ## Configuration 🔨 <a name="configuration"></a>
 
 ### Command line args
