@@ -54,9 +54,8 @@ func getUpdateErrorResolution(dbp zesty.DBProvider) (*resolution.Resolution, err
 			FROM "resolution"
 			WHERE ((instance_id = $1 AND state = $2) OR
 				  ((state = $3 OR state = $4) AND next_retry < NOW()))
-			AND pg_try_advisory_xact_lock(id)
 			LIMIT 1
-			FOR UPDATE
+			FOR UPDATE SKIP LOCKED
 		)
 		RETURNING id, public_id`
 
