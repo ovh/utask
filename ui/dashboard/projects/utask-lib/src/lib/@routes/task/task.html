@@ -1,7 +1,6 @@
-<utask-loader *ngIf="(loaders.task || loaders.resolution) && !task && !errors.main"></utask-loader>
+<utask-loader *ngIf="(loaders.task || loaders.resolution) && !errors.main"></utask-loader>
 <lib-utask-error-message [data]="errors.main" *ngIf="errors.main"></lib-utask-error-message>
-
-<ng-container *ngIf="((!loaders.task && !loaders.resolution) || task) && !errors.main">
+<ng-container *ngIf="((!loaders.task && !loaders.resolution)) && !errors.main">
     <nz-page-header nzBackIcon [nzGhost]="false">
         <nz-page-header-title><span class="bloc_status task_state_{{task.state}}">{{task.state}}</span> {{task.title}}
         </nz-page-header-title>
@@ -10,8 +9,8 @@
             <nz-switch [(ngModel)]="autorefresh.actif" [nzDisabled]="!autorefresh.enable"
                 (ngModelChange)="autorefresh.hasChanged = true">
             </nz-switch>
-            <button type="button" nz-button nzType="primary" nzShape="circle" nzSize="small" (click)="loadTask()"
-                title="Refresh tasks" [nzLoading]="loaders.task || loaders.resolution" [disabled]="autorefresh.actif"><i
+            <button type="button" nz-button nzType="primary" nzShape="circle" nzSize="small" (click)="loadTask(true)"
+                title="Refresh tasks" [nzLoading]="loaders.task || loaders.resolution || loaders.refreshResolution || loaders.refreshTask" [disabled]="autorefresh.actif"><i
                     nz-icon nzType="sync"></i></button>
         </nz-page-header-extra>
     </nz-page-header>
@@ -113,7 +112,7 @@
             <small>{{resolution.id}}</small> -
             <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state ===
                 'ERROR' ? ' (retrying)' : ''}}</small>
-            <span *ngIf="loaders.execution || loaders.task">&nbsp;<i nz-icon nzType="loading"></i></span>
+            <span *ngIf="loaders.execution || loaders.refreshTask">&nbsp;<i nz-icon nzType="loading"></i></span>
             <nz-button-group nzSize="small">
                 <button type="button" nz-button title="Run" (click)="runResolution(resolution)"><i nz-icon
                         nzType="caret-right"></i></button>
@@ -154,7 +153,7 @@
                         </nz-descriptions-item>
                     </nz-descriptions>
                     <lib-utask-steps-list *ngIf="resolution.steps" [resolution]="resolution"
-                        [selectedStep]="selectedStep" (stepChanged)="loadTask()">
+                        [selectedStep]="selectedStep" (stepChanged)="loadTask(true)">
                     </lib-utask-steps-list>
                 </div>
                 <div nz-col [nzSpan]="16">

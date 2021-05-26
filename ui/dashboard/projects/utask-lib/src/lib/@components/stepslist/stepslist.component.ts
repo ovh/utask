@@ -119,9 +119,7 @@ export class StepsListComponent implements OnChanges {
                 apiCall: () => this._api.resolution.getStep(this.resolution.id, step.name).toPromise().then((d: any) => {
                     JSToYaml.spacingStart = ' '.repeat(0);
                     JSToYaml.spacing = ' '.repeat(4);
-                    return JSToYaml.stringify(
-                        omit(d, ['state', 'children_steps', 'children_steps_map', 'output', 'metadatas', 'tags', 'children', 'error', 'try_count', 'last_time', 'item'])
-                    ).value
+                    return JSToYaml.stringify(d).value;
                 }).catch(err => {
                     throw err;
                 }),

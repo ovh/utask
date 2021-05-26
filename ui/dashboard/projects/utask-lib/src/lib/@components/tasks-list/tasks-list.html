@@ -46,10 +46,12 @@
                 <td *ngIf="!options?.disableBulk" nzLeft [nzChecked]="!!bulkSelection[item.id]"
                     (nzCheckedChange)="clickCheckTask(item.id, $event)">
                 </td>
-                <td [nzTooltipTitle]="tooltip" nz-tooltip>
-                    <a [routerLink]="options.routingTaskPath+item.id">{{item.title}}</a>
+                <td>
+                    <a [routerLink]="options.routingTaskPath+item.id" [title]="item.title">{{item.title}}</a>
                     <br />
                     <small>{{item.id}}</small>
+                    <i class="tags" nz-icon nzType="tags" nzTheme="outline" [nzTooltipTitle]="tooltip" nz-tooltip
+                        *ngIf="item.tags"></i>
                 </td>
                 <td>
                     <lib-utask-task-status [task]="item"></lib-utask-task-status>
@@ -92,7 +94,6 @@
                     </nz-dropdown-menu>
                 </td>
                 <ng-template #tooltip>
-                    <p>{{item.title}}</p>
                     <ng-container *ngIf="item.tags">
                         Tags
                         <ul>
