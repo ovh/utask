@@ -110,9 +110,9 @@ export class TaskComponent implements OnInit, OnDestroy {
 
     this.refreshes.tasks = interval(this._options.refresh.task)
       .pipe(filter(() => {
-        return !this.loaders.task && this.autorefresh.actif;
+        return !this.loaders.task && !this.loaders.refreshTask && this.autorefresh.actif;
       }))
-      .pipe(concatMap(() => this.loadTask()))
+      .pipe(concatMap(() => this.loadTask(true)))
       .subscribe();
   }
 
@@ -156,7 +156,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   editRequest(task: Task) {
     this.requestService.edit(task).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The request has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -167,7 +167,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   editResolution(resolution: any) {
     this.resolutionService.edit(resolution).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The resolution has been edited.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -178,7 +178,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   runResolution(resolution: any) {
     this.resolutionService.run(resolution.id).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The resolution has been run.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -189,7 +189,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   pauseResolution(resolution: any) {
     this.resolutionService.pause(resolution.id).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The resolution has been paused.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -200,7 +200,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   cancelResolution(resolution: any) {
     this.resolutionService.cancel(resolution.id).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The resolution has been cancelled.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -211,7 +211,7 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   extendResolution(resolution: any) {
     this.resolutionService.extend(resolution.id).then((data: any) => {
-      this.loadTask();
+      this.loadTask(true);
       this._notif.info('', 'The resolution has been extended.');
     }).catch((err) => {
       if (err !== 'close') {
@@ -245,7 +245,7 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.loaders.rejectTask = true;
     this.api.task.reject(this.task.id).toPromise().then((res: any) => {
       this.errors.rejectTask = null;
-      this.loadTask();
+      this.loadTask(true);
     }).catch((err) => {
       this.errors.rejectTask = err;
     }).finally(() => {
@@ -270,7 +270,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       resolver_inputs: InputsFormComponent.getInputs(this.validateResolveForm.value)
     }).toPromise().then((res: any) => {
       this.errors.resolveTask = null;
-      this.loadTask();
+      this.loadTask(true);
     }).catch((err) => {
       this.errors.resolveTask = err;
     }).finally(() => {
@@ -282,20 +282,22 @@ export class TaskComponent implements OnInit, OnDestroy {
     this.selectedStep = step || '';
   }
 
-  templateChange(t: Template): void {
-    if (t) {
-      if (this.template && t.name === this.template.name) {
-        return;
+  async getTemplate(templateName): Promise<Template> {
+    return new Promise((resolve, reject) => {
+      const template = this.route.parent.snapshot.data.templates.find((t: Template) => t.name === templateName);
+      if (template) {
+        resolve(template);
+      } else {
+        this.api.template.get(templateName).toPromise().then((t) => {
+          resolve(t);
+        }).catch((err) => {
+          reject(err);
+        });
       }
-      this.template = t;
-      this.resolverInputs = t.resolver_inputs;
-    } else {
-      if (this.task.resolver_inputs && this.resolverInputs && this.task.resolver_inputs.length === this.resolverInputs.length) {
-        return;
-      }
-      this.resolverInputs = this.task.resolver_inputs;
-    }
+    });
+  }
 
+  taskChanged() {
     this.inputControls.forEach(key => this.validateResolveForm.removeControl(key));
     if (this.resolverInputs) {
       this.resolverInputs.forEach(input => {
@@ -313,11 +315,13 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
       this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
     }
+    this.item.task_id = this.task.id;
   }
 
-  loadTask() {
+  loadTask(refresh: boolean = false) {
     return new Promise<void>((resolve, reject) => {
-      this.loaders.task = true;
+      this.loaders.task = !refresh;
+      this.loaders.refreshTask = refresh;
       Promise.all([
         this.api.task.get(this.taskId).toPromise(),
         this.api.task.list({
@@ -325,13 +329,25 @@ export class TaskComponent implements OnInit, OnDestroy {
           type: this.meta.user_is_admin ? 'all' : 'own',
           tag: '_utask_parent_task_id=' + this.taskId
         } as any).toPromise(),
-      ]).then((data) => {
+      ]).then(async (data) => {
         this.task = data[0];
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
-        this.item.task_id = this.task.id;
-        this.templateChange(this.route.parent.snapshot.data.templates.find(t => t.name === this.task.template_name));
-        const resolvable = this.requestService.isResolvable(this.task, this.meta, this.template?.allowed_resolver_usernames || []);
+
+        if (this.template?.name !== this.task.template_name) {
+          try {
+            this.template = await this.getTemplate(this.task.template_name);
+            this.resolverInputs = this.template.resolver_inputs;
+          } catch (err) {
+            reject(err);
+          }
+        }
+
+        if (!refresh) {
+          this.taskChanged();
+        }
+
+        this.taskIsResolvable = this.requestService.isResolvable(this.task, this.meta, this.template);
         if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
           this.autorefresh.enable = false;
           this.autorefresh.actif = false;
@@ -341,8 +357,10 @@ export class TaskComponent implements OnInit, OnDestroy {
             this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN'].indexOf(this.task.state) > -1;
           }
         }
-        this.taskIsResolvable = resolvable;
+
         if (this.task.resolution) {
+          this.loaders.resolution = !refresh;
+          this.loaders.refreshResolution = !refresh;
           this.loadResolution(this.task.resolution).then(rData => {
             if (!this.resolution && rData) {
               this.display.execution = true;
@@ -354,6 +372,7 @@ export class TaskComponent implements OnInit, OnDestroy {
             reject(err);
           }).finally(() => {
             this.loaders.resolution = false;
+            this.loaders.refreshResolution = false;
           });
         } else {
           this.resolution = null;
@@ -364,13 +383,13 @@ export class TaskComponent implements OnInit, OnDestroy {
         reject(err);
       }).finally(() => {
         this.loaders.task = false;
+        this.loaders.refreshTask = false;
       });
     });
   }
 
   loadResolution(resolutionId: string): any {
     return new Promise((resolve, reject) => {
-      this.loaders.resolution = true;
       this.api.resolution.get(resolutionId).subscribe(data => {
         resolve(data);
       }, (err: any) => {

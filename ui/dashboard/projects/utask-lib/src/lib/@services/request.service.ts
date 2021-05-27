@@ -4,6 +4,7 @@ import Meta from '../@models/meta.model';
 import { ModalApiYamlEditComponent } from '../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ApiService } from './api.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import Template from '../@models/template.model';
 
 @Injectable()
 export class RequestService {
@@ -33,11 +34,11 @@ export class RequestService {
         });
     }
 
-    isResolvable(task: Task, meta: Meta, allowedResolverUsernames: string[]): boolean {
+    isResolvable(task: Task, meta: Meta, template: Template): boolean {
         return !task.resolution && task.state !== 'WONTFIX' &&
             (
                 meta.user_is_admin ||
-                (allowedResolverUsernames ?? []).indexOf(meta.username) > -1 ||
+                (template.allowed_resolver_usernames ?? []).indexOf(meta.username) > -1 ||
                 (task.resolver_usernames ?? []).indexOf(meta.username) > -1
             );
     }

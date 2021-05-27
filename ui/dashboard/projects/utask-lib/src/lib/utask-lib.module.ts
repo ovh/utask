@@ -126,7 +126,7 @@ const components: any[] = [
     NzSwitchModule,
     NzPageHeaderModule,
     NzResultModule,
-    NzNotificationModule
+    NzNotificationModule,
   ],
   exports: components,
   bootstrap: [],
