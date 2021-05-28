@@ -20,6 +20,7 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/step"
+	"github.com/ovh/utask/engine/step/condition"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/runnerinstance"
@@ -738,6 +739,18 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 	// generate all children steps
 	for i, item := range items {
 		childStepName := fmt.Sprintf("%s-%d", s.Name, i)
+
+		// copy all slices from the parent step to prevent array pointer
+		// to be shared between multiple steps
+		dependencies := make([]string, len(s.Dependencies))
+		customStates := make([]string, len(s.CustomStates))
+		conditions := make([]*condition.Condition, len(s.Conditions))
+		resources := make([]string, len(s.Resources))
+		copy(dependencies, s.Dependencies)
+		copy(customStates, s.CustomStates)
+		copy(conditions, s.Conditions)
+		copy(resources, s.Resources)
+
 		res.Steps[childStepName] = &step.Step{
 			Name:         childStepName,
 			Description:  fmt.Sprintf("%d - %s", i, s.Description),
@@ -747,10 +760,10 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 			State:        step.StateTODO,
 			RetryPattern: s.RetryPattern,
 			MaxRetries:   s.MaxRetries,
-			Dependencies: s.Dependencies,
-			CustomStates: s.CustomStates,
-			Conditions:   s.Conditions,
-			Resources:    s.Resources,
+			Dependencies: dependencies,
+			CustomStates: customStates,
+			Conditions:   conditions,
+			Resources:    resources,
 			Item:         item,
 		}
 
