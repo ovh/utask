@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS "task" CASCADE;
 DROP TABLE IF EXISTS "task_comment" CASCADE;
 DROP TABLE IF EXISTS "resolution" CASCADE;
 DROP TABLE IF EXISTS "runner_instance" CASCADE;
+DROP TABLE IF EXISTS "utask_sql_migrations" CASCADE;
 
 CREATE TABLE "task_template" (
     id BIGSERIAL PRIMARY KEY,
