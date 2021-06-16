@@ -145,6 +145,12 @@ type TemplateNotificationStrategy struct {
 	NotificationStrategy string   `json:"notification_strategy"` // value can be `always`, `failure_only`, `silent`
 }
 
+// NotifyBackendOpsGenie holds configuration for instantiating an OPsGenie notify client
+type NotifyBackendOpsGenie struct {
+	Zone   string `json:"zone"`
+	ApiKey string `json:"api_key"`
+}
+
 // NotifyBackendTat holds configuration for instantiating a Tat notify client
 type NotifyBackendTat struct {
 	Username string `json:"username"`

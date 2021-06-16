@@ -45,6 +45,7 @@ postgres://user:pass@db/utask?sslmode=disable
     "completed_task_expiration": "720h", // default == 720h == 30 days
     // notify_config contains a map of named notification configurations, composed of a type and config data,
     // implemented notifiers include:
+    // - opsgenie (https://www.atlassian.com/software/opsgenie); available zones are: global, eu, sandbox
     // - tat (github.com/ovh/tat)
     // - slack webhook (https://api.slack.com/messaging/webhooks)
     // - generic webhook (custom URL, with HTTP POST method)
@@ -53,6 +54,16 @@ postgres://user:pass@db/utask?sslmode=disable
     // - default_notification_strategy is the strategy that will apply, if none matched above
     // available strategies are: always, failure_only, silent
     "notify_config": {
+        "opsgenie-eu": {
+            "type": "opsgenie",
+            "config": {
+                "zone": "eu",
+                "api_key": "very-secret"
+            },
+            "default_notification_strategy": {
+                "task_state_update": "failure_only"
+            }
+        },
         "tat-internal": {
             "type": "tat",
             "config": {

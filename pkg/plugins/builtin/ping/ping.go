@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	ping "github.com/sparrc/go-ping"
+	ping "github.com/go-ping/ping"
 
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 )
