@@ -1,10 +1,12 @@
 package opsgenie
 
 import (
+	"context"
+	"time"
+
 	"github.com/juju/errors"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
-
 	"github.com/ovh/utask/pkg/notify"
 )
 
@@ -28,18 +30,18 @@ type NotificationSender struct {
 
 // NewOpsGenieNotificationSender instantiates a NotificationSender
 func NewOpsGenieNotificationSender(zone, apikey string) (*NotificationSender, error) {
-	zonesToApiUrls := map[string]client.ApiUrl{
+	zonesToAPIUrls := map[string]client.ApiUrl{
 		ZoneDefault: client.API_URL,
 		ZoneEU:      client.API_URL_EU,
 		ZoneSandbox: client.API_URL_SANDBOX,
 	}
-	apiUrl, present := zonesToApiUrls[zone]
+	apiURL, present := zonesToAPIUrls[zone]
 	if !present {
 		return nil, errors.NotFoundf("opsgenie zone %q", zone)
 	}
 	client, err := alert.NewClient(&client.Config{
 		ApiKey:         apikey,
-		OpsGenieAPIURL: apiUrl,
+		OpsGenieAPIURL: apiURL,
 	})
 	if err != nil {
 		return nil, err
@@ -59,7 +61,10 @@ func (ns *NotificationSender) Send(m *notify.Message, name string) {
 		Details:     m.Fields,
 	}
 
-	_, err := ns.client.Create(nil, req)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	_, err := ns.client.Create(ctx, req)
 	if err != nil {
 		notify.WrappedSendError(Type, err.Error())
 		return

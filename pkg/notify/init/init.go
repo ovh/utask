@@ -42,7 +42,7 @@ func Init(store *configstore.Store) error {
 			}
 			ogns, err := opsgenie.NewOpsGenieNotificationSender(
 				f.Zone,
-				f.ApiKey,
+				f.APIKey,
 			)
 			if err != nil {
 				return fmt.Errorf("Failed to instantiate tat notification sender: %s", err)
