@@ -35,7 +35,7 @@ func NewOpsGenieNotificationSender(zone, apikey string) (*NotificationSender, er
 	}
 	apiUrl, present := zonesToApiUrls[zone]
 	if !present {
-		return nil, errors.NotFoundf("opsgenie zone %q not found", zone)
+		return nil, errors.NotFoundf("opsgenie zone %q", zone)
 	}
 	client, err := alert.NewClient(&client.Config{
 		ApiKey:         apikey,
