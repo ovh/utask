@@ -58,7 +58,8 @@ postgres://user:pass@db/utask?sslmode=disable
             "type": "opsgenie",
             "config": {
                 "zone": "eu",
-                "api_key": "very-secret"
+                "api_key": "very-secret", 
+                "timeout": "30s"
             },
             "default_notification_strategy": {
                 "task_state_update": "failure_only"

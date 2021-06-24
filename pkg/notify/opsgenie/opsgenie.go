@@ -23,13 +23,14 @@ const (
 // NotificationSender is a notify.NotificationSender implementation
 // capable of sending formatted notifications over OpsGenie (https://www.atlassian.com/software/opsgenie)
 type NotificationSender struct {
-	opsGenieZone   string
-	opsGenieAPIKey string
-	client         *alert.Client
+	opsGenieZone    string
+	opsGenieAPIKey  string
+	opsGenieTimeout time.Duration
+	client          *alert.Client
 }
 
 // NewOpsGenieNotificationSender instantiates a NotificationSender
-func NewOpsGenieNotificationSender(zone, apikey string) (*NotificationSender, error) {
+func NewOpsGenieNotificationSender(zone, apikey, timeout string) (*NotificationSender, error) {
 	zonesToAPIUrls := map[string]client.ApiUrl{
 		ZoneDefault: client.API_URL,
 		ZoneEU:      client.API_URL_EU,
@@ -46,10 +47,18 @@ func NewOpsGenieNotificationSender(zone, apikey string) (*NotificationSender, er
 	if err != nil {
 		return nil, err
 	}
+	timeoutDuration := 30 * time.Second
+	if timeout != "" {
+		timeoutDuration, err = time.ParseDuration(timeout)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &NotificationSender{
-		opsGenieZone:   zone,
-		opsGenieAPIKey: apikey,
-		client:         client,
+		opsGenieZone:    zone,
+		opsGenieAPIKey:  apikey,
+		opsGenieTimeout: timeoutDuration,
+		client:          client,
 	}, nil
 }
 
@@ -61,7 +70,7 @@ func (ns *NotificationSender) Send(m *notify.Message, name string) {
 		Details:     m.Fields,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ns.opsGenieTimeout)
 	defer cancel()
 
 	_, err := ns.client.Create(ctx, req)
