@@ -39,6 +39,7 @@ export class RequestService {
             (
                 meta.user_is_admin ||
                 (template.allowed_resolver_usernames ?? []).indexOf(meta.username) > -1 ||
+                (template.allowed_resolver_groups ?? []).some(group => (meta.user_groups ?? []).includes(group)) ||
                 (task.resolver_usernames ?? []).indexOf(meta.username) > -1
             );
     }

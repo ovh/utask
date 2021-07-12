@@ -224,9 +224,10 @@ A process that can be executed by µTask is modelled as a `task template`: it is
 
 The user that creates a task is called `requester`, and the user that executes it is called `resolver`. Both can be the same user in some scenarios.
 
-A user can be allowed to resolve a task in three ways:
+A user can be allowed to resolve a task in four ways:
 - the user is included in the global configuration's list of `admin_usernames`
 - the user is included in the task's template list of `allowed_resolver_usernames`
+- the user is in a group that is included in the task's template list of `allowed_resolver_groups`
 - the user is included in the task `resolver_usernames` list
 
 ### Value Templating
@@ -269,6 +270,7 @@ The following templating functions are available:
 
 ### Advanced properties
 
+- `allowed_resolver_groups`: a list of groups with the right to resolve a task based on this template
 - `allowed_resolver_usernames`: a list of usernames with the right to resolve a task based on this template
 - `allow_all_resolver_usernames`: boolean (default: false): when true, any user can execute a task based on this template
 - `auto_runnable`; boolean (default: false): when true, the task will be executed directly after being created, IF the requester is an accepted resolver or `allow_all_resolver_usernames` is true
@@ -811,7 +813,7 @@ type InitializerPlugin interface {
 
 As of version `v1.0.0`, this is meant to give you access to two features:
 - `service.Store` exposes the `RegisterProvider(name string, f configstore.Provider)` method that allow you to plug different data sources for you configuration, which are not available by default in the main runtime
-- `service.Server` exposes the `WithAuth(authProvider func(*http.Request) (string, error))` method, where you can provide a custom source of authentication and authorization based on the incoming http requests
+- `service.Server` exposes the `WithAuth(authProvider func(*http.Request) (string, error))` and `WithGroupAuth(groupAuthProvider func(*http.Request) (string, []string, error))` methods, where you can provide a custom source of authentication and authorization based on the incoming http requests
 
 If you develop more than one initialization plugin, they will all be loaded in alphabetical order. You might want to provide a default initialization, plus more specific behaviour under certain scenarios.
 

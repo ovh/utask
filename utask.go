@@ -101,6 +101,7 @@ const (
 type Cfg struct {
 	ApplicationName                            string                   `json:"application_name"`
 	AdminUsernames                             []string                 `json:"admin_usernames"`
+	AdminGroups                                []string                 `json:"admin_groups"`
 	CompletedTaskExpiration                    string                   `json:"completed_task_expiration"`
 	NotifyConfig                               map[string]NotifyBackend `json:"notify_config"`
 	NotifyActions                              NotifyActions            `json:"notify_actions"`

@@ -55,6 +55,15 @@ func (s *Server) WithAuth(authProvider func(*http.Request) (string, error)) {
 	}
 }
 
+// WithAuthGroup configures the Server's auth group middleware
+// it receives an groupAuthProvider function capable of extracting the caller's groups and identity from an *http.Request
+// the groupAuthProvider function also has discretion to deny authorization for a request by returning an error
+func (s *Server) WithGroupAuth(groupAuthProvider func(*http.Request) (string, []string, error)) {
+	if groupAuthProvider != nil {
+		s.authMiddleware = groupAuthMiddleware(groupAuthProvider)
+	}
+}
+
 // WithCustomMiddlewares sets an array of customized gin middlewares.
 // It helps for init plugins to include these customized middlewares in the api server
 func (s *Server) WithCustomMiddlewares(customMiddlewares ...gin.HandlerFunc) {
@@ -475,11 +484,12 @@ func pingHandler(c *gin.Context) {
 }
 
 type rootOut struct {
-	ApplicationName string `json:"application_name"`
-	UserIsAdmin     bool   `json:"user_is_admin"`
-	Username        string `json:"username"`
-	Version         string `json:"version"`
-	Commit          string `json:"commit"`
+	ApplicationName string   `json:"application_name"`
+	UserIsAdmin     bool     `json:"user_is_admin"`
+	Username        string   `json:"username"`
+	UserGroups      []string `json:"user_groups"`
+	Version         string   `json:"version"`
+	Commit          string   `json:"commit"`
 }
 
 func rootHandler(c *gin.Context) (*rootOut, error) {
@@ -487,6 +497,7 @@ func rootHandler(c *gin.Context) (*rootOut, error) {
 		ApplicationName: utask.AppName(),
 		UserIsAdmin:     auth.IsAdmin(c) == nil,
 		Username:        auth.GetIdentity(c),
+		UserGroups:      auth.GetGroups(c),
 		Version:         utask.Version,
 		Commit:          utask.Commit,
 	}, nil

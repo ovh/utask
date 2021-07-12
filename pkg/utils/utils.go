@@ -62,6 +62,16 @@ func ListContainsString(list []string, item string) bool {
 	return false
 }
 
+// HasIntersection asserts that the given lists have an intersection (a common item) between them
+func HasIntersection(referenceList []string, items []string) bool {
+	for _, i := range items {
+		if ListContainsString(referenceList, i) {
+			return true
+		}
+	}
+	return false
+}
+
 // AppendUniq does the same thing than append but insure we have only 1 iteam of each
 func AppendUniq(list []string, items ...string) []string {
 	for _, item := range items {
