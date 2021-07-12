@@ -18,6 +18,7 @@ CREATE TABLE "task_template" (
     resolver_inputs JSONB NOT NULL,
     steps JSONB NOT NULL,
     variables JSONB NOT NULL DEFAULT 'null',
+    allowed_resolver_groups JSONB NOT NULL DEFAULT '[]',
     allowed_resolver_usernames JSONB NOT NULL DEFAULT '[]',
     allow_all_resolver_usernames BOOL NOT NULL DEFAULT false,
     auto_runnable BOOL NOT NULL DEFAULT false,
