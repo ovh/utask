@@ -702,6 +702,58 @@ func TestForeachWithChainedIterations(t *testing.T) {
 	td.Cmp(t, res.Steps["generateItems-4"].Dependencies, []string{"generateItems-3"})
 }
 
+func TestForeachWithChainedIterationsWithDepOnParent(t *testing.T) {
+	_, require := td.AssertRequire(t)
+	res, err := createResolution("foreach.yaml", map[string]interface{}{
+		"list": []interface{}{"a", "b", "c", "d", "e"},
+	}, nil)
+	require.Nil(err)
+	require.NotNil(res)
+
+	res.Steps["generateItems"].Dependencies = []string{"emptyLoop"}
+	res.Steps["generateItems"].Conditions[0].Then["this"] = "DONE"
+	res.Steps["generateItems"].Conditions = append(
+		res.Steps["generateItems"].Conditions,
+		&condition.Condition{
+			Type: condition.CHECK,
+			If: []*condition.Assert{
+				{
+					Value:    "{{.iterator}}",
+					Operator: condition.EQ,
+					Expected: "d",
+				},
+			},
+			Then: map[string]string{
+				"this": "SERVER_ERROR",
+			},
+		},
+	)
+	res.Steps["generateItems"].ForEachStrategy = "sequence"
+	err = updateResolution(res)
+	require.Nil(err)
+
+	res, err = runResolution(res)
+	require.NotNil(res)
+	require.Nil(err)
+	require.Cmp(res.State, resolution.StateError)
+
+	td.Cmp(t, res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
+	td.Cmp(t, res.Steps["concatItems"].State, step.StateTODO)
+	td.Cmp(t, res.Steps["finalStep"].State, step.StateTODO)
+	td.Cmp(t, res.Steps["bStep"].State, "B")
+	td.Cmp(t, res.Steps["generateItems-0"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-1"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-2"].State, step.StateDone)
+	td.Cmp(t, res.Steps["generateItems-3"].State, step.StateServerError)
+	td.Cmp(t, res.Steps["generateItems-4"].State, step.StateTODO)
+	td.Cmp(t, res.Steps["generateItems"].Dependencies, []string{"emptyLoop", "generateItems-0:ANY", "generateItems-1:ANY", "generateItems-2:ANY", "generateItems-3:ANY", "generateItems-4:ANY"})
+	td.Cmp(t, res.Steps["generateItems-0"].Dependencies, []string{"emptyLoop"})
+	td.Cmp(t, res.Steps["generateItems-1"].Dependencies, []string{"emptyLoop", "generateItems-0"})
+	td.Cmp(t, res.Steps["generateItems-2"].Dependencies, []string{"emptyLoop", "generateItems-1"})
+	td.Cmp(t, res.Steps["generateItems-3"].Dependencies, []string{"emptyLoop", "generateItems-2"})
+	td.Cmp(t, res.Steps["generateItems-4"].Dependencies, []string{"emptyLoop", "generateItems-3"})
+}
+
 func TestForeachWithPreRun(t *testing.T) {
 	input := map[string]interface{}{}
 	res, err := createResolution("foreachAndPreRun.yaml", input, nil)
