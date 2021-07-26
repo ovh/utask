@@ -1,119 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "type": "object",
-    "title": "µTask template schema",
-    "description": "This validates a µTask template",
+    "title": "µTask function schema",
+    "description": "This validates a µTask function",
     "additionalProperties": false,
     "definitions": {
-        "Step": {
-            "type": "object",
-            "title": "A µTask template step",
-            "default": {},
-            "additionalProperties": false,
-            "examples": [
-                {
-                    "description": "Get UTC time",
-                    "action": {
-                        "type": "http",
-                        "configuration": {
-                            "method": "GET",
-                            "url": "http://worldclockapi.com/api/json/utc/now"
-                        }
-                    }
-                }
-            ],
-            "required": [
-                "description",
-                "action"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "title": "Step unique name",
-                    "description": "Will identify the step uniquely",
-                    "default": "",
-                    "examples": [
-                        "get_UTC_time"
-                    ]
-                },
-                "description": {
-                    "type": "string",
-                    "title": "Step description",
-                    "description": "Will be displayed to customers in UI.",
-                    "default": "",
-                    "examples": [
-                        "Get UTC time"
-                    ]
-                },
-                "retry_pattern": {
-                    "type": "string",
-                    "enum": [
-                        "seconds",
-                        "minutes",
-                        "hours"
-                    ],
-                    "title": "Retry pattern of the step",
-                    "description": "Define on what temporal order of magnitude the re-runs of this step should be spread."
-                },
-                "max_retries": {
-                    "type": "number",
-                    "title": "Maximum number of retries for the step",
-                    "description": "Define the maximum number of retries for the given step."
-                },
-                "dependencies": {
-                    "type": "array",
-                    "description": "List of step names on which this step waits before running",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "action": {
-                    "$ref": "#/definitions/Action"
-                },
-                "conditions": {
-                    "type": "array",
-                    "description": "Conditions before/after step executed",
-                    "items": {
-                        "$ref": "#/definitions/Condition"
-                    }
-                },
-                "custom_states": {
-                    "type": "array",
-                    "description": "Declares some custom state to be used within the step",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "foreach": {
-                    "type": "string",
-                    "description": "Elements on which the step will loop"
-                },
-                "foreach_strategy": {
-                    "type": "string",
-                    "description": "The strategy used to run each elements of the loop",
-                    "default": "parallel",
-                    "enum": [
-                        "parallel",
-                        "sequence"
-                    ]
-                },
-                "json_schema": {
-                    "type": "object",
-                    "description": "Elements on which the step will loop"
-                },
-                "idempotent": {
-                    "type": "boolean",
-                    "description": "Indicate if the step can be retried safely if the uTask instance dies during the step execution"
-                },
-                "resources": {
-                    "type": "array",
-                    "description": "Resources that will be used during the execution of the step",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "Action": {
             "oneOf": [
                 {
@@ -276,10 +167,7 @@
                             "type": "string"
                         },
                         "insecure_skip_verify": {
-                            "type": [
-                                "string",
-                                "boolean"
-                            ]
+                            "type": "string"
                         }
                     }
                 },
@@ -794,128 +682,6 @@
             },
             "description": "Conditions to apply on the step"
         },
-        "Input": {
-            "type": "object",
-            "additionalProperties": false,
-            "examples": [
-                {
-                    "name": "language",
-                    "default": "english",
-                    "optional": true,
-                    "description": "The language in which you wish to greet the world",
-                    "legal_values": [
-                        "english",
-                        "spanish"
-                    ]
-                }
-            ],
-            "required": [
-                "name",
-                "description"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Input name - to be used inside template as .input.name",
-                    "default": "",
-                    "examples": [
-                        "language"
-                    ]
-                },
-                "description": {
-                    "type": "string",
-                    "description": "Description displayed in the UI",
-                    "default": "",
-                    "examples": [
-                        "The language in which you wish to greet the world"
-                    ]
-                },
-                "regex": {
-                    "type": "string",
-                    "description": "Regex to validate the input value",
-                    "default": "",
-                    "examples": [
-                        "^[a-z\\d]+$"
-                    ]
-                },
-                "type": {
-                    "type": "string",
-                    "description": "Input value type",
-                    "enum": [
-                        "string",
-                        "number",
-                        "bool",
-                        "password"
-                    ],
-                    "examples": [
-                        "bool"
-                    ]
-                },
-                "legal_values": {
-                    "type": "array",
-                    "description": "Restrict input value to some values",
-                    "default": [],
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "optional": {
-                    "type": "boolean",
-                    "description": "Indicates if input is optional or not",
-                    "default": false
-                },
-                "default": {
-                    "description": "Default value of the input if not fulfilled",
-                    "examples": [
-                        "english"
-                    ]
-                },
-                "collection": {
-                    "type": "boolean",
-                    "description": "Indicates if multiple values can be specified for this input",
-                    "default": false
-                }
-            }
-        },
-        "Variable": {
-            "type": "object",
-            "additionalProperties": false,
-            "examples": [
-                {
-                    "name": "english-message",
-                    "value": "Hello World!"
-                },
-                {
-                    "expression": "// a short javascript snippet\nvar h = 'Hola';\nvar m = 'mundo';\nh + ' ' + m + '!';",
-                    "name": "spanish-message"
-                }
-            ],
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Variable name",
-                    "default": "",
-                    "examples": [
-                        "english-message"
-                    ]
-                },
-                "value": {
-                    "type": "string",
-                    "description": "Fixed value for the variable (cannot be templated)",
-                    "default": "",
-                    "examples": [
-                        "Hello World!"
-                    ]
-                },
-                "expression": {
-                    "type": "string",
-                    "description": "Javascript expression that will be evaluated (can be templated)"
-                }
-            }
-        },
         "Tags": {
             "type": "object",
             "patternProperties": {
@@ -927,151 +693,46 @@
     },
     "required": [
         "name",
-        "description",
-        "title_format"
+        "action"
     ],
     "properties": {
         "name": {
             "type": "string",
-            "description": "Template name",
+            "title": "Function unique name",
+            "description": "Will identify the function uniquely",
             "default": "",
             "examples": [
-                "hello-world-now"
+                "get_UTC_time"
             ]
         },
         "description": {
             "type": "string",
-            "description": "Template short description",
+            "title": "Function description",
+            "description": "Not used inside µTask, just for maintainers",
             "default": "",
             "examples": [
-                "Say hello to the world, now!"
+                "get_UTC_time"
             ]
         },
-        "long_description": {
-            "type": "string",
-            "description": "Template long description (will be displayed to customer when selecting templates)",
-            "default": "",
-            "examples": [
-                "This task prints out a greeting to the entire world, after retrieving the current UTC time from an external API"
-            ]
+        "action": {
+            "$ref": "#/definitions/Action"
         },
-        "doc_link": {
-            "type": "string",
-            "description": "Template documentation URL",
-            "default": "",
-            "examples": [
-                "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
-            ]
+        "pre_hook": {
+            "$ref": "#/definitions/Action"
         },
-        "title_format": {
-            "type": "string",
-            "description": "Template title (will be used when task are created using this template)",
-            "default": "",
-            "examples": [
-                "Say hello in {{.input.language}}"
-            ]
-        },
-        "result_format": {
-            "type": "object",
-            "description": "Describes the object format that will be saved as task result",
-            "default": {},
-            "examples": [
-                {
-                    "echo_message": "{{.step.sayHello.output.message}}",
-                    "echo_when": "{{.step.sayHello.output.when}}"
-                }
-            ]
-        },
-        "allowed_resolver_usernames": {
+        "conditions": {
             "type": "array",
-            "description": "Usernames of people allowed to resolve a task based on this template",
-            "default": [],
+            "description": "Conditions before/after function executed",
+            "items": {
+                "$ref": "#/definitions/Condition"
+            }
+        },
+        "custom_states": {
+            "type": "array",
+            "description": "Declares some custom state to be used within the function",
             "items": {
                 "type": "string"
             }
-        },
-        "allow_all_resolver_usernames": {
-            "type": "boolean",
-            "description": "Indicates if any user can resolve a task based on this template",
-            "default": false,
-            "examples": [
-                true
-            ]
-        },
-        "auto_runnable": {
-            "type": "boolean",
-            "description": "Indicates if task will run automatically with validation if requester is a valid resolver",
-            "default": false,
-            "examples": [
-                true
-            ]
-        },
-        "blocked": {
-            "type": "boolean",
-            "description": "Indicates if tasks can be created from this template",
-            "default": false,
-            "examples": [
-                false
-            ]
-        },
-        "hidden": {
-            "type": "boolean",
-            "description": "Indicates if template will be listed for regular users",
-            "default": false,
-            "examples": [
-                false
-            ]
-        },
-        "retry_max": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Maximum amount of consecutive executions of a task based on this template",
-            "default": 100,
-            "examples": [
-                100
-            ]
-        },
-        "variables": {
-            "type": "array",
-            "description": "Variables that can be used inside this templates",
-            "default": [],
-            "items": {
-                "$ref": "#/definitions/Variable"
-            }
-        },
-        "inputs": {
-            "type": "array",
-            "description": "Inputs that should be provided when creating a task based on this template",
-            "default": [],
-            "items": {
-                "$ref": "#/definitions/Input"
-            }
-        },
-        "resolver_inputs": {
-            "type": "array",
-            "description": "Inputs that should be provided when resolving a task based on this template",
-            "default": [],
-            "items": {
-                "$ref": "#/definitions/Input"
-            }
-        },
-        "steps": {
-            "type": "object",
-            "description": "Steps that will be executed when a task based on this template is created",
-            "default": {},
-            "patternProperties": {
-                ".*": {
-                    "$ref": "#/definitions/Step"
-                }
-            }
-        },
-        "base_configurations": {
-            "type": "object",
-            "description": "Global configurations that will be used as base for steps inside this template"
-        },
-        "tags": {
-            "description": "Global tags that will be applied to all tasks created with this template",
-            "$ref": "#/definitions/Tags"
         }
     }
 }

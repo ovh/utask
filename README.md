@@ -691,7 +691,7 @@ Declared `resource_limits` must be positive integers. When a step is executed, i
 
 ### Task templates validation
 
-A JSON-schema file is available to validate the syntax of task templates, it's available in `hack/template-schema.json`.
+A JSON-schema file is available to validate the syntax of task templates and functions, it's available in files `hack/template-schema.json` and `hack/function-schema.json`.
 
 Validation can be performed at writing time if you are using a modern IDE or editor.
 
@@ -703,7 +703,12 @@ Validation can be performed at writing time if you are using a modern IDE or edi
 ```json
 {
     "yaml.schemas": {
-        "./hack/template-schema.json": ["/*.yaml"]
+        ".vscode/template-schema.json": [
+            "/templates*/*.yaml"
+        ],
+        ".vscode/function-schema.json": [
+            "/functions/*.yaml"
+        ]
     }
 }
 ```
