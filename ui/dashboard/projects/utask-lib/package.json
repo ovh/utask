@@ -2,7 +2,7 @@
     "name": "@ovhcloud/utask-lib",
     "version": "0.0.0",
     "peerDependencies": {
-        "monaco-editor": "^0.21.2",
+        "monaco-editor": "^0.25.2",
         "ng-zorro-antd": "^11.0.0",
         "@angular/common": "^11.0.0",
         "@angular/core": "^11.0.0",

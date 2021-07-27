@@ -10,8 +10,9 @@
                 (ngModelChange)="autorefresh.hasChanged = true">
             </nz-switch>
             <button type="button" nz-button nzType="primary" nzShape="circle" nzSize="small" (click)="loadTask(true)"
-                title="Refresh tasks" [nzLoading]="loaders.task || loaders.resolution || loaders.refreshResolution || loaders.refreshTask" [disabled]="autorefresh.actif"><i
-                    nz-icon nzType="sync"></i></button>
+                title="Refresh tasks"
+                [nzLoading]="loaders.task || loaders.resolution || loaders.refreshResolution || loaders.refreshTask"
+                [disabled]="autorefresh.actif"><i nz-icon nzType="sync"></i></button>
         </nz-page-header-extra>
     </nz-page-header>
 
@@ -89,14 +90,14 @@
                         </tbody>
                     </table>
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="Informations">
+                <nz-descriptions-item nzTitle="Information">
                     Created by {{task.requester_username}} <abbr
                         title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created |
                             utaskFromNow}}</em></abbr>
                     <span
                         *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username">
                         and
-                        updated by {{task.resolver_username}} <abbr
+                        updated {{task.resolver_username ? 'by' : ''}} {{task.resolver_username}} <abbr
                             title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity |
                                 utaskFromNow}}</em></abbr></span>
                 </nz-descriptions-item>
