@@ -14,7 +14,7 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.2
 	github.com/go-gorp/gorp v2.2.0+incompatible
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
@@ -53,8 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
-	github.com/tidwall/gjson v1.6.0
-	github.com/tidwall/pretty v1.0.1 // indirect
+	github.com/tidwall/gjson v1.8.1
 	github.com/wI2L/fizz v0.13.4
 	github.com/ybriffa/go-http-digest-auth-client v0.6.3
 	github.com/ziutek/mymysql v1.5.4 // indirect
