@@ -20,6 +20,7 @@ CREATE TABLE "task_template" (
     variables JSONB NOT NULL DEFAULT 'null',
     allowed_resolver_usernames JSONB NOT NULL DEFAULT '[]',
     allow_all_resolver_usernames BOOL NOT NULL DEFAULT false,
+    allowed_watcher_usernames JSONB NOT NULL DEFAULT '[]',
     auto_runnable BOOL NOT NULL DEFAULT false,
     blocked BOOL NOT NULL DEFAULT false,
     hidden BOOL NOT NULL DEFAULT false,

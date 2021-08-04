@@ -33,6 +33,7 @@ type TaskTemplate struct {
 
 	AllowedResolverUsernames  []string `json:"allowed_resolver_usernames" db:"allowed_resolver_usernames"`
 	AllowAllResolverUsernames bool     `json:"allow_all_resolver_usernames" db:"allow_all_resolver_usernames"`
+	AllowedWatcherUsernames   []string `json:"allowed_watcher_usernames,omitempty" db:"allowed_watcher_usernames"`
 	AutoRunnable              bool     `json:"auto_runnable" db:"auto_runnable"`
 	Blocked                   bool     `json:"blocked" db:"blocked"`
 	Hidden                    bool     `json:"hidden" db:"hidden"`
@@ -54,6 +55,7 @@ func Create(dbp zesty.DBProvider,
 	inputs, resolverInputs []input.Input,
 	allowedResolverUsernames []string,
 	allowAllResolverUsernames, autoRunnable bool,
+	allowedWatcherUsernames []string,
 	steps map[string]*step.Step,
 	variables []values.Variable,
 	tags map[string]string,
@@ -76,6 +78,7 @@ func Create(dbp zesty.DBProvider,
 		Tags:                      tags,
 		AllowedResolverUsernames:  allowedResolverUsernames,
 		AllowAllResolverUsernames: allowAllResolverUsernames,
+		AllowedWatcherUsernames:   allowedWatcherUsernames,
 		AutoRunnable:              autoRunnable,
 		Blocked:                   false,
 		Hidden:                    false,

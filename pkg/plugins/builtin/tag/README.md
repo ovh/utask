@@ -4,8 +4,7 @@ This plugin updates the tags of the current task. Existing tags are overwritten 
 
 ## Configuration
 
-|Fields|Description
-| ---    | ---             |
+| Fields | Description     |
 | ------ | --------------- |
 | `tags` | key/values tags |
 

@@ -117,7 +117,8 @@ type Step struct {
 
 	Resources []string `json:"resources"` // resource limits to enforce
 
-	Tags map[string]string `json:"tags"`
+	Tags             map[string]string `json:"-"`
+	WatcherUsernames []string          `json:"-"`
 }
 
 // Context provides a step with extra metadata about the task
@@ -296,7 +297,7 @@ func (st *Step) generateExecution(action executor.Executor, baseConfig map[strin
 	return &ret, nil
 }
 
-func (st *Step) execute(execution *execution, callback func(interface{}, interface{}, map[string]string, error)) {
+func (st *Step) execute(execution *execution, callback func(interface{}, interface{}, map[string]string, []string, error)) {
 
 	select {
 	case <-execution.shutdownCtx.Done():
@@ -316,8 +317,8 @@ func (st *Step) execute(execution *execution, callback func(interface{}, interfa
 	}
 	defer utask.ReleaseResources(limits)
 
-	output, metadata, tags, err := execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
-	callback(output, metadata, tags, err)
+	output, metadata, tags, watchers, err := execution.runner.Exec(st.Name, execution.baseCfgRaw, execution.config, execution.ctx)
+	callback(output, metadata, tags, watchers, err)
 }
 
 // Run carries out the action defined by a Step, by providing values to its configuration
@@ -380,7 +381,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		go func() {
 			defer preHookWg.Done()
 
-			st.execute(preHookExecution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
+			st.execute(preHookExecution, func(output interface{}, metadata interface{}, tags map[string]string, watchers []string, err error) {
 				if err != nil {
 					st.State = StateFatalError
 					st.Error = fmt.Sprintf("prehook: %s", err)
@@ -420,8 +421,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 			return
 		}
 
-		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
-			st.Output, st.Metadata, st.Tags = output, metadata, tags
+		st.execute(execution, func(output interface{}, metadata interface{}, tags map[string]string, watchers []string, err error) {
+			st.Output, st.Metadata, st.Tags, st.WatcherUsernames = output, metadata, tags, watchers
 
 			outputErr := execution.generateOutput(st, preHookValues)
 			if outputErr != nil {
