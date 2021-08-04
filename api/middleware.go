@@ -101,3 +101,22 @@ func authMiddleware(authProvider func(*http.Request) (string, error)) func(c *gi
 	}
 	return func(c *gin.Context) { c.Next() }
 }
+
+func groupAuthMiddleware(authProvider func(*http.Request) (string, []string, error)) func(c *gin.Context) {
+	if authProvider != nil {
+		return func(c *gin.Context) {
+			user, groups, err := authProvider(c.Request)
+			if err != nil {
+				if errors.IsUnauthorized(err) {
+					c.Header("WWW-Authenticate", `Basic realm="Authorization Required"`)
+				}
+				c.AbortWithError(http.StatusUnauthorized, err)
+				return
+			}
+			c.Set(auth.IdentityProviderCtxKey, user)
+			c.Set(auth.GroupProviderCtxKey, groups)
+			c.Next()
+		}
+	}
+	return func(c *gin.Context) { c.Next() }
+}

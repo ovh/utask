@@ -18,6 +18,7 @@ CREATE TABLE "task_template" (
     resolver_inputs JSONB NOT NULL,
     steps JSONB NOT NULL,
     variables JSONB NOT NULL DEFAULT 'null',
+    allowed_resolver_groups JSONB NOT NULL DEFAULT '[]',
     allowed_resolver_usernames JSONB NOT NULL DEFAULT '[]',
     allow_all_resolver_usernames BOOL NOT NULL DEFAULT false,
     auto_runnable BOOL NOT NULL DEFAULT false,
@@ -110,6 +111,6 @@ CREATE TABLE "utask_sql_migrations" (
     current_migration_applied TEXT PRIMARY KEY
 );
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.10.0-migration005');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.16.1-migration006');
 
 END;

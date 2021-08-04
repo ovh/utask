@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	expectedVersion = "v1.10.0-migration005"
+	expectedVersion = "v1.16.1-migration006"
 )
 
 // migrationChecker make sure that the latest SQL migration is correctly applied
