@@ -1,6 +1,6 @@
 module github.com/ovh/utask
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Masterminds/sprig/v3 v3.1.0
