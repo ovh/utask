@@ -116,8 +116,8 @@ func extractArguments(path string, v reflect.Value) ([]string, error) {
 
 // Exec is the implementation of the runner.Exec function but does nothing: function runners
 // are just place holders to resolve to actual plugin/builtin.
-func (f *Function) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, error) {
-	return nil, nil, nil, errors.New("functions cannot be executed")
+func (f *Function) Exec(stepName string, baseConfig json.RawMessage, config json.RawMessage, ctx interface{}) (interface{}, interface{}, map[string]string, []string, error) {
+	return nil, nil, nil, nil, errors.New("functions cannot be executed")
 }
 
 // ValidConfig insure that the given configuration resolves all the input needed by the function.

@@ -94,7 +94,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 			PublicID:          uuid.Must(uuid.NewV4()).String(),
 			TemplateID:        tt.ID,
 			RequesterUsername: reqUsername,
-			WatcherUsernames:  watcherUsernames,
+			WatcherUsernames:  mergeStringSlicesWithoutDuplicates(tt.AllowedWatcherUsernames, watcherUsernames),
 			ResolverUsernames: resolverUsernames,
 			Created:           now.Get(),
 			LastActivity:      now.Get(),
@@ -693,4 +693,19 @@ func (t *Task) NotifyStepState(stepName, stepState string) {
 		notify.WrapTaskStepUpdate(tsu),
 		notify.ListActions().TaskStepUpdateAction,
 	)
+}
+
+func mergeStringSlicesWithoutDuplicates(a, b []string) []string {
+	m := make(map[string]struct{}, len(a)+len(b))
+	for _, v := range a {
+		m[v] = struct{}{}
+	}
+	for _, v := range b {
+		m[v] = struct{}{}
+	}
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }
