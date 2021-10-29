@@ -39,7 +39,7 @@ build: install
 
 build-prod: install
 	$(NODE) scripts/prebuild-env-prod.js
-	$(NG) build --prod --base-href $(BASEHREF) --verbose=true
+	$(NG) build --configuration production --base-href $(BASEHREF) --verbose=true
 	# $(TAR) $(DIST_TAR) $(DIST_DIR)
 
 prod:

@@ -18,7 +18,7 @@ export class NsAutoHeightTableDirective {
 
   constructor(
     private element: ElementRef,
-    private table: NzTableComponent,
+    private table: NzTableComponent<any>,
     private cd: ChangeDetectorRef
   ) { }
 

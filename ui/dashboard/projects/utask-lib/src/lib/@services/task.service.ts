@@ -44,7 +44,8 @@ export class TaskService {
     return this._modalService.confirm(
       '<i>Are you sure you want to delete this task?</i>',
       `Task ID: ${taskId}`,
-      'danger',
+      'default',
+      true,
       this.api.task.delete(taskId)
     );
   }
@@ -53,7 +54,8 @@ export class TaskService {
     return this._modalService.confirmAll(
       `<i>Are you sure you want to delete these ${taskIds.length} tasks?</i>`,
       '',
-      'danger',
+      'default',
+      true,
       ...taskIds.map(id => {
         return this.api.task.delete(id)
           .pipe(catchError(() => throwError(`Can't delete the task with id: ${id}`)));
