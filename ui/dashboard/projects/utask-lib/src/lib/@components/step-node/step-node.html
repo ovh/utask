@@ -1,8 +1,3 @@
-<div #div [nzTooltipTitle]="tooltip" nz-tooltip class="step step-{{styleClass}}" (click)="clickNode()">
+<div #div class="step step-{{styleClass}}" (click)="clickNode()" title="{{key}} - {{step?.state}}">
 	<div class="title">{{key}}</div>
 </div>
-<ng-template #tooltip>
-	{{key}} - {{step?.state}}
-	<br />
-	{{step.description}}
-</ng-template>

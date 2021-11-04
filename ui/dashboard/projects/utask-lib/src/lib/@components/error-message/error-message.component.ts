@@ -17,6 +17,8 @@ export class ErrorMessageComponent implements OnChanges {
     ngOnChanges() {
         if (isString(this.data)) {
             this.text = this.data;
+        } else if (this.data?.message != "") {
+            this.text = this.data.message;
         } else {
             this.text = get(this.data, 'error.error', (get(this.data, 'error', 'An error just occured, please retry')));
         }

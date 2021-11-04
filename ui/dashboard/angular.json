@@ -46,6 +46,7 @@
                         ],
                         "styles": [
                             "./node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
+                            "./node_modules/ng-zorro-antd/graph/style/index.css",
                             "./node_modules/ng-zorro-antd/code-editor/style/index.min.css",
                             "src/styles.sass"
                         ],
@@ -55,6 +56,18 @@
                         ]
                     },
                     "configurations": {
+                        "development": {
+                            "buildOptimizer": false,
+                            "optimization": {
+                                "scripts": false,
+                                "styles": false,
+                                "fonts": false
+                            },
+                            "vendorChunk": true,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "namedChunks": true
+                        },
                         "production": {
                             "optimization": true,
                             "outputHashing": "all",
@@ -76,7 +89,8 @@
                                 }
                             ]
                         }
-                    }
+                    },
+                    "defaultConfiguration": "development"
                 },
                 "serve": {
                     "builder": "@angular-builders/custom-webpack:dev-server",

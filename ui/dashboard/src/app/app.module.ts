@@ -5,6 +5,9 @@ import { ThemeService } from './@services/theme.service';
 import { routing } from './app.routing';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
+import { NzElementPatchModule } from 'ng-zorro-antd/core/element-patch';
+
+import { NzGraphModule } from 'ng-zorro-antd/graph';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { BrowserModule } from '@angular/platform-browser';
 import { BaseComponent } from './@routes/base/base.component';
@@ -38,10 +41,12 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
     ReactiveFormsModule,
 
     NzLayoutModule,
+    NzGraphModule,
     NzMenuModule,
     NzButtonModule,
     NzAvatarModule,
     NzBadgeModule,
+    NzElementPatchModule,
     NzSwitchModule,
     NzToolTipModule,
     NzResultModule,

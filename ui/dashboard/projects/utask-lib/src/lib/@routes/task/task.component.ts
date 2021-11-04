@@ -40,6 +40,7 @@ export class TaskComponent implements OnInit, OnDestroy {
     task_id: null
   };
   task: Task = null;
+  taskJson: string;
   taskIsResolvable = false;
   taskId = '';
   resolution: any = null;
@@ -331,6 +332,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         } as any).toPromise(),
       ]).then(async (data) => {
         this.task = data[0];
+        this.taskJson = JSON.stringify(data[0].result, null, 2);
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
         this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
 

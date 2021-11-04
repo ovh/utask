@@ -1,4 +1,27 @@
 <div oncontextmenu="return false;">
-    <svg #svg></svg>
-    <button nz-button nzSize="large" (click)="center()"><i nz-icon nzType="aim"></i></button>
+    <button type="button" nz-button nzType="primary" nzSize="large" (click)="fit()"><i nz-icon
+            nzType="aim"></i></button>
+
+    <nz-graph nz-graph-zoom [nzGraphData]="graphData" [nzAutoSize]="true" [nzRankDirection]="rankDirection"
+        (nzGraphInitialized)="graphInitialized($event)" [nzGraphLayoutConfig]="layoutConfig">
+        <ng-container *nzGraphNode="let node">
+            <foreignObject x="0" y="0" [attr.width]="node.width" height="50">
+                <xhtml:div class="graph-node leaf-node {{node.attr.class}}" (click)="selectNode(node.attr.step)">
+                    <lib-utask-step-node [key]="node.name" [step]="node.attr.step"></lib-utask-step-node>
+                </xhtml:div>
+            </foreignObject>
+        </ng-container>
+
+        <ng-container *nzGraphEdge="let edge">
+            <svg:g class="edge {{edge.classes}}">
+                <path [attr.marker-end]="edge.markerEnd"></path>
+                <text text-anchor="middle" dy="10" class="nz-graph-edge-text">
+                    <textPath startOffset="50%" [attr.href]="'#'+edge.v+'--'+edge.w">
+                        {{edge.label}}
+                    </textPath>
+                </text>
+            </svg:g>
+        </ng-container>
+    </nz-graph>
+
 </div>
