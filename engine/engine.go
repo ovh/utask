@@ -385,7 +385,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 	executedSteps := map[string]bool{}
 	stepChan := make(chan *step.Step)
 
-	expectedMessages, err := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
+	expectedMessages, err := runAvailableSteps(dbp, map[string]bool{}, res, stepChan, executedSteps, []string{}, wg, debugLogger)
 	if err != nil {
 		debugLogger.Debugf("Engine: resolve() %s loop, ERROR WHILE runAvailableSteps: %s", res.PublicID, err)
 		return err
@@ -457,7 +457,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 			// one less step to go
 			expectedMessages--
 			// state change might unlock more steps for execution
-			newAvailableSteps, err := runAvailableSteps(dbp, modifiedSteps, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
+			newAvailableSteps, err := runAvailableSteps(dbp, modifiedSteps, res, stepChan, executedSteps, []string{}, wg, debugLogger)
 			if err != nil {
 				debugLogger.Debugf("Engine: resolve() %s loop, ERROR WHILE runAvailableSteps: %s", res.PublicID, err)
 				return err
@@ -653,7 +653,7 @@ func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) erro
 	return dbp.Commit()
 }
 
-func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, t *task.Task, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, wg *sync.WaitGroup, debugLogger *logrus.Entry) (int, error) {
+func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res *resolution.Resolution, stepChan chan<- *step.Step, executedSteps map[string]bool, expandedSteps []string, wg *sync.WaitGroup, debugLogger *logrus.Entry) (int, error) {
 	av := availableSteps(modifiedSteps, res, executedSteps, expandedSteps, debugLogger)
 	expandedSteps = []string{}
 	preRunModifiedSteps := map[string]bool{}
@@ -732,7 +732,7 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 	// - loop step generated new steps
 	if len(preRunModifiedSteps) > 0 || expanded > 0 {
 		pruneSteps(res, preRunModifiedSteps)
-		newAvailableSteps, err := runAvailableSteps(dbp, preRunModifiedSteps, res, t, stepChan, executedSteps, expandedSteps, wg, debugLogger)
+		newAvailableSteps, err := runAvailableSteps(dbp, preRunModifiedSteps, res, stepChan, executedSteps, expandedSteps, wg, debugLogger)
 		if err != nil {
 			return 0, err
 		}
