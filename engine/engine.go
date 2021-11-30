@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/utask/models/runnerinstance"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
-	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
@@ -588,31 +587,12 @@ forLoop:
 }
 
 func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphore.Weighted, debugLogger *logrus.Entry) error {
-	switch currentTask.State {
-	case task.StateDone, task.StateWontfix, task.StateCancelled:
-	default:
-		return nil
-	}
-	if currentTask.Tags == nil {
-		return nil
-	}
-	parentTaskID, ok := currentTask.Tags[constants.SubtaskTagParentTaskID]
-	if !ok {
-		return nil
-	}
-
-	parentTask, err := task.LoadFromPublicID(dbp, parentTaskID)
+	parentTask, err := currentTask.ShouldResumeParentTask(dbp)
 	if err != nil {
 		return err
 	}
-	switch parentTask.State {
-	case task.StateBlocked, task.StateRunning:
-	default:
-		// not allowed to resume a parent task that is not either Running or Blocked.
-		// Todo state should not be runned as it might need manual resolution from a granted resolver
-		return nil
-	}
-	if parentTask.Resolution == nil {
+
+	if parentTask == nil {
 		return nil
 	}
 

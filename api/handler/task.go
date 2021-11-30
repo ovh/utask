@@ -8,8 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/step"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
@@ -438,6 +440,16 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 	if err != nil {
 		dbp.Rollback()
 		return err
+	}
+
+	parentTask, err := t.ShouldResumeParentTask(dbp)
+	if err == nil && parentTask != nil {
+		go func() {
+			logrus.Debugf("resuming parent task %q resolution %q", parentTask.PublicID, *parentTask.Resolution)
+			logrus.WithFields(logrus.Fields{"task_id": parentTask.PublicID, "resolution_id": *parentTask.Resolution}).Debugf("resuming resolution %q as child task %q state changed", *parentTask.Resolution, t.PublicID)
+
+			err = engine.GetEngine().Resolve(*parentTask.Resolution, nil)
+		}()
 	}
 
 	if err := dbp.Commit(); err != nil {
