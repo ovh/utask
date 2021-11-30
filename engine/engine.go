@@ -385,6 +385,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 
 	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
 
+forLoop:
 	for expectedMessages > 0 {
 		debugLogger.Debugf("Engine: resolve() %s loop, %d expected steps", res.PublicID, expectedMessages)
 		select {
@@ -462,7 +463,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 		case <-gracePeriodEnd:
 			// shutting down, time is up: exit the loop no matter how many steps might be pending
 			expectedMessages = 0
-			break
+			break forLoop
 		}
 	}
 
