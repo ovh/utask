@@ -1,4 +1,4 @@
-FROM node:latest AS js-builder
+FROM node:16 AS js-builder
 
 RUN npm install -g @angular/cli
 COPY ./ui /home/node/ui
@@ -11,7 +11,7 @@ RUN BASEHREF=___UTASK_DASHBOARD_BASEHREF___ PREFIX_API_BASE_URL=___UTASK_DASHBOA
 WORKDIR /home/node/ui/editor
 RUN BASEHREF=___UTASK_EDITOR_BASEHREF___ SENTRY_DSN=___UTASK_DASHBOARD_SENTRY_DSN___ make build-prod
 
-FROM golang:1.16-buster
+FROM golang:1.17-buster
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
