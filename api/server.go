@@ -426,6 +426,14 @@ func (s *Server) build(ctx context.Context) {
 					},
 					maintenanceMode,
 					tonic.Handler(handler.UpdateResolutionStepState, 204))
+				resolutionRoutes.POST("/resolution/:id/templating",
+					[]fizz.OperationOption{
+						fizz.ID("ResolveTemplatingResolution"),
+						fizz.Summary("Resolve templating of a resolution"),
+						fizz.Description("Resolve the templating of a string, within a task resolution. Admin users only."),
+					},
+					maintenanceMode,
+					tonic.Handler(handler.ResolveTemplatingResolution, 200))
 
 				//	resolutionRoutes.POST("/resolution/:id/rollback",
 				//		[]fizz.OperationOption{

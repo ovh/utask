@@ -9,6 +9,7 @@ import (
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/sirupsen/logrus"
 
+	"github.com/ovh/configstore"
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/step"
@@ -932,4 +933,81 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 	}
 
 	return nil
+}
+
+type resolveTemplatingResolutionIn struct {
+	PublicID             string `path:"id" validate:"required"`
+	TemplatingExpression string `json:"templating_expression" validate:"required"`
+	StepName             string `json:"step_name"`
+}
+
+// ResolveTemplatingResolutionOut is the output of the HTTP route
+// for ResolveTemplatingResolution
+type ResolveTemplatingResolutionOut struct {
+	Result string  `json:"result"`
+	Error  *string `json:"error,omitempty"`
+}
+
+// ResolveTemplatingResolution will use µtask templating engine for a given resolution
+// to validate a given template. Action is restricted to admin only, as it could be used
+// to exfiltrate configuration.
+func ResolveTemplatingResolution(c *gin.Context, in *resolveTemplatingResolutionIn) (*ResolveTemplatingResolutionOut, error) {
+	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := resolution.LoadFromPublicID(dbp, in.PublicID)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := task.LoadFromID(dbp, r.TaskID)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata.AddActionMetadata(c, metadata.TaskID, t.PublicID)
+
+	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
+
+	admin := auth.IsAdmin(c) == nil
+
+	if !admin {
+		return nil, errors.Forbiddenf("You are not allowed to resolve resolution variables")
+	}
+
+	metadata.SetSUDO(c)
+
+	// provide the resolution with values
+	t.ExportTaskInfos(r.Values)
+	r.Values.SetInput(t.Input)
+	r.Values.SetResolverInput(r.ResolverInput)
+	r.Values.SetVariables(tt.Variables)
+
+	config, err := utask.GetTemplatingConfig(configstore.DefaultStore)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Values.SetConfig(config)
+
+	output, err := r.Values.Apply(in.TemplatingExpression, nil, in.StepName)
+	if err != nil {
+		errStr := err.Error()
+		return &ResolveTemplatingResolutionOut{
+			Error: &errStr,
+		}, nil
+	}
+
+	return &ResolveTemplatingResolutionOut{
+		Result: string(output),
+	}, nil
 }

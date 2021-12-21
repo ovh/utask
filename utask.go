@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/ovh/configstore"
@@ -409,4 +410,77 @@ func Config(store *configstore.Store) (*Cfg, error) {
 	}
 
 	return global, nil
+}
+
+// GetTemplatingConfig returns the µTask configuration without sensible piece of configuration
+// such as encryption key, ... to be used by templating functions.
+func GetTemplatingConfig(store *configstore.Store) (map[string]interface{}, error) {
+	cfg, err := Config(store)
+	if err != nil {
+		return nil, err
+	}
+	// get all configuration items
+	itemList, err := store.GetItemList()
+	if err != nil {
+		return nil, err
+	}
+	// Squash to ensure that secrets with lower priority
+	// are dismissed.
+	itemList = configstore.Filter().Squash().Apply(itemList)
+
+	// drop those that shouldnt be available for task execution
+	// (don't let DB credentials leak, for instance...)
+	config, err := filteredConfig(itemList, cfg.ConcealedSecrets...)
+	if err != nil {
+		return nil, err
+	}
+	// attempt to deserialize json formatted config items
+	// -> make it easier to access internal nodes/values when templating
+	c := make(map[string]interface{})
+	for k, v := range config {
+		var i interface{}
+		if v != nil {
+			err := yaml.Unmarshal([]byte(*v), &i, func(dec *json.Decoder) *json.Decoder {
+				dec.UseNumber()
+				return dec
+			})
+			if err != nil {
+				c[k] = v
+			} else {
+				c[k] = i
+			}
+		}
+	}
+	return c, nil
+}
+
+// filteredConfig takes a configstore item list, drops some items by key
+// then reduces the result into a map of key->values
+func filteredConfig(list *configstore.ItemList, dropAlias ...string) (map[string]*string, error) {
+	cfg := make(map[string]*string)
+	for _, i := range list.Items {
+		if !listContainsString(dropAlias, i.Key()) {
+			// assume only one value per alias
+			if _, ok := cfg[i.Key()]; !ok {
+				v, err := i.Value()
+				if err != nil {
+					return nil, err
+				}
+				if len(v) > 0 {
+					cfg[i.Key()] = &v
+				}
+			}
+		}
+	}
+	return cfg, nil
+}
+
+// listContainsString asserts that a string slice contains a given string
+func listContainsString(list []string, item string) bool {
+	for _, i := range list {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }
