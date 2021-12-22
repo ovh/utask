@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/notify"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/utils"
@@ -693,4 +694,36 @@ func (t *Task) NotifyStepState(stepName, stepState string) {
 		notify.WrapTaskStepUpdate(tsu),
 		notify.ListActions().TaskStepUpdateAction,
 	)
+}
+
+func (t *Task) ShouldResumeParentTask(dbp zesty.DBProvider) (*Task, error) {
+	switch t.State {
+	case StateDone, StateWontfix, StateCancelled:
+	default:
+		return nil, nil
+	}
+	if t.Tags == nil {
+		return nil, nil
+	}
+	parentTaskID, ok := t.Tags[constants.SubtaskTagParentTaskID]
+	if !ok {
+		return nil, nil
+	}
+
+	parentTask, err := LoadFromPublicID(dbp, parentTaskID)
+	if err != nil {
+		return nil, err
+	}
+	switch parentTask.State {
+	case StateBlocked, StateRunning:
+	default:
+		// not allowed to resume a parent task that is not either Running or Blocked.
+		// Todo state should not be runned as it might need manual resolution from a granted resolver
+		return nil, nil
+	}
+	if parentTask.Resolution == nil {
+		return nil, nil
+	}
+
+	return parentTask, nil
 }
