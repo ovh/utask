@@ -35,6 +35,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzGraphModule } from 'ng-zorro-antd/graph';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzListModule } from 'ng-zorro-antd/list';
@@ -112,6 +113,7 @@ const components: any[] = [
     NzAutocompleteModule,
     NzModalModule,
     NzGridModule,
+    NzGraphModule,
     NzAlertModule,
     NzCollapseModule,
     NzCodeEditorModule,

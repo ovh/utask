@@ -11,13 +11,14 @@ export class ModalService {
 		private _modal: NzModalService
 	) { }
 
-	confirmAll<T>(title: string, content: string, okBtnType: NzButtonType, ...actions: Array<Observable<T>>): Promise<Array<T>> {
+	confirmAll<T>(title: string, content: string, okBtnType: NzButtonType, okBtnDanger: boolean, ...actions: Array<Observable<T>>): Promise<Array<T>> {
 		return new Promise((resolveModal, _) => {
 			this._modal.confirm({
 				nzTitle: title,
 				nzContent: NzModalContentWithErrorComponent,
 				nzComponentParams: { content },
 				nzOkText: 'Yes',
+				nzOkDanger: okBtnDanger,
 				nzCancelText: 'No',
 				nzOkType: okBtnType,
 				nzOnOk: modal => {
@@ -41,7 +42,7 @@ export class ModalService {
 		});
 	}
 
-	confirm<T>(title: string, content: string, okBtnType: NzButtonType, action: Observable<T>): Promise<T> {
+	confirm<T>(title: string, content: string, okBtnType: NzButtonType, okBtnDanger: boolean, action: Observable<T>): Promise<T> {
 		return new Promise((resolveModal, _) => {
 			this._modal.confirm({
 				nzTitle: title,
@@ -50,6 +51,7 @@ export class ModalService {
 				nzOkText: 'Yes',
 				nzCancelText: 'No',
 				nzOkType: okBtnType,
+				nzOkDanger: okBtnDanger,
 				nzOnOk: modal => {
 					let resolveClose: any;
 					modal.errors = [];

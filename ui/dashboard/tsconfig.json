@@ -7,6 +7,7 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "module": "esnext",
     "moduleResolution": "node",
     "importHelpers": true,
@@ -16,7 +17,8 @@
     ],
     "lib": [
       "es2018",
-      "dom"
+      "dom",
+      "ES2020.Promise"
     ],
     "paths": {
       "utask-lib": [

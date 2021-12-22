@@ -83,8 +83,6 @@ export class StepsListComponent implements OnChanges {
                         if (typeof (item) === 'string') {
                             resolve(item);
                         } else {
-                            JSToYaml.spacingStart = ' '.repeat(0);
-                            JSToYaml.spacing = ' '.repeat(4);
                             resolve(JSToYaml.stringify(item).value);
                         }
                     });
@@ -117,8 +115,6 @@ export class StepsListComponent implements OnChanges {
             nzWidth: '80%',
             nzComponentParams: {
                 apiCall: () => this._api.resolution.getStep(this.resolution.id, step.name).toPromise().then((d: any) => {
-                    JSToYaml.spacingStart = ' '.repeat(0);
-                    JSToYaml.spacing = ' '.repeat(4);
                     return JSToYaml.stringify(d).value;
                 }).catch(err => {
                     throw err;

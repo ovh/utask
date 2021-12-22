@@ -9,7 +9,7 @@
             [nzRotate]="panel.nzActive ? 0 : -90"></i>
     </ng-template>
     <ng-template #boxHeader>
-        <div [ngStyle]="customStyleHeader">
+        <div class="header" [ngStyle]="customStyleHeader">
             <ng-content select="[app-box-header]"></ng-content>
         </div>
     </ng-template>

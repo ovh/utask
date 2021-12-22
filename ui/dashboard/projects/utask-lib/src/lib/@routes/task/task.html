@@ -52,7 +52,7 @@
         *ngIf="task.result && task.resolution">
         <div app-box-header>Result</div>
         <div app-box-content>
-            <lib-utask-editor [ngModel]="JSON.stringify(task.result, null, 2)" ngDefaultControl
+            <lib-utask-editor [ngModel]="taskJson" ngDefaultControl
                 [ngModelOptions]="{standalone: true}" [config]="{ language: 'json', readOnly: true, wordWrap: 'on' }">
             </lib-utask-editor>
         </div>

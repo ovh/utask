@@ -16,6 +16,7 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzGraphModule } from 'ng-zorro-antd/graph';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -130,6 +131,7 @@ const utaskLibRoutes: Routes = [
 		NzCollapseModule,
 		NzCodeEditorModule,
 		NzFormModule,
+		NzGraphModule,
 		NzCheckboxModule,
 		NzSpinModule,
 		NzDescriptionsModule,

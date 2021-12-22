@@ -23,7 +23,8 @@ export class ResolutionService {
         return this._modalService.confirmAll(
             `<i>Are you sure you want to pause these ${resolutionIds.length} tasks?</i>`,
             '',
-            'danger',
+            'default',
+            true,
             ...resolutionIds.map(id => {
                 return this.api.resolution.pause(id)
                     .pipe(catchError(() => throwError(`Can't pause the resolution with id: ${id}`)));
@@ -35,7 +36,8 @@ export class ResolutionService {
         return this._modalService.confirm(
             '<i>Are you sure you want to cancel this resolution?</i>',
             `Resolution ID: ${resolutionId}`,
-            'danger',
+            'default',
+            true,
             this.api.resolution.cancel(resolutionId)
         );
     }
@@ -44,7 +46,8 @@ export class ResolutionService {
         return this._modalService.confirmAll(
             `<i>Are you sure you want to cancel these ${resolutionIds.length} tasks?</i>`,
             '',
-            'danger',
+            'default',
+            true,
             ...resolutionIds.map(id => {
                 return this.api.resolution.cancel(id)
                     .pipe(catchError(() => throwError(`Can't cancel the resolution with id: ${id}`)));
@@ -61,6 +64,7 @@ export class ResolutionService {
             `<i>Are you sure you want to extend these ${resolutionIds.length} tasks?</i>`,
             '',
             'primary',
+            false,
             ...resolutionIds.map(id => {
                 return this.api.resolution.extend(id)
                     .pipe(catchError(() => throwError(`Can't extend the resolution with id: ${id}`)));
@@ -77,6 +81,7 @@ export class ResolutionService {
             `<i>Are you sure you want to run these ${resolutionIds.length} tasks?</i>`,
             '',
             'primary',
+            false,
             ...resolutionIds.map(id => {
                 return this.api.resolution.run(id)
                     .pipe(catchError(() => throwError(`Can't run the resolution with id: ${id}`)));
