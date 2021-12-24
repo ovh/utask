@@ -22,6 +22,7 @@ import (
 type createResolutionIn struct {
 	TaskID         string                 `json:"task_id" binding:"required"`
 	ResolverInputs map[string]interface{} `json:"resolver_inputs"`
+	StartOver      bool                   `json:"start_over"`
 }
 
 // CreateResolution handles the creation of a resolution for a given task
@@ -45,9 +46,14 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		return nil, err
 	}
 
+	if in.StartOver && t.Resolution == nil {
+		_ = dbp.Rollback()
+		return nil, errors.BadRequestf("can't start over a task that hasn't been resolved at least once")
+	}
+
 	tt, err := tasktemplate.LoadFromID(dbp, t.TemplateID)
 	if err != nil {
-		dbp.Rollback()
+		_ = dbp.Rollback()
 		return nil, err
 	}
 
@@ -55,7 +61,7 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 	resolutionManager := auth.IsResolutionManager(c, tt, t, nil) == nil
 
 	if !admin && !resolutionManager {
-		dbp.Rollback()
+		_ = dbp.Rollback()
 		return nil, errors.Forbiddenf("You are not allowed to resolve this task")
 	} else if !resolutionManager {
 		metadata.SetSUDO(c)
@@ -69,6 +75,31 @@ func CreateResolution(c *gin.Context, in *createResolutionIn) (*resolution.Resol
 		t.ResolverUsernames = append(t.ResolverUsernames, resUser)
 		if err := t.Update(dbp, false, false); err != nil {
 			dbp.Rollback()
+			return nil, err
+		}
+	}
+
+	if in.StartOver {
+		if !admin && resolutionManager && !tt.AllowTaskStartOver {
+			_ = dbp.Rollback()
+			return nil, errors.Forbiddenf("You are not allowed to start over this task")
+		}
+
+		res, err := resolution.LoadLockedFromPublicID(dbp, *t.Resolution)
+		if err != nil {
+			_ = dbp.Rollback()
+			return nil, err
+		}
+
+		if res.State != resolution.StatePaused && res.State != resolution.StateBlockedBadRequest && res.State != resolution.StateCancelled {
+			_ = dbp.Rollback()
+			return nil, errors.BadRequestf("can't start over a task that isn't in status %q, %q or %q", resolution.StatePaused, resolution.StateBlockedBadRequest, resolution.StateCancelled)
+		}
+
+		logrus.WithFields(logrus.Fields{"resolution_id": res.PublicID, "task_id": t.PublicID}).Debugf("Handler CreateResolution: start-over the resolution, deleting old resolution %s", res.PublicID)
+
+		if err := res.Delete(dbp); err != nil {
+			_ = dbp.Rollback()
 			return nil, err
 		}
 	}

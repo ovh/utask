@@ -26,6 +26,7 @@ CREATE TABLE "task_template" (
     result_format JSONB NOT NULL,
     title_format TEXT NOT NULL,
     retry_max INTEGER,
+    allow_task_start_over BOOL NOT NULL DEFAULT false,
     base_configurations JSONB NOT NULL,
     tags JSONB NOT NULL DEFAULT 'null'
 );
@@ -110,6 +111,6 @@ CREATE TABLE "utask_sql_migrations" (
     current_migration_applied TEXT PRIMARY KEY
 );
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.10.0-migration005');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.17.0-migration006');
 
 END;

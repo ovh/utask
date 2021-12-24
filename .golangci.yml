@@ -10,31 +10,34 @@ run:
 
 linters:
   enable:
-    - govet
-    - megacheck
-    - staticcheck
-    - deadcode
-    - structcheck
-    - typecheck
-    - gosimple
-    - varcheck
-    - ineffassign
-    - bodyclose
     - asciicheck
-    - exportloopref
-    - goconst
-    - misspell
-    - gofmt
-    - goimports
-    - predeclared
-    - gosec
-    - golint
-    - nolintlint
-    - unconvert
+    - bodyclose
+    - deadcode
     - errcheck
     - exportloopref
+    - goconst
+    - gofmt
+    - goimports
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - megacheck
+    - misspell
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
     - unparam
     - unused
+    - varcheck
+    - wastedassign
+    - whitespace
 
   disable:
     - maligned
