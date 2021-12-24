@@ -403,4 +403,31 @@ export class TaskComponent implements OnInit, OnDestroy {
   eventUtask(event: any) {
     this._notif.create(event.type, '', event.message);
   }
+
+  restartTask() {
+    for (const i in this.validateResolveForm.controls) {
+      if (Object.prototype.hasOwnProperty.call(this.validateResolveForm.controls, i)) {
+        this.validateResolveForm.controls[i].markAsDirty();
+        this.validateResolveForm.controls[i].updateValueAndValidity();
+      }
+    }
+    if (this.validateResolveForm.invalid) {
+      return;
+    }
+
+    this.loaders.restartTask = true;
+    this.api.resolution.add({
+      ...this.item,
+      resolver_inputs: InputsFormComponent.getInputs(this.validateResolveForm.value),
+      start_over: true,
+    }).toPromise().then((res: any) => {
+      this.errors.restartTask = null;
+      this.display.restartTask = false;
+      this.loadTask(true);
+    }).catch((err) => {
+      this.errors.restartTask = err;
+    }).finally(() => {
+      this.loaders.restartTask = false;
+    });
+  }
 }
