@@ -807,7 +807,7 @@ type updateResolutionStepStateIn struct {
 }
 
 // UpdateResolutionStepState allows the edition of a step state.
-// Can only be called when the resolution is in state PAUSED, and by a resolution manager.
+// Can only be called when the resolution is in state PAUSED, and by the template owners.
 func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) error {
 	metadata.AddActionMetadata(c, metadata.ResolutionID, in.PublicID)
 	metadata.AddActionMetadata(c, metadata.StepName, in.StepName)
@@ -854,7 +854,7 @@ func UpdateResolutionStepState(c *gin.Context, in *updateResolutionStepStateIn) 
 	metadata.AddActionMetadata(c, metadata.TemplateName, tt.Name)
 
 	admin := auth.IsAdmin(c) == nil
-	resolutionManager := auth.IsResolutionManager(c, tt, t, r) == nil
+	resolutionManager := auth.IsTemplateOwner(c, tt) == nil
 
 	if !admin && !resolutionManager {
 		dbp.Rollback()
