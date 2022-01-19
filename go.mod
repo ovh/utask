@@ -53,7 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.5.1
-	github.com/tidwall/gjson v1.8.1
+	github.com/tidwall/gjson v1.9.3
 	github.com/wI2L/fizz v0.17.0
 	github.com/ybriffa/go-http-digest-auth-client v0.6.3
 	github.com/ziutek/mymysql v1.5.4 // indirect
