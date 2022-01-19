@@ -24,12 +24,13 @@ import (
 )
 
 type createTaskIn struct {
-	TemplateName     string                 `json:"template_name" binding:"required"`
-	Input            map[string]interface{} `json:"input" binding:"required"`
-	Comment          string                 `json:"comment"`
-	WatcherUsernames []string               `json:"watcher_usernames"`
-	Delay            *string                `json:"delay"`
-	Tags             map[string]string      `json:"tags"`
+	TemplateName      string                 `json:"template_name" binding:"required"`
+	Input             map[string]interface{} `json:"input" binding:"required"`
+	Comment           string                 `json:"comment"`
+	WatcherUsernames  []string               `json:"watcher_usernames"`
+	ResolverUsernames []string               `json:"resolver_usernames"`
+	Delay             *string                `json:"delay"`
+	Tags              map[string]string      `json:"tags"`
 }
 
 // CreateTask handles the creation of a new task based on an existing template
@@ -62,7 +63,22 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, in.Input, nil, in.Comment, in.Delay, in.Tags)
+	if len(in.ResolverUsernames) > 0 {
+		// if user is neither admin nor template owner, prevent setting the resolver_usernames
+		// as the template might have defined a limited set of users that can resolve the task.
+		// We need to be sure that the requester will not grant himself (or anybody else) as resolver
+		// and bypass the resolver restriction set on the task_template.
+		// Let's limit this parameter to template owners and admins.
+
+		admin := auth.IsAdmin(c) == nil
+		templateOwner := auth.IsTemplateOwner(c, tt) == nil
+
+		if !admin && !templateOwner {
+			return nil, errors.Forbiddenf("resolver_usernames can't be set by a regular user, you need to be owner of the template, or admin")
+		}
+	}
+
+	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.ResolverUsernames, in.Input, nil, in.Comment, in.Delay, in.Tags)
 	if err != nil {
 		dbp.Rollback()
 		return nil, err
