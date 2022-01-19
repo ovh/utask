@@ -78,13 +78,13 @@ func TestMain(m *testing.M) {
 
 func loadTemplates() map[string][]byte {
 	templateList := map[string][]byte{}
-	files, err := ioutil.ReadDir(testDirTemplates)
+	files, err := os.ReadDir(testDirTemplates)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, file := range files {
-		if file.Mode().IsRegular() {
+		if file.Type().IsRegular() {
 			bytes, err := ioutil.ReadFile(filepath.Join(testDirTemplates, file.Name()))
 			if err != nil {
 				panic(err)
