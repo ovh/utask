@@ -1072,6 +1072,10 @@
         "tags": {
             "description": "Global tags that will be applied to all tasks created with this template",
             "$ref": "#/definitions/Tags"
+        },
+        "allow_task_start_over": {
+            "description": "Indicates if tasks coming from a template can be start-over by admins or resolution manager",
+            "type": "boolean"
         }
     }
 }
