@@ -52,9 +52,13 @@ func TestMain(m *testing.M) {
 	store := configstore.DefaultStore
 	store.InitFromEnvironment()
 
-	db.Init(store)
+	if err := db.Init(store); err != nil {
+		panic(err)
+	}
 
-	now.Init()
+	if err := now.Init(); err != nil {
+		panic(err)
+	}
 
 	var wg sync.WaitGroup
 

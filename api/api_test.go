@@ -26,7 +26,10 @@ import (
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/input"
 	"github.com/ovh/utask/engine/step"
+	"github.com/ovh/utask/engine/step/condition"
 	"github.com/ovh/utask/engine/step/executor"
+	"github.com/ovh/utask/engine/values"
+	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
@@ -56,11 +59,17 @@ func TestMain(m *testing.M) {
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 
-	db.Init(store)
+	if err := db.Init(store); err != nil {
+		panic(err)
+	}
 
-	now.Init()
+	if err := now.Init(); err != nil {
+		panic(err)
+	}
 
-	auth.Init(store)
+	if err := auth.Init(store); err != nil {
+		panic(err)
+	}
 
 	ctx := context.Background()
 	var wg sync.WaitGroup
@@ -272,6 +281,105 @@ func TestPasswordInput(t *testing.T) {
 	tester.AddCall("fetchStatistics", http.MethodGet, "/unsecured/stats", "").
 		Headers(regularHeaders).
 		Checkers(iffy.ExpectStatus(200))
+
+	tester.Run()
+}
+
+func TestStartOver(t *testing.T) {
+	tester := iffy.NewTester(t, hdl)
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tmpl := resolverInputTemplate()
+
+	_, err = tasktemplate.LoadFromName(dbp, tmpl.Name)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			t.Fatal(err)
+		}
+		if err := dbp.DB().Insert(&tmpl); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	tester.AddCall("getTemplate", http.MethodGet, "/template/"+tmpl.Name, "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"{{.getTemplate.name}}","input":{"id":"yesssss!"}}`).
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("createResolutionMissingResolverInput", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}"}`).
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONBranch("error", `Failed to create Resolution: Missing input 'ri1'`),
+		)
+
+	tester.AddCall("createResolutionStartOverFailed", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}","resolver_inputs":{"ri1":"foo"}, "start_over":true}`).
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONBranch("error", `can't start over a task that hasn't been resolved at least once`),
+		)
+
+	tester.AddCall("createResolution", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}","resolver_inputs":{"ri1":"foo"}}`).
+		Headers(adminHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("runResolution", http.MethodPost, "/resolution/{{.createResolution.id}}/run", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(204),
+			waitChecker(time.Second), // fugly... need to give resolution manager some time to asynchronously finish running
+		)
+
+	tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("state", resolution.StateBlockedBadRequest),
+		)
+
+	tester.AddCall("createResolutionStartOver", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}","resolver_inputs":{"ri1":"bar"}, "start_over":true}`).
+		Headers(adminHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("runResolutionStartOver", http.MethodPost, "/resolution/{{.createResolutionStartOver.id}}/run", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(204),
+			waitChecker(time.Second), // fugly... need to give resolution manager some time to asynchronously finish running
+		)
+
+	tester.AddCall("getResolutionStartOver", http.MethodGet, "/resolution/{{.createResolutionStartOver.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("state", resolution.StateDone),
+		)
+
+	tester.AddCall("getResolutionAfterStartOver", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(404),
+		)
+
+	tester.AddCall("createResolutionStartOverFailed", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}","resolver_inputs":{"ri1":"foo"}, "start_over":true}`).
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONBranch("error", `can't start over a task that isn't in status "PAUSED", "BLOCKED_BADREQUEST" or "CANCELLED"`),
+		)
 
 	tester.Run()
 }
@@ -505,6 +613,70 @@ func templateWithPasswordInput() tasktemplate.TaskTemplate {
 					Configuration: json.RawMessage(`{
 						"output": {"showSecret":"{{.input.verysecret}}"}
 					}`),
+				},
+			},
+		},
+	}
+}
+
+func resolverInputTemplate() tasktemplate.TaskTemplate {
+	return tasktemplate.TaskTemplate{
+		Name:        "resolver-input-template",
+		Description: "does nothing",
+		TitleFormat: "this task does nothing at all",
+		Inputs: []input.Input{
+			{
+				Name: "id",
+			},
+		},
+		Variables: []values.Variable{
+			{
+				Name:  "var1",
+				Value: "hello id {{.input.id }} for {{ .step.step1.output.foo }} and {{ .step.this.state | default \"BROKEN_TEMPLATING\" }}",
+			},
+			{
+				Name:       "var2",
+				Expression: "var a = 3+2; a;",
+			},
+		},
+		ResolverInputs: []input.Input{
+			{
+				Name:        "ri1",
+				Description: "resolver input 1",
+				LegalValues: []interface{}{"foo", "bar"},
+			},
+		},
+		Steps: map[string]*step.Step{
+			"step1": {
+				Action: executor.Executor{
+					Type: "echo",
+					Configuration: json.RawMessage(`{
+						"output": {"foo":"bar"}
+					}`),
+				},
+			},
+			"step2": {
+				Action: executor.Executor{
+					Type: "echo",
+					Configuration: json.RawMessage(`{
+						"output": {"foo":"bar"}
+					}`),
+				},
+				Dependencies: []string{"step1"},
+				Conditions: []*condition.Condition{
+					{
+						If: []*condition.Assert{
+							{
+								Expected: "foo",
+								Value:    "{{.resolver_input.ri1}}",
+								Operator: "EQ",
+							},
+						},
+						Then: map[string]string{
+							"this": "CLIENT_ERROR",
+						},
+						Type: "skip",
+					},
 				},
 			},
 		},

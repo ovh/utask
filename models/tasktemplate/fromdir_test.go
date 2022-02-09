@@ -34,9 +34,13 @@ func TestMain(m *testing.M) {
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 	step.RegisterRunner(pluginsubtask.Plugin.PluginName(), pluginsubtask.Plugin)
 
-	db.Init(store)
+	if err := db.Init(store); err != nil {
+		panic(err)
+	}
 
-	now.Init()
+	if err := now.Init(); err != nil {
+		panic(err)
+	}
 
 	os.Exit(m.Run())
 }
