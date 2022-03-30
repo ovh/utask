@@ -1,12 +1,12 @@
 import {
     Component,
     ViewChild,
-    AfterViewInit,
     OnChanges,
     Input,
     Output,
     EventEmitter,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    ChangeDetectionStrategy
 } from '@angular/core';
 import keys from 'lodash-es/keys';
 import Resolution from '../../@models/resolution.model';
@@ -15,9 +15,10 @@ import { NzGraphComponent, NzGraphData, NzGraphLayoutConfig, NzGraphZoomDirectiv
 @Component({
     selector: 'lib-utask-steps-viewer',
     templateUrl: './steps-viewer.html',
-    styleUrls: ['./steps-viewer.sass']
+    styleUrls: ['./steps-viewer.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class StepsViewerComponent implements AfterViewInit, OnChanges {
+export class StepsViewerComponent implements OnChanges {
     // Inputs & Outputs
     @Input() resolution: Resolution;
     @Output() public select: EventEmitter<any> = new EventEmitter();
@@ -37,13 +38,9 @@ export class StepsViewerComponent implements AfterViewInit, OnChanges {
     };
     zoom = 0.5;
 
-    constructor(private _cd: ChangeDetectorRef,) {
-
-    }
-
-    ngAfterViewInit() {
-
-    }
+    constructor(
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnChanges() {
         this.clear();

@@ -16,44 +16,28 @@
     </ng-template>
 </nz-select>
 
-
-<div class="list">
-    <nz-table nzTemplateMode nzSize="small">
-        <tbody>
-            <ng-container *ngFor="let stepName of filteredStepNames">
-                <tr
-                    [ngStyle]="lineStyle(stepName)">
-                    <td>{{stepName}}</td>
-                    <td style="text-align: right;padding-right: 8px;">
-                        <nz-button-group nzSize="small" nzType="default">
-                            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View error"
-                                *ngIf="resolution.steps[stepName].error"
-                                (click)="preview('Step '+ resolution.steps[stepName].name, resolution.steps[stepName].error); $event.stopPropagation();"
-                                nzTooltipTitle="View error" nz-tooltip><i nz-icon nzType="warning"
-                                    nzTheme="outline"></i></button>
-
-                            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View children"
-                                *ngIf="resolution.steps[stepName].children"
-                                (click)="preview('Children '+ resolution.steps[stepName].name, resolution.steps[stepName].children); $event.stopPropagation();"
-                                nzTooltipTitle="View children" nz-tooltip><i nz-icon nzType="partition"
-                                    nzTheme="outline"></i></button>
-
-                            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View as code"
-                                (click)="preview('Step '+ resolution.steps[stepName].name, resolution.steps[stepName]); $event.stopPropagation();"
-                                nzTooltipTitle="View as code" nz-tooltip><i nz-icon nzType="file-text"></i></button>
-
-                            <button type="button" nzType="default" nz-button [nzGhost]="true"
-                                *ngIf="resolution.state == 'PAUSED'"
-                                (click)="updateStepState(resolution.steps[stepName]); $event.stopPropagation();"
-                                nzTooltipTitle="Edit step state" nz-tooltip><i nz-icon nzType="edit"></i></button>
-                            <button type="button" nzType="default" nz-button [nzGhost]="true"
-                                *ngIf="resolution.state == 'PAUSED'" nzTooltipTitle="Edit step" nz-tooltip
-                                (click)="updateStep(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
-                                    nzType="form"></i></button>
-                        </nz-button-group>
-                    </td>
-                </tr>
-            </ng-container>
-        </tbody>
-    </nz-table>
-</div>
+<nz-list nzSize="small" class="list">
+    <nz-list-item *ngFor="let stepName of filteredStepNames" [ngStyle]="lineStyle(stepName)">
+        {{stepName}}
+        <nz-button-group nzSize="small" nzType="default">
+            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View error"
+                *ngIf="resolution.steps[stepName].error"
+                (click)="preview('Step '+ resolution.steps[stepName].name, resolution.steps[stepName].error); $event.stopPropagation();"
+                nzTooltipTitle="View error" nz-tooltip><i nz-icon nzType="warning" nzTheme="outline"></i></button>
+            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View children"
+                *ngIf="resolution.steps[stepName].children"
+                (click)="preview('Children '+ resolution.steps[stepName].name, resolution.steps[stepName].children); $event.stopPropagation();"
+                nzTooltipTitle="View children" nz-tooltip><i nz-icon nzType="partition" nzTheme="outline"></i></button>
+            <button type="button" nzType="default" nz-button [nzGhost]="true" title="View as code"
+                (click)="preview('Step '+ resolution.steps[stepName].name, resolution.steps[stepName]); $event.stopPropagation();"
+                nzTooltipTitle="View as code" nz-tooltip><i nz-icon nzType="file-text"></i></button>
+            <button type="button" nzType="default" nz-button [nzGhost]="true" *ngIf="resolution.state == 'PAUSED'"
+                (click)="updateStepState(resolution.steps[stepName]); $event.stopPropagation();"
+                nzTooltipTitle="Edit step state" nz-tooltip><i nz-icon nzType="edit"></i></button>
+            <button type="button" nzType="default" nz-button [nzGhost]="true" *ngIf="resolution.state == 'PAUSED'"
+                nzTooltipTitle="Edit step" nz-tooltip
+                (click)="updateStep(resolution.steps[stepName]); $event.stopPropagation();"><i nz-icon
+                    nzType="form"></i></button>
+        </nz-button-group>
+    </nz-list-item>
+</nz-list>

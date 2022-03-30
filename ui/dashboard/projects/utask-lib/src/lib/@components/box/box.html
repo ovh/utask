@@ -1,7 +1,7 @@
 <nz-collapse nzAccordion class="box {{headerConfig.class}}" [class.custom-color]="customStyle && customStylePanel"
     [ngStyle]="customStyle">
     <nz-collapse-panel #panel [nzHeader]="boxHeader" [nzActive]="display" [ngStyle]="customStylePanel"
-        [nzExpandedIcon]="expandedIcon" [nzShowArrow]="headerConfig.openable">
+        [nzExpandedIcon]="expandedIcon" [nzShowArrow]="headerConfig.openable" [nzExtra]="extraTpl">
         <ng-content select="[app-box-content]"></ng-content>
     </nz-collapse-panel>
     <ng-template #expandedIcon let-active>
@@ -11,6 +11,11 @@
     <ng-template #boxHeader>
         <div class="header" [ngStyle]="customStyleHeader">
             <ng-content select="[app-box-header]"></ng-content>
+        </div>
+    </ng-template>
+    <ng-template #extraTpl>
+        <div class="header" [ngStyle]="customStyleHeader">
+            <ng-content select="[app-box-header-extra]"></ng-content>
         </div>
     </ng-template>
 </nz-collapse>
