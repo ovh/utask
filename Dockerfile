@@ -1,6 +1,5 @@
 FROM node:16 AS js-builder
 
-RUN npm install -g @angular/cli
 COPY ./ui /home/node/ui
 
 # dashboard
