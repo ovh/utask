@@ -26,7 +26,7 @@ debug:
 	$(ECHO) "-=DEBUG=-"
 
 install:
-	$(NPM) install
+	$(NPM) ci
 
 dev:
 	$(NODE) scripts/prebuild-env-dev.js

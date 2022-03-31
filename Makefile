@@ -54,7 +54,7 @@ release:
 
 release-utask-lib:	
 	cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version
-	cd ui/dashboard && npm install && ng build --prod utask-lib
+	cd ui/dashboard && npm ci && ng build --prod utask-lib
 	npm publish ui/dashboard/dist/utask-lib --access public
 
 test:
