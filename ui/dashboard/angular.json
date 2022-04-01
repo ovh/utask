@@ -162,7 +162,7 @@
             "prefix": "lib",
             "architect": {
                 "build": {
-                    "builder": "@angular-devkit/build-angular:build",
+                    "builder": "@angular-devkit/build-angular:ng-packagr",
                     "options": {
                         "tsConfig": "projects/utask-lib/tsconfig.lib.json",
                         "project": "projects/utask-lib/ng-package.json"

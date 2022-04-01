@@ -1,4 +1,4 @@
-NG=ng
+NG=npm run ng --
 NPM=npm
 NODE=node
 TAR=tar -zcvf
