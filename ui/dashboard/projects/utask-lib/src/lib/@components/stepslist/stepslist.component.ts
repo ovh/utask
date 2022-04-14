@@ -1,11 +1,9 @@
 import { Component, Input, OnChanges, Output, SimpleChanges, EventEmitter } from '@angular/core';
 import map from 'lodash-es/map';
 import uniq from 'lodash-es/uniq';
-import omit from 'lodash-es/omit';
 import compact from 'lodash-es/compact';
 import { WorkflowService } from '../../@services/workflow.service';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
-import JSToYaml from 'convert-yaml';
 import { EditorOptions } from 'ng-zorro-antd/code-editor';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalEditResolutionStepStateComponent } from '../../@modals/modal-edit-resolution-step-state/modal-edit-resolution-step-state.component';
@@ -83,7 +81,7 @@ export class StepsListComponent implements OnChanges {
                         if (typeof (item) === 'string') {
                             resolve(item);
                         } else {
-                            resolve(JSToYaml.stringify(item).value);
+                            resolve(JSON.stringify(item, null, 2));
                         }
                     });
                 }
@@ -115,7 +113,7 @@ export class StepsListComponent implements OnChanges {
             nzWidth: '80%',
             nzComponentParams: {
                 apiCall: () => this._api.resolution.getStep(this.resolution.id, step.name).toPromise().then((d: any) => {
-                    return JSToYaml.stringify(d).value;
+                    return JSON.stringify(d, null, 2);
                 }).catch(err => {
                     throw err;
                 }),
