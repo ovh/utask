@@ -4,18 +4,21 @@ import { BaseComponent } from './@routes/base/base.component';
 import { AppModule } from './app.module';
 import { MetaResolve } from 'projects/utask-lib/src/lib/@resolves/meta.resolve';
 import { NotFoundComponent } from './@routes/not-found/not-found.component';
+import { ErrorComponent } from 'projects/utask-lib/src/lib/@routes/error/error.component';
 
 const routes: Routes = [
   {
     path: '',
-    component: BaseComponent,
-    resolve: {
-      meta: MetaResolve
-    },
     children: [
+      { path: 'error', component: ErrorComponent },
       { path: '', redirectTo: '/tasks', pathMatch: 'full' },
       {
-        path: '', loadChildren: () => import('../../projects/utask-lib/src/lib/utask-lib.routing.module')
+        path: '',
+        resolve: {
+          meta: MetaResolve
+        },
+        component: BaseComponent,
+        loadChildren: () => import('../../projects/utask-lib/src/lib/utask-lib.routing.module')
           .then(m => m.UTaskLibRoutingModule)
       }
     ]

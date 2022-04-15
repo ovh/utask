@@ -50,7 +50,6 @@ const utaskLibRoutes: Routes = [
 	{
 		path: '',
 		children: [
-			{ path: 'error', component: ErrorComponent },
 			{
 				path: '',
 				resolve: {
