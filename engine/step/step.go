@@ -36,6 +36,7 @@ const (
 const (
 	StateAny           = "ANY" // wildcard
 	StateTODO          = "TODO"
+	StateWaiting       = "WAITING"
 	StateRunning       = "RUNNING"
 	StateDone          = "DONE"
 	StateClientError   = "CLIENT_ERROR"
@@ -60,9 +61,9 @@ const (
 )
 
 var (
-	builtinStates            = []string{StateTODO, StateRunning, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateRetryNow, StateAfterrunError, StateAny, StateExpanded}
+	builtinStates            = []string{StateTODO, StateWaiting, StateRunning, StateDone, StateClientError, StateServerError, StateFatalError, StateCrashed, StatePrune, StateToRetry, StateRetryNow, StateAfterrunError, StateAny, StateExpanded}
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateRetryNow, StateFatalError, StateClientError}
-	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateRetryNow, StateAfterrunError, StateExpanded} // everything but RUNNING, DONE, PRUNE
+	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateRetryNow, StateAfterrunError, StateExpanded, StateWaiting} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
 )
 
@@ -431,6 +432,8 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 				if err != nil {
 					if errors.IsBadRequest(err) {
 						st.State = StateClientError
+					} else if errors.IsNotAssigned(err) {
+						st.State = StateWaiting
 					} else if errors.IsNotProvisioned(err) {
 						st.State = StateToRetry
 					} else {

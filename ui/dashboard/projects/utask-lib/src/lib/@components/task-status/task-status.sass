@@ -2,6 +2,7 @@ $color-danger: #dc3545
 $color-warning: #fd7e14
 $color-success: #28a745
 $color-primary: #007bff
+$color-waiting: #8a2be2
 
 .wrapper
   display: flex
@@ -14,6 +15,11 @@ $color-primary: #007bff
     background: $color-success
   &.RUNNING
     background-color: $color-primary
+    background-image: linear-gradient(-45deg, transparent 33%, rgba(0, 0, 0, .1) 33%, rgba(0, 0, 0, .1) 66%, transparent 66%)
+    background-size: 4rem 100%, 100% 100%, 100% 100%
+    animation: animate-state-running 1s linear infinite
+  &.WAITING
+    background-color: $color-waiting
     background-image: linear-gradient(-45deg, transparent 33%, rgba(0, 0, 0, .1) 33%, rgba(0, 0, 0, .1) 66%, transparent 66%)
     background-size: 4rem 100%, 100% 100%, 100% 100%
     animation: animate-state-running 1s linear infinite

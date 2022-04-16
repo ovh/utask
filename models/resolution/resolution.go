@@ -40,6 +40,7 @@ const (
 
 	// collectable
 
+	StateWaiting          = "WAITING"
 	StateCrashed          = "CRASHED"
 	StateRetry            = "RETRY"
 	StateError            = "ERROR" // a step failed, we'll retry, keep the resolution running

@@ -166,6 +166,14 @@ export class WorkflowService {
         icon: 'history',
         error: false
     }, {
+        key: 'WAITING',
+        color: '#8a2be2',
+        fontColor: 'white',
+        shape: 'shape_blue',
+        isFinal: false,
+        icon: 'sync',
+        error: false
+    }, {
         key: 'RUNNING',
         color: '#32acff',
         fontColor: 'white',

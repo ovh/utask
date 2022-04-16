@@ -33,6 +33,7 @@ const (
 	StateBlocked   = "BLOCKED" // not automatically retriable, 400 bad requests, etc..
 	StateCancelled = "CANCELLED"
 	StateWontfix   = "WONTFIX"
+	StateWaiting   = "WAITING"
 )
 
 // StepError holds an error and the name of the step from where it originated
@@ -576,7 +577,7 @@ func (t *Task) SetTags(tags map[string]string, values *values.Values) error {
 // and input is present and valid given the template spec
 func (t *Task) Valid(tt *tasktemplate.TaskTemplate) error {
 	switch t.State {
-	case StateTODO, StateRunning, StateDone, StateBlocked, StateCancelled, StateWontfix:
+	case StateTODO, StateRunning, StateDone, StateBlocked, StateCancelled, StateWontfix, StateWaiting:
 		break
 	default:
 		return errors.BadRequestf("Wrong state: %s", t.State)
@@ -715,9 +716,9 @@ func (t *Task) ShouldResumeParentTask(dbp zesty.DBProvider) (*Task, error) {
 		return nil, err
 	}
 	switch parentTask.State {
-	case StateBlocked, StateRunning:
+	case StateBlocked, StateRunning, StateWaiting:
 	default:
-		// not allowed to resume a parent task that is not either Running or Blocked.
+		// not allowed to resume a parent task that is not either Waiting, Running or Blocked.
 		// Todo state should not be runned as it might need manual resolution from a granted resolver
 		return nil, nil
 	}

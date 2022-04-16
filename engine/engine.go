@@ -494,6 +494,9 @@ forLoop:
 		case step.StateRunning:
 			mapStatus[resolution.StateCrashed] = true
 			allDone = false
+		case step.StateWaiting:
+			mapStatus[resolution.StateWaiting] = true
+			allDone = false
 		case step.StateTODO:
 			// instance is in shutdown mode, the resolution may have been interrupted
 			// set to crashed for proper retry
@@ -513,7 +516,7 @@ forLoop:
 	// compute resolution state
 	if !allDone {
 		// from candidate resolution states, choose a resolution state by priority
-		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateBlockedDeadlock} {
+		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateBlockedDeadlock, resolution.StateWaiting} {
 			if mapStatus[status] {
 				res.SetState(status)
 				break
@@ -540,6 +543,8 @@ forLoop:
 		} else {
 			res.NextRetry = nextRetry(res)
 		}
+	case resolution.StateWaiting:
+		t.SetState(task.StateWaiting)
 	case resolution.StateBlockedBadRequest, resolution.StateBlockedFatal, resolution.StateBlockedDeadlock:
 		t.SetState(task.StateBlocked)
 	}
