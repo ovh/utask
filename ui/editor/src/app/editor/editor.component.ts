@@ -33,8 +33,8 @@ export class EditorComponent implements OnInit {
   constructor(
     private TemplateYamlHelper: TemplateYamlHelper
   ) {
-    JSToYaml.spacing = ' '.repeat(4);
-    JSToYaml.spacingStart = '';
+    (JSToYaml as any).spacing = ' '.repeat(4);
+    (JSToYaml as any).spacingStart = '';
     this.editor = {
       valid: false,
       text: JSToYaml.stringify(StepsConfig.initValue).value,
@@ -97,14 +97,14 @@ export class EditorComponent implements OnInit {
         const countSpacing = currentText.match(/^\s*/)[0].length;
         if (path === 'steps' || countSpacing <= (this.editor.minimumSpacing + this.editor.spacing)) {
           Object.keys(stepsConfig.types).forEach((key: string) => {
-            JSToYaml.spacingStart = ' '.repeat(max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]));
+            (JSToYaml as any).spacingStart = ' '.repeat(max([this.editor.minimumSpacing + this.editor.spacing - countSpacing, 0]));
             const snippet = {
               name: `Add '${key}' step`,
               score: 499,
               meta: 'Snippet',
               snippet: `${isEmptyRow ? '' : '\n'}${JSToYaml.stringify({ '${1:step_name}': stepsConfig.types[key].snippet }).value}\n`
             };
-            JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing);
+            (JSToYaml as any).spacingStart = ' '.repeat(this.editor.minimumSpacing);
             arr.push(snippet);
           });
         } else if (path.match(/^steps\.[a-zA-Z0-9\-\_\s]+\.dependencies$/)) {
@@ -264,7 +264,7 @@ export class EditorComponent implements OnInit {
     } catch (err) {
       if (this.editor.ace) {
         this.editor.ace.getSession().setAnnotations([{
-          row: err.mark.line,
+          row: err.mark?.line,
           column: 0,
           text: err.message,
           type: "error"
@@ -291,10 +291,10 @@ export class EditorComponent implements OnInit {
   toYaml(obj: any, hasStep: boolean): string[] {
     let str;
     if (hasStep) {
-      JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing + this.editor.spacing);
+      (JSToYaml as any).spacingStart = ' '.repeat(this.editor.minimumSpacing + this.editor.spacing);
     }
     str = JSToYaml.stringify(obj).value;
-    JSToYaml.spacingStart = ' '.repeat(this.editor.minimumSpacing);
+    (JSToYaml as any).spacingStart = ' '.repeat(this.editor.minimumSpacing);
     return str.split('\n');
   }
 

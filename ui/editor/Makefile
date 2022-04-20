@@ -1,4 +1,4 @@
-NG=ng
+NG=npm run ng --
 NPM=npm
 NODE=node
 TAR=tar -zcvf
@@ -28,7 +28,7 @@ install:
 	$(NPM) install
 
 dev:
-	$(NG) serve --open --port 5555 --base-href $(BASEHREF)
+	$(NG) serve --open --port 5555
 
 build: install
 	$(NG) build --base-href $(BASEHREF)

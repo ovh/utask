@@ -5,7 +5,6 @@ import { NzCollapsePanelComponent } from 'ng-zorro-antd/collapse';
 class HeaderConfig {
     init: boolean;
     openable: boolean;
-    link: string;
     class: string;
     color: string;
     fontColor: string;
@@ -16,7 +15,7 @@ class HeaderConfig {
     templateUrl: './box.html',
     styleUrls: ['./box.sass'],
 })
-export class BoxComponent implements OnChanges, AfterViewInit {
+export class BoxComponent implements OnChanges {
     @ViewChild('panel') panel: NzCollapsePanelComponent;
 
     @Input() header: HeaderConfig;
@@ -27,28 +26,13 @@ export class BoxComponent implements OnChanges, AfterViewInit {
     customStylePanel: any
     customStyleHeader: any
 
-    constructor(
-        private router: Router
-    ) { }
-
-    ngAfterViewInit(): void {
-        const oldCallback = this.panel.clickHeader.bind(this.panel);
-        this.panel.clickHeader = () => {
-            if (this.header.link) {
-                this.router.navigate([this.header.link]);
-            }
-            if (this.header.openable) {
-                oldCallback();
-            }
-        }
-    }
+    constructor() { }
 
     ngOnChanges() {
         this.display = this.header.init ?? true;
         this.headerConfig = {
             openable: false,
             init: true,
-            link: '',
             class: 'primary',
             ...this.header
         };
