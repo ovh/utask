@@ -21,6 +21,12 @@ require_exec() {
     done
 }
 
+ENV_FILE=$(readlink -f $(dirname ${0}))/test.env
+
+if [ -f ${ENV_FILE} ]; then
+    source ${ENV_FILE}
+fi
+
 require PG_USER PG_PASSWORD PG_HOST PG_PORT PG_DATABASENAME
 
 export CFG_DATABASE="postgres://$PG_USER:$PG_PASSWORD@$PG_HOST:$PG_PORT/$PG_DATABASENAME?connect_timeout=5&sslmode=disable"
@@ -40,6 +46,12 @@ EOF
 cat <<EOF >$PWD/config/utask-cfg
 {
     "admin_usernames": ["admin"]
+}
+EOF
+
+cat <<EOF >$PWD/config/callback-config
+{
+    "base_url": "http://foo.example.com"
 }
 EOF
 

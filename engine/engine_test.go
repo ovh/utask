@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/engine"
@@ -34,6 +35,8 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/now"
+	"github.com/ovh/utask/pkg/plugins"
+	plugincallback "github.com/ovh/utask/pkg/plugins/builtin/callback"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
@@ -51,6 +54,13 @@ var (
 func TestMain(m *testing.M) {
 	store := configstore.DefaultStore
 	store.InitFromEnvironment()
+
+	server := api.NewServer()
+	service := &plugins.Service{Store: store, Server: server}
+
+	if err := plugincallback.Init.Init(service); err != nil {
+		panic(err)
+	}
 
 	if err := db.Init(store); err != nil {
 		panic(err)
@@ -76,6 +86,7 @@ func TestMain(m *testing.M) {
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 	step.RegisterRunner(pluginsubtask.Plugin.PluginName(), pluginsubtask.Plugin)
+	step.RegisterRunner(plugincallback.Plugin.PluginName(), plugincallback.Plugin)
 
 	os.Exit(m.Run())
 }
@@ -1203,4 +1214,20 @@ func TestResolveSubTask(t *testing.T) {
 
 	}
 	assert.Equal(t, resolution.StateDone, res.State)
+}
+
+func TestResolveCallback(t *testing.T) {
+	res, err := createResolution("callback.yaml", map[string]interface{}{}, nil)
+	require.NoError(t, err)
+
+	res, err = runResolution(res)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// check steps state
+	assert.Equal(t, res.Steps["createCallback"].State, step.StateDone)
+	assert.Equal(t, res.Steps["waitCallback"].State, step.StateWaiting)
+
+	// callback has been created, waiting for its resolution
+	assert.Equal(t, resolution.StateWaiting, res.State)
 }

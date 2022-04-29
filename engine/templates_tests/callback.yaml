@@ -1,0 +1,38 @@
+name: callbackTemplate
+description: Template that test the callbacks
+title_format: "[test] callback template test"
+variables:
+  - name: successField
+    value: 'success'
+steps:
+  createCallback:
+    description: create a callback
+    action:
+      type: callback
+      configuration:
+        action: create
+        schema: |-
+          {
+            "$schema": "http://json-schema.org/schema#",            
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["{{evalCache `successField`}}"],
+            "properties": {
+              "{{evalCache `successField`}}": {
+                "type": "boolean"
+              }
+            }
+          }
+
+  waitCallback:
+    dependencies:
+      - createCallback
+    description: everything is OK
+    action:
+      type: callback
+      configuration:
+        action: wait
+        id: '{{.step.createCallback.output.id}}'
+
+result_format:
+    foo: "{{.step.waitCallback.output.success}}"

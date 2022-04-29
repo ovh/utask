@@ -135,6 +135,9 @@
                     "$ref": "#/definitions/ActionSubtask"
                 },
                 {
+                    "$ref": "#/definitions/ActionCallback"
+                },
+                {
                     "$ref": "#/definitions/ActionPing"
                 },
                 {
@@ -163,6 +166,7 @@
                                     "script",
                                     "ssh",
                                     "subtask",
+                                    "callback",
                                     "ping",
                                     "notify",
                                     "email",
@@ -519,6 +523,45 @@
             "title": "Subtask Action",
             "additionalProperties": false,
             "description": "Subtask action will spawn a subtask of the specified template, and wait for resolution"
+        },
+        "ActionCallback": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "callback"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "oneOf": [
+                        {
+                            "properties": {
+                                "action": {
+                                    "const": "create"
+                                },
+                                "schema": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["action"]
+                        },
+                        {
+                            "properties": {
+                                "action": {
+                                    "const": "wait"
+                                },
+                                "id": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["action", "id"]
+                        }
+                    ]
+                }
+            },
+            "title": "Callback Action",
+            "additionalProperties": false,
+            "description": "Callback action allows to create a callback and to wait for the resolution"
         },
         "ActionTag": {
             "type": "object",

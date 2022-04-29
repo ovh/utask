@@ -49,3 +49,8 @@ dist/
 
 # VScode extension
 **/*.vsix
+
+# Related to tests
+docker-compose.override.yaml
+hack/test.env
+report.xml

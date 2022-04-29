@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/loopfz/gadgeto/tonic/utils/jujerr"
 	"github.com/loopfz/gadgeto/zesty"
@@ -21,10 +22,27 @@ import (
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/api/handler"
+	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/pkg/auth"
 )
+
+type PluginRoute struct {
+	Secured     bool
+	Maintenance bool
+	Path        string
+	Method      string
+	Infos       []fizz.OperationOption
+	Handlers    []gin.HandlerFunc
+}
+
+type PluginRouterGroup struct {
+	Path        string
+	Name        string
+	Description string
+	Routes      []PluginRoute
+}
 
 // Server wraps the http handler that exposes a REST API to control
 // the task orchestration engine
@@ -37,6 +55,7 @@ type Server struct {
 	editorPathPrefix       string
 	maxBodyBytes           int64
 	customMiddlewares      []gin.HandlerFunc
+	pluginRoutes           []PluginRouterGroup
 }
 
 // NewServer returns a new Server
@@ -132,6 +151,17 @@ func (s *Server) Handler(ctx context.Context) http.Handler {
 	return s.httpHandler
 }
 
+// RegisterPluginRoutes allows plugins to register custom routes
+func (s *Server) RegisterPluginRoutes(group PluginRouterGroup) error {
+	for _, route := range group.Routes {
+		if len(route.Handlers) == 0 {
+			return errors.NewNotImplemented(nil, "found route without handler")
+		}
+	}
+	s.pluginRoutes = append(s.pluginRoutes, group)
+	return nil
+}
+
 func generateBaseHref(pathPrefix, uri string) string {
 	// UI requires to have a trailing slash at the end
 	return path.Join(pathPrefix, uri) + "/"
@@ -199,6 +229,7 @@ func (s *Server) build(ctx context.Context) {
 
 		tonic.SetErrorHook(jujerr.ErrHook)
 		tonic.SetBindHook(yamlBindHook(s.maxBodyBytes))
+		tonic.SetBindHook(bodyBindHook)
 		tonic.SetRenderHook(yamljsonRenderHook, "application/json")
 
 		authRoutes := router.Group("/", "x-misc", "Misc authenticated routes", s.authMiddleware)
@@ -458,6 +489,26 @@ func (s *Server) build(ctx context.Context) {
 			},
 			tonic.Handler(Stats, 200))
 
+		// plugin routes
+		for _, p := range s.pluginRoutes {
+			group := router.Group(p.Path, p.Name, p.Description)
+
+			for _, r := range p.Routes {
+				routeHandlers := []gin.HandlerFunc{}
+
+				if r.Maintenance {
+					routeHandlers = append(routeHandlers, maintenanceMode)
+				}
+				if r.Secured {
+					routeHandlers = append(routeHandlers, s.authMiddleware)
+				}
+
+				routeHandlers = append(routeHandlers, r.Handlers...)
+
+				group.Handle(r.Path, r.Method, r.Infos, routeHandlers...)
+			}
+		}
+
 		s.httpHandler = router
 	}
 }
@@ -529,6 +580,9 @@ func maintenanceMode(c *gin.Context) {
 func keyRotate(c *gin.Context) error {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
+		return err
+	}
+	if err := db.CallKeyRotations(dbp); err != nil {
 		return err
 	}
 	if err := task.RotateTasks(dbp); err != nil {
