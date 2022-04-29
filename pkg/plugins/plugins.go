@@ -62,15 +62,11 @@ func InitializersFromFolder(path string, service *Service) error {
 			return fmt.Errorf("failed to load Plugin from %s: received a non-pointer object", fileName)
 		}
 		pluginInterface := reflectvalue.Elem().Interface()
-		plug, ok := pluginInterface.(InitializerPlugin)
+		plugin, ok := pluginInterface.(InitializerPlugin)
 		if !ok {
 			return fmt.Errorf("failed to assert type of plugin '%s': expected InitializerPlugin got %T", fileName, pluginInterface)
 		}
-		if err := plug.Init(service); err != nil {
-			return fmt.Errorf("failed to run initialization plugin: %s", err)
-		}
-		logrus.Infof("Ran initialization plugin: %s", plug.Description())
-		return nil
+		return RegisterInit(fileName, plugin, service)
 	})
 }
 
@@ -96,5 +92,13 @@ func loadPlugins(path string, load func(string, plugin.Symbol) error) error {
 			}
 		}
 	}
+	return nil
+}
+
+func RegisterInit(pluginName string, plugin InitializerPlugin, service *Service) error {
+	if err := plugin.Init(service); err != nil {
+		return fmt.Errorf("failed to run initialization plugin: %s", err)
+	}
+	logrus.Infof("Ran initialization plugin: %s", plugin.Description())
 	return nil
 }

@@ -43,6 +43,11 @@ var schema = []tableModel{
 	{runnerinstance.Instance{}, "runner_instance", []string{"id"}, true},
 }
 
+// RegisterTableModel registers a new table model
+func RegisterTableModel(model interface{}, name string, keys []string, autoinc bool) {
+	schema = append(schema, tableModel{model, name, keys, autoinc})
+}
+
 // Init takes a connection string and a configuration struct
 // and registers a new postgres DB connection in zesty,
 // under utask.DBName -> accessible from api handlers and engine collectors

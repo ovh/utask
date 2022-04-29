@@ -143,11 +143,15 @@ var rootCmd = &cobra.Command{
 		server = api.NewServer()
 		server.WithGroupAuth(defaultAuthHandler)
 
+		service := &plugins.Service{Store: store, Server: server}
+
 		for _, err := range []error{
+			// register builtin initializers
+			builtin.RegisterInit(service),
 			// register builtin executors
 			builtin.Register(),
 			// run custom initialization code built as *.so plugins
-			plugins.InitializersFromFolder(utask.FInitializersFolder, &plugins.Service{Store: store, Server: server}),
+			plugins.InitializersFromFolder(utask.FInitializersFolder, service),
 			// load custom executors built as *.so plugins
 			plugins.ExecutorsFromFolder(utask.FPluginFolder),
 			// load the functions
