@@ -78,7 +78,7 @@ run-test-stack-docker:
 	bash hack/test-docker.sh bash hack/interactive.sh
 
 run-goreleaser:
-	export BINDIR=${GOPATH}/bin; curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+	export BINDIR=${GOPATH}/bin; go install github.com/goreleaser/goreleaser@v1.6.3
 ifneq (,$(findstring -dev,$(VERSION)))
 	@echo Run Goreleaser in snapshot mod
 	$(call goreleaser,--snapshot)
