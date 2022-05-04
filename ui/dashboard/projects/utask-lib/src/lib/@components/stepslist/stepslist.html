@@ -20,6 +20,10 @@
     <nz-list-item *ngFor="let stepName of filteredStepNames" [ngStyle]="lineStyle(stepName)">
         {{stepName}}
         <nz-button-group nzSize="small" nzType="default">
+            <button type="button" nzType="default" nz-button [nzGhost]="true" title="Go to subtask"
+                *ngIf="resolution.steps[stepName].action.type === 'subtask' && resolution.steps[stepName].output.id"
+                [routerLink]="options.routingTaskPath+resolution.steps[stepName].output.id"
+                nzTooltipTitle="Go to subtask" nz-tooltip><i nz-icon nzType="link" nzTheme="outline"></i></button>
             <button type="button" nzType="default" nz-button [nzGhost]="true" title="View error"
                 *ngIf="resolution.steps[stepName].error"
                 (click)="preview('Step '+ resolution.steps[stepName].name, resolution.steps[stepName].error); $event.stopPropagation();"

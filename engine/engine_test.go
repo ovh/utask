@@ -1150,7 +1150,7 @@ func TestResolveSubTask(t *testing.T) {
 	res, err = runResolution(res)
 	require.Nil(t, err)
 	require.NotNil(t, res)
-	assert.Equal(t, resolution.StateError, res.State)
+	assert.Equal(t, resolution.StateWaiting, res.State)
 
 	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
 	subtaskPublicID := subtaskCreationOutput["id"].(string)

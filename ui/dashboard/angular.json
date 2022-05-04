@@ -96,7 +96,8 @@
                     "builder": "@angular-builders/custom-webpack:dev-server",
                     "options": {
                         "proxyConfig": "proxy.conf.js",
-                        "browserTarget": "utask-ui:build"
+                        "browserTarget": "utask-ui:build",
+                        "disableHostCheck": true
                     },
                     "configurations": {
                         "production": {

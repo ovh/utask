@@ -3,6 +3,7 @@ $color-warning: #fd7e14
 $color-danger: #dc3545
 $color-success: #28a745
 $color-primary: #007bff
+$color-waiting: #8a2be2
 
 :host
   display: flex
@@ -71,6 +72,9 @@ nz-page-header-extra
   &_TODO, &_RUNNING
     background: $color-primary
     color: white
+  &_WAITING
+    background: $color-waiting
+    color: white
 
 lib-utask-steps-list
     margin-bottom: 15px
@@ -94,4 +98,7 @@ lib-utask-steps-viewer
     color: white !important
   &_TODO, &_RUNNING
     background: $color-primary !important
+    color: white !important
+  &_WAITING
+    background: $color-waiting !important
     color: white !important

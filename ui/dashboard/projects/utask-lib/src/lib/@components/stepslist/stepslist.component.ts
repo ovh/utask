@@ -11,6 +11,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import Step from '../../@models/step.model';
 import { ModalApiYamlEditComponent } from '../../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ApiService } from '../../@services/api.service';
+import { TasksListComponentOptions } from '../tasks-list/tasks-list.component';
 
 @Component({
     selector: 'lib-utask-steps-list',
@@ -21,6 +22,7 @@ export class StepsListComponent implements OnChanges {
     @Input() resolution: any;
     @Input() selectedStep: string;
     @Output() stepChanged = new EventEmitter<Step>();
+    @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
     displayDetails: { [key: string]: boolean } = {};
     filter: any = {
         tags: []

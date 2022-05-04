@@ -40,6 +40,10 @@ export class StepNodeComponent implements OnInit, OnChanges {
                 this.styleClass = 'prune';
                 break;
             }
+            case 'WAITING': {
+                this.styleClass = 'waiting';
+                break;
+            }
             case 'CLIENT_ERROR':
             case 'FATAL_ERROR':
                 {
@@ -74,6 +78,10 @@ export class StepNodeComponent implements OnInit, OnChanges {
                 }
                 case 'PRUNE': {
                     this.styleClass = 'prune';
+                    break;
+                }
+                case 'WAITING': {
+                    this.styleClass = 'waiting';
                     break;
                 }
                 case 'CLIENT_ERROR':

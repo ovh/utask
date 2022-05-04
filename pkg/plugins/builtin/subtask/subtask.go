@@ -153,9 +153,9 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		stepError = errors.BadRequestf("Task '%s' changed state: %s", t.PublicID, strings.ToLower(t.State))
 	case task.StateTODO:
 		if t.Resolution == nil {
-			stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q is waiting for human validation", t.PublicID), "")
+			stepError = errors.NewNotAssigned(fmt.Errorf("Task %q is waiting for human validation", t.PublicID), "")
 		} else {
-			stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q will start shortly", t.PublicID), "")
+			stepError = errors.NewNotAssigned(fmt.Errorf("Task %q will start shortly", t.PublicID), "")
 		}
 	case task.StateRunning:
 		stepError = errors.NewNotProvisioned(fmt.Errorf("Task %q is currently RUNNING", t.PublicID), "")
