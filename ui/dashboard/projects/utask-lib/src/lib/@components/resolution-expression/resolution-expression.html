@@ -1,0 +1,25 @@
+<form *ngIf="formGroup" nz-form [formGroup]="formGroup" [nzLayout]="'vertical'" (ngSubmit)="submit()">
+  <nz-form-item>
+    <nz-form-label nzFor="step" [nzRequired]="true">Step</nz-form-label>
+    <nz-form-control nzErrorTip="Please select step!">
+      <nz-select formControlName="step" nzPlaceHolder="Please select">
+        <nz-option *ngFor="let step of steps$ | async" [nzLabel]="step" [nzValue]="step"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label nzFor="expression" [nzRequired]="true">Template expression</nz-form-label>
+    <nz-form-control nzErrorTip="Please set a valid value for expression!">
+      <input type="string" formControlName="expression" nz-input [placeholder]="'{{.input}}'"/>
+    </nz-form-control>
+  </nz-form-item>
+</form>
+<lib-utask-error-message *ngIf="error$ | async as error" [data]="error">
+</lib-utask-error-message>
+<div class="buttons">
+  <button nz-button nzType="secondary" type="button" (click)="reset()">Reset</button>
+  <button nz-button nzType="primary" [disabled]="!formGroup.valid" type="button" (click)="submit()">Submit</button>
+</div>
+<div *ngIf="result$ | async as result" class="result">
+  <pre>{{ result }}</pre>
+</div>

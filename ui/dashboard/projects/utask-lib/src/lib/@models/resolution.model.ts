@@ -15,3 +15,8 @@ export default class Resolution {
     task_title: string;
     steps: { [key: string]: Step };
 }
+
+export class TemplateExpression {
+    result: string;
+    error?: string;
+}
