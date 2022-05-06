@@ -270,6 +270,17 @@
             </div>
         </lib-utask-box>
 
+        <!-- Templating expression box -->
+        <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}"
+            *ngIf="meta.user_is_admin && resolution && resolution.steps">
+            <div app-box-header>
+                Template expression
+                <span *ngIf="loaders.execution || loaders.refreshTask">&nbsp;<i nz-icon nzType="loading"></i></span>
+            </div>
+            <div app-box-content>
+                <lib-utask-resoution-expression [resolution]="resolution"></lib-utask-resoution-expression>
+            </div>
+        </lib-utask-box>
     </ng-container>
 
 
