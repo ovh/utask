@@ -516,7 +516,7 @@ forLoop:
 	// compute resolution state
 	if !allDone {
 		// from candidate resolution states, choose a resolution state by priority
-		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateBlockedDeadlock, resolution.StateWaiting} {
+		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateWaiting, resolution.StateBlockedDeadlock} {
 			if mapStatus[status] {
 				res.SetState(status)
 				break
