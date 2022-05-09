@@ -52,7 +52,7 @@ re: clean all
 release:
 	bash hack/generate-install-script.sh
 
-release-utask-lib:	
+release-utask-lib:
 	cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version
 	cd ui/dashboard && npm ci && ng build --prod utask-lib
 	npm publish ui/dashboard/dist/utask-lib --access public
@@ -79,6 +79,7 @@ run-test-stack-docker:
 
 run-goreleaser:
 	export BINDIR=${GOPATH}/bin; go install github.com/goreleaser/goreleaser@v1.6.3
+	rm -rf .cache
 ifneq (,$(findstring -dev,$(VERSION)))
 	@echo Run Goreleaser in snapshot mod
 	$(call goreleaser,--snapshot)
