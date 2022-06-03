@@ -10,7 +10,7 @@ import { ModalEditResolutionStepStateComponent } from '../../@modals/modal-edit-
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import Step from '../../@models/step.model';
 import { ModalApiYamlEditComponent } from '../../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
-import { ApiService } from '../../@services/api.service';
+import { ApiService, UTaskLibOptions } from '../../@services/api.service';
 import { TasksListComponentOptions } from '../tasks-list/tasks-list.component';
 
 @Component({
@@ -22,7 +22,7 @@ export class StepsListComponent implements OnChanges {
     @Input() resolution: any;
     @Input() selectedStep: string;
     @Output() stepChanged = new EventEmitter<Step>();
-    @Input() options?: TasksListComponentOptions = new TasksListComponentOptions();
+    @Input() options?: TasksListComponentOptions = new TasksListComponentOptions({}, this._options);
     displayDetails: { [key: string]: boolean } = {};
     filter: any = {
         tags: []
@@ -46,6 +46,7 @@ export class StepsListComponent implements OnChanges {
     defaultState;
 
     constructor(
+        private _options: UTaskLibOptions,
         private _modal: NzModalService,
         private _workflowService: WorkflowService,
         private _notif: NzNotificationService,
