@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  extension:
+    image: node:lts
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: 'bash -c "npm install && npm run watch"'
+  webview:
+    image: node:lts
+    volumes:
+      - ./:/app
+    working_dir: /app/web
+    command: 'bash -c "npm install && npm run watch"'
