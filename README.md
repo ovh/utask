@@ -695,26 +695,12 @@ A JSON-schema file is available to validate the syntax of task templates and fun
 
 Validation can be performed at writing time if you are using a modern IDE or editor.
 
-#### Validation with Visual Studio Code
+#### Working with Visual Studio Code
 
-- Install YAML extension from RedHat.
-  - Ctrl+P, then type `ext install redhat.vscode-yaml`
-- Edit your workspace configuration (`settings.json` file) to add:
-```json
-{
-    "yaml.schemas": {
-        ".vscode/template-schema.json": [
-            "/templates*/*.yaml"
-        ],
-        ".vscode/function-schema.json": [
-            "/functions/*.yaml"
-        ]
-    }
-}
-```
-- Every template will be validated real-time while editing.
+- Install official µTask extension.
+  - Ctrl+P, then type `ext install ovh.vscode-utask`
 
-![](./assets/img/vscode_template_validation.png)
+![](./vscode/images/preview.gif)
 
 #### Task template snippets with Visual Studio Code
 
