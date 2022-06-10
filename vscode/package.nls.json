@@ -1,0 +1,6 @@
+{
+  "displayName": "OVH µTask",
+  "description": "Provides support for µTask templates and functions.",
+  "utask.preview.show.title": "Show preview",
+  "utask.preview.title": "Preview {0}"
+}
