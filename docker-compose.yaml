@@ -10,6 +10,7 @@ services:
       CFG_DATABASE:       'postgres://user:pass@db/utask?sslmode=disable'
       CFG_UTASK_CFG:      '{"admin_usernames":["admin"],"application_name":"µTask"}'
       CFG_BASIC_AUTH:     '{"admin":"1234","resolver":"3456","regular":"5678"}'
+      CFG_GROUPS_AUTH:    '{"admin":["admins","resolvers"],"resolver": ["resolvers"]}'
       CFG_ENCRYPTION_KEY: '{"identifier":"storage","cipher":"aes-gcm","timestamp":1535627466,"key":"e5f45aef9f072e91f735547be63f3434e6de49695b178e3868b23b0e32269800"}'
     ports:
       - 8081:8081
