@@ -982,6 +982,14 @@
                 }
             ]
         },
+        "allowed_resolver_groups": {
+            "type": "array",
+            "description": "Groups of people allowed to resolve a task based on this template",
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
         "allowed_resolver_usernames": {
             "type": "array",
             "description": "Usernames of people allowed to resolve a task based on this template",
