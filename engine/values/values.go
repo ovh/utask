@@ -430,7 +430,7 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 		return nil, err
 	}
 
-	res, err := evalUnsafe(exp, time.Second*5)
+	res, err := evalUnsafe(exp, time.Second*10)
 	if err != nil {
 		return nil, err
 	}
