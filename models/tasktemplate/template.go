@@ -7,6 +7,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/db/sqlgenerator"
 	"github.com/ovh/utask/engine/input"
@@ -457,7 +458,7 @@ func validateVariables(variables []values.Variable) error {
 
 var (
 	ttBasicSelector = sqlgenerator.PGsql.Select(
-		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".allow_task_start_over, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations, "task_template".tags`,
+		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_groups, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".allow_task_start_over, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations, "task_template".tags`,
 	).From(
 		`"task_template"`,
 	).OrderBy(
