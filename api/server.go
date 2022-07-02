@@ -493,11 +493,16 @@ type rootOut struct {
 }
 
 func rootHandler(c *gin.Context) (*rootOut, error) {
+	groups := auth.GetGroups(c)
+	if groups == nil {
+		groups = []string{}
+	}
+
 	return &rootOut{
 		ApplicationName: utask.AppName(),
 		UserIsAdmin:     auth.IsAdmin(c) == nil,
 		Username:        auth.GetIdentity(c),
-		UserGroups:      auth.GetGroups(c),
+		UserGroups:      groups,
 		Version:         utask.Version,
 		Commit:          utask.Commit,
 	}, nil
