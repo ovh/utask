@@ -75,6 +75,7 @@ type DBModel struct {
 	RequesterUsername string            `json:"requester_username" db:"requester_username"`
 	WatcherUsernames  []string          `json:"watcher_usernames,omitempty" db:"watcher_usernames"`
 	ResolverUsernames []string          `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
+	ResolverGroups    []string          `json:"resolver_groups,omitempty" db:"resolver_groups"`
 	Created           time.Time         `json:"created" db:"created"`
 	State             string            `json:"state" db:"state"`
 	StepsDone         int               `json:"steps_done" db:"steps_done"`
@@ -88,7 +89,7 @@ type DBModel struct {
 }
 
 // Create inserts a new Task in DB
-func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
+func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to create new Task")
 
 	t = &Task{
@@ -98,6 +99,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 			RequesterUsername: reqUsername,
 			WatcherUsernames:  watcherUsernames,
 			ResolverUsernames: resolverUsernames,
+			ResolverGroups:    resolverGroups,
 			Created:           now.Get(),
 			LastActivity:      now.Get(),
 			StepsTotal:        len(tt.Steps),
@@ -610,7 +612,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 
 var (
 	tSelector = sqlgenerator.PGsql.Select(
-		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
+		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
 	).From(
 		`"task"`,
 	).Join(

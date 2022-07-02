@@ -29,6 +29,7 @@ type createTaskIn struct {
 	Comment           string                 `json:"comment"`
 	WatcherUsernames  []string               `json:"watcher_usernames"`
 	ResolverUsernames []string               `json:"resolver_usernames"`
+	ResolverGroups    []string               `json:"resolver_groups"`
 	Delay             *string                `json:"delay"`
 	Tags              map[string]string      `json:"tags"`
 }
@@ -63,8 +64,8 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		return nil, err
 	}
 
-	if len(in.ResolverUsernames) > 0 {
-		// if user is neither admin nor template owner, prevent setting the resolver_usernames
+	if len(in.ResolverUsernames) > 0 || len(in.ResolverGroups) > 0 {
+		// if user is neither admin nor template owner, prevent setting the resolver_usernames or resolver_groups
 		// as the template might have defined a limited set of users that can resolve the task.
 		// We need to be sure that the requester will not grant himself (or anybody else) as resolver
 		// and bypass the resolver restriction set on the task_template.
@@ -74,11 +75,11 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		templateOwner := auth.IsTemplateOwner(c, tt) == nil
 
 		if !admin && !templateOwner {
-			return nil, errors.Forbiddenf("resolver_usernames can't be set by a regular user, you need to be owner of the template, or admin")
+			return nil, errors.Forbiddenf("resolver_usernames and resolver_groups can't be set by a regular user, you need to be owner of the template, or admin")
 		}
 	}
 
-	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.ResolverUsernames, in.Input, nil, in.Comment, in.Delay, in.Tags)
+	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.ResolverUsernames, in.ResolverGroups, in.Input, nil, in.Comment, in.Delay, in.Tags)
 	if err != nil {
 		dbp.Rollback()
 		return nil, err

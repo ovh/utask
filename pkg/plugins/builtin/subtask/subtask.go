@@ -7,6 +7,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
@@ -33,6 +34,7 @@ type SubtaskConfig struct {
 	Template          string                 `json:"template"`
 	Input             map[string]interface{} `json:"input"`
 	ResolverUsernames string                 `json:"resolver_usernames"`
+	ResolverGroups    string                 `json:"resolver_groups"`
 	WatcherUsernames  string                 `json:"watcher_usernames"`
 	Delay             *string                `json:"delay"`
 	Tags              map[string]string      `json:"tags"`
@@ -112,9 +114,15 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, err
 		}
 
-		var resolverUsernames, watcherUsernames []string
+		var resolverUsernames, resolverGroups, watcherUsernames []string
 		if cfg.ResolverUsernames != "" {
 			resolverUsernames, err = utils.ConvertJSONRowToSlice(cfg.ResolverUsernames)
+			if err != nil {
+				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
+		if cfg.ResolverGroups != "" {
+			resolverGroups, err = utils.ConvertJSONRowToSlice(cfg.ResolverGroups)
 			if err != nil {
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
 			}
@@ -132,7 +140,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			cfg.Tags = map[string]string{}
 		}
 		cfg.Tags[constants.SubtaskTagParentTaskID] = stepContext.ParentTaskID
-		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, resolverGroups, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err

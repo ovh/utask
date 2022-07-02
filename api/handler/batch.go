@@ -61,7 +61,7 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 			return nil, err
 		}
 
-		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, input, b, in.Comment, nil, in.Tags)
+		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, []string{}, input, b, in.Comment, nil, in.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, err

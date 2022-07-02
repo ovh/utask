@@ -73,6 +73,7 @@ export default class Task {
     last_stop: Date;
     requester_username: string;
     resolver_usernames: string[];
+    resolver_groups: string[];
     resolution: string;
     resolver_username: string;
     result: any;

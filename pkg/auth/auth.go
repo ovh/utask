@@ -104,7 +104,7 @@ func IsWatcher(ctx context.Context, t *task.Task) error {
 
 // IsResolutionManager asserts that identity data found in context is either:
 // - a template owner (allowed_resolver_usernames or allowed_resolver_groups)
-// - a task resolver (resolver_usernames)
+// - a task resolver (resolver_usernames or resolver_groups)
 // - this task resolver (resolver_username)
 func IsResolutionManager(ctx context.Context, tt *tasktemplate.TaskTemplate, t *task.Task, r *resolution.Resolution) error {
 	id := GetIdentity(ctx)
@@ -122,6 +122,11 @@ func IsResolutionManager(ctx context.Context, tt *tasktemplate.TaskTemplate, t *
 	}
 
 	if r != nil && r.ResolverUsername == id {
+		return nil
+	}
+
+	groups := GetGroups(ctx)
+	if utils.HasIntersection(t.ResolverGroups, groups) {
 		return nil
 	}
 

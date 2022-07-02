@@ -492,6 +492,9 @@
                         "resolver_usernames": {
                             "type": "string"
                         },
+                        "resolver_groups": {
+                            "type": "string"
+                        },
                         "watcher_usernames": {
                             "type": "string"
                         },
