@@ -33,7 +33,8 @@ export class NewComponent implements OnInit {
   ngOnInit() {
     this.validateForm = this._fb.group({
       template: [null, [Validators.required]],
-      watchers: [null, []]
+      watchers: [null, []],
+      watcher_groups: [null, []]
     });
 
     this.templates = this._activatedRoute.snapshot.data.templates.sort((a, b) => {
@@ -49,7 +50,10 @@ export class NewComponent implements OnInit {
             template,
             watchers: values.watcher_usernames ?
               (isArray(values.watcher_usernames) ? values.watcher_usernames : [values.watcher_usernames])
-              : []
+              : [],
+            watcher_groups: values.watcher_groups ?
+                (isArray(values.watcher_groups) ? values.watcher_groups : [values.watcher_groups])
+                : []
           };
           (template.inputs ?? []).forEach(input => {
             if (input.collection && !isArray(values[input.name])) {
@@ -94,6 +98,7 @@ export class NewComponent implements OnInit {
     item.template_name = values.template.name;
     item.input = InputsFormComponent.getInputs(values);
     item.watcher_usernames = values.watchers ? values.watchers : [];
+    item.watcher_groups = values.watcher_groups ? values.watcher_groups : [];
     return item;
   }
 
@@ -128,7 +133,8 @@ export class NewComponent implements OnInit {
 
     const queryParams = {
       template_name: item.template_name,
-      watcher_usernames: item.watcher_usernames
+      watcher_usernames: item.watcher_usernames,
+      watcher_groups: item.watcher_groups
     };
 
     Object.keys(item.input)

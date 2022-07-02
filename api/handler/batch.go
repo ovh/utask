@@ -19,6 +19,7 @@ type createBatchIn struct {
 	Inputs           []map[string]interface{} `json:"inputs" binding:"required"`
 	Comment          string                   `json:"comment"`
 	WatcherUsernames []string                 `json:"watcher_usernames"`
+	WatcherGroups    []string                 `json:"watcher_groups"`
 	Tags             map[string]string        `json:"tags"`
 }
 
@@ -61,7 +62,7 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 			return nil, err
 		}
 
-		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, []string{}, []string{}, input, b, in.Comment, nil, in.Tags)
+		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.WatcherGroups, []string{}, []string{}, input, b, in.Comment, nil, in.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, err

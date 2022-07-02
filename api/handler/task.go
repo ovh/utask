@@ -28,6 +28,7 @@ type createTaskIn struct {
 	Input             map[string]interface{} `json:"input" binding:"required"`
 	Comment           string                 `json:"comment"`
 	WatcherUsernames  []string               `json:"watcher_usernames"`
+	WatcherGroups     []string               `json:"watcher_groups"`
 	ResolverUsernames []string               `json:"resolver_usernames"`
 	ResolverGroups    []string               `json:"resolver_groups"`
 	Delay             *string                `json:"delay"`
@@ -79,7 +80,7 @@ func CreateTask(c *gin.Context, in *createTaskIn) (*task.Task, error) {
 		}
 	}
 
-	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.ResolverUsernames, in.ResolverGroups, in.Input, nil, in.Comment, in.Delay, in.Tags)
+	t, err := taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.WatcherGroups, in.ResolverUsernames, in.ResolverGroups, in.Input, nil, in.Comment, in.Delay, in.Tags)
 	if err != nil {
 		dbp.Rollback()
 		return nil, err
@@ -260,6 +261,7 @@ type updateTaskIn struct {
 	PublicID         string                 `path:"id,required"`
 	Input            map[string]interface{} `json:"input"`
 	WatcherUsernames []string               `json:"watcher_usernames"`
+	WatcherGroups    []string               `json:"watcher_groups"`
 	Tags             map[string]string      `json:"tags"`
 }
 
@@ -321,6 +323,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 
 	t.SetInput(clearInput)
 	t.SetWatcherUsernames(in.WatcherUsernames)
+	t.SetWatcherGroups(in.WatcherGroups)
 
 	// validate read-only tags
 	v, readOnlyTagUpdated := in.Tags[constants.SubtaskTagParentTaskID]

@@ -45,8 +45,9 @@ CREATE TABLE "task" (
     title TEXT NOT NULL,
     requester_username TEXT,
     watcher_usernames JSONB NOT NULL DEFAULT 'null',
+    watcher_groups JSONB NOT NULL DEFAULT 'null',
     resolver_usernames JSONB NOT NULL DEFAULT 'null',
-    "resolver_groups" JSONB NOT NULL DEFAULT 'null',
+    resolver_groups JSONB NOT NULL DEFAULT 'null',
     created TIMESTAMP with time zone DEFAULT now() NOT NULL,
     last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     state TEXT NOT NULL,
@@ -66,6 +67,7 @@ CREATE INDEX ON "task"(last_activity DESC);
 -- See section 8.14.4 relative to jsonb indexing:
 -- https://www.postgresql.org/docs/9.4/datatype-json.html
 CREATE INDEX ON "task" USING gin (watcher_usernames jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (watcher_groups jsonb_path_ops);
 CREATE INDEX ON "task" USING gin (resolver_usernames jsonb_path_ops);
 CREATE INDEX ON "task" USING gin (resolver_groups jsonb_path_ops);
 CREATE INDEX ON "task" USING gin (tags jsonb_path_ops);

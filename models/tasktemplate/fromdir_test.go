@@ -98,7 +98,7 @@ func TestLoadFromDir(t *testing.T) {
 	err = dbp.DB().Insert(&tt)
 	assert.Nil(t, err, "unable to insert new template")
 
-	_, err = task.Create(dbp, &tt, "admin", []string{}, []string{}, []string{}, map[string]interface{}{}, nil, nil)
+	_, err = task.Create(dbp, &tt, "admin", []string{}, []string{}, []string{}, []string{}, map[string]interface{}{}, nil, nil)
 	assert.Nil(t, err, "unable to create task")
 
 	err = tasktemplate.LoadFromDir(dbp, "templates_tests")

@@ -96,10 +96,16 @@ func IsRequester(ctx context.Context, t *task.Task) error {
 // a watcher of the given task
 func IsWatcher(ctx context.Context, t *task.Task) error {
 	id := GetIdentity(ctx)
-	if !utils.ListContainsString(t.WatcherUsernames, id) {
-		return errors.Forbiddenf("User is not watcher of this task")
+	if utils.ListContainsString(t.WatcherUsernames, id) {
+		return nil
 	}
-	return nil
+
+	groups := GetGroups(ctx)
+	if utils.HasIntersection(t.WatcherGroups, groups) {
+		return nil
+	}
+
+	return errors.Forbiddenf("User is not watcher of this task")
 }
 
 // IsResolutionManager asserts that identity data found in context is either:

@@ -36,6 +36,7 @@ type SubtaskConfig struct {
 	ResolverUsernames string                 `json:"resolver_usernames"`
 	ResolverGroups    string                 `json:"resolver_groups"`
 	WatcherUsernames  string                 `json:"watcher_usernames"`
+	WatcherGroups     string                 `json:"watcher_groups"`
 	Delay             *string                `json:"delay"`
 	Tags              map[string]string      `json:"tags"`
 }
@@ -114,7 +115,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, err
 		}
 
-		var resolverUsernames, resolverGroups, watcherUsernames []string
+		var resolverUsernames, resolverGroups, watcherUsernames, watcherGroups []string
 		if cfg.ResolverUsernames != "" {
 			resolverUsernames, err = utils.ConvertJSONRowToSlice(cfg.ResolverUsernames)
 			if err != nil {
@@ -133,6 +134,12 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
 			}
 		}
+		if cfg.WatcherGroups != "" {
+			watcherGroups, err = utils.ConvertJSONRowToSlice(cfg.WatcherGroups)
+			if err != nil {
+				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
@@ -140,7 +147,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			cfg.Tags = map[string]string{}
 		}
 		cfg.Tags[constants.SubtaskTagParentTaskID] = stepContext.ParentTaskID
-		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, resolverGroups, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, watcherGroups, resolverUsernames, resolverGroups, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err

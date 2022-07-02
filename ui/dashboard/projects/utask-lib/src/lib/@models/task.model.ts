@@ -83,6 +83,7 @@ export default class Task {
     template_name: string;
     title: string;
     watcher_usernames: string[];
+    watcher_groups: string[];
     tags: { [key: string]: string };
     resolver_inputs: ResolverInput[];
 
