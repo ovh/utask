@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid"
 	"github.com/juju/errors"
+	"github.com/lib/pq"
 	"github.com/loopfz/gadgeto/zesty"
 
 	"github.com/ovh/utask"
@@ -273,17 +274,19 @@ func loadDetails(dbp zesty.DBProvider, t *Task, withComments bool) (err error) {
 
 // ListFilter holds parameters for filtering a list of tasks
 type ListFilter struct {
-	RequesterUser                    *string
-	PotentialResolverUser            *string
-	RequesterOrPotentialResolverUser *string
-	Last                             *string
-	State                            *string
-	Batch                            *Batch
-	PageSize                         uint64
-	Before                           *time.Time
-	After                            *time.Time
-	Tags                             map[string]string
-	Template                         *string
+	RequesterUser                      *string
+	PotentialResolverUser              *string
+	PotentialResolverGroups            []string
+	RequesterOrPotentialResolverUser   *string
+	RequesterOrPotentialResolverGroups []string
+	Last                               *string
+	State                              *string
+	Batch                              *Batch
+	PageSize                           uint64
+	Before                             *time.Time
+	After                              *time.Time
+	Tags                               map[string]string
+	Template                           *string
 }
 
 // ListTasks returns a list of tasks, optionally filtered on one or several criteria
@@ -319,7 +322,31 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 		})
 	}
 
-	if filter.PotentialResolverUser != nil {
+	if filter.PotentialResolverGroups != nil && len(filter.PotentialResolverGroups) > 0 {
+		argGroups, err := pq.Array(filter.PotentialResolverGroups).Value()
+		if err != nil {
+			return nil, err
+		}
+
+		if filter.PotentialResolverUser != nil {
+			argUser := strconv.Quote(*filter.PotentialResolverUser)
+			sel = sel.Where(squirrel.Or{
+				// User conditions
+				squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, argUser),
+				// Group conditions
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		} else {
+			sel = sel.Where(squirrel.Or{
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		}
+	} else if filter.PotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.PotentialResolverUser)
 		sel = sel.Where(squirrel.Or{
 			squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg),
@@ -327,7 +354,33 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 		})
 	}
 
-	if filter.RequesterOrPotentialResolverUser != nil {
+	if filter.RequesterOrPotentialResolverGroups != nil && len(filter.RequesterOrPotentialResolverGroups) > 0 {
+		argGroups, err := pq.Array(filter.RequesterOrPotentialResolverGroups).Value()
+		if err != nil {
+			return nil, err
+		}
+
+		if filter.RequesterOrPotentialResolverUser != nil {
+			argUser := strconv.Quote(*filter.RequesterOrPotentialResolverUser)
+			sel = sel.Where(squirrel.Or{
+				// User conditions
+				squirrel.Eq{`"task".requester_username`: *filter.RequesterOrPotentialResolverUser},
+				squirrel.Expr(`"task".watcher_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, argUser),
+				// Group conditions
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		} else {
+			sel = sel.Where(squirrel.Or{
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		}
+	} else if filter.RequesterOrPotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.RequesterOrPotentialResolverUser)
 		sel = sel.Where(squirrel.Or{
 			squirrel.Eq{`"task".requester_username`: *filter.RequesterOrPotentialResolverUser},

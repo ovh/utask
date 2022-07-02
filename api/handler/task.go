@@ -168,9 +168,11 @@ func ListTasks(c *gin.Context, in *listTasksIn) (t []*task.Task, err error) {
 		filter.RequesterUser = user
 	case taskTypeResolvable:
 		filter.PotentialResolverUser = user
+		filter.PotentialResolverGroups = auth.GetGroups(c)
 	case taskTypeAll:
 		if err2 := auth.IsAdmin(c); err2 != nil {
 			filter.RequesterOrPotentialResolverUser = user
+			filter.RequesterOrPotentialResolverGroups = auth.GetGroups(c)
 		}
 	default:
 		return nil, errors.BadRequestf("Unknown type for listing: '%s'. Was expecting '%s', '%s' or '%s'", in.Type, taskTypeOwn, taskTypeResolvable, taskTypeAll)
