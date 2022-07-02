@@ -498,6 +498,9 @@
                         "watcher_usernames": {
                             "type": "string"
                         },
+                        "watcher_groups": {
+                            "type": "string"
+                        },
                         "delay": {
                             "type": "string"
                         }

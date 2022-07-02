@@ -12,6 +12,7 @@ fully `DONE`.
 | `resolver_usernames` | a string containing a JSON array of additional resolver users for the subtask                                     |
 | `resolver_groups`    | a string containing a JSON array of additional resolver groups for the subtask                                    |
 | `watcher_usernames`  | a string containing a JSON array of additional watcher users for the subtask                                      |
+| `watcher_groups`     | a string containing a JSON array of additional watcher groups for the subtask                                     |
 | `delay`              | a duration indicating if subtask execution needs to be delayed, expects Golang time.Duration format (5s, 1m, ...) |
 
 ## Example
@@ -31,6 +32,7 @@ action:
     resolver_usernames: '["authorizedUser"]'
     resolver_groups: '["authorizedGroup"]'
     watcher_usernames: '["authorizedUser"]'
+    watcher_groups: '["authorizedGroup"]'
     delay: 10m
 ```
 
