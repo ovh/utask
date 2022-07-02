@@ -245,11 +245,17 @@ var rootCmd = &cobra.Command{
 // It is a default implementation which can be overridden by Server.WithAuth or
 // Server.WithGroupAuth functions in api package.
 func basicAuthHandler(store *configstore.Store) (func(*http.Request) (string, []string, error), error) {
-	groupsMap := map[string][]string{}
+	userGroupsMap := map[string][]string{}
 	groupsAuthStr, err := configstore.Filter().Slice(groupsAuthKey).Squash().Store(store).MustGetFirstItem().Value()
 	if err == nil {
+		groupsMap := map[string][]string{}
 		if err = json.Unmarshal([]byte(groupsAuthStr), &groupsMap); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal utask configuration: %s", err)
+		}
+		for group, users := range groupsMap {
+			for _, user := range users {
+				userGroupsMap[user] = append(userGroupsMap[user], group)
+			}
 		}
 	}
 
@@ -272,12 +278,12 @@ func basicAuthHandler(store *configstore.Store) (func(*http.Request) (string, []
 			if !found {
 				return "", nil, errors.Unauthorizedf("User not found")
 			}
-			return user, groupsMap[user], nil
+			return user, userGroupsMap[user], nil
 		}, nil
 	}
 	// fallback to expecting a username in x-remote-user header
 	return func(r *http.Request) (string, []string, error) {
 		user := r.Header.Get("x-remote-user")
-		return user, groupsMap[user], nil
+		return user, userGroupsMap[user], nil
 	}, nil
 }

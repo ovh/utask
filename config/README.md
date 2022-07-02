@@ -41,6 +41,8 @@ postgres://user:pass@db/utask?sslmode=disable
     "application_name": "µTask Foo",
     // admin_usernames is a list of usernames with admin privileges over µTask resources, ie. the ability to view and execute any task, and to hotfix resolutions if a problem arises
     "admin_usernames": ["admin1", "admin2"],
+    // admin_groups is a list of user groups with admin privileges over µTask resources, ie. the ability to view and execute any task, and to hotfix resolutions if a problem arises
+    "admin_groups": ["administrators", "maintainers"],
     // completed_task_expiration is a textual representation of how long a task is kept in DB after its completion
     "completed_task_expiration": "720h", // default == 720h == 30 days
     // notify_config contains a map of named notification configurations, composed of a type and config data,
@@ -184,5 +186,18 @@ postgres://user:pass@db/utask?sslmode=disable
 ```js
 {
     "admin": "1234"
+}
+```
+
+
+### Groups auth
+
+`groups-auth` key is only for development purposes: it is used to declare the users of each group. 
+It consists of a map of group names and slices of usernames.
+
+```json
+{
+    "administrators": ["admin"],
+    "maintainers": ["admin"]
 }
 ```
