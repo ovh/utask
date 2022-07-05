@@ -12,7 +12,7 @@ This extension uses [vscode-yaml](https://github.com/redhat-developer/vscode-yam
 
 During development, you can preview your templates using this extension.
 
-![preview](vscode/images/preview.gif)
+![preview](/vscode/images/preview.gif)
 
 ## Requirements
 
