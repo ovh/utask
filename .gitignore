@@ -46,3 +46,6 @@ dist/
 # Templates & functions
 /templates
 /functions
+
+# VScode extension
+**/*.vsix
