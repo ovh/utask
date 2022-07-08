@@ -7,7 +7,7 @@ ALTER TABLE "task" ADD COLUMN "watcher_groups" JSONB NOT NULL DEFAULT 'null';
 CREATE INDEX "task_resolver_groups_idx" ON "task" USING gin (resolver_groups jsonb_path_ops);
 CREATE INDEX "task_watcher_groups_idx" ON "task" USING gin (watcher_groups jsonb_path_ops);
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.18.2-migration007');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.19.0-migration007');
 
 -- +migrate Down
 
@@ -17,4 +17,4 @@ ALTER TABLE "task" DROP COLUMN "resolver_groups", "watcher_groups";
 DROP INDEX "task_resolver_groups_idx";
 DROP INDEX "task_watcher_groups_idx";
 
-DELETE FROM "utask_sql_migrations" WHERE current_migration_applied = 'v1.18.2-migration007';
+DELETE FROM "utask_sql_migrations" WHERE current_migration_applied = 'v1.19.0-migration007';
