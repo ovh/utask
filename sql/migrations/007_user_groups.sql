@@ -12,9 +12,7 @@ INSERT INTO "utask_sql_migrations" VALUES ('v1.19.0-migration007');
 -- +migrate Down
 
 ALTER TABLE "task_template" DROP COLUMN "allowed_resolver_groups";
-ALTER TABLE "task" DROP COLUMN "resolver_groups", "watcher_groups";
-
-DROP INDEX "task_resolver_groups_idx";
-DROP INDEX "task_watcher_groups_idx";
+ALTER TABLE "task" DROP COLUMN "resolver_groups";
+ALTER TABLE "task" DROP COLUMN "watcher_groups";
 
 DELETE FROM "utask_sql_migrations" WHERE current_migration_applied = 'v1.19.0-migration007';
