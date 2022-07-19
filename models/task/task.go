@@ -74,11 +74,12 @@ type DBModel struct {
 	TemplateID        int64             `json:"-" db:"id_template"`
 	BatchID           *int64            `json:"-" db:"id_batch"`
 	RequesterUsername string            `json:"requester_username" db:"requester_username"`
+	RequesterGroups   []string          `json:"requester_groups,omitempty" db:"requester_groups"`
 	WatcherUsernames  []string          `json:"watcher_usernames,omitempty" db:"watcher_usernames"`
 	WatcherGroups     []string          `json:"watcher_groups,omitempty" db:"watcher_groups"`
 	ResolverUsernames []string          `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
 	ResolverGroups    []string          `json:"resolver_groups,omitempty" db:"resolver_groups"`
-	Created           time.Time         `json:"created" db:"created"`
+	Created           time.Time         `j¬son:"created" db:"created"`
 	State             string            `json:"state" db:"state"`
 	StepsDone         int               `json:"steps_done" db:"steps_done"`
 	StepsTotal        int               `json:"steps_total" db:"steps_total"`
@@ -91,7 +92,7 @@ type DBModel struct {
 }
 
 // Create inserts a new Task in DB
-func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, watcherGroups []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
+func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, reqGroups []string, watcherUsernames []string, watcherGroups []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to create new Task")
 
 	t = &Task{
@@ -99,6 +100,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 			PublicID:          uuid.Must(uuid.NewV4()).String(),
 			TemplateID:        tt.ID,
 			RequesterUsername: reqUsername,
+			RequesterGroups:   reqGroups,
 			WatcherUsernames:  watcherUsernames,
 			WatcherGroups:     watcherGroups,
 			ResolverUsernames: resolverUsernames,
@@ -660,6 +662,9 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	m["task_id"] = t.PublicID
 	m["created"] = t.Created
 	m["requester_username"] = t.RequesterUsername
+	if t.RequesterGroups != nil && len(t.RequesterGroups) > 0 {
+		m["requester_groups"] = strings.Join(t.RequesterGroups, utask.GroupsSeparator)
+	}
 	if t.ResolverUsername != nil {
 		m["resolver_username"] = t.ResolverUsername
 	}
@@ -674,7 +679,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 
 var (
 	tSelector = sqlgenerator.PGsql.Select(
-		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".watcher_groups, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
+		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".requester_groups, "task".watcher_usernames, "task".watcher_groups, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
 	).From(
 		`"task"`,
 	).Join(

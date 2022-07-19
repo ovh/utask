@@ -413,7 +413,7 @@ func TestPagination(t *testing.T) {
 	cnt := 20
 	var midTask task.Task
 	for i := 0; i < cnt; i++ {
-		tsk, err := task.Create(dbp, tmpl, regularUser, nil, nil, nil, nil, map[string]interface{}{"id": strconv.Itoa(i)}, nil, nil)
+		tsk, err := task.Create(dbp, tmpl, regularUser, nil, nil, nil, nil, nil, map[string]interface{}{"id": strconv.Itoa(i)}, nil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

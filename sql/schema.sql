@@ -44,6 +44,7 @@ CREATE TABLE "task" (
     id_batch BIGINT REFERENCES "batch"(id),
     title TEXT NOT NULL,
     requester_username TEXT,
+    requester_groups JSONB NOT NULL DEFAULT 'null',
     watcher_usernames JSONB NOT NULL DEFAULT 'null',
     watcher_groups JSONB NOT NULL DEFAULT 'null',
     resolver_usernames JSONB NOT NULL DEFAULT 'null',

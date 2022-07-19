@@ -46,6 +46,7 @@ type SubtaskContext struct {
 	ParentTaskID      string `json:"parent_task_id"`
 	TaskID            string `json:"task_id"`
 	RequesterUsername string `json:"requester_username"`
+	RequesterGroups   string `json:"requester_groups"`
 }
 
 func ctx(stepName string) interface{} {
@@ -53,6 +54,7 @@ func ctx(stepName string) interface{} {
 		ParentTaskID:      "{{ .task.task_id }}",
 		TaskID:            fmt.Sprintf("{{ if (index .step `%s` ) }}{{ if (index .step `%s` `output`) }}{{ index .step `%s` `output` `id` }}{{ end }}{{ end }}", stepName, stepName, stepName),
 		RequesterUsername: "{{.task.requester_username}}",
+		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
 	}
 }
 
@@ -115,7 +117,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, err
 		}
 
-		var resolverUsernames, resolverGroups, watcherUsernames, watcherGroups []string
+		var requesterGroups, resolverUsernames, resolverGroups, watcherUsernames, watcherGroups []string
+		if stepContext.RequesterGroups != "" {
+			requesterGroups = strings.Split(stepContext.RequesterGroups, utask.GroupsSeparator)
+		}
 		if cfg.ResolverUsernames != "" {
 			resolverUsernames, err = utils.ConvertJSONRowToSlice(cfg.ResolverUsernames)
 			if err != nil {
@@ -143,6 +148,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
+		ctx = auth.WithGroups(context.Background(), requesterGroups)
 		if cfg.Tags == nil {
 			cfg.Tags = map[string]string{}
 		}

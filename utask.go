@@ -95,6 +95,9 @@ const (
 	NotificationStrategyAlways = "always"
 	// NotificationStrategyFailureOnly corresponds to the mode where notifications will only be sent if the state is BLOCKED
 	NotificationStrategyFailureOnly = "failure_only"
+
+	// GroupsSeparator corresponds to the separator used to break a string into a list of groups and vice versa.
+	GroupsSeparator = ","
 )
 
 // Cfg holds global configuration data
