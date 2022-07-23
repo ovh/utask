@@ -235,6 +235,29 @@ func TestFunctionCustomState(t *testing.T) {
 	assert.Equal(t, []string{"STATE_HELLO"}, customStates)
 }
 
+func TestFunctionConditions(t *testing.T) {
+	input := map[string]interface{}{}
+	res, err := runTask("functionConditions.yaml", input, nil)
+
+	require.Nil(t, err)
+
+	assert.Equal(t, map[string]interface{}{
+		"value": "Hello foobar !",
+	}, res.Steps["asExpected"].Output)
+	assert.Equal(t, "SAID_HELLO", res.Steps["asExpected"].State)
+	assert.Equal(t, "Said hello to foobar", res.Steps["asExpected"].Error)
+
+	assert.Equal(t, map[string]interface{}{
+		"value": "Hello foo !",
+	}, res.Steps["notExpected"].Output)
+	assert.Equal(t, "NOT_EXPECTED", res.Steps["notExpected"].State)
+	assert.Equal(t, "Expected bar, got foo", res.Steps["notExpected"].Error)
+
+	assert.Nil(t, res.Steps["skipped"].Output)
+	assert.Equal(t, "PRUNE", res.Steps["skipped"].State)
+	assert.Equal(t, "No hello foo !", res.Steps["skipped"].Error)
+}
+
 func TestFunctionPreHook(t *testing.T) {
 	input := map[string]interface{}{}
 	res, err := runTask("functionPreHook.yaml", input, nil)

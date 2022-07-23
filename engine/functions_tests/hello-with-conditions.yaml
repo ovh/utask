@@ -1,0 +1,34 @@
+name: hello-with-conditions
+description: Say hello with conditions
+action:
+  type: echo::hello::world
+  configuration:
+    name: '{{.function_args.name}}'
+custom_states:
+  - SAID_HELLO
+  - NOT_EXPECTED
+conditions:
+  - type: skip
+    if:
+      - value: '{{.function_args.skip | default `false`}}'
+        operator: EQ
+        expected: 'true'
+    then:
+      this: PRUNE
+    message: 'No hello {{.function_args.name}} !'
+  - type: check
+    if:
+      - value: '{{.function_args.name}}'
+        operator: NE
+        expected: '{{.function_args.expected}}'
+    then:
+      this: NOT_EXPECTED
+    message: 'Expected {{.function_args.expected}}, got {{.function_args.name}}'
+  - type: check
+    if:
+      - value: '{{.function_args.name}}'
+        operator: EQ
+        expected: '{{.function_args.expected}}'
+    then:
+      this: SAID_HELLO
+    message: 'Said hello to {{.function_args.name}}'
