@@ -67,6 +67,9 @@
                         "type": "string"
                     }
                 },
+                "pre_hook": {
+                    "$ref": "#/definitions/Action"
+                },
                 "action": {
                     "$ref": "#/definitions/Action"
                 },
