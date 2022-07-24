@@ -79,7 +79,7 @@ type DBModel struct {
 	WatcherGroups     []string          `json:"watcher_groups,omitempty" db:"watcher_groups"`
 	ResolverUsernames []string          `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
 	ResolverGroups    []string          `json:"resolver_groups,omitempty" db:"resolver_groups"`
-	Created           time.Time         `j¬son:"created" db:"created"`
+	Created           time.Time         `json:"created" db:"created"`
 	State             string            `json:"state" db:"state"`
 	StepsDone         int               `json:"steps_done" db:"steps_done"`
 	StepsTotal        int               `json:"steps_total" db:"steps_total"`
