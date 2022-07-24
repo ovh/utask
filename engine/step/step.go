@@ -367,6 +367,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 		return
 	}
 
+	var prehookFailed bool
 	var preHookWg sync.WaitGroup
 	if prehook != nil {
 		preHookExecution, err := st.generateExecution(*prehook, baseConfig, stepValues, shutdownCtx)
@@ -383,6 +384,7 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 
 			st.execute(preHookExecution, func(output interface{}, metadata interface{}, tags map[string]string, err error) {
 				if err != nil {
+					prehookFailed = true
 					st.State = StateFatalError
 					st.Error = fmt.Sprintf("prehook: %s", err)
 					go noopStep(st, stepChan)
@@ -399,10 +401,16 @@ func Run(st *Step, baseConfig map[string]json.RawMessage, stepValues *values.Val
 
 		time.Sleep(st.ExecutionDelay)
 
-		// Wait the prehook execution is done
+		// Wait the pre-hook execution is done
 		preHookWg.Wait()
 
-		// after pre-hook execution, let's verify if we are not shutting down the instance
+		// Stop the Step execution if the pre-hook has failed.
+		// Don't send the step into stepChan, because the pre_hook already did it.
+		if prehookFailed {
+			return
+		}
+
+		// After pre-hook execution, let's verify if we are not shutting down the instance
 		// in that case, we can just put the step in ToRetry instead of starting the main execution of the step
 		select {
 		case <-shutdownCtx.Done():
