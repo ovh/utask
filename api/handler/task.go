@@ -101,7 +101,7 @@ const (
 )
 
 type listTasksIn struct {
-	Type          string     `query:"type,default=own"`
+	Type          string     `query:"type,default=own" enum:"own,resolvable,all"`
 	State         *string    `query:"state"`
 	BatchPublicID *string    `query:"batch"`
 	Template      *string    `query:"template"`
