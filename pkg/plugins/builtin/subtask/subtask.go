@@ -148,7 +148,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
-		ctx = auth.WithGroups(context.Background(), requesterGroups)
+		ctx = auth.WithGroups(ctx, requesterGroups)
 		if cfg.Tags == nil {
 			cfg.Tags = map[string]string{}
 		}

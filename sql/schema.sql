@@ -68,9 +68,9 @@ CREATE INDEX ON "task"(last_activity DESC);
 -- See section 8.14.4 relative to jsonb indexing:
 -- https://www.postgresql.org/docs/9.4/datatype-json.html
 CREATE INDEX ON "task" USING gin (watcher_usernames jsonb_path_ops);
-CREATE INDEX ON "task" USING gin (watcher_groups jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (watcher_groups);
 CREATE INDEX ON "task" USING gin (resolver_usernames jsonb_path_ops);
-CREATE INDEX ON "task" USING gin (resolver_groups jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (resolver_groups);
 CREATE INDEX ON "task" USING gin (tags jsonb_path_ops);
 
 CREATE TABLE "task_comment" (
