@@ -20,7 +20,7 @@ steps:
         expected: bar
 
   skipped:
-    description: Say hello to foo but expect bar
+    description: Say hello to foo but skipping step before it starts
     action:
       type: hello-with-conditions
       configuration:
