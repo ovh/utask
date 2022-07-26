@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/configstore"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/notify"
 	"github.com/ovh/utask/pkg/notify/opsgenie"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	errRetrieveCfg string = "Failed to retrieve cfg"
+	errRetrieveCfg string = "failed to retrieve cfg"
 )
 
 // Init aims to inject user defined cfg around notify
@@ -46,7 +47,7 @@ func Init(store *configstore.Store) error {
 				f.Timeout,
 			)
 			if err != nil {
-				return fmt.Errorf("Failed to instantiate tat notification sender: %s", err)
+				return fmt.Errorf("failed to instantiate opsgenie notification sender: %s", err)
 			}
 			notify.RegisterSender(name, ogns, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
@@ -62,7 +63,7 @@ func Init(store *configstore.Store) error {
 				f.Topic,
 			)
 			if err != nil {
-				return fmt.Errorf("Failed to instantiate tat notification sender: %s", err)
+				return fmt.Errorf("failed to instantiate tat notification sender: %s", err)
 			}
 			notify.RegisterSender(name, tn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
@@ -83,7 +84,7 @@ func Init(store *configstore.Store) error {
 			notify.RegisterSender(name, sn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
 		default:
-			return fmt.Errorf("Failed to identify backend type: %s", ncfg.Type)
+			return fmt.Errorf("failed to identify backend type: %s", ncfg.Type)
 		}
 	}
 
