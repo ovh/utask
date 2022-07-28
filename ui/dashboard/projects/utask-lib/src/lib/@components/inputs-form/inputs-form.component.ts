@@ -4,7 +4,7 @@ import { ResolverInput } from '../../@models/task.model';
 @Component({
 	selector: 'lib-utask-inputs-form',
 	templateUrl: './inputs-form.html',
-	styleUrls: ['./inputs-form.sass'],
+	styleUrls: ['./inputs-form.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputsFormComponent {

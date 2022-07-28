@@ -1,5 +1,5 @@
 <form *ngIf="formGroup && inputs" nz-form [formGroup]="formGroup" [nzLayout]="'vertical'">
-    <nz-form-item *ngFor="let input of inputs; trackBy: trackInput">
+    <nz-form-item *ngFor="let input of inputs; trackBy: trackInput" [ngClass]="{'hidden': input.hidden}">
         <nz-form-label *ngIf="input.regex" nzFor="input_{{input.name}}" [nzRequired]="!input.optional"
             [nzTooltipTitle]="input.regex" nzTooltipIcon="info-circle">
             {{input.description ? input.description : input.name}}

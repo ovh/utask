@@ -32,6 +32,7 @@ type Input struct {
 	Type        string        `json:"type,omitempty"`
 	Optional    bool          `json:"optional"`
 	Default     interface{}   `json:"default"`
+	Hidden      bool          `json:"hidden"`
 }
 
 // Valid asserts that an input definition is valid
