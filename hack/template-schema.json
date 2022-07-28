@@ -877,6 +877,11 @@
                     "type": "boolean",
                     "description": "Indicates if multiple values can be specified for this input",
                     "default": false
+                },
+                "hidden": {
+                    "type": "boolean",
+                    "description": "Indicates if the input is hidden on the task spawn form",
+                    "default": false
                 }
             }
         },
