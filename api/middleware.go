@@ -110,7 +110,7 @@ func groupAuthMiddleware(authProvider func(*http.Request) (string, []string, err
 				if errors.IsUnauthorized(err) {
 					c.Header("WWW-Authenticate", `Basic realm="Authorization Required"`)
 				}
-				c.AbortWithError(http.StatusUnauthorized, err)
+				_ = c.AbortWithError(http.StatusUnauthorized, err)
 				return
 			}
 			c.Set(auth.IdentityProviderCtxKey, user)

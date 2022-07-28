@@ -26,12 +26,12 @@ var (
 
 // WithIdentity adds identity data to a context
 func WithIdentity(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, IdentityProviderCtxKey, id)
+	return context.WithValue(ctx, IdentityProviderCtxKey, id) // nolint
 }
 
 // WithIdentity adds identity data to a context
 func WithGroups(ctx context.Context, groups []string) context.Context {
-	return context.WithValue(ctx, GroupProviderCtxKey, groups)
+	return context.WithValue(ctx, GroupProviderCtxKey, groups) // nolint
 }
 
 // Init reads authorization from configstore, bootstraps values
