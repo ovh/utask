@@ -73,6 +73,7 @@ export default class Task {
     last_stop: Date;
     requester_username: string;
     resolver_usernames: string[];
+    resolver_groups: string[];
     resolution: string;
     resolver_username: string;
     result: any;
@@ -82,6 +83,7 @@ export default class Task {
     template_name: string;
     title: string;
     watcher_usernames: string[];
+    watcher_groups: string[];
     tags: { [key: string]: string };
     resolver_inputs: ResolverInput[];
 

@@ -26,12 +26,14 @@ export class NewTask {
     tags: { [key: string]: string };
     template_name: string;
     watcher_usernames: string[];
+    watcher_groups: string[];
 }
 
 export class UpdatedTask {
     input: any;
     tags: { [key: string]: string };
     watcher_usernames: string[];
+    watcher_groups: string[];
 }
 
 export class ApiServiceComment {

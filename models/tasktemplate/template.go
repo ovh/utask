@@ -7,6 +7,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/db/sqlgenerator"
 	"github.com/ovh/utask/engine/input"
@@ -31,6 +32,7 @@ type TaskTemplate struct {
 	TitleFormat     string                 `json:"title_format,omitempty" db:"title_format"`
 	ResultFormat    map[string]interface{} `json:"result_format,omitempty" db:"result_format"`
 
+	AllowedResolverGroups     []string `json:"allowed_resolver_groups" db:"allowed_resolver_groups"`
 	AllowedResolverUsernames  []string `json:"allowed_resolver_usernames" db:"allowed_resolver_usernames"`
 	AllowAllResolverUsernames bool     `json:"allow_all_resolver_usernames" db:"allow_all_resolver_usernames"`
 	AutoRunnable              bool     `json:"auto_runnable" db:"auto_runnable"`
@@ -53,6 +55,7 @@ func Create(dbp zesty.DBProvider,
 	longDescription,
 	docLink *string,
 	inputs, resolverInputs []input.Input,
+	allowedResolverGroups []string,
 	allowedResolverUsernames []string,
 	allowAllResolverUsernames, autoRunnable bool,
 	steps map[string]*step.Step,
@@ -76,6 +79,7 @@ func Create(dbp zesty.DBProvider,
 		ResolverInputs:            resolverInputs,
 		Variables:                 variables,
 		Tags:                      tags,
+		AllowedResolverGroups:     allowedResolverGroups,
 		AllowedResolverUsernames:  allowedResolverUsernames,
 		AllowAllResolverUsernames: allowAllResolverUsernames,
 		AutoRunnable:              autoRunnable,
@@ -184,6 +188,7 @@ func ListTemplates(dbp zesty.DBProvider, includeHidden bool, pageSize uint64, la
 func (tt *TaskTemplate) Update(dbp zesty.DBProvider,
 	description, longDescription, docLink *string,
 	inputs, resolverInputs []input.Input,
+	allowedResolverGroups []string,
 	allowedResolverUsernames []string,
 	allowAllResolverUsernames, autoRunnable, blocked, hidden *bool,
 	steps map[string]*step.Step,
@@ -208,6 +213,9 @@ func (tt *TaskTemplate) Update(dbp zesty.DBProvider,
 	}
 	if resolverInputs != nil {
 		tt.ResolverInputs = resolverInputs
+	}
+	if allowedResolverGroups != nil {
+		tt.AllowedResolverGroups = allowedResolverGroups
 	}
 	if allowedResolverUsernames != nil {
 		tt.AllowedResolverUsernames = allowedResolverUsernames
@@ -450,7 +458,7 @@ func validateVariables(variables []values.Variable) error {
 
 var (
 	ttBasicSelector = sqlgenerator.PGsql.Select(
-		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".allow_task_start_over, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations, "task_template".tags`,
+		`"task_template".id, "task_template".name, "task_template".description, "task_template".long_description, "task_template".doc_link, "task_template".allowed_resolver_groups, "task_template".allowed_resolver_usernames, "task_template".allow_all_resolver_usernames, "task_template".auto_runnable, "task_template".blocked, "task_template".hidden, "task_template".retry_max, "task_template".allow_task_start_over, "task_template".inputs, "task_template".resolver_inputs, "task_template".base_configurations, "task_template".tags`,
 	).From(
 		`"task_template"`,
 	).OrderBy(

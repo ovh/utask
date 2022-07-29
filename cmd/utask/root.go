@@ -52,7 +52,8 @@ const (
 	envMaintenance = "MAINTENANCE_MODE"
 	envLogsFormat  = "LOGS_FORMAT"
 
-	basicAuthKey = "basic-auth"
+	basicAuthKey  = "basic-auth"
+	groupsAuthKey = "groups-auth"
 )
 
 var (
@@ -140,7 +141,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		server = api.NewServer()
-		server.WithAuth(defaultAuthHandler)
+		server.WithGroupAuth(defaultAuthHandler)
 
 		for _, err := range []error{
 			// register builtin executors
@@ -233,9 +234,31 @@ var rootCmd = &cobra.Command{
 	SilenceUsage:  true,
 }
 
-// if a map of user passwords is found in configstore
-// use them as basic auth check on incoming requests
-func basicAuthHandler(store *configstore.Store) (func(*http.Request) (string, error), error) {
+// basicAuthHandler handles user and groups authentication.
+//
+// How does it work?
+// If a map of user passwords is found in configstore, use them as basic auth
+// check on incoming requests. The groups of the user are determined from the
+// configuration in configstore. If nothing is found, the zero value of a slice
+// is returned (i.e. `nil`).
+//
+// It is a default implementation which can be overridden by Server.WithAuth or
+// Server.WithGroupAuth functions in api package.
+func basicAuthHandler(store *configstore.Store) (func(*http.Request) (string, []string, error), error) {
+	userGroupsMap := map[string][]string{}
+	groupsAuthStr, err := configstore.Filter().Slice(groupsAuthKey).Squash().Store(store).MustGetFirstItem().Value()
+	if err == nil {
+		groupsMap := map[string][]string{}
+		if err = json.Unmarshal([]byte(groupsAuthStr), &groupsMap); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal utask configuration: %s", err)
+		}
+		for group, users := range groupsMap {
+			for _, user := range users {
+				userGroupsMap[user] = append(userGroupsMap[user], group)
+			}
+		}
+	}
+
 	authMap := map[string]string{}
 	basicAuthStr, err := configstore.Filter().Slice(basicAuthKey).Squash().Store(store).MustGetFirstItem().Value()
 	if err == nil {
@@ -249,17 +272,18 @@ func basicAuthHandler(store *configstore.Store) (func(*http.Request) (string, er
 		}
 	}
 	if len(authMap) > 0 {
-		return func(r *http.Request) (string, error) {
+		return func(r *http.Request) (string, []string, error) {
 			authHeader := r.Header.Get("Authorization")
 			user, found := authMap[authHeader]
 			if !found {
-				return "", errors.Unauthorizedf("User not found")
+				return "", nil, errors.Unauthorizedf("User not found")
 			}
-			return user, nil
+			return user, userGroupsMap[user], nil
 		}, nil
 	}
 	// fallback to expecting a username in x-remote-user header
-	return func(r *http.Request) (string, error) {
-		return r.Header.Get("x-remote-user"), nil
+	return func(r *http.Request) (string, []string, error) {
+		user := r.Header.Get("x-remote-user")
+		return user, userGroupsMap[user], nil
 	}, nil
 }

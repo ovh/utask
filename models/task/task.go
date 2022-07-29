@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid"
 	"github.com/juju/errors"
+	"github.com/lib/pq"
 	"github.com/loopfz/gadgeto/zesty"
 
 	"github.com/ovh/utask"
@@ -73,8 +74,11 @@ type DBModel struct {
 	TemplateID        int64             `json:"-" db:"id_template"`
 	BatchID           *int64            `json:"-" db:"id_batch"`
 	RequesterUsername string            `json:"requester_username" db:"requester_username"`
+	RequesterGroups   []string          `json:"requester_groups,omitempty" db:"requester_groups"`
 	WatcherUsernames  []string          `json:"watcher_usernames,omitempty" db:"watcher_usernames"`
+	WatcherGroups     []string          `json:"watcher_groups,omitempty" db:"watcher_groups"`
 	ResolverUsernames []string          `json:"resolver_usernames,omitempty" db:"resolver_usernames"`
+	ResolverGroups    []string          `json:"resolver_groups,omitempty" db:"resolver_groups"`
 	Created           time.Time         `json:"created" db:"created"`
 	State             string            `json:"state" db:"state"`
 	StepsDone         int               `json:"steps_done" db:"steps_done"`
@@ -88,7 +92,7 @@ type DBModel struct {
 }
 
 // Create inserts a new Task in DB
-func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, watcherUsernames []string, resolverUsernames []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
+func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, reqGroups []string, watcherUsernames []string, watcherGroups []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to create new Task")
 
 	t = &Task{
@@ -96,8 +100,11 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 			PublicID:          uuid.Must(uuid.NewV4()).String(),
 			TemplateID:        tt.ID,
 			RequesterUsername: reqUsername,
+			RequesterGroups:   reqGroups,
 			WatcherUsernames:  watcherUsernames,
+			WatcherGroups:     watcherGroups,
 			ResolverUsernames: resolverUsernames,
+			ResolverGroups:    resolverGroups,
 			Created:           now.Get(),
 			LastActivity:      now.Get(),
 			StepsTotal:        len(tt.Steps),
@@ -271,17 +278,19 @@ func loadDetails(dbp zesty.DBProvider, t *Task, withComments bool) (err error) {
 
 // ListFilter holds parameters for filtering a list of tasks
 type ListFilter struct {
-	RequesterUser                    *string
-	PotentialResolverUser            *string
-	RequesterOrPotentialResolverUser *string
-	Last                             *string
-	State                            *string
-	Batch                            *Batch
-	PageSize                         uint64
-	Before                           *time.Time
-	After                            *time.Time
-	Tags                             map[string]string
-	Template                         *string
+	RequesterUser                      *string
+	PotentialResolverUser              *string
+	PotentialResolverGroups            []string
+	RequesterOrPotentialResolverUser   *string
+	RequesterOrPotentialResolverGroups []string
+	Last                               *string
+	State                              *string
+	Batch                              *Batch
+	PageSize                           uint64
+	Before                             *time.Time
+	After                              *time.Time
+	Tags                               map[string]string
+	Template                           *string
 }
 
 // ListTasks returns a list of tasks, optionally filtered on one or several criteria
@@ -317,7 +326,31 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 		})
 	}
 
-	if filter.PotentialResolverUser != nil {
+	if filter.PotentialResolverGroups != nil && len(filter.PotentialResolverGroups) > 0 {
+		argGroups, err := pq.Array(filter.PotentialResolverGroups).Value()
+		if err != nil {
+			return nil, err
+		}
+
+		if filter.PotentialResolverUser != nil {
+			argUser := strconv.Quote(*filter.PotentialResolverUser)
+			sel = sel.Where(squirrel.Or{
+				// User conditions
+				squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, argUser),
+				// Group conditions
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		} else {
+			sel = sel.Where(squirrel.Or{
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		}
+	} else if filter.PotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.PotentialResolverUser)
 		sel = sel.Where(squirrel.Or{
 			squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, arg),
@@ -325,7 +358,35 @@ func ListTasks(dbp zesty.DBProvider, filter ListFilter) (t []*Task, err error) {
 		})
 	}
 
-	if filter.RequesterOrPotentialResolverUser != nil {
+	if filter.RequesterOrPotentialResolverGroups != nil && len(filter.RequesterOrPotentialResolverGroups) > 0 {
+		argGroups, err := pq.Array(filter.RequesterOrPotentialResolverGroups).Value()
+		if err != nil {
+			return nil, err
+		}
+
+		if filter.RequesterOrPotentialResolverUser != nil {
+			argUser := strconv.Quote(*filter.RequesterOrPotentialResolverUser)
+			sel = sel.Where(squirrel.Or{
+				// User conditions
+				squirrel.Eq{`"task".requester_username`: *filter.RequesterOrPotentialResolverUser},
+				squirrel.Expr(`"task".watcher_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task_template".allowed_resolver_usernames @> ?::jsonb`, argUser),
+				squirrel.Expr(`"task".resolver_usernames @> ?::jsonb`, argUser),
+				// Group conditions
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task".watcher_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		} else {
+			sel = sel.Where(squirrel.Or{
+				// To escape "?", insert two "?" (see https://github.com/Masterminds/squirrel/pull/32)
+				squirrel.Expr(`"task".watcher_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task_template".allowed_resolver_groups ??| ?`, argGroups),
+				squirrel.Expr(`"task".resolver_groups ??| ?`, argGroups),
+			})
+		}
+	} else if filter.RequesterOrPotentialResolverUser != nil {
 		arg := strconv.Quote(*filter.RequesterOrPotentialResolverUser)
 		sel = sel.Where(squirrel.Or{
 			squirrel.Eq{`"task".requester_username`: *filter.RequesterOrPotentialResolverUser},
@@ -504,6 +565,11 @@ func (t *Task) SetWatcherUsernames(watcherUsernames []string) {
 	t.WatcherUsernames = watcherUsernames
 }
 
+// SetWatcherGroups sets the list of watcher groups for the task
+func (t *Task) SetWatcherGroups(watcherGroups []string) {
+	t.WatcherGroups = watcherGroups
+}
+
 // SetInput sets the provided input for the task
 func (t *Task) SetInput(input map[string]interface{}) {
 	t.Input = input
@@ -596,6 +662,9 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	m["task_id"] = t.PublicID
 	m["created"] = t.Created
 	m["requester_username"] = t.RequesterUsername
+	if t.RequesterGroups != nil && len(t.RequesterGroups) > 0 {
+		m["requester_groups"] = strings.Join(t.RequesterGroups, utask.GroupsSeparator)
+	}
 	if t.ResolverUsername != nil {
 		m["resolver_username"] = t.ResolverUsername
 	}
@@ -610,7 +679,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 
 var (
 	tSelector = sqlgenerator.PGsql.Select(
-		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".watcher_usernames, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
+		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".requester_groups, "task".watcher_usernames, "task".watcher_groups, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
 	).From(
 		`"task"`,
 	).Join(

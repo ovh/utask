@@ -495,7 +495,13 @@
                         "resolver_usernames": {
                             "type": "string"
                         },
+                        "resolver_groups": {
+                            "type": "string"
+                        },
                         "watcher_usernames": {
+                            "type": "string"
+                        },
+                        "watcher_groups": {
                             "type": "string"
                         },
                         "delay": {
@@ -989,6 +995,14 @@
                     "echo_when": "{{.step.sayHello.output.when}}"
                 }
             ]
+        },
+        "allowed_resolver_groups": {
+            "type": "array",
+            "description": "Groups of people allowed to resolve a task based on this template",
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         },
         "allowed_resolver_usernames": {
             "type": "array",

@@ -18,6 +18,7 @@ CREATE TABLE "task_template" (
     resolver_inputs JSONB NOT NULL,
     steps JSONB NOT NULL,
     variables JSONB NOT NULL DEFAULT 'null',
+    allowed_resolver_groups JSONB NOT NULL DEFAULT '[]',
     allowed_resolver_usernames JSONB NOT NULL DEFAULT '[]',
     allow_all_resolver_usernames BOOL NOT NULL DEFAULT false,
     auto_runnable BOOL NOT NULL DEFAULT false,
@@ -43,8 +44,11 @@ CREATE TABLE "task" (
     id_batch BIGINT REFERENCES "batch"(id),
     title TEXT NOT NULL,
     requester_username TEXT,
+    requester_groups JSONB NOT NULL DEFAULT 'null',
     watcher_usernames JSONB NOT NULL DEFAULT 'null',
+    watcher_groups JSONB NOT NULL DEFAULT 'null',
     resolver_usernames JSONB NOT NULL DEFAULT 'null',
+    resolver_groups JSONB NOT NULL DEFAULT 'null',
     created TIMESTAMP with time zone DEFAULT now() NOT NULL,
     last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     state TEXT NOT NULL,
@@ -64,7 +68,9 @@ CREATE INDEX ON "task"(last_activity DESC);
 -- See section 8.14.4 relative to jsonb indexing:
 -- https://www.postgresql.org/docs/9.4/datatype-json.html
 CREATE INDEX ON "task" USING gin (watcher_usernames jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (watcher_groups);
 CREATE INDEX ON "task" USING gin (resolver_usernames jsonb_path_ops);
+CREATE INDEX ON "task" USING gin (resolver_groups);
 CREATE INDEX ON "task" USING gin (tags jsonb_path_ops);
 
 CREATE TABLE "task_comment" (
@@ -111,6 +117,6 @@ CREATE TABLE "utask_sql_migrations" (
     current_migration_applied TEXT PRIMARY KEY
 );
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.17.0-migration006');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.19.0-migration007');
 
 END;

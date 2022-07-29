@@ -7,6 +7,7 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
@@ -33,7 +34,9 @@ type SubtaskConfig struct {
 	Template          string                 `json:"template"`
 	Input             map[string]interface{} `json:"input"`
 	ResolverUsernames string                 `json:"resolver_usernames"`
+	ResolverGroups    string                 `json:"resolver_groups"`
 	WatcherUsernames  string                 `json:"watcher_usernames"`
+	WatcherGroups     string                 `json:"watcher_groups"`
 	Delay             *string                `json:"delay"`
 	Tags              map[string]string      `json:"tags"`
 }
@@ -43,6 +46,7 @@ type SubtaskContext struct {
 	ParentTaskID      string `json:"parent_task_id"`
 	TaskID            string `json:"task_id"`
 	RequesterUsername string `json:"requester_username"`
+	RequesterGroups   string `json:"requester_groups"`
 }
 
 func ctx(stepName string) interface{} {
@@ -50,6 +54,7 @@ func ctx(stepName string) interface{} {
 		ParentTaskID:      "{{ .task.task_id }}",
 		TaskID:            fmt.Sprintf("{{ if (index .step `%s` ) }}{{ if (index .step `%s` `output`) }}{{ index .step `%s` `output` `id` }}{{ end }}{{ end }}", stepName, stepName, stepName),
 		RequesterUsername: "{{.task.requester_username}}",
+		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
 	}
 }
 
@@ -112,9 +117,18 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			return nil, nil, err
 		}
 
-		var resolverUsernames, watcherUsernames []string
+		var requesterGroups, resolverUsernames, resolverGroups, watcherUsernames, watcherGroups []string
+		if stepContext.RequesterGroups != "" {
+			requesterGroups = strings.Split(stepContext.RequesterGroups, utask.GroupsSeparator)
+		}
 		if cfg.ResolverUsernames != "" {
 			resolverUsernames, err = utils.ConvertJSONRowToSlice(cfg.ResolverUsernames)
+			if err != nil {
+				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
+		if cfg.ResolverGroups != "" {
+			resolverGroups, err = utils.ConvertJSONRowToSlice(cfg.ResolverGroups)
 			if err != nil {
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
 			}
@@ -125,14 +139,21 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
 			}
 		}
+		if cfg.WatcherGroups != "" {
+			watcherGroups, err = utils.ConvertJSONRowToSlice(cfg.WatcherGroups)
+			if err != nil {
+				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
 
 		// TODO inherit watchers from parent task
 		ctx := auth.WithIdentity(context.Background(), stepContext.RequesterUsername)
+		ctx = auth.WithGroups(ctx, requesterGroups)
 		if cfg.Tags == nil {
 			cfg.Tags = map[string]string{}
 		}
 		cfg.Tags[constants.SubtaskTagParentTaskID] = stepContext.ParentTaskID
-		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, resolverUsernames, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
+		t, err = taskutils.CreateTask(ctx, dbp, tt, watcherUsernames, watcherGroups, resolverUsernames, resolverGroups, cfg.Input, nil, "Auto created subtask, parent task "+stepContext.ParentTaskID, cfg.Delay, cfg.Tags)
 		if err != nil {
 			dbp.Rollback()
 			return nil, nil, err

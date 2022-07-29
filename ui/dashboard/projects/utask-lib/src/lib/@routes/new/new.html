@@ -43,6 +43,15 @@
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>
+                <nz-form-label nzFor="watcher_groups">
+                    Watcher groups
+                </nz-form-label>
+                <nz-form-control nzErrorTip="Please set a valid value for watcher groups!">
+                    <nz-select formControlName="watcher_groups" nzMode="tags" nzPlaceHolder="Groups">
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
                 <nz-form-control>
                     <button type="submit" nz-button [disabled]="!validateForm.valid" [nzLoading]="loaders.submit"
                         nzType="primary">Submit</button>

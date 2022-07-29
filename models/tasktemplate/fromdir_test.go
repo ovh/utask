@@ -10,6 +10,9 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/engine/step"
@@ -19,8 +22,6 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -97,7 +98,7 @@ func TestLoadFromDir(t *testing.T) {
 	err = dbp.DB().Insert(&tt)
 	assert.Nil(t, err, "unable to insert new template")
 
-	_, err = task.Create(dbp, &tt, "admin", []string{}, []string{}, map[string]interface{}{}, nil, nil)
+	_, err = task.Create(dbp, &tt, "admin", []string{}, []string{}, []string{}, []string{}, []string{}, map[string]interface{}{}, nil, nil)
 	assert.Nil(t, err, "unable to create task")
 
 	err = tasktemplate.LoadFromDir(dbp, "templates_tests")

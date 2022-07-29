@@ -6,6 +6,7 @@ export default class Template {
     auto_runnable: boolean;
     allow_all_resolver_usernames: boolean;
     allowed_resolver_usernames: string[];
+    allowed_resolver_groups: string[];
     doc_link: string;
     inputs: any[];
     resolver_inputs: any[];

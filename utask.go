@@ -95,12 +95,16 @@ const (
 	NotificationStrategyAlways = "always"
 	// NotificationStrategyFailureOnly corresponds to the mode where notifications will only be sent if the state is BLOCKED
 	NotificationStrategyFailureOnly = "failure_only"
+
+	// GroupsSeparator corresponds to the separator used to break a string into a list of groups and vice versa.
+	GroupsSeparator = ","
 )
 
 // Cfg holds global configuration data
 type Cfg struct {
 	ApplicationName                            string                   `json:"application_name"`
 	AdminUsernames                             []string                 `json:"admin_usernames"`
+	AdminGroups                                []string                 `json:"admin_groups"`
 	CompletedTaskExpiration                    string                   `json:"completed_task_expiration"`
 	NotifyConfig                               map[string]NotifyBackend `json:"notify_config"`
 	NotifyActions                              NotifyActions            `json:"notify_actions"`
