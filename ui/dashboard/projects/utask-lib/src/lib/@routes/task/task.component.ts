@@ -356,7 +356,7 @@ export class TaskComponent implements OnInit, OnDestroy {
         } else {
           this.autorefresh.enable = true;
           if (!this.autorefresh.hasChanged) {
-            this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN'].indexOf(this.task.state) > -1;
+            this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN', 'WAITING'].indexOf(this.task.state) > -1;
           }
         }
 
