@@ -12,7 +12,10 @@ import (
 	"github.com/ovh/utask/pkg/now"
 )
 
-const thresholdStrDefault = "720h" // 1 month
+const (
+	thresholdStrDefault  = "720h" // 1 month
+	sleepDurationDefault = 24 * time.Hour
+)
 
 // GarbageCollector launches a process that cleans up finished tasks
 // (ie are in a final state) older than a given threshold
@@ -31,8 +34,12 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 		return err
 	}
 
-	// sleep 24h: run once a day
-	// delete old completed/blocked/cancelled/wontfix tasks
+	sleepDuration := sleepDurationDefault
+	if threshold < sleepDurationDefault {
+		sleepDuration = threshold
+	}
+
+	// delete old completed/cancelled/wontfix tasks
 	go func() {
 		// Run it immediately and wait for new tick
 		if err := deleteOldTasks(dbp, threshold); err != nil {
@@ -40,7 +47,7 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 		}
 
 		for running := true; running; {
-			time.Sleep(24 * time.Hour)
+			time.Sleep(sleepDuration)
 
 			select {
 			case <-ctx.Done():
@@ -61,7 +68,7 @@ func GarbageCollector(ctx context.Context, completedTaskExpiration string) error
 		}
 
 		for running := true; running; {
-			time.Sleep(24 * time.Hour)
+			time.Sleep(sleepDuration)
 
 			select {
 			case <-ctx.Done():
