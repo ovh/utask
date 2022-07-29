@@ -38,7 +38,7 @@
     "jquery": "3.6.0",
     "js-yaml": "4.1.0",
     "lodash-es": "4.17.21",
-    "moment": "2.29.2",
+    "moment": "2.29.4",
     "monaco-editor": "0.33.0",
     "ng-zorro-antd": "13.1.1",
     "rxjs": "7.5.5",
