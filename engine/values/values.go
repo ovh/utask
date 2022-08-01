@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/pkg/utils"
 	"github.com/robertkrimen/otto"
+	"github.com/sirupsen/logrus"
 )
 
 // keys to store/retrieve data from a Values struct
@@ -465,6 +466,10 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 		return string(valS), nil
 	}
 
+	log := logrus.WithFields(logrus.Fields{"variable": varName})
+	log.Infof("Raw expression:")
+	log.Infof("%s", i.Expression)
+
 	exp, err := v.Apply(i.Expression, nil, "")
 	if err != nil {
 		return nil, err
@@ -478,10 +483,16 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 		}
 	}
 
+	log.Infof("Computed expression:")
+	log.Infof("%s", exp)
+
 	res, err := evalUnsafe(exp, timeout)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("Result:")
+	log.Infof("%s", res.String())
 
 	return res.String(), nil
 }
