@@ -59,8 +59,8 @@ release-utask-lib:
 
 test:
 	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod
-	cd ${HOME} && go get github.com/jstemmer/go-junit-report github.com/stretchr/testify/assert
-	GO111MODULE=on DEV=true bash hack/test.sh ${TEST_CMD} 2>&1 | go-junit-report > report.xml
+	cd ${HOME} && go install github.com/jstemmer/go-junit-report/v2@latest
+	GO111MODULE=on DEV=true bash hack/test.sh ${TEST_CMD} 2>&1 | go-junit-report -set-exit-code > report.xml
 
 test-travis:
 	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod

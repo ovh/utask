@@ -1095,6 +1095,11 @@ func TestScriptPluginEnvironmentVariables(t *testing.T) {
 	assert.NotNil(t, res)
 	assert.Nil(t, err)
 
+	assert.Equal(t, step.StateDone, res.State)
+	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
+	t.Log(res.Steps["stepOne"].Error)
+	t.Log(res.Steps["stepOne"].Metadata)
+
 	assert.NotNil(t, res.Steps["stepOne"].Output)
 
 	environment := res.Steps["stepOne"].Output.(map[string]interface{})
