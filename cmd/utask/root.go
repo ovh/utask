@@ -146,12 +146,12 @@ var rootCmd = &cobra.Command{
 		service := &plugins.Service{Store: store, Server: server}
 
 		for _, err := range []error{
+			// run custom initialization code built as *.so plugins
+			plugins.InitializersFromFolder(utask.FInitializersFolder, service),
 			// register builtin initializers
 			builtin.RegisterInit(service),
 			// register builtin executors
 			builtin.Register(),
-			// run custom initialization code built as *.so plugins
-			plugins.InitializersFromFolder(utask.FInitializersFolder, service),
 			// load custom executors built as *.so plugins
 			plugins.ExecutorsFromFolder(utask.FPluginFolder),
 			// load the functions
