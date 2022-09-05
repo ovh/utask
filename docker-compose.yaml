@@ -4,14 +4,15 @@ services:
     build: .
     command: ["/wait-for-it.sh", "db:5432", "--", "/app/utask"]
     environment:
-      DEBUG:              'true'
-      DEV:                'true'
-      CONFIGURATION_FROM: 'env:CFG'
-      CFG_DATABASE:       'postgres://user:pass@db/utask?sslmode=disable'
-      CFG_UTASK_CFG:      '{"admin_usernames":["admin"],"application_name":"µTask"}'
-      CFG_BASIC_AUTH:     '{"admin":"1234","resolver":"3456","regular":"5678"}'
-      CFG_GROUPS_AUTH:    '{"admins":["admin"],"resolvers":["admin","resolver"]}'
-      CFG_ENCRYPTION_KEY: '{"identifier":"storage","cipher":"aes-gcm","timestamp":1535627466,"key":"e5f45aef9f072e91f735547be63f3434e6de49695b178e3868b23b0e32269800"}'
+      DEBUG:               'true'
+      DEV:                 'true'
+      CONFIGURATION_FROM:  'env:CFG'
+      CFG_DATABASE:        'postgres://user:pass@db/utask?sslmode=disable'
+      CFG_UTASK_CFG:       '{"admin_usernames":["admin"],"application_name":"µTask"}'
+      CFG_CALLBACK_CONFIG: '{"base_url": "http://foo.example.com"}'
+      CFG_BASIC_AUTH:      '{"admin":"1234","resolver":"3456","regular":"5678"}'
+      CFG_GROUPS_AUTH:     '{"admins":["admin"],"resolvers":["admin","resolver"]}'
+      CFG_ENCRYPTION_KEY:  '{"identifier":"storage","cipher":"aes-gcm","timestamp":1535627466,"key":"e5f45aef9f072e91f735547be63f3434e6de49695b178e3868b23b0e32269800"}'
     ports:
       - 8081:8081
     volumes:
