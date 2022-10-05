@@ -531,7 +531,7 @@ All the strategies available are:
 Browse [builtin actions](./pkg/plugins/builtin)
 
 | Plugin name    | Description                                                                                                                                                                                                                                       | Documentation                                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 | **`echo`**     | Print out a pre-determined result                                                                                                                                                                                                                 | [Access plugin doc](./pkg/plugins/builtin/echo/README.md)     |
 | **`http`**     | Make an http request                                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/http/README.md)     |
 | **`subtask`**  | Spawn a new task on µTask                                                                                                                                                                                                                         | [Access plugin doc](./pkg/plugins/builtin/subtask/README.md)  |
@@ -543,6 +543,8 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`script`**   | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)   |
 | **`tag`**      | Add tags to the current running task                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/tag/README.md)      |
 | **`callback`** | Use callbacks to manage your tasks  life-cycle                                                                                                                                                                                                    | [Access plugin doc](./pkg/plugins/builtin/callback/README.md) |
+| **`kafka`**    | Publish a message to a Kafka topic                                                                                                                                                                                                                | [Access plugin doc](./pkg/plugins/builtin/kafka/README.md)    |
+
 
 #### Pre-hooks <a name="pre-hooks"></a>
 

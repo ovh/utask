@@ -8,6 +8,7 @@ import (
 	pluginecho "github.com/ovh/utask/pkg/plugins/builtin/echo"
 	pluginemail "github.com/ovh/utask/pkg/plugins/builtin/email"
 	pluginhttp "github.com/ovh/utask/pkg/plugins/builtin/http"
+	pluginkafka "github.com/ovh/utask/pkg/plugins/builtin/kafka"
 	pluginnotify "github.com/ovh/utask/pkg/plugins/builtin/notify"
 	pluginping "github.com/ovh/utask/pkg/plugins/builtin/ping"
 	pluginscript "github.com/ovh/utask/pkg/plugins/builtin/script"
@@ -43,6 +44,7 @@ func Register() error {
 		pluginscript.Plugin,
 		plugintag.Plugin,
 		plugincallback.Plugin,
+		pluginkafka.Plugin,
 	} {
 		if err := step.RegisterRunner(p.PluginName(), p); err != nil {
 			return err

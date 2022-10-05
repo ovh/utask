@@ -5,6 +5,8 @@ go 1.19
 require (
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/Masterminds/squirrel v1.4.0
+	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
+	github.com/Shopify/sarama v1.37.2
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/fabienm/go-logrus-formatters v1.0.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -12,6 +14,8 @@ require (
 	github.com/go-gorp/gorp v2.2.0+incompatible
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
 	github.com/gofrs/uuid v3.3.0+incompatible
+	github.com/imdario/mergo v0.3.9 // indirect
+	github.com/jinzhu/now v1.0.1 // indirect
 	github.com/jpillora/backoff v1.0.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/lib/pq v1.6.0
@@ -23,6 +27,8 @@ require (
 	github.com/ovh/go-ovh v0.0.0-20181109152953-ba5adb4cf014
 	github.com/ovh/symmecrypt v0.4.3
 	github.com/ovh/tat v5.2.5+incompatible
+	github.com/pelletier/go-toml v1.4.0 // indirect
+	github.com/poy/onpar v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/santhosh-tekuri/jsonschema v1.2.4
@@ -35,20 +41,22 @@ require (
 	github.com/ybriffa/go-http-digest-auth-client v0.6.3
 	golang.org/x/crypto v0.5.0
 	golang.org/x/net v0.7.0
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
 	gopkg.in/mail.v2 v2.3.1
 )
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.0 // indirect
-	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/eapache/go-resiliency v1.3.0 // indirect
+	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
+	github.com/eapache/queue v1.1.0 // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
 	github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe // indirect
@@ -62,22 +70,24 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.1.1 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.5.1 // indirect
-	github.com/hashicorp/go-uuid v1.0.2 // indirect
+	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
-	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
-	github.com/jcmturner/gofork v1.0.0 // indirect
+	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
-	github.com/jcmturner/gokrb5/v8 v8.3.0 // indirect
-	github.com/jcmturner/rpc/v2 v2.0.2 // indirect
-	github.com/jinzhu/now v1.0.1 // indirect
+	github.com/jcmturner/gokrb5/v8 v8.4.3 // indirect
+	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
@@ -92,14 +102,15 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
+	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/poy/onpar v1.0.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
