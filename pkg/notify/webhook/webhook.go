@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
@@ -51,13 +50,13 @@ func (w *NotificationSender) Send(m *notify.Message, name string) {
 
 	b, err := json.Marshal(msg)
 	if err != nil {
-		fmt.Println(err)
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
 	req, err := http.NewRequest("POST", w.webhookURL, bytes.NewBuffer(b))
 	if err != nil {
-		fmt.Println(err)
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
@@ -71,18 +70,22 @@ func (w *NotificationSender) Send(m *notify.Message, name string) {
 
 	res, err := w.httpClient.Do(req)
 	if err != nil {
-		log.Println(err)
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode >= 400 {
+		resErr := fmt.Errorf("failed to send notification using %q: backend returned with status code %d", name, res.StatusCode)
+
 		resBody, err := ioutil.ReadAll(res.Body)
-		log.Printf("failed to send notification using %q: backend returned with status code %d\n", name, res.StatusCode)
 		if err == nil {
-			log.Printf("webhook %q response body: %s\n", name, string(resBody))
+			notify.WrappedSendErrorWithBody(resErr, m, Type, name, string(resBody))
+		} else {
+			notify.WrappedSendError(resErr, m, Type, name)
 		}
+
 		return
 	}
 }
