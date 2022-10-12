@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/utask/engine/input"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/models"
+	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/notify"
@@ -792,6 +793,16 @@ func (t *Task) ShouldResumeParentTask(dbp zesty.DBProvider) (*Task, error) {
 		return nil, nil
 	}
 	if parentTask.Resolution == nil {
+		return nil, nil
+	}
+
+	r, err := resolution.LoadFromPublicID(dbp, *parentTask.Resolution)
+	if err != nil {
+		return nil, err
+	}
+
+	switch r.State {
+	case resolution.StateCrashed, resolution.StatePaused:
 		return nil, nil
 	}
 
