@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/constants"
 )
 
 // CreateTask creates a task with the given inputs, and creates a resolution if autorunnable
@@ -66,4 +67,46 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 	}
 
 	return t, nil
+}
+
+func ShouldResumeParentTask(dbp zesty.DBProvider, t *task.Task) (*task.Task, error) {
+	switch t.State {
+	case task.StateDone, task.StateWontfix, task.StateCancelled:
+	default:
+		return nil, nil
+	}
+	if t.Tags == nil {
+		return nil, nil
+	}
+	parentTaskID, ok := t.Tags[constants.SubtaskTagParentTaskID]
+	if !ok {
+		return nil, nil
+	}
+
+	parentTask, err := task.LoadFromPublicID(dbp, parentTaskID)
+	if err != nil {
+		return nil, err
+	}
+	switch parentTask.State {
+	case task.StateBlocked, task.StateRunning, task.StateWaiting:
+	default:
+		// not allowed to resume a parent task that is not either Waiting, Running or Blocked.
+		// Todo state should not be runned as it might need manual resolution from a granted resolver
+		return nil, nil
+	}
+	if parentTask.Resolution == nil {
+		return nil, nil
+	}
+
+	r, err := resolution.LoadFromPublicID(dbp, *parentTask.Resolution)
+	if err != nil {
+		return nil, err
+	}
+
+	switch r.State {
+	case resolution.StateCrashed, resolution.StatePaused:
+		return nil, nil
+	}
+
+	return parentTask, nil
 }

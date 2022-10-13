@@ -40,6 +40,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
+	"github.com/ovh/utask/pkg/taskutils"
 )
 
 const (
@@ -1188,7 +1189,7 @@ func TestResolveSubTask(t *testing.T) {
 	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
 	require.Nil(t, err)
 	assert.Equal(t, task.StateDone, subtask.State)
-	parentTaskToResume, err := subtask.ShouldResumeParentTask(dbp)
+	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
 	require.Nil(t, err)
 	require.NotNil(t, parentTaskToResume)
 	assert.Equal(t, res.TaskID, parentTaskToResume.ID)
@@ -1269,7 +1270,7 @@ func TestResolveSubTaskParentTaskPaused(t *testing.T) {
 	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
 	require.Nil(t, err)
 	assert.Equal(t, task.StateDone, subtask.State)
-	parentTaskToResume, err := subtask.ShouldResumeParentTask(dbp)
+	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
 	require.Nil(t, parentTaskToResume)
 	require.Nil(t, err)
 }

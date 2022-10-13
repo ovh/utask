@@ -29,6 +29,7 @@ import (
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
+	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
 
@@ -592,7 +593,7 @@ forLoop:
 }
 
 func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphore.Weighted, debugLogger *logrus.Entry) error {
-	parentTask, err := currentTask.ShouldResumeParentTask(dbp)
+	parentTask, err := taskutils.ShouldResumeParentTask(dbp, currentTask)
 	if err != nil {
 		return err
 	}
