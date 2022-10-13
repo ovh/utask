@@ -171,6 +171,7 @@ func templateFromYAML(dbp zesty.DBProvider, filename string) (*tasktemplate.Task
 	if err := tmpl.Valid(); err != nil {
 		return nil, err
 	}
+	tmpl.Normalize()
 	if err := dbp.DB().Insert(&tmpl); err != nil {
 		intErr := pgjuju.Interpret(err)
 		if !errors.IsAlreadyExists(intErr) {
@@ -1152,13 +1153,7 @@ func TestResolveSubTask(t *testing.T) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	require.Nil(t, err)
 
-	tt, err := templateFromYAML(dbp, "variables.yaml")
-	require.Nil(t, err)
-	tt.Normalize()
-	assert.Equal(t, "variableeval", tt.Name)
-	require.Nil(t, tt.Valid())
-
-	err = dbp.DB().Insert(tt)
+	_, err = templateFromYAML(dbp, "variables.yaml")
 	require.Nil(t, err)
 
 	res, err := createResolution("subtask.yaml", map[string]interface{}{}, nil)
@@ -1229,13 +1224,7 @@ func TestResolveSubTaskParentTaskPaused(t *testing.T) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	require.Nil(t, err)
 
-	tt, err := templateFromYAML(dbp, "variables.yaml")
-	require.Nil(t, err)
-	tt.Normalize()
-	assert.Equal(t, "variableeval", tt.Name)
-	require.Nil(t, tt.Valid())
-
-	err = dbp.DB().Insert(tt)
+	_, err = templateFromYAML(dbp, "variables.yaml")
 	require.Nil(t, err)
 
 	res, err := createResolution("subtask.yaml", map[string]interface{}{}, nil)
