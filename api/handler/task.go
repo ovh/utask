@@ -464,7 +464,7 @@ func WontfixTask(c *gin.Context, in *wontfixTaskIn) error {
 		return err
 	}
 
-	parentTask, err := t.ShouldResumeParentTask(dbp)
+	parentTask, err := taskutils.ShouldResumeParentTask(dbp, t)
 	if err == nil && parentTask != nil {
 		go func() {
 			logrus.Debugf("resuming parent task %q resolution %q", parentTask.PublicID, *parentTask.Resolution)

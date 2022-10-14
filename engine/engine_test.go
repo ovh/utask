@@ -40,6 +40,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
 	pluginsubtask "github.com/ovh/utask/pkg/plugins/builtin/subtask"
+	"github.com/ovh/utask/pkg/taskutils"
 )
 
 const (
@@ -170,6 +171,7 @@ func templateFromYAML(dbp zesty.DBProvider, filename string) (*tasktemplate.Task
 	if err := tmpl.Valid(); err != nil {
 		return nil, err
 	}
+	tmpl.Normalize()
 	if err := dbp.DB().Insert(&tmpl); err != nil {
 		intErr := pgjuju.Interpret(err)
 		if !errors.IsAlreadyExists(intErr) {
@@ -1151,13 +1153,7 @@ func TestResolveSubTask(t *testing.T) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	require.Nil(t, err)
 
-	tt, err := templateFromYAML(dbp, "variables.yaml")
-	require.Nil(t, err)
-	tt.Normalize()
-	assert.Equal(t, "variableeval", tt.Name)
-	require.Nil(t, tt.Valid())
-
-	err = dbp.DB().Insert(tt)
+	_, err = templateFromYAML(dbp, "variables.yaml")
 	require.Nil(t, err)
 
 	res, err := createResolution("subtask.yaml", map[string]interface{}{}, nil)
@@ -1185,6 +1181,14 @@ func TestResolveSubTask(t *testing.T) {
 		assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
 	}
 
+	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateDone, subtask.State)
+	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
+	require.Nil(t, err)
+	require.NotNil(t, parentTaskToResume)
+	assert.Equal(t, res.TaskID, parentTaskToResume.ID)
+
 	// checking if the parent task is picked up after that the subtask is resolved.
 	// need to sleep a bit because the parent task is resumed asynchronously
 	ti := time.Second
@@ -1192,7 +1196,7 @@ func TestResolveSubTask(t *testing.T) {
 	for i < ti {
 		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
 		require.Nil(t, err)
-		if res.State != resolution.StateError {
+		if res.State != resolution.StateWaiting {
 			break
 		}
 
@@ -1214,6 +1218,50 @@ func TestResolveSubTask(t *testing.T) {
 
 	}
 	assert.Equal(t, resolution.StateDone, res.State)
+}
+
+func TestResolveSubTaskParentTaskPaused(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	require.Nil(t, err)
+
+	_, err = templateFromYAML(dbp, "variables.yaml")
+	require.Nil(t, err)
+
+	res, err := createResolution("subtask.yaml", map[string]interface{}{}, nil)
+	require.Nil(t, err, "failed to create resolution: %s", err)
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateWaiting, res.State)
+
+	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
+	subtaskPublicID := subtaskCreationOutput["id"].(string)
+
+	// pausing parent task
+	res.SetState(resolution.StatePaused)
+	res.Update(dbp)
+
+	subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateTODO, subtask.State)
+
+	subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
+	require.Nil(t, err)
+
+	subtaskResolution, err = runResolution(subtaskResolution)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateDone, subtaskResolution.State)
+	for k, v := range subtaskResolution.Steps {
+		assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
+	}
+
+	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateDone, subtask.State)
+	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
+	require.Nil(t, parentTaskToResume)
+	require.Nil(t, err)
 }
 
 func TestResolveCallback(t *testing.T) {
