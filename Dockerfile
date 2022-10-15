@@ -10,7 +10,7 @@ RUN BASEHREF=___UTASK_DASHBOARD_BASEHREF___ PREFIX_API_BASE_URL=___UTASK_DASHBOA
 WORKDIR /home/node/ui/editor
 RUN BASEHREF=___UTASK_EDITOR_BASEHREF___ SENTRY_DSN=___UTASK_DASHBOARD_SENTRY_DSN___ make build-prod
 
-FROM golang:1.18
+FROM golang:1.19
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
