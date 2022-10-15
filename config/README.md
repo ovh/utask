@@ -167,7 +167,10 @@ postgres://user:pass@db/utask?sslmode=disable
     // dashboard_sentry_dsn defines the Sentry DSN for the Dashboard UI. Used to retrieve Javascript execution errors inside a Sentry instance.
     // default: empty, no SENTRY_DSN
     "dashboard_sentry_dsn": "",
-     // server_options holds configuration to fine-tune DB connection
+    // steps_compression_algorithm defines the compression algorithm to use to compress the steps data in database.
+    // default: empty, no compression. Available compression algorithms: gzip
+    "steps_compression_algorithm": "",
+    // server_options holds configuration to fine-tune DB connection
     "server_options": {
         // max_body_bytes defines the maximum size that will be read when sending a body to the uTask server.
         // value can't be smaller than 1KB (1024), and can't be bigger than 10MB (10*1024*1024)

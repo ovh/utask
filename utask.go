@@ -10,6 +10,9 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"github.com/ovh/configstore"
+
+	"github.com/ovh/utask/pkg/compress"
+	"github.com/ovh/utask/pkg/compress/noop"
 )
 
 var (
@@ -21,6 +24,8 @@ var (
 	App string
 	// InstanceID identifies this running instance of µTask, as registered in DB
 	InstanceID uint64
+	// StepsCompressionAlg represents the compression algorithm used to compress the steps data in resolution row.
+	StepsCompressionAlg string
 
 	// FInitializersFolder is the path to a folder containing
 	// .so plugins for µTask initialization
@@ -98,6 +103,8 @@ const (
 
 	// GroupsSeparator corresponds to the separator used to break a string into a list of groups and vice versa.
 	GroupsSeparator = ","
+
+	DefaultCompressionAlgorithm = noop.AlgorithmName
 )
 
 // Cfg holds global configuration data
@@ -123,6 +130,7 @@ type Cfg struct {
 	DashboardAPIPathPrefix                     string                   `json:"dashboard_api_path_prefix"`
 	DashboardSentryDSN                         string                   `json:"dashboard_sentry_dsn"`
 	EditorPathPrefix                           string                   `json:"editor_path_prefix"`
+	StepsCompressionAlg                        string                   `json:"steps_compression_algorithm"`
 	ServerOptions                              ServerOpt                `json:"server_options"`
 
 	resourceSemaphores map[string]*semaphore.Weighted
@@ -377,6 +385,14 @@ func Config(store *configstore.Store) (*Cfg, error) {
 			}
 		} else {
 			global.resourceAcquireTimeoutDuration = defaultResourceAcquireTimeout
+		}
+
+		if global.StepsCompressionAlg != "" {
+			if _, err = compress.Get(global.StepsCompressionAlg); err != nil {
+				return nil, err
+			}
+		} else {
+			global.StepsCompressionAlg = DefaultCompressionAlgorithm
 		}
 
 		App = global.ApplicationName
