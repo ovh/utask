@@ -11,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
@@ -21,9 +23,9 @@ import (
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	compress "github.com/ovh/utask/pkg/compress/init"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -42,6 +44,10 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := now.Init(); err != nil {
+		panic(err)
+	}
+
+	if err := compress.Register(); err != nil {
 		panic(err)
 	}
 

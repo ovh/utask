@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	compress "github.com/ovh/utask/pkg/compress/init"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
@@ -68,6 +69,10 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := auth.Init(store); err != nil {
+		panic(err)
+	}
+
+	if err := compress.Register(); err != nil {
 		panic(err)
 	}
 

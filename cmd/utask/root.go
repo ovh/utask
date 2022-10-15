@@ -26,6 +26,7 @@ import (
 	functionsrunner "github.com/ovh/utask/engine/functions/runner"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
+	compress "github.com/ovh/utask/pkg/compress/init"
 	notify "github.com/ovh/utask/pkg/notify/init"
 	"github.com/ovh/utask/pkg/plugins"
 	"github.com/ovh/utask/pkg/plugins/builtin"
@@ -146,6 +147,8 @@ var rootCmd = &cobra.Command{
 		service := &plugins.Service{Store: store, Server: server}
 
 		for _, err := range []error{
+			// register compression algorithms
+			compress.Register(),
 			// run custom initialization code built as *.so plugins
 			plugins.InitializersFromFolder(utask.FInitializersFolder, service),
 			// register builtin initializers
@@ -177,6 +180,8 @@ var rootCmd = &cobra.Command{
 		server.SetEditorPathPrefix(cfg.EditorPathPrefix)
 		server.SetDashboardSentryDSN(cfg.DashboardSentryDSN)
 		server.SetMaxBodyBytes(cfg.ServerOptions.MaxBodyBytes)
+
+		utask.StepsCompressionAlg = cfg.StepsCompression
 
 		if utask.FDebug {
 			log.SetLevel(log.DebugLevel)

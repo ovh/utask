@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/utask/models"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/compress"
 	"github.com/ovh/utask/pkg/now"
 
 	"github.com/Masterminds/squirrel"
@@ -81,9 +82,10 @@ type DBModel struct {
 	RunCount   int        `json:"run_count" db:"run_count"`
 	RunMax     int        `json:"run_max" db:"run_max"`
 
-	CryptKey       []byte `json:"-" db:"crypt_key"` // key for encrypting steps (itself encrypted with master key)
-	EncryptedInput []byte `json:"-" db:"encrypted_resolver_input"`
-	EncryptedSteps []byte `json:"-" db:"encrypted_steps"` // encrypted Steps map
+	CryptKey            []byte `json:"-" db:"crypt_key"` // key for encrypting steps (itself encrypted with master key)
+	EncryptedInput      []byte `json:"-" db:"encrypted_resolver_input"`
+	EncryptedSteps      []byte `json:"-" db:"encrypted_steps"`       // encrypted Steps map
+	StepsCompressionAlg string `json:"-" db:"steps_compression_alg"` // compression algorithm used
 
 	BaseConfigurations map[string]json.RawMessage `json:"base_configurations" db:"base_configurations"`
 }
@@ -145,7 +147,18 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 	if err != nil {
 		return nil, err
 	}
-	r.EncryptedSteps = []byte(encrSteps)
+
+	c, err := compress.Get(utask.StepsCompressionAlg)
+	if err != nil {
+		return nil, err
+	}
+
+	r.StepsCompressionAlg = utask.StepsCompressionAlg
+
+	r.EncryptedSteps, err = c.Compress([]byte(encrSteps))
+	if err != nil {
+		return nil, err
+	}
 
 	err = tt.ValidateResolverInputs(resolverInputs)
 	if err != nil {
@@ -221,8 +234,18 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 
 	r.Values = values.NewValues()
 
+	c, err := compress.Get(r.StepsCompressionAlg)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptSteps, err := c.Decompress(r.EncryptedSteps)
+	if err != nil {
+		return nil, err
+	}
+
 	st := make(map[string]*step.Step)
-	err = models.EncryptionKey.DecryptMarshal(string(r.EncryptedSteps), &st, []byte(r.PublicID))
+	err = models.EncryptionKey.DecryptMarshal(string(encryptSteps), &st, []byte(r.PublicID))
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +354,18 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 	if err != nil {
 		return err
 	}
-	r.EncryptedSteps = []byte(encrSteps)
+
+	c, err := compress.Get(r.StepsCompressionAlg)
+	if err != nil {
+		return err
+	}
+
+	compressedSteps, err := c.Compress([]byte(encrSteps))
+	if err != nil {
+		return err
+	}
+
+	r.EncryptedSteps = compressedSteps
 
 	encrInput, err := models.EncryptionKey.EncryptMarshal(r.ResolverInput, []byte(r.PublicID))
 	if err != nil {
@@ -514,7 +548,7 @@ func (r *Resolution) SetInput(input map[string]interface{}) {
 }
 
 var rSelector = sqlgenerator.PGsql.Select(
-	`"resolution".id, "resolution".public_id, "resolution".id_task, "resolution".resolver_username, "resolution".state, "resolution".instance_id, "resolution".created, "resolution".last_start, "resolution".last_stop, "resolution".next_retry, "resolution".run_count, "resolution".run_max, "resolution".crypt_key, "resolution".encrypted_steps, "resolution".encrypted_resolver_input, "resolution".base_configurations, "task".public_id as task_public_id, "task".title as task_title`,
+	`"resolution".id, "resolution".public_id, "resolution".id_task, "resolution".resolver_username, "resolution".state, "resolution".instance_id, "resolution".created, "resolution".last_start, "resolution".last_stop, "resolution".next_retry, "resolution".run_count, "resolution".run_max, "resolution".crypt_key, "resolution".encrypted_steps, "resolution".steps_compression_alg, "resolution".encrypted_resolver_input, "resolution".base_configurations, "task".public_id as task_public_id, "task".title as task_title`,
 ).From(
 	`"resolution"`,
 ).OrderBy(

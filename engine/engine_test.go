@@ -34,6 +34,7 @@ import (
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
+	compress "github.com/ovh/utask/pkg/compress/init"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins"
 	plugincallback "github.com/ovh/utask/pkg/plugins/builtin/callback"
@@ -68,6 +69,10 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := now.Init(); err != nil {
+		panic(err)
+	}
+
+	if err := compress.Register(); err != nil {
 		panic(err)
 	}
 
