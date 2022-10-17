@@ -7,6 +7,7 @@ import (
 	"github.com/juju/errors"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
+
 	"github.com/ovh/utask/pkg/notify"
 )
 
@@ -75,7 +76,7 @@ func (ns *NotificationSender) Send(m *notify.Message, name string) {
 
 	_, err := ns.client.Create(ctx, req)
 	if err != nil {
-		notify.WrappedSendError(Type, err.Error())
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 }

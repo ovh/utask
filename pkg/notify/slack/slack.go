@@ -3,6 +3,7 @@ package slack
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -57,14 +58,14 @@ func (sn *NotificationSender) Send(m *notify.Message, name string) {
 
 	req, err := http.NewRequest(http.MethodPost, sn.webhookURL, bytes.NewBuffer(slackBody))
 	if err != nil {
-		notify.WrappedSendError(Type, err.Error())
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := sn.httpClient.Do(req)
 	if err != nil {
-		notify.WrappedSendError(Type, err.Error())
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
@@ -73,7 +74,8 @@ func (sn *NotificationSender) Send(m *notify.Message, name string) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	if buf.String() != "ok" {
-		notify.WrappedSendError(Type, "Non-ok response returned from Slack")
+		err = errors.New("non-ok response returned from Slack")
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 }

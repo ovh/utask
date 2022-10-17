@@ -50,7 +50,7 @@ func NewTatNotificationSender(url, user, pass, topic string) (*NotificationSende
 func (tn *NotificationSender) Send(m *notify.Message, name string) {
 	client, err := tn.spawnTatClient()
 	if err != nil {
-		fmt.Println(err)
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (tn *NotificationSender) Send(m *notify.Message, name string) {
 		},
 	)
 	if err != nil {
-		fmt.Println(err)
+		notify.WrappedSendError(err, m, Type, name)
 		return
 	}
 	// TODO create message for task creation
