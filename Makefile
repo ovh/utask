@@ -67,11 +67,11 @@ test-dev:
 
 test-travis:
 	# moving to another location to go get some packages, otherwise it will include those packages as dependencies in go.mod
-	cd ${HOME} && go get golang.org/x/tools/cmd/cover github.com/mattn/goveralls
+	cd ${HOME} && go go install github.com/mattn/goveralls@latest
 	hack/test.sh ${TEST_CMD_COV}
 
 test-docker:
-	cd ${HOME} && go get golang.org/x/tools/cmd/cover github.com/mattn/goveralls
+	cd ${HOME} && go install github.com/mattn/goveralls@latest
 	DEV=true bash hack/test-docker.sh ${TEST_CMD}
 
 run-test-stack:
