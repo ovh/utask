@@ -9,6 +9,7 @@ fully `DONE`.
 |----------------------|-------------------------------------------------------------------------------------------------------------------|
 | `template`           | the name of a task template, as accepted through µTask's  API                                                     |
 | `input`              | a map of named values, as accepted on µTask's API                                                                 |
+| `json_input`         | a JSON string passed as input to the subtask template                                                             |
 | `resolver_usernames` | a string containing a JSON array of additional resolver users for the subtask                                     |
 | `resolver_groups`    | a string containing a JSON array of additional resolver groups for the subtask                                    |
 | `watcher_usernames`  | a string containing a JSON array of additional watcher users for the subtask                                      |

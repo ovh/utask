@@ -2,6 +2,7 @@ package pluginsubtask
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -33,6 +34,7 @@ var (
 type SubtaskConfig struct {
 	Template          string                 `json:"template"`
 	Input             map[string]interface{} `json:"input"`
+	JsonInput         string                 `json:"json_input,omitempty"`
 	ResolverUsernames string                 `json:"resolver_usernames"`
 	ResolverGroups    string                 `json:"resolver_groups"`
 	WatcherUsernames  string                 `json:"watcher_usernames"`
@@ -143,6 +145,11 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 			watcherGroups, err = utils.ConvertJSONRowToSlice(cfg.WatcherGroups)
 			if err != nil {
 				return nil, nil, fmt.Errorf("can't convert JSON to row slice: %s", err)
+			}
+		}
+		if cfg.JsonInput != "" {
+			if err := json.Unmarshal([]byte(cfg.JsonInput), &cfg.Input); err != nil {
+				return nil, nil, fmt.Errorf("can't parse `json_input`: %s", err)
 			}
 		}
 
