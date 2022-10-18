@@ -493,6 +493,9 @@
                         "input": {
                             "type": "object"
                         },
+                        "json_input": {
+                            "type": "string"
+                        },
                         "tags": {
                             "$ref": "#/definitions/Tags"
                         },

@@ -1,6 +1,9 @@
 name: subtaskTemplate
 description: Template that spawns a subtask
 title_format: "[test] subtask template test"
+variables:
+- name: quaranteDeux
+  value: '42'
 steps:
     subtaskCreation:
         description: creating a subtask
@@ -15,5 +18,25 @@ steps:
             configuration:
                 output:
                     foo: OK
+    jsonInputSubtask:
+        description: creating a subtask using json_input
+        action:
+            type: subtask
+            configuration:
+                template: input
+                json_input: |-
+                    {
+                        "quantity": 1337
+                    }
+    templatingJsonInputSubtask:
+        description: creating a subtask using json_input
+        action:
+            type: subtask
+            configuration:
+                template: input
+                json_input: |-
+                    {
+                        "quantity": {{eval `quaranteDeux`}}
+                    }
 result_format:
     foo: "{{.step.echoOK.output.foo}}"

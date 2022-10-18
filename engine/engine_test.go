@@ -1164,30 +1164,32 @@ func TestResolveSubTask(t *testing.T) {
 	require.NotNil(t, res)
 	assert.Equal(t, resolution.StateWaiting, res.State)
 
-	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
-	subtaskPublicID := subtaskCreationOutput["id"].(string)
+	for _, subtaskName := range []string{"subtaskCreation", "jsonInputSubtask", "templatingJsonInputSubtask"} {
+		subtaskCreationOutput := res.Steps[subtaskName].Output.(map[string]interface{})
+		subtaskPublicID := subtaskCreationOutput["id"].(string)
 
-	subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
-	require.Nil(t, err)
-	assert.Equal(t, task.StateTODO, subtask.State)
+		subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
+		require.Nil(t, err)
+		assert.Equal(t, task.StateTODO, subtask.State)
 
-	subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
-	require.Nil(t, err)
+		subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
+		require.Nil(t, err)
 
-	subtaskResolution, err = runResolution(subtaskResolution)
-	require.Nil(t, err)
-	assert.Equal(t, task.StateDone, subtaskResolution.State)
-	for k, v := range subtaskResolution.Steps {
-		assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
+		subtaskResolution, err = runResolution(subtaskResolution)
+		require.Nil(t, err)
+		assert.Equal(t, task.StateDone, subtaskResolution.State)
+		for k, v := range subtaskResolution.Steps {
+			assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
+		}
+
+		subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
+		require.Nil(t, err)
+		assert.Equal(t, task.StateDone, subtask.State)
+		parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
+		require.Nil(t, err)
+		require.NotNil(t, parentTaskToResume)
+		assert.Equal(t, res.TaskID, parentTaskToResume.ID)
 	}
-
-	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
-	require.Nil(t, err)
-	assert.Equal(t, task.StateDone, subtask.State)
-	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
-	require.Nil(t, err)
-	require.NotNil(t, parentTaskToResume)
-	assert.Equal(t, res.TaskID, parentTaskToResume.ID)
 
 	// checking if the parent task is picked up after that the subtask is resolved.
 	// need to sleep a bit because the parent task is resumed asynchronously
