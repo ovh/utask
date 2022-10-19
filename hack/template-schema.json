@@ -363,6 +363,9 @@
                         "argv": {
                             "type": "array"
                         },
+                        "environment": {
+                            "type": "object"
+                        },
                         "stdin": {
                             "type": "string"
                         },

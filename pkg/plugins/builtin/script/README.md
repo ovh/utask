@@ -17,6 +17,7 @@ The step will be considered successful if the script returns exit code 0, otherw
 |---|---
 | `file_path` | file name under scripts folder
 | `argv` | a collection of script argv
+| `environment` | a map of environment variables passed to the script
 | `timeout` | timeout of the script execution
 | `stdin` | inject stdin in your script
 | `output_mode` | indicates how to retrieve the output values ; valid values are: `manual-lastline` (default), `disabled`, `manual-delimiters`
@@ -50,6 +51,8 @@ action:
       - "1-10"
       - "100"
       - "110"
+    environment:
+      FOO: '{{eval `foo`}}'
 ```
 
 ## Note

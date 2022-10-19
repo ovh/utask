@@ -1123,6 +1123,10 @@ func TestScriptPluginEnvironmentVariables(t *testing.T) {
 	assert.Equal(t, res.PublicID, environment["UTASK_RESOLUTION_ID"])
 	assert.NotNil(t, environment["UTASK_STEP_NAME"])
 	assert.Equal(t, "stepOne", environment["UTASK_STEP_NAME"])
+	assert.NotNil(t, environment["static_value"])
+	assert.Equal(t, "foo", environment["static_value"])
+	assert.NotNil(t, environment["variable_value"])
+	assert.Equal(t, "bar", environment["variable_value"])
 }
 
 func TestBaseBaseConfiguration(t *testing.T) {

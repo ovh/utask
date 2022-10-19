@@ -2,6 +2,10 @@ name: exec-script-with-environment
 description: Executing a shell script that returns environment variables
 title_format: "[test] a simple task for script-plugin to verify environment variables"
 
+variables:
+- name: foo
+  value: bar
+
 steps:
     stepOne:
         description: first step
@@ -30,3 +34,6 @@ steps:
                 # You can specify your file's path relative to that location
                 file_path: "./scripts_tests/env-vars.py"
                 timeout_seconds: "25"
+                environment:
+                    static_value: foo
+                    variable_value: '{{ eval `foo` }}'
