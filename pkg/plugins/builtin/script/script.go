@@ -46,13 +46,14 @@ type Metadata struct {
 
 // Config is the configuration needed to execute a script
 type Config struct {
-	File                   string   `json:"file_path"`
-	Argv                   []string `json:"argv,omitempty"`
-	Timeout                string   `json:"timeout,omitempty"`
-	Stdin                  string   `json:"stdin,omitempty"`
-	OutputMode             string   `json:"output_mode"`
-	OutputManualDelimiters []string `json:"output_manual_delimiters"`
-	ExitCodesUnrecoverable []string `json:"exit_codes_unrecoverable"`
+	File                   string                 `json:"file_path"`
+	Argv                   []string               `json:"argv,omitempty"`
+	Timeout                string                 `json:"timeout,omitempty"`
+	Stdin                  string                 `json:"stdin,omitempty"`
+	OutputMode             string                 `json:"output_mode"`
+	OutputManualDelimiters []string               `json:"output_manual_delimiters"`
+	ExitCodesUnrecoverable []string               `json:"exit_codes_unrecoverable"`
+	Environment            map[string]interface{} `json:"environment,omitempty"`
 }
 
 // ScriptContext is the metadata inherited from the task
@@ -167,6 +168,10 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	)
 	cmd.Dir = utask.FScriptsFolder
 	cmd.Stdin = strings.NewReader(cfg.Stdin)
+
+	for k, v := range cfg.Environment {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
 
 	exitCode := 0
 	metaError := ""
