@@ -463,6 +463,9 @@
                                 "manual-lastline"
                             ],
                             "default": "auto-result"
+                        },
+                        "timeout": {
+                            "type": "string"
                         }
                     }
                 },

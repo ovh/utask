@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/juju/errors"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/ovh/utask/pkg/plugins/builtin/scriptutil"
@@ -17,8 +19,9 @@ import (
 
 // connection configuration values
 const (
-	MaxHops     = 10
-	ConnTimeout = 10 * time.Second
+	MaxHops           = 10
+	ConnTimeout       = 10 * time.Second
+	DefaultCmdTimeout = 5 * time.Minute
 )
 
 // ssh plugin opens an ssh connection and runs commands on target machine
@@ -27,6 +30,7 @@ var (
 		taskplugin.WithConfig(configssh, ConfigSSH{}),
 		taskplugin.WithResources(resourcesssh),
 	)
+	ErrSessionTimeout = errors.New("ssh session has not terminated before timeout")
 )
 
 // ConfigSSH is the data needed to perform an SSH action
@@ -41,6 +45,7 @@ type ConfigSSH struct {
 	Key                    string            `json:"ssh_key"`
 	KeyPassphrase          string            `json:"ssh_key_passphrase"`
 	ExitCodesUnrecoverable []string          `json:"exit_codes_unrecoverable"`
+	Timeout                string            `json:"timeout,omitempty"`
 }
 
 func resourcesssh(i interface{}) []string {
@@ -74,6 +79,16 @@ func configssh(i interface{}) error {
 
 	if len(cfg.Hops) > MaxHops {
 		return fmt.Errorf("ssh too many hops (max %d)", MaxHops)
+	}
+
+	if cfg.Timeout != "" {
+		dur, err := time.ParseDuration(cfg.Timeout)
+		if err != nil {
+			return fmt.Errorf("can't parse timeout field %q: %s", cfg.Timeout, err.Error())
+		}
+		if dur < 0 {
+			return errors.New("timeout must be positive")
+		}
 	}
 
 	switch cfg.OutputMode {
@@ -131,6 +146,15 @@ func execssh(stepName string, i interface{}, ctx interface{}) (interface{}, inte
 	}
 	if err != nil {
 		return nil, nil, errors.NewBadRequest(err, "ssh plugin: private key")
+	}
+
+	var executionTimeout time.Duration
+
+	if cfg.Timeout != "" {
+		// Can skip error, value already validated.
+		executionTimeout, _ = time.ParseDuration(cfg.Timeout)
+	} else {
+		executionTimeout = DefaultCmdTimeout
 	}
 
 	config := &ssh.ClientConfig{
@@ -226,26 +250,44 @@ trap printResultJSON EXIT
 		extraCmd = execStr
 	}
 
-	stdoutstderr, err := session.CombinedOutput(extraCmd)
-	if err != nil {
-		exitErr, ok := err.(*ssh.ExitError)
+	exit := make(chan struct{}, 1)
+	timer := time.NewTimer(executionTimeout)
+
+	go func() {
+		select {
+		case <-timer.C:
+			err := session.Signal(ssh.SIGKILL)
+			if err != nil {
+				logrus.Warnf("session signal error: %s", err)
+			}
+		case <-exit:
+		}
+	}()
+	cmdOutput, cmdErr := session.CombinedOutput(extraCmd)
+	if !timer.Stop() {
+		logrus.Debugf("session run error: %s", cmdErr)
+		cmdErr = ErrSessionTimeout
+	}
+	close(exit)
+
+	if cmdErr != nil {
+		exitErr, ok := cmdErr.(*ssh.ExitError)
 		if ok {
 			exitCode = exitErr.Waitmsg.ExitStatus()
 			exitSignal = exitErr.Waitmsg.Signal()
 			exitMessage = exitErr.Waitmsg.Msg()
 		} else {
-			return nil, nil, err
+			return nil, nil, cmdErr
 		}
 	}
+	outStr := string(cmdOutput)
 
-	outStr := string(stdoutstderr)
 	metadata := map[string]interface{}{
 		"output":      outStr,
-		"exit_code":   fmt.Sprint(exitCode),
+		"exit_code":   strconv.Itoa(exitCode),
 		"exit_signal": exitSignal,
 		"exit_msg":    exitMessage,
 	}
-
 	output := make(map[string]interface{})
 
 	if resultLine, err := scriptutil.ParseOutput(outStr, cfg.OutputMode, cfg.OutputManualDelimiters); err != nil {
@@ -256,10 +298,8 @@ trap printResultJSON EXIT
 			return nil, metadata, err
 		}
 	}
-
 	if exitCode != 0 {
-		return output, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, err)
+		return output, metadata, scriptutil.FormatErrorExitCode(exitCode, cfg.ExitCodesUnrecoverable, cmdErr)
 	}
-
 	return output, metadata, nil
 }

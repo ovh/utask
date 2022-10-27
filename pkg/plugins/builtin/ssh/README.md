@@ -6,18 +6,19 @@ The step will be considered successful if the script returns exit code 0, otherw
 
 ## Configuration
 
-|Fields|Description
-|---|---
-| `user` | username for the connection
-| `target` | address of the remote machine
-| `hops` | a list of intermediate addresses (bastions)
-| `script` | multiline text, commands to be run on the machine's shell
-| `output_mode` | indicates how to retrieve the output values ; valid values are: `auto-result` (default), `disabled`, `manual-delimiters`, `manual-lastline`
-| `result` | an object to extract the values of variables from the machine's shell (only used when `output_mode` is configured to `auto-result`)
-| `output_manual_delimiters` | array of 2 strings ; look for a JSON formatted string in the script output between specific delimiters (only used when `output_mode` is configured to `manual-delimiters`)
-| `ssh_key` | private ssh key, preferably retrieved from {{.config}}
-| `ssh_key_passphrase` | passphrase for the key, if any
-| `exit_codes_unrecoverable` | a list of non-zero exit codes (1, 2, 3, ...) or ranges (1-10, ...) which should be considered unrecoverable and halt execution ; these will be returned to the main engine as a `CLIENT_ERROR`
+| Fields                     | Description                                                                                                                                                                                    |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `user`                     | username for the connection                                                                                                                                                                    |
+| `target`                   | address of the remote machine                                                                                                                                                                  |
+| `hops`                     | a list of intermediate addresses (bastions)                                                                                                                                                    |
+| `script`                   | multiline text, commands to be run on the machine's shell                                                                                                                                      |
+| `output_mode`              | indicates how to retrieve the output values ; valid values are: `auto-result` (default), `disabled`, `manual-delimiters`, `manual-lastline`                                                    |
+| `result`                   | an object to extract the values of variables from the machine's shell (only used when `output_mode` is configured to `auto-result`)                                                            |
+| `output_manual_delimiters` | array of 2 strings ; look for a JSON formatted string in the script output between specific delimiters (only used when `output_mode` is configured to `manual-delimiters`)                     |
+| `ssh_key`                  | private ssh key, preferably retrieved from {{.config}}                                                                                                                                         |
+| `ssh_key_passphrase`       | passphrase for the key, if any                                                                                                                                                                 |
+| `exit_codes_unrecoverable` | a list of non-zero exit codes (1, 2, 3, ...) or ranges (1-10, ...) which should be considered unrecoverable and halt execution ; these will be returned to the main engine as a `CLIENT_ERROR` |
+| `timeout`                  | defines the maximum duration of the SSH session (connection time not included). Default to `3600s` (5 minutes).                                                                                |
 
 ## Example
 
@@ -52,6 +53,7 @@ action:
       - "1-10"
       - "100"
       - "110"
+    timeout: 30s
 ```
 
 ## Requirements
