@@ -134,6 +134,6 @@ CREATE TABLE "utask_sql_migrations" (
     current_migration_applied TEXT PRIMARY KEY
 );
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.20.0-migration008');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.21.0-migration009');
 
 END;

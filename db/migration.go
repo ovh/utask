@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	expectedVersion = "v1.20.0-migration008"
+	expectedVersion = "v1.21.0-migration009"
 )
 
 var (

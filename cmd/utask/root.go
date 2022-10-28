@@ -181,7 +181,7 @@ var rootCmd = &cobra.Command{
 		server.SetDashboardSentryDSN(cfg.DashboardSentryDSN)
 		server.SetMaxBodyBytes(cfg.ServerOptions.MaxBodyBytes)
 
-		utask.StepsCompressionAlg = cfg.StepsCompression
+		utask.StepsCompressionAlg = cfg.StepsCompressionAlg
 
 		if utask.FDebug {
 			log.SetLevel(log.DebugLevel)
