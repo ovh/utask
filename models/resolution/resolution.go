@@ -1,7 +1,6 @@
 package resolution
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/compress"
 	"github.com/ovh/utask/pkg/now"
-	"github.com/ovh/utask/pkg/utils"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid"
@@ -274,7 +272,7 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 	}
 
 	st := make(map[string]*step.Step)
-	if err := utils.JSONnumberUnmarshal(bytes.NewReader(jsonSteps), &st); err != nil {
+	if err := json.Unmarshal(jsonSteps, &st); err != nil {
 		return nil, err
 	}
 	r.setSteps(st)
