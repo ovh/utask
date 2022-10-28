@@ -1,6 +1,7 @@
 package resolution
 
 import (
+	"bytes"
 	"encoding/json"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/compress"
 	"github.com/ovh/utask/pkg/now"
+	"github.com/ovh/utask/pkg/utils"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid"
@@ -143,11 +145,6 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 
 	r.BaseConfigurations = tt.BaseConfigurations
 
-	encrSteps, err := models.EncryptionKey.EncryptMarshal(r.Steps, []byte(r.PublicID))
-	if err != nil {
-		return nil, err
-	}
-
 	c, err := compress.Get(utask.StepsCompressionAlg)
 	if err != nil {
 		return nil, err
@@ -155,10 +152,21 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 
 	r.StepsCompressionAlg = utask.StepsCompressionAlg
 
-	r.EncryptedSteps, err = c.Compress([]byte(encrSteps))
+	jsonSteps, err := json.Marshal(r.Steps)
 	if err != nil {
 		return nil, err
 	}
+
+	compressedSteps, err := c.Compress(jsonSteps)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedSteps, err := models.EncryptionKey.Encrypt(compressedSteps, []byte(r.PublicID))
+	if err != nil {
+		return nil, err
+	}
+	r.EncryptedSteps = encryptedSteps
 
 	err = tt.ValidateResolverInputs(resolverInputs)
 	if err != nil {
@@ -239,14 +247,18 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 		return nil, err
 	}
 
-	encryptSteps, err := c.Decompress(r.EncryptedSteps)
+	compressedSteps, err := models.EncryptionKey.Decrypt(r.EncryptedSteps, []byte(r.PublicID))
+	if err != nil {
+		return nil, err
+	}
+
+	jsonSteps, err := c.Decompress(compressedSteps)
 	if err != nil {
 		return nil, err
 	}
 
 	st := make(map[string]*step.Step)
-	err = models.EncryptionKey.DecryptMarshal(string(encryptSteps), &st, []byte(r.PublicID))
-	if err != nil {
+	if err := utils.JSONnumberUnmarshal(bytes.NewReader(jsonSteps), &st); err != nil {
 		return nil, err
 	}
 	r.setSteps(st)
@@ -350,22 +362,26 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 
 	// TODO tasktemplate.ValidateResolverInput !!
 
-	encrSteps, err := models.EncryptionKey.EncryptMarshal(r.Steps, []byte(r.PublicID))
-	if err != nil {
-		return err
-	}
-
 	c, err := compress.Get(r.StepsCompressionAlg)
 	if err != nil {
 		return err
 	}
 
-	compressedSteps, err := c.Compress([]byte(encrSteps))
+	jsonSteps, err := json.Marshal(r.Steps)
 	if err != nil {
 		return err
 	}
 
-	r.EncryptedSteps = compressedSteps
+	compressedSteps, err := c.Compress(jsonSteps)
+	if err != nil {
+		return err
+	}
+
+	encryptedSteps, err := models.EncryptionKey.Encrypt(compressedSteps, []byte(r.PublicID))
+	if err != nil {
+		return err
+	}
+	r.EncryptedSteps = encryptedSteps
 
 	encrInput, err := models.EncryptionKey.EncryptMarshal(r.ResolverInput, []byte(r.PublicID))
 	if err != nil {
