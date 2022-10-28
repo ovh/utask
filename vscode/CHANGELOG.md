@@ -1,3 +1,7 @@
+# 1.3.0 (2022-11-14)
+
+Declare 1.21 version for JSON schema ([e739ec7](https://github.com/ovh/utask/commit/e739ec7))
+
 # 1.2.0 (2022-08-12)
 
 Declare 1.20 version for JSON schema ([29e30e3](https://github.com/ovh/utask/commit/29e30e3))
