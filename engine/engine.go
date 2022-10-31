@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/jsonschema"
+	"github.com/ovh/utask/pkg/kafkaconsumer"
 	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/taskutils"
@@ -146,6 +147,31 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 		// init retry collector (retry resolutions with state == error)
 		if err := RetryCollector(ctx); err != nil {
 			return err
+		}
+
+		// init KafkaConsumer
+		kcItems, err := configstore.Filter().Store(store).Slice(kafkaconsumer.ConfigKey).Unmarshal(func() interface{} { return &kafkaconsumer.KafkaConfig{} }).Squash().GetItemList()
+		if err != nil {
+			return err
+		}
+
+		for _, cfgItem := range kcItems.Items {
+			i, err := cfgItem.Unmarshaled()
+			if err != nil {
+				return err
+			}
+
+			cfg := i.(*kafkaconsumer.KafkaConfig)
+			consumer, err := kafkaconsumer.StartNewTaskConsumer(ctx, *cfg)
+			if err != nil {
+				return err
+			}
+
+			if err := consumer.SetDefaultConsumer(ctx); err != nil {
+				return err
+			}
+
+			consumer.StartConsumer(ctx)
 		}
 	}
 	return nil
