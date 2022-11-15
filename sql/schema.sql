@@ -100,7 +100,7 @@ CREATE TABLE "resolution" (
     crypt_key BYTEA NOT NULL,
     encrypted_resolver_input BYTEA,
     encrypted_steps BYTEA NOT NULL,
-    steps_compression_alg TEXT,
+    steps_compression_alg TEXT NOT NULL DEFAULT '',
     base_configurations JSONB NOT NULL
 );
 
