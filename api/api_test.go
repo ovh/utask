@@ -290,6 +290,61 @@ func TestPasswordInput(t *testing.T) {
 	tester.Run()
 }
 
+func TestResolutionEdit(t *testing.T) {
+	tester := iffy.NewTester(t, hdl)
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tmpl := dummyTemplate()
+
+	_, err = tasktemplate.LoadFromName(dbp, tmpl.Name)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			t.Fatal(err)
+		}
+		if err := dbp.DB().Insert(&tmpl); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	tester.AddCall("getTemplate", http.MethodGet, "/template/"+tmpl.Name, "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"{{.getTemplate.name}}","input":{"id":"foo"}}`).
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("jsonUpdate", http.MethodPut, "/task/{{.newTask.id}}", `{"input":{"id":"bar-json"}}`).
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(200))
+
+	tester.AddCall("getAfterJson", http.MethodGet, "/task/{{.newTask.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("input", "id", "bar-json"),
+		)
+
+	tester.AddCall("yamlUpdate", http.MethodPut, "/task/{{.newTask.id}}", "input:\n  id: bar-yaml").
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(200))
+
+	tester.AddCall("getAfterYaml", http.MethodGet, "/task/{{.newTask.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("input", "id", "bar-yaml"),
+		)
+
+	tester.Run()
+}
+
 func TestStartOver(t *testing.T) {
 	tester := iffy.NewTester(t, hdl)
 
