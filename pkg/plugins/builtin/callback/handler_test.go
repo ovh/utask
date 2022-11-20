@@ -2,40 +2,64 @@ package plugincallback
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/http/httptest"
+	"net/http"
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/juju/errors"
+	"github.com/loopfz/gadgeto/iffy"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/engine"
-	"github.com/ovh/utask/engine/input"
 	"github.com/ovh/utask/engine/step"
-	"github.com/ovh/utask/engine/values"
-	"github.com/ovh/utask/models/resolution"
-	"github.com/ovh/utask/models/task"
+	"github.com/ovh/utask/engine/step/executor"
 	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/auth"
 	compress "github.com/ovh/utask/pkg/compress/init"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins"
 )
 
+const (
+	adminUser   = "admin"
+	regularUser = "regular"
+
+	usernameHeaderKey = "x-remote-user"
+)
+
+var hdl http.Handler
+
 func TestMain(m *testing.M) {
 	store := configstore.DefaultStore
 	store.InitFromEnvironment()
 
-	server := api.NewServer()
-	service := &plugins.Service{Store: store, Server: server}
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.ErrorLevel)
 
-	if err := Init.Init(service); err != nil {
+	step.RegisterRunner(Plugin.PluginName(), Plugin)
+
+	srv := api.NewServer()
+	srv.WithAuth(dumbIdentityProvider)
+	srv.WithCustomMiddlewares(dummyCustomMiddleware)
+	srv.SetDashboardPathPrefix("")
+	srv.SetDashboardAPIPathPrefix("")
+	srv.SetDashboardSentryDSN("")
+	srv.SetEditorPathPrefix("")
+
+	svc := &plugins.Service{Store: store, Server: srv}
+
+	if err := Init.Init(svc); err != nil {
 		panic(err)
 	}
 
@@ -47,45 +71,64 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	if err := auth.Init(store); err != nil {
+		panic(err)
+	}
+
 	if err := compress.Register(); err != nil {
 		panic(err)
 	}
 
 	var wg sync.WaitGroup
+	ctx := context.Background()
 
-	if err := engine.Init(context.Background(), &wg, store); err != nil {
+	if err := engine.Init(ctx, &wg, store); err != nil {
 		panic(err)
 	}
 
-	step.RegisterRunner(Plugin.PluginName(), Plugin)
+	go srv.ListenAndServe()
+	srvx := &http.Server{Addr: fmt.Sprintf(":%d", utask.FPort)}
+	err := srvx.Shutdown(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	hdl = srv.Handler(ctx)
 
 	os.Exit(m.Run())
 }
 
-func TestHandleCallback(t *testing.T) {
-	dbp, err := zesty.NewDBProvider(utask.DBName)
-	assert.NoError(t, err)
+func dummyCustomMiddleware(c *gin.Context) {
+	c.Next()
+}
 
-	tt, err := tasktemplate.Create(dbp, "callback", "callback", nil, nil, []input.Input{}, []input.Input{}, []string{}, []string{}, false, false, nil, []values.Variable{}, nil, nil, "foo", nil, false, nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, tt)
+func dumbIdentityProvider(r *http.Request) (string, error) {
+	username := r.Header.Get(usernameHeaderKey)
 
-	tsk, err := task.Create(dbp, tt, "foo", []string{}, []string{}, []string{}, []string{}, []string{}, nil, nil, nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, t)
+	if username != adminUser && username != regularUser {
+		return "", errors.New("unknown user")
+	}
+	return username, nil
+}
 
-	res, err := resolution.Create(dbp, tsk, nil, "bar", true, nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, res)
+func waitChecker(dur time.Duration) iffy.Checker {
+	return func(r *http.Response, body string, respObject interface{}) error {
+		time.Sleep(dur)
+		return nil
+	}
+}
 
-	tsk.Resolution = &res.PublicID
-	tsk.Update(dbp, true, false)
+var (
+	adminHeaders = iffy.Headers{
+		usernameHeaderKey: adminUser,
+	}
+	regularHeaders = iffy.Headers{
+		usernameHeaderKey: regularUser,
+	}
+)
 
-	cb, err := createCallback(dbp, tsk, &CallbackContext{
-		StepName:          "foo",
-		TaskID:            tsk.PublicID,
-		RequesterUsername: "foo",
-	}, `{
+func callbackTemplate() (*tasktemplate.TaskTemplate, error) {
+	schema := `{
 		"$schema": "http://json-schema.org/schema#",
 		"type": "object",
 		"additionalProperties": false,
@@ -95,54 +138,142 @@ func TestHandleCallback(t *testing.T) {
 				"type": "boolean"
 			}
 		}
-	}`)
-	assert.NoError(t, err)
-	assert.NotNil(t, cb)
+	}`
+	jsonSchema, err := json.Marshal(schema)
+	if err != nil {
+		return nil, err
+	}
 
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	// invalid state
-	out, err := HandleCallback(c, &handleCallbackIn{
-		CallbackID:     cb.PublicID,
-		CallbackSecret: cb.Secret,
-		Body:           map[string]interface{}{},
-	})
-	assert.EqualError(t, err, "related task is not in a valid state: TODO")
-	assert.Nil(t, out)
-
-	// run the task
-	tsk.SetState(task.StateRunning)
-	tsk.Update(dbp, true, false)
-
-	// Invalid JSON-schema
-	out, err = HandleCallback(c, &handleCallbackIn{
-		CallbackID:     cb.PublicID,
-		CallbackSecret: cb.Secret,
-		Body:           map[string]interface{}{},
-	})
-	assert.EqualError(t, err, fmt.Sprintf("unable to validate body: I[#] S[#] doesn't validate with %q\n  I[#] S[#/required] missing properties: %q", cb.PublicID+"#", "success"))
-	assert.Nil(t, out)
-
-	// valid body
-	out, err = HandleCallback(c, &handleCallbackIn{
-		CallbackID:     cb.PublicID,
-		CallbackSecret: cb.Secret,
-		Body: map[string]interface{}{
-			"success": true,
+	return &tasktemplate.TaskTemplate{
+		Name:        "callback",
+		Description: "callback",
+		TitleFormat: "callback",
+		Steps: map[string]*step.Step{
+			"createCb": {
+				Action: executor.Executor{
+					Type:          "callback",
+					Configuration: json.RawMessage(`{"action": "create", "schema": ` + string(jsonSchema) + `}`),
+				},
+			},
+			"waitCb": {
+				Dependencies: []string{"createCb"},
+				Action: executor.Executor{
+					Type:          "callback",
+					Configuration: json.RawMessage(`{"action": "wait", "id": "{{.step.createCb.output.id}}"}`),
+				},
+			},
 		},
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, out.Message, "The callback has been resolved")
+	}, nil
+}
 
-	// already called
-	out, err = HandleCallback(c, &handleCallbackIn{
-		CallbackID:     cb.PublicID,
-		CallbackSecret: cb.Secret,
-		Body: map[string]interface{}{
-			"success": true,
-		},
-	})
-	assert.Nil(t, out)
-	assert.EqualError(t, err, "callback has already been resolved")
+func TestHandleCallback(t *testing.T) {
+	tester := iffy.NewTester(t, hdl)
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	assert.NoError(t, err)
+
+	callback, err := callbackTemplate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tmpl, err := tasktemplate.LoadFromName(dbp, callback.Name)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			t.Fatal(err)
+		}
+		if err := dbp.DB().Insert(callback); err != nil {
+			t.Fatal(err)
+		}
+		tmpl, err = tasktemplate.LoadFromName(dbp, callback.Name)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	tester.AddCall("getTemplate", http.MethodGet, "/template/"+tmpl.Name, "").
+		Headers(regularHeaders).
+		Checkers(
+			iffy.ExpectStatus(200),
+		)
+
+	tester.AddCall("newTask", http.MethodPost, "/task", `{"template_name":"{{.getTemplate.name}}", "input": {}}`).
+		Headers(regularHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("createResolution", http.MethodPost, "/resolution", `{"task_id":"{{.newTask.id}}"}`).
+		Headers(adminHeaders).
+		Checkers(iffy.ExpectStatus(201))
+
+	tester.AddCall("runResolution", http.MethodPost, "/resolution/{{.createResolution.id}}/run", "").
+		Headers(adminHeaders).
+		Checkers(
+			iffy.ExpectStatus(204),
+			waitChecker(time.Second), // fugly... need to give resolution manager some time to asynchronously finish running
+		)
+
+	tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("state", "WAITING"),
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}", `{"success": true}`).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONBranch("error", "binding error on field 'CallbackSecret' of type 'handleCallbackIn': missing query parameter: t"),
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}?t={{.getResolution.steps.createCb.output.token}}", ``).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONFields("error"),
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}?t={{.getResolution.steps.createCb.output.token}}", `{}`).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONFields("error"),
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}?t={{.getResolution.steps.createCb.output.token}}", `{"success": "true"}`).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONFields("error"),
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}?t={{.getResolution.steps.createCb.output.token}}", `{"success": true}`).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("message", "The callback has been resolved"),
+			waitChecker(time.Second), // fugly... need to give resolution manager some time to asynchronously finish running
+		)
+
+	tester.AddCall("resolveCallback", http.MethodPost, "/unsecured/callback/{{.getResolution.steps.createCb.output.id}}?t={{.getResolution.steps.createCb.output.token}}", `{"success": false}`).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(400),
+			iffy.ExpectJSONBranch("error", "callback has already been resolved"),
+			waitChecker(time.Second), // fugly... need to give resolution manager some time to asynchronously finish running
+		)
+
+	tester.AddCall("getResolution", http.MethodGet, "/resolution/{{.createResolution.id}}", "").
+		Headers(adminHeaders).
+		Checkers(
+			//iffy.DumpResponse(t),
+			iffy.ExpectStatus(200),
+			iffy.ExpectJSONBranch("state", "DONE"),
+			iffy.ExpectJSONBranch("steps", "waitCb", "output", "body", "success", "true"),
+		)
+
+	tester.Run()
 }

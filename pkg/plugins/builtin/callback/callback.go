@@ -80,6 +80,7 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return map[string]interface{}{
 			"id":     cb.PublicID,
 			"url":    buildUrl(cb),
+			"token":  cb.Secret,
 			"schema": cb.Schema,
 		}, nil, nil
 
