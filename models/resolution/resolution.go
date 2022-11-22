@@ -168,7 +168,7 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 		return nil, err
 	}
 
-	dst := make([]byte, 0, hex.EncodedLen(len(encryptedSteps)))
+	dst := make([]byte, hex.EncodedLen(len(encryptedSteps)))
 	hex.Encode(dst, encryptedSteps)
 	r.EncryptedSteps = encryptedSteps
 
@@ -251,7 +251,7 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 		return nil, err
 	}
 
-	dst := make([]byte, 0, hex.DecodedLen(len(r.EncryptedSteps)))
+	dst := make([]byte, hex.DecodedLen(len(r.EncryptedSteps)))
 
 	// if we can't hex Decode, we might be in the case of a Resolution row in database that was
 	// created between the v1.21.1 and v1.21.3 that was bugged, and failed to hex Encode/Decode the
@@ -259,7 +259,9 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 	// often.
 	// See https://github.com/ovh/utask/commit/bf23fbb10b62bb487ac4ea01b1e519f85480e58b and migration
 	// from symmecrypt.Key.DecryptMarshal to symmecrypt.Key.Decrypt
-	_, _ = hex.Decode(dst, r.EncryptedSteps)
+	if _, err = hex.Decode(dst, r.EncryptedSteps); err != nil {
+		dst = r.EncryptedSteps
+	}
 
 	compressedSteps, err := models.EncryptionKey.Decrypt(dst, []byte(r.PublicID))
 	if err != nil {
@@ -391,7 +393,7 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 		return err
 	}
 
-	dst := make([]byte, 0, hex.EncodedLen(len(compressedSteps)))
+	dst := make([]byte, hex.EncodedLen(len(compressedSteps)))
 	hex.Encode(dst, compressedSteps)
 	encryptedSteps, err := models.EncryptionKey.Encrypt(compressedSteps, []byte(r.PublicID))
 	if err != nil {
