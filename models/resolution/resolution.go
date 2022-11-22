@@ -2,6 +2,7 @@ package resolution
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -166,6 +167,9 @@ func Create(dbp zesty.DBProvider, t *task.Task, resolverInputs map[string]interf
 	if err != nil {
 		return nil, err
 	}
+
+	dst := make([]byte, 0, hex.EncodedLen(len(encryptedSteps)))
+	hex.Encode(dst, encryptedSteps)
 	r.EncryptedSteps = encryptedSteps
 
 	err = tt.ValidateResolverInputs(resolverInputs)
@@ -247,7 +251,17 @@ func load(dbp zesty.DBProvider, publicID string, locked bool, lockNoWait bool) (
 		return nil, err
 	}
 
-	compressedSteps, err := models.EncryptionKey.Decrypt(r.EncryptedSteps, []byte(r.PublicID))
+	dst := make([]byte, 0, hex.DecodedLen(len(r.EncryptedSteps)))
+
+	// if we can't hex Decode, we might be in the case of a Resolution row in database that was
+	// created between the v1.21.1 and v1.21.3 that was bugged, and failed to hex Encode/Decode the
+	// ciphered data. We need to keep backward compatibility for those, but this should not happen
+	// often.
+	// See https://github.com/ovh/utask/commit/bf23fbb10b62bb487ac4ea01b1e519f85480e58b and migration
+	// from symmecrypt.Key.DecryptMarshal to symmecrypt.Key.Decrypt
+	_, _ = hex.Decode(dst, r.EncryptedSteps)
+
+	compressedSteps, err := models.EncryptionKey.Decrypt(dst, []byte(r.PublicID))
 	if err != nil {
 		return nil, err
 	}
@@ -377,6 +391,8 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 		return err
 	}
 
+	dst := make([]byte, 0, hex.EncodedLen(len(compressedSteps)))
+	hex.Encode(dst, compressedSteps)
 	encryptedSteps, err := models.EncryptionKey.Encrypt(compressedSteps, []byte(r.PublicID))
 	if err != nil {
 		return err
