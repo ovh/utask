@@ -44,10 +44,11 @@ type Values struct {
 // Variable holds a named variable, with either a JS expression to be evalued
 // or a concrete value
 type Variable struct {
-	Name             string      `json:"name"`
-	Expression       string      `json:"expression"`
-	Value            interface{} `json:"value"`
-	evalCachedResult interface{}
+	Name              string      `json:"name"`
+	Expression        string      `json:"expression"`
+	ExpressionTimeout string      `json:"expression_timeout"`
+	Value             interface{} `json:"value"`
+	evalCachedResult  interface{}
 }
 
 // NewValues instantiates a new Values holder,
@@ -430,7 +431,15 @@ func (v *Values) varEval(varName string) (interface{}, error) {
 		return nil, err
 	}
 
-	res, err := evalUnsafe(exp, time.Second*10)
+	var timeout = time.Second * 10
+	if i.ExpressionTimeout != "" {
+		timeout, err = time.ParseDuration(i.ExpressionTimeout)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	res, err := evalUnsafe(exp, timeout)
 	if err != nil {
 		return nil, err
 	}

@@ -976,6 +976,10 @@
                 "expression": {
                     "type": "string",
                     "description": "Javascript expression that will be evaluated (can be templated)"
+                },
+                "expression_timeout": {
+                    "type": "string",
+                    "description": "A valid golang duration which can be parsed by time.ParseDuration()"
                 }
             }
         },
