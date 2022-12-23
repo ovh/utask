@@ -138,6 +138,22 @@ func TestInvalidVariablesTemplates(t *testing.T) {
 	tt.Normalize()
 	err = tt.Valid()
 	assert.Contains(t, fmt.Sprint(err), "expression and value can't be empty at the same time")
+
+	tt.Variables[0].Name = "toto"
+	tt.Variables[0].Expression = ""
+	tt.Variables[0].Value = "foo"
+	tt.Variables[0].ExpressionTimeout = "30s"
+	tt.Normalize()
+	err = tt.Valid()
+	assert.Contains(t, fmt.Sprint(err), "expression timeout cannot be defined when value is defined")
+
+	tt.Variables[0].Name = "toto"
+	tt.Variables[0].Expression = "1+1"
+	tt.Variables[0].Value = nil
+	tt.Variables[0].ExpressionTimeout = "foo"
+	tt.Normalize()
+	err = tt.Valid()
+	assert.Contains(t, fmt.Sprint(err), "invalid duration \"foo\"")
 }
 
 func TestDependenciesValidation(t *testing.T) {

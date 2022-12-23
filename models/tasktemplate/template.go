@@ -3,6 +3,7 @@ package tasktemplate
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/juju/errors"
@@ -450,6 +451,15 @@ func validateVariables(variables []values.Variable) error {
 		}
 		if variable.Value == nil && variable.Expression == "" {
 			return errors.BadRequestf("variable %q expression and value can't be empty at the same time", variable.Name)
+		}
+		if variable.Value != nil && variable.ExpressionTimeout != "" {
+			return errors.BadRequestf("variable %q expression timeout cannot be defined when value is defined", variable.Name)
+		}
+		if variable.ExpressionTimeout != "" {
+			_, err := time.ParseDuration(variable.ExpressionTimeout)
+			if err != nil {
+				return errors.BadRequestf("variable %q %s", variable.Name, err)
+			}
 		}
 	}
 
