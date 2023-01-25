@@ -360,8 +360,10 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 	err = tmpl.Execute(b, v.m)
 	if err != nil {
+		logrus.WithField("step", stepName).WithField("template", templateStr).WithError(err).Error("Templating error")
 		return nil, errors.NewBadRequest(err, "Templating error")
 	}
+	logrus.WithField("step", stepName).WithField("template", templateStr).Infof("Result: %q", b.String())
 
 	return b.Bytes(), nil
 }
