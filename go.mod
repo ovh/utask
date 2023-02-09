@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/fabienm/go-logrus-formatters v1.0.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/gin-gonic/gin v1.7.2
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-gorp/gorp v2.2.0+incompatible
 	github.com/go-ping/ping v0.0.0-20210506233800-ff8be3320020
 	github.com/gofrs/uuid v3.3.0+incompatible
