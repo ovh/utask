@@ -921,7 +921,7 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 			// - dependency state is ANY, and depStep is in a final state
 			// - depStep is a child of a Foreach loop step in TO_RETRY state, and child is not running
 
-			if res.Steps[depStep].IsFinal() && depStates[0] == step.StateAny {
+			if res.Steps[depStep].IsFinal() && depStates[0] == step.StateAny && parentDepsAreFinal(res, res.Steps[depStep]) {
 				// if dependency doesn't require a specific state, and depStep is in a final state
 				// then dependency is matching
 				continue
@@ -980,6 +980,22 @@ func availableSteps(modifiedSteps map[string]bool, res *resolution.Resolution, e
 		debugLogger.Debugf("Engine: availableSteps(): %s", strings.Join(recap, ", "))
 	}
 	return available
+}
+
+func parentDepsAreFinal(res *resolution.Resolution, stp *step.Step) bool {
+	for _, dep := range stp.Dependencies {
+		depStep, _ := step.DependencyParts(dep)
+
+		if !res.Steps[depStep].IsFinal() {
+			return false
+		}
+
+		if !parentDepsAreFinal(res, res.Steps[depStep]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func nextRetry(res *resolution.Resolution) *time.Time {

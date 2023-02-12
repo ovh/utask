@@ -596,6 +596,21 @@ func TestAnyDependency(t *testing.T) {
 	assert.Equal(t, step.StateDone, finalOKState)
 }
 
+func TestIndirectDependencies(t *testing.T) {
+	res, err := createResolution("indirectDependencies.yaml", map[string]interface{}{}, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	assert.Equal(t, step.StateDone, res.Steps["stepOne"].State)
+	assert.Equal(t, step.StateFatalError, res.Steps["stepTwo"].State)
+	assert.Equal(t, step.StatePrune, res.Steps["stepThree"].State)
+	assert.Equal(t, step.StateTODO, res.Steps["stepFour"].State)
+}
+
 func TestMetadata(t *testing.T) {
 	res, err := createResolution("metadata.yaml", map[string]interface{}{}, nil)
 	assert.NotNil(t, res)

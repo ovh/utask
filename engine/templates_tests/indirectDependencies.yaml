@@ -1,0 +1,50 @@
+name: indirectDependencies
+description: Indirect dependencies must be verified
+title_format: "[test] indirect dependencies test"
+
+steps:
+  stepOne:
+    action:
+      type: echo
+      configuration:
+        output: {}
+    conditions:
+      - type: check
+        if:
+          - value: '1'
+            operator: EQ
+            expected: '1'
+        then:
+          stepThree: PRUNE
+
+  stepTwo:
+    dependencies:
+      - stepOne
+    action:
+      type: echo
+      configuration:
+        output: {}
+    conditions:
+      - type: check
+        if:
+          - value: '1'
+            operator: EQ
+            expected: '1'
+        then:
+          this: FATAL_ERROR
+
+  stepThree:
+    dependencies:
+      - stepTwo
+    action:
+      type: echo
+      configuration:
+        output: {}
+
+  stepFour:
+    dependencies:
+      - stepThree:ANY
+    action:
+      type: echo
+      configuration:
+        output: {}
