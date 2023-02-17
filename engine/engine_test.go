@@ -672,6 +672,19 @@ func TestForeach(t *testing.T) {
 	firstItem := concatList[0].(map[string]interface{})
 	firstItemOutput := firstItem[values.OutputKey].(map[string]interface{})
 	assert.Equal(t, "foo-b-bar-b", firstItemOutput["concat"])
+
+	outputExpected := map[string]string{"foo": "foo-b", "bar": "bar-b"}
+	metadata, ok := firstItem[values.MetadataKey].(map[string]interface{})
+	require.True(t, ok)
+	iterator, ok := metadata[values.IteratorKey].(map[string]interface{})
+	require.True(t, ok)
+	outputInterface, ok := iterator["output"].(map[string]interface{})
+	require.True(t, ok)
+	output := make(map[string]string)
+	for key, value := range outputInterface {
+		output[key] = fmt.Sprintf("%v", value)
+	}
+	assert.Equal(t, outputExpected, output)
 }
 
 func TestForeachWithChainedIterations(t *testing.T) {

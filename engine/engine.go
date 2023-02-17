@@ -791,6 +791,12 @@ func contractStep(s *step.Step, res *resolution.Resolution) {
 				if child.Metadata != nil {
 					childM[values.MetadataKey] = child.Metadata
 				}
+				childMMetadata := childM[values.MetadataKey].(map[string]interface{})
+				if childMMetadata == nil {
+					childMMetadata = make(map[string]interface{})
+				}
+				childMMetadata[values.IteratorKey] = child.Item
+				childM[values.MetadataKey] = childMMetadata
 				childM[values.StateKey] = child.State
 				var i interface{} = childM
 				collectedChildren = append(collectedChildren, i)
