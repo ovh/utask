@@ -22,8 +22,8 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 	if tt.Blocked {
 		return nil, errors.NewNotValid(nil, "Template not available (blocked)")
 	}
-
-	t, err := task.Create(dbp, tt, reqUsername, reqGroups, watcherUsernames, watcherGroups, resolverUsernames, resolverGroups, input, tags, b)
+	delayed := delay != nil
+	t, err := task.Create(dbp, tt, reqUsername, reqGroups, watcherUsernames, watcherGroups, resolverUsernames, resolverGroups, input, tags, b, delayed)
 	if err != nil {
 		return nil, err
 	}

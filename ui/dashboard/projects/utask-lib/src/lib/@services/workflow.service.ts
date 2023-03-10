@@ -190,6 +190,14 @@ export class WorkflowService {
         icon: 'hourglass',
         error: false
     }, {
+        key: 'DELAYED',
+        color: '#8a2be2',
+        fontColor: 'white',
+        shape: 'shape_blue',
+        isFinal: false,
+        icon: 'hourglass',
+        error: false
+    }, {
         key: 'EXPANDED',
         color: '#32acff',
         shape: 'shape_blue',

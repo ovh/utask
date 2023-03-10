@@ -62,6 +62,12 @@ export class StatsComponent implements OnInit {
         label: 'waiting',
         value: this._route.snapshot.data.stats.task_states['WAITING'] || 0
       },
+      {
+        color: '#AF69EE',
+        key: 'DELAYED',
+        label: 'delayed',
+        value: this._route.snapshot.data.stats.task_states['DELAYED'] || 0
+      },
     ].sort((a, b) => a.value < b.value ? 1 : -1);
   }
 }
