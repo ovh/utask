@@ -135,7 +135,7 @@ func createResolution(tmplName string, inputs, resolverInputs map[string]interfa
 	if err != nil {
 		return nil, err
 	}
-	tsk, err := task.Create(dbp, tmpl, "", nil, nil, nil, nil, nil, inputs, nil, nil)
+	tsk, err := task.Create(dbp, tmpl, "", nil, nil, nil, nil, nil, inputs, nil, nil, false)
 	if err != nil {
 		return nil, err
 	}

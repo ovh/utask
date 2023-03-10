@@ -34,7 +34,8 @@ export enum TaskState {
     RUNNING = 'RUNNING',
     TODO = 'TODO',
     WONTFIX = 'WONTFIX',
-    WAITING = 'WAITING'
+    WAITING = 'WAITING',
+    DELAYED = 'DELAYED'
 };
 
 export class Comment {

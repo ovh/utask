@@ -517,7 +517,7 @@ forLoop:
 	// compute resolution state
 	if !allDone {
 		// from candidate resolution states, choose a resolution state by priority
-		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateWaiting, resolution.StateBlockedDeadlock} {
+		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateWaiting, resolution.StateBlockedDeadlock, resolution.StateToAutorunDelayed} {
 			if mapStatus[status] {
 				res.SetState(status)
 				break
@@ -546,6 +546,8 @@ forLoop:
 		}
 	case resolution.StateWaiting:
 		t.SetState(task.StateWaiting)
+	case resolution.StateToAutorunDelayed:
+		t.SetState(task.StateDelayed)
 	case resolution.StateBlockedBadRequest, resolution.StateBlockedFatal, resolution.StateBlockedDeadlock:
 		t.SetState(task.StateBlocked)
 	}

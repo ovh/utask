@@ -78,9 +78,9 @@ var (
 // the result of such a step will be the collection of results of all sub-steps, which can be fed
 // into another "foreach" step
 // A step can be configured to evaluate "conditions" before and after the action is performed:
-// - a "skip" condition will be run before and might determine that the step's action can be skipped entirely
-// - a "check" condition will be run after the action, and can control execution flow by examining
-//   the step's result and modifying step states through the entire task's resolution
+//   - a "skip" condition will be run before and might determine that the step's action can be skipped entirely
+//   - a "check" condition will be run after the action, and can control execution flow by examining
+//     the step's result and modifying step states through the entire task's resolution
 type Step struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`

@@ -31,6 +31,7 @@ const (
 	StateDone      = "DONE"
 	StateTODO      = "TODO"    // default on creation
 	StateBlocked   = "BLOCKED" // not automatically retriable, 400 bad requests, etc..
+	StateDelayed   = "DELAYED"
 	StateCancelled = "CANCELLED"
 	StateWontfix   = "WONTFIX"
 	StateWaiting   = "WAITING"
@@ -91,9 +92,13 @@ type DBModel struct {
 }
 
 // Create inserts a new Task in DB
-func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, reqGroups []string, watcherUsernames []string, watcherGroups []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch) (t *Task, err error) {
+func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername string, reqGroups []string, watcherUsernames []string, watcherGroups []string, resolverUsernames []string, resolverGroups []string, input map[string]interface{}, tags map[string]string, b *Batch, delayed bool) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to create new Task")
 
+	initState := StateTODO
+	if delayed {
+		initState = StateDelayed
+	}
 	t = &Task{
 		DBModel: DBModel{
 			PublicID:          uuid.Must(uuid.NewV4()).String(),
@@ -107,7 +112,7 @@ func Create(dbp zesty.DBProvider, tt *tasktemplate.TaskTemplate, reqUsername str
 			Created:           now.Get(),
 			LastActivity:      now.Get(),
 			StepsTotal:        len(tt.Steps),
-			State:             StateTODO,
+			State:             initState,
 		},
 		TemplateName: tt.Name,
 		Result:       tt.ResultFormat,
@@ -642,7 +647,7 @@ func (t *Task) SetTags(tags map[string]string, values *values.Values) error {
 // and input is present and valid given the template spec
 func (t *Task) Valid(tt *tasktemplate.TaskTemplate) error {
 	switch t.State {
-	case StateTODO, StateRunning, StateDone, StateBlocked, StateCancelled, StateWontfix, StateWaiting:
+	case StateTODO, StateRunning, StateDone, StateBlocked, StateCancelled, StateWontfix, StateWaiting, StateDelayed:
 		break
 	default:
 		return errors.BadRequestf("Wrong state: %s", t.State)
