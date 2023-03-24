@@ -45,6 +45,7 @@ func Init(store *configstore.Store) error {
 				f.Zone,
 				f.APIKey,
 				f.Timeout,
+				f.PersistAlert,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to instantiate opsgenie notification sender: %s", err)

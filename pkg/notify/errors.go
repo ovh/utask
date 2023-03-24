@@ -25,15 +25,10 @@ func WrappedSendErrorWithBody(err error, m *Message, backend, name, body string)
 
 // newLogger creates a logger instance with pre-filled fields.
 func newLogger(err error, m *Message, backend, name string) *log.Entry {
-	var taskID string
-	if m != nil { // avoid panic if `m` is nil
-		taskID = m.Fields["task_id"]
-	}
-
 	return log.WithFields(log.Fields{
 		"notify_backend":    backend,
 		"notifier_name":     name,
-		"task_id":           taskID,
+		"task_id":           m.TaskID(),
 		"notification_type": m.NotificationType,
 		"instance_id":       utask.InstanceID,
 	}).WithError(err)

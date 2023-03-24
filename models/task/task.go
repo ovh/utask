@@ -60,6 +60,7 @@ type Task struct {
 	LastStop         *time.Time             `json:"last_stop,omitempty" db:"last_stop"`
 	ResolverUsername *string                `json:"resolver_username,omitempty" db:"resolver_username"`
 	Comments         []*Comment             `json:"comments,omitempty" db:"-"`
+	Metadata         []*Metadata[any]       `json:"metadata,omitempty" db:"-"`
 	Batch            *string                `json:"batch,omitempty" db:"batch_public_id"`
 	Errors           []StepError            `json:"errors,omitempty" db:"-"`
 	ResolverInputs   []input.Input          `json:"resolver_inputs,omitempty" db:"resolver_inputs"`
@@ -193,7 +194,7 @@ func LoadLockedFromPublicID(dbp zesty.DBProvider, publicID string) (t *Task, err
 	return loadFromPublicID(dbp, publicID, true, true)
 }
 
-func loadFromPublicID(dbp zesty.DBProvider, publicID string, locked, withComments bool) (t *Task, err error) {
+func loadFromPublicID(dbp zesty.DBProvider, publicID string, locked, withDetails bool) (t *Task, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to load task from public id")
 
 	sel := tSelector
@@ -215,7 +216,7 @@ func loadFromPublicID(dbp zesty.DBProvider, publicID string, locked, withComment
 		return nil, pgjuju.Interpret(err)
 	}
 
-	err = loadDetails(dbp, t, withComments)
+	err = loadDetails(dbp, t, withDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +249,7 @@ func LoadFromID(dbp zesty.DBProvider, ID int64) (t *Task, err error) {
 	return t, nil
 }
 
-func loadDetails(dbp zesty.DBProvider, t *Task, withComments bool) (err error) {
+func loadDetails(dbp zesty.DBProvider, t *Task, all bool) (err error) {
 	resBytes, err := models.EncryptionKey.Decrypt(t.EncryptedResult, []byte(t.PublicID))
 	if err != nil {
 		return err
@@ -268,8 +269,12 @@ func loadDetails(dbp zesty.DBProvider, t *Task, withComments bool) (err error) {
 	}
 	t.Input = input
 
-	if withComments {
+	if all {
 		t.Comments, err = LoadCommentsFromTaskID(dbp, t.ID)
+		if err != nil {
+			return err
+		}
+		t.Metadata, err = LoadMetadatasFromTaskID[any](dbp, t.PublicID)
 	}
 
 	return err
