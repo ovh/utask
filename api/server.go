@@ -52,7 +52,6 @@ type Server struct {
 	dashboardPathPrefix    string
 	dashboardAPIPathPrefix string
 	dashboardSentryDSN     string
-	editorPathPrefix       string
 	maxBodyBytes           int64
 	customMiddlewares      []gin.HandlerFunc
 	pluginRoutes           []PluginRouterGroup
@@ -105,13 +104,6 @@ func (s *Server) SetDashboardAPIPathPrefix(dashboardAPIPathPrefix string) {
 // SetDashboardSentryDSN configures a Sentry DSN URI to send UI exceptions and failures to.
 func (s *Server) SetDashboardSentryDSN(dashboardSentryDSN string) {
 	s.dashboardSentryDSN = dashboardSentryDSN
-}
-
-// SetEditorPathPrefix configures a custom path prefix for editor static files hosting.
-// It doesn't change the path used by utask API to serve the files, it's only used inside UI files
-// in order that editor can be aware of a ProxyPass configuration.
-func (s *Server) SetEditorPathPrefix(editorPathPrefix string) {
-	s.editorPathPrefix = editorPathPrefix
 }
 
 // SetMaxBodyBytes
@@ -192,12 +184,6 @@ func (s *Server) build(ctx context.Context) {
 					"___UTASK_DASHBOARD_SENTRY_DSN___",
 					s.dashboardSentryDSN)).
 			StaticFS("/ui/dashboard", http.Dir("./static/dashboard"))
-
-		ginEngine.Group("/",
-			StaticFilePatternReplaceMiddleware(
-				"___UTASK_EDITOR_BASEHREF___",
-				generateBaseHref(s.editorPathPrefix, "/ui/editor"))).
-			StaticFS("/ui/editor", http.Dir("./static/editor"))
 
 		ginEngine.
 			Group("/",

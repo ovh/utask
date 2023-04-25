@@ -157,9 +157,6 @@ postgres://user:pass@db/utask?sslmode=disable
     // dashboard_path_prefix defines the path prefix for the dashboard UI. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path
     // default: empty, no prefix
     "dashboard_path_prefix": "/my-utask-instance",
-    // editor_path_prefix defines the path prefix for the editor UI. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path
-    // default: empty, no prefix
-    "editor_path_prefix": "/my-utask-instance",
     // dashboard_api_path_prefix defines the path prefix for the uTask API. Should be used if the uTask instance is hosted with a ProxyPass, on a custom path.
     // dashboard_api_path_prefix will be used by Dashboard UI to contact the uTask API
     // default: empty, no prefix

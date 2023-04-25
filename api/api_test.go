@@ -88,7 +88,6 @@ func TestMain(m *testing.M) {
 	srv.SetDashboardPathPrefix("")
 	srv.SetDashboardAPIPathPrefix("")
 	srv.SetDashboardSentryDSN("")
-	srv.SetEditorPathPrefix("")
 
 	go srv.ListenAndServe()
 	srvx := &http.Server{Addr: fmt.Sprintf(":%d", utask.FPort)}

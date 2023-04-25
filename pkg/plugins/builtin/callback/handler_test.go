@@ -55,7 +55,6 @@ func TestMain(m *testing.M) {
 	srv.SetDashboardPathPrefix("")
 	srv.SetDashboardAPIPathPrefix("")
 	srv.SetDashboardSentryDSN("")
-	srv.SetEditorPathPrefix("")
 
 	svc := &plugins.Service{Store: store, Server: srv}
 

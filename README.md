@@ -816,9 +816,9 @@ To visualize API routes, a swagger-ui interface is available with the docker ima
 
 ### Frontend
 
-µTask serves two graphical interfaces: one for general use of the tool (`dashboard`), the other one for task template authoring (`editor`). They're found in the `ui` folder and each have their own Makefile for development purposes.
+µTask serves a graphical interface for general use of the tool (`dashboard`). It is found in the `ui` folder and has its own Makefile for development purposes.
 
-Run `make dev` to launch a live-reloading on your machine. The editor is a standalone GUI, while the dashboard needs a backing µTask api (see above to run a server).
+Run `make dev` to launch a live-reloading on your machine. The dashboard needs a backing µTask api (see above to run a server).
 
 ### Run the tests
 

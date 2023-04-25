@@ -6,23 +6,18 @@ COPY ./ui /home/node/ui
 WORKDIR /home/node/ui/dashboard
 RUN BASEHREF=___UTASK_DASHBOARD_BASEHREF___ PREFIX_API_BASE_URL=___UTASK_DASHBOARD_PREFIXAPIBASEURL___ SENTRY_DSN=___UTASK_DASHBOARD_SENTRY_DSN___ make build-prod
 
-# editor
-WORKDIR /home/node/ui/editor
-RUN BASEHREF=___UTASK_EDITOR_BASEHREF___ SENTRY_DSN=___UTASK_DASHBOARD_SENTRY_DSN___ make build-prod
-
 FROM golang:1.19
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
 RUN make re && \
     mv hack/Makefile-child Makefile && \
-    mkdir -p /app/plugins /app/templates /app/config /app/init /app/static/dashboard /app/static/editor && \
+    mkdir -p /app/plugins /app/templates /app/config /app/init /app/static/dashboard && \
     mv hack/wait-for-it/wait-for-it.sh /wait-for-it.sh && \
     chmod +x /wait-for-it.sh
 WORKDIR /app
 
 COPY --from=js-builder /home/node/ui/dashboard/dist/utask-ui/  /app/static/dashboard/
-COPY --from=js-builder /home/node/ui/editor/dist/utask-editor/ /app/static/editor/
 
 RUN cp /go/src/github.com/ovh/utask/utask /app/utask && \
     chmod +x /app/utask && \

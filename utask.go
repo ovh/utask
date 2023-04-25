@@ -129,7 +129,6 @@ type Cfg struct {
 	DashboardPathPrefix                        string                   `json:"dashboard_path_prefix"`
 	DashboardAPIPathPrefix                     string                   `json:"dashboard_api_path_prefix"`
 	DashboardSentryDSN                         string                   `json:"dashboard_sentry_dsn"`
-	EditorPathPrefix                           string                   `json:"editor_path_prefix"`
 	StepsCompressionAlg                        string                   `json:"steps_compression_algorithm"`
 	ServerOptions                              ServerOpt                `json:"server_options"`
 

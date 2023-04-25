@@ -28,9 +28,6 @@ ui/dashboard/coverage
 ui/dashboard/dist.tar.gz
 ui/dashboard/node_modules
 ui/dashboard/src/environments/environment.ts
-ui/editor/dist
-ui/editor/dist.tar.gz
-ui/editor/node_modules
 
 # Related to config
 config/*
