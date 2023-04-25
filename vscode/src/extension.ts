@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
     return Object.assign(result, {
       [path]: yamlSchemas[path]
-    })
+    });
   }, {}), {
     [functionSchema]: ["**/functions/*.yaml", "**/functions-*/*.yaml"],
     [templateSchema]: ["**/templates/*.yaml", "**/templates-*/*.yaml"]
