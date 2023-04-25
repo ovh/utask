@@ -4,3 +4,7 @@
     align-items: center !important;
     background: #333 !important;
 }
+
+::ng-deep .edge {
+  fill: transparent;
+}

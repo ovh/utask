@@ -1,1 +1,3 @@
-<lib-utask-steps-viewer></lib-utask-steps-viewer>
+<utask-loader *ngIf="!resolution && !invalid"></utask-loader>
+<lib-utask-error-message *ngIf="invalid" [data]="'Unable to display the template'"></lib-utask-error-message>
+<lib-utask-steps-viewer *ngIf="resolution && !invalid" [resolution]="resolution"></lib-utask-steps-viewer>
