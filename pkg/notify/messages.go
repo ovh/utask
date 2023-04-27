@@ -32,6 +32,13 @@ func (m *Message) TaskID() string {
 	return ""
 }
 
+func (m *Message) TaskState() string {
+	if m != nil {
+		return m.Fields["state"]
+	}
+	return ""
+}
+
 // TaskStateUpdate holds a digest of data representing a task state change
 type TaskStateUpdate struct {
 	Title              string

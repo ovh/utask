@@ -159,10 +159,9 @@ type TemplateNotificationStrategy struct {
 
 // NotifyBackendOpsGenie holds configuration for instantiating an OPsGenie notify client
 type NotifyBackendOpsGenie struct {
-	Zone         string `json:"zone"`
-	APIKey       string `json:"api_key"`
-	Timeout      string `json:"timeout"`
-	PersistAlert bool   `json:"persist_alert"`
+	Zone    string `json:"zone"`
+	APIKey  string `json:"api_key"`
+	Timeout string `json:"timeout"`
 }
 
 // NotifyBackendTat holds configuration for instantiating a Tat notify client
