@@ -31,7 +31,7 @@ func validTemplate(template string, inputs, resolverInputs []string, steps map[s
 	}
 
 	stepNames := stepNames(steps)
-	taskInfoKeys := []string{"resolver_username", "created", "requester_username", "requester_groups", "task_id", "region", "resolution_id"}
+	taskInfoKeys := []string{"resolver_username", "created", "requester_username", "requester_groups", "task_id", "region", "resolution_id", "watcher_usernames", "watcher_groups"}
 	for _, m := range matches {
 		parts := strings.Split(m[1], ".")
 		if len(parts) >= 3 {
@@ -138,13 +138,14 @@ func stepNames(stepMap map[string]*step.Step) []string {
 
 // tryVariablePath tries to match a chain of variables with the given properties.
 // For example:
-//      given properties = map[foo:[bar] bar:[bar] qux:[foo] utaskRootKey:[qux]]
-//      and parts = [qux foo bar bar bar]
-//      "qux.foo.bar.bar.bar" is valid since "qux" makes "foo", "foo" makes "bar"
-//      and "bar" makes "bar".
-//      "qux.foo.bar.foo" is not valid since we cannot make "foo" from "bar".
-//      "foo.bar.bar" is not valid either since we start looping on parts using
-//      utaskRootKey map, which contains root properties of the json schema.
+//
+//	given properties = map[foo:[bar] bar:[bar] qux:[foo] utaskRootKey:[qux]]
+//	and parts = [qux foo bar bar bar]
+//	"qux.foo.bar.bar.bar" is valid since "qux" makes "foo", "foo" makes "bar"
+//	and "bar" makes "bar".
+//	"qux.foo.bar.foo" is not valid since we cannot make "foo" from "bar".
+//	"foo.bar.bar" is not valid either since we start looping on parts using
+//	utaskRootKey map, which contains root properties of the json schema.
 func tryVariablePath(properties map[string][]string, parts []string) error {
 	// start with root properties
 	lastKey := jsonschema.RootKey

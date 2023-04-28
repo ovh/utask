@@ -101,6 +101,9 @@ const (
 	// NotificationStrategyFailureOnly corresponds to the mode where notifications will only be sent if the state is BLOCKED
 	NotificationStrategyFailureOnly = "failure_only"
 
+	// UsernamesSeparator corresponds to the separator used to break a string into a list of usernames and vice versa.
+	UsernamesSeparator = ","
+
 	// GroupsSeparator corresponds to the separator used to break a string into a list of groups and vice versa.
 	GroupsSeparator = ","
 
