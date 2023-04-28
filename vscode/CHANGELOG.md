@@ -1,3 +1,8 @@
+# 1.6.0 (2023-04-28)
+
+Declare 1.25 version for JSON schema ([6148552](https://github.com/ovh/utask/commit/6148552))
+Fix user experience issues ([865467f](https://github.com/ovh/utask/commit/865467f))
+
 # 1.5.0 (2023-03-28)
 
 Declare 1.24 version for JSON schema ([c5773a4](https://github.com/ovh/utask/commit/c5773a4))
