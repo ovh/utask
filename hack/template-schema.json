@@ -323,6 +323,7 @@
                         },
                         "output": {
                             "type": [
+                                "array",
                                 "object",
                                 "string",
                                 "null"
