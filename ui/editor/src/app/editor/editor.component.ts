@@ -23,6 +23,7 @@ const langTools = brace.acequire('ace/ext/language_tools');
 
 @Component({
   templateUrl: 'editor.html',
+  styleUrls: ['./editor.scss'],
 })
 export class EditorComponent implements OnInit {
   editor: Editor;
