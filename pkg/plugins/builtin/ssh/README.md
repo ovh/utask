@@ -18,7 +18,7 @@ The step will be considered successful if the script returns exit code 0, otherw
 | `ssh_key`                  | private ssh key, preferably retrieved from {{.config}}                                                                                                                                         |
 | `ssh_key_passphrase`       | passphrase for the key, if any                                                                                                                                                                 |
 | `exit_codes_unrecoverable` | a list of non-zero exit codes (1, 2, 3, ...) or ranges (1-10, ...) which should be considered unrecoverable and halt execution ; these will be returned to the main engine as a `CLIENT_ERROR` |
-| `timeout`                  | defines the maximum duration of the SSH session (connection time not included). Default to `3600s` (5 minutes).                                                                                |
+| `timeout`                  | defines the maximum duration of the SSH session (connection time not included). Default to `5m`.                                                                                               |
 
 ## Example
 
