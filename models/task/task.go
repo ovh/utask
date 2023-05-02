@@ -666,11 +666,17 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	m["task_id"] = t.PublicID
 	m["created"] = t.Created
 	m["requester_username"] = t.RequesterUsername
-	if t.RequesterGroups != nil && len(t.RequesterGroups) > 0 {
+	if len(t.RequesterGroups) > 0 {
 		m["requester_groups"] = strings.Join(t.RequesterGroups, utask.GroupsSeparator)
 	}
 	if t.ResolverUsername != nil {
 		m["resolver_username"] = t.ResolverUsername
+	}
+	if len(t.WatcherUsernames) > 0 {
+		m["watcher_usernames"] = strings.Join(t.WatcherUsernames, utask.UsernamesSeparator)
+	}
+	if len(t.WatcherGroups) > 0 {
+		m["watcher_groups"] = strings.Join(t.WatcherGroups, utask.GroupsSeparator)
 	}
 	m["last_activity"] = t.LastActivity
 	m["region"] = utask.FRegion
