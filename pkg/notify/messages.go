@@ -25,6 +25,20 @@ type Message struct {
 	Fields           map[string]string
 }
 
+func (m *Message) TaskID() string {
+	if m != nil {
+		return m.Fields["task_id"]
+	}
+	return ""
+}
+
+func (m *Message) TaskState() string {
+	if m != nil {
+		return m.Fields["state"]
+	}
+	return ""
+}
+
 // TaskStateUpdate holds a digest of data representing a task state change
 type TaskStateUpdate struct {
 	Title              string
