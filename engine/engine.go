@@ -54,8 +54,9 @@ type Engine struct {
 	// items retrieved from configstore are part of the data
 	// available to steps during execution
 	// ie. credentials needed for http calls, etc...
-	config map[string]interface{}
-	wg     *sync.WaitGroup
+	config    map[string]interface{}
+	configraw map[string]*string
+	wg        *sync.WaitGroup
 }
 
 // Init launches the task orchestration engine, providing it with a global context
@@ -83,7 +84,11 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 	// attempt to deserialize json formatted config items
 	// -> make it easier to access internal nodes/values when templating
 	eng.config = make(map[string]interface{})
+	eng.configraw = make(map[string]*string)
 	for k, v := range config {
+		// store raw value
+		eng.configraw[k] = v
+		// try to decode it
 		var i interface{}
 		if v != nil {
 			err := yaml.Unmarshal([]byte(*v), &i, func(dec *json.Decoder) *json.Decoder {
@@ -216,6 +221,7 @@ func (e Engine) launchResolution(publicID string, async bool, sm *semaphore.Weig
 	debugLogger = debugLogger.WithFields(logrus.Fields{metadata.TemplateName: t.TemplateName, metadata.TaskID: t.PublicID})
 
 	res.Values.SetConfig(e.config)
+	res.Values.SetConfigRaw(e.configraw)
 
 	// check if all resources are available before starting the resolution
 	// first, check if we have a custom semaphore, for example, a semaphore that limits the concurrent execution of tasks recovery from a crashed instance.

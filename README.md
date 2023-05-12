@@ -241,6 +241,7 @@ A user can be allowed to resolve a task in four ways:
 - `.step.[STEP_NAME].error`: error message from a failed step
 - `.step.[STEP_NAME].state`: current state of the given step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
+- `.configraw.[CONFIG_ITEM]`: raw value of a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
 - `.pre_hook.output.foo`: field `foo` from the output of the step's pre-hook (see [pre-hooks](#pre-hooks))
 - `.pre_hook.metadata.HTTPStatus`: field `HTTPStatus` from the metadata of the step's pre-hook (see [pre-hooks](#pre-hooks))

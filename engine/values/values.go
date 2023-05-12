@@ -23,6 +23,7 @@ const (
 	ResolverInputKey = "resolver_input"
 	StepKey          = "step"
 	ConfigKey        = "config"
+	ConfigRawKey     = "configraw"
 	TaskKey          = "task"
 	VarKey           = "var"
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
@@ -62,6 +63,7 @@ func NewValues() *Values {
 			StepKey:          map[string]interface{}{},
 			TaskKey:          map[string]interface{}{},
 			ConfigKey:        map[string]interface{}{},
+			RawConfigKey:     map[string]*string{},
 			VarKey:           map[string]*Variable{},
 			IteratorKey:      nil,
 		},
@@ -131,6 +133,11 @@ func (v *Values) SetFunctionsArgs(in map[string]interface{}) {
 // SetConfig stores items retrieved from configstore in Values
 func (v *Values) SetConfig(cfg map[string]interface{}) {
 	v.m[ConfigKey] = cfg
+}
+
+// SetConfig stores items retrieved from configstore in Values
+func (v *Values) SetConfigRaw(cfg map[string]*string) {
+	v.m[ConfigRawKey] = cfg
 }
 
 // GetOutput returns the output of a named step

@@ -71,6 +71,8 @@ func validTemplate(template string, inputs, resolverInputs []string, steps map[s
 				}
 			case values.ConfigKey:
 				// TODO... not sure how to check this... against global secret store?
+			case values.RawConfigKey:
+				// TODO... not sure how to check this... against global secret store?
 			case values.TaskKey:
 				if !utils.ListContainsString(taskInfoKeys, key) {
 					return fmt.Errorf("Wrong task key: %s", key)
