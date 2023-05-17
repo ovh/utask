@@ -17,8 +17,31 @@ import (
 )
 
 var (
-	metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state"}, []string{"status"})
+	metrics              = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state"}, []string{"status"})
+	metricsResolverGroup = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state_per_resolver_group"}, []string{"status", "group"})
 )
+
+func updateMetrics(dbp zesty.DBProvider) {
+	// utask_task_state
+	stats, err := task.LoadStateCount(dbp, nil)
+	if err != nil {
+		logrus.Warn(err)
+	}
+	for state, count := range stats {
+		metrics.WithLabelValues(state).Set(count)
+	}
+
+	// utask_task_state_per_resolver_group
+	statsResolverGroup, err := task.LoadStateCountResolverGroup(dbp)
+	if err != nil {
+		logrus.Warn(err)
+	}
+	for group, groupStats := range statsResolverGroup {
+		for state, count := range groupStats {
+			metricsResolverGroup.WithLabelValues(state, group).Set(count)
+		}
+	}
+}
 
 func collectMetrics(ctx context.Context) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
@@ -28,17 +51,14 @@ func collectMetrics(ctx context.Context) {
 	}
 
 	tick := time.NewTicker(5 * time.Second)
+
+	updateMetrics(dbp)
+
 	go func() {
 		for {
 			select {
 			case <-tick.C:
-				stats, err := task.LoadStateCount(dbp, nil)
-				if err != nil {
-					logrus.Warn(err)
-				}
-				for state, count := range stats {
-					metrics.WithLabelValues(state).Set(count)
-				}
+				updateMetrics(dbp)
 			case <-ctx.Done():
 				tick.Stop()
 				return
