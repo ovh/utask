@@ -25,6 +25,11 @@ type stateCount struct {
 	Count float64 `db:"state_count"`
 }
 
+type stateCountResolverGroup struct {
+	stateCount
+	Group string `db:"group_name"`
+}
+
 // RegisterValidationTime computes the duration between the task creation and
 // the associated resolution's creation. This metric is then pushed to Prometheus.
 func RegisterValidationTime(templateName string, taskCreation time.Time) {
@@ -82,6 +87,49 @@ func LoadStateCount(dbp zesty.DBProvider, tags map[string]string) (sc map[string
 	}
 	for _, c := range s {
 		sc[c.State] = c.Count
+	}
+
+	return sc, nil
+}
+
+// LoadStateCountResolverGroup returns a map containing the count of tasks grouped by state and by resolver_group
+func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string]float64, err error) {
+	defer errors.DeferredAnnotatef(&err, "Failed to load task stats")
+
+	subQuery := sqlgenerator.PGsql.Select(`t."id"`, `t."state"`, `coalesce(nullif(t."resolver_groups", 'null'::jsonb), nullif(tt."allowed_resolver_groups", 'null'::jsonb)) as "groups"`).
+		From(`"task" t`).
+		LeftJoin(`"task_template" tt ON t."id_template" = tt."id"`)
+
+	sel := sqlgenerator.PGsql.Select(`"group_name"`, `"state"`, `count("sq"."state") as "state_count"`).
+		FromSelect(subQuery, "sq").
+		Join(`jsonb_array_elements_text("sq"."groups") "group_name" ON true`).
+		Where(`"sq"."groups" IS NOT NULL`).
+		GroupBy(`"group_name"`, `"sq"."state"`)
+
+	query, params, err := sel.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	s := []stateCountResolverGroup{}
+	if _, err := dbp.DB().Select(&s, query, params...); err != nil {
+		return nil, pgjuju.Interpret(err)
+	}
+
+	sc = make(map[string]map[string]float64)
+
+	for _, gsc := range s {
+		if _, exists := sc[gsc.Group]; !exists {
+			sc[gsc.Group] = map[string]float64{
+				StateTODO:      0,
+				StateBlocked:   0,
+				StateRunning:   0,
+				StateWontfix:   0,
+				StateDone:      0,
+				StateCancelled: 0,
+			}
+		}
+		sc[gsc.Group][gsc.State] = gsc.Count
 	}
 
 	return sc, nil
