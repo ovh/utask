@@ -236,6 +236,10 @@ func checkIfDeliverMessageFromTaskState(m *Message, strategy string) bool {
 		if v, ok := m.Fields["state"]; ok && v == stateBlocked {
 			send = true
 		}
+	case utask.NotificationStrategyFailureOrDone:
+		if v, ok := m.Fields["state"]; ok && (v == stateBlocked || v == step.StateDone) {
+			send = true
+		}
 	case utask.NotificationStrategySilent:
 	}
 
@@ -251,6 +255,13 @@ func checkIfDeliverMessageFromStepState(m *Message, strategy string) bool {
 		if v, ok := m.Fields["step_state"]; ok {
 			switch v {
 			case step.StateFatalError, step.StateCrashed, step.StateAfterrunError:
+				send = true
+			}
+		}
+	case utask.NotificationStrategyFailureOrDone:
+		if v, ok := m.Fields["step_state"]; ok {
+			switch v {
+			case step.StateFatalError, step.StateCrashed, step.StateAfterrunError, step.StateDone:
 				send = true
 			}
 		}

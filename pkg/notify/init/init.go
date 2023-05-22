@@ -148,6 +148,10 @@ func validateStrategyForAction(action, strategy string) error {
 		if action == notify.TaskValidationKey {
 			return errNotAllowed
 		}
+	case utask.NotificationStrategyFailureOrDone:
+		if action == notify.TaskValidationKey {
+			return errNotAllowed
+		}
 	default:
 		return errUnknown
 	}
