@@ -1,0 +1,26 @@
+name: kafka-task-template
+description: Number input should be valid
+title_format: "[test] input number test"
+auto_runnable: true
+inputs:
+    - name: quantity
+      description: Options quantity (1 will… streams, 2 for 10 ...)
+      collection: false
+      type: number
+      optional: false
+    - name: foo
+      description: A string value
+      type: string
+      optional: true
+      default: ""
+steps:
+    stepOne:
+        description: first step
+        idempotent: true
+        retry_pattern: seconds
+        action:
+            type: echo
+            configuration:
+                output:
+                    value: "{{.input.quantity}}"
+                    foo: "{{.input.foo}}"
