@@ -10,11 +10,11 @@ FROM golang:1.19
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
-RUN make re && \
-    mv hack/Makefile-child Makefile && \
+RUN make re && make makefile && \
     mkdir -p /app/plugins /app/templates /app/config /app/init /app/static/dashboard && \
     mv hack/wait-for-it/wait-for-it.sh /wait-for-it.sh && \
-    chmod +x /wait-for-it.sh
+    chmod +x /wait-for-it.sh && \
+    go clean -cache && rm -rf /go/pkg/*
 WORKDIR /app
 
 COPY --from=js-builder /home/node/ui/dashboard/dist/utask-ui/  /app/static/dashboard/
