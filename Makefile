@@ -15,7 +15,7 @@ ifndef VERSION
 	VERSION = $(shell git describe --abbrev=3 --tags $(git rev-list --tags --max-count=1))-dev
 endif
 
-LAST_COMMIT		= `git rev-parse HEAD`
+LAST_COMMIT		:= $(shell git rev-parse HEAD)
 VERSION_PKG		= github.com/ovh/utask
 
 DOCKER			= 0
@@ -93,4 +93,7 @@ endif
 
 package:
 
-.PHONY: all clean test re package release test test-travis test-docker run-test-stack run-test-stack-docker run-goreleaser docker
+makefile:
+	sed -e 's/VERSION=/VERSION=${VERSION}/g' hack/Makefile-child | sed -e 's/LAST_COMMIT=/LAST_COMMIT=${LAST_COMMIT}/g' >| Makefile  
+
+.PHONY: all clean test re package release test test-travis test-docker run-test-stack run-test-stack-docker run-goreleaser docker makefile
