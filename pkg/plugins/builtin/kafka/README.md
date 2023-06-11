@@ -21,10 +21,8 @@ An action of type `kafka` requires the following kind of configuration:
 action:
   type: kafka
   configuration:
-    # mandatory, array of string
-    brokers:
-      - localhost:9092
-      - localhost:9093
+    # mandatory, comma-separated string
+    brokers: "localhost:9092,localhost:9093"
     # optional, default version is 1.0.0.0
     kafka_version: "1.0.0.0"
     # optional, if you need to use SASL authentication
@@ -45,3 +43,23 @@ action:
            "message": "Hello world!"
          }
 ```
+
+## Requirements
+
+None by default. Sensitive data should stored in the configuration and accessed through `{{.config.[itemKey]}}` rather than hardcoded in your template.
+
+## Resources
+
+The `kafka` plugin declares automatically resources for its steps:
+- `socket` to rate-limit concurrent execution on the number of open outgoing sockets
+- `url:hostname` (where `hostname` is the broker destination host of the plugin configuration) to rate-limit concurrent execution on a specific broker.
+
+
+## Return
+
+### Output
+
+| Name                 | Description                           |
+|----------------------|---------------------------------------|
+| `partition`          | The partition of the produced message |
+| `offset`             | The offset of the produced message    |

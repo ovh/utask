@@ -34,8 +34,8 @@ type Message struct {
 
 // KafkaConfig is the configuration needed to write a message on Kafka topic
 type KafkaConfig struct {
-	Brokers      []string `json:"brokers"`
-	KafkaVersion string   `json:"kafka_version,omitempty"`
+	Brokers      string `json:"brokers"`
+	KafkaVersion string `json:"kafka_version,omitempty"`
 	SASL         struct {
 		User     string `json:"user,omitempty"`
 		Password string `json:"password,omitempty"`
@@ -45,18 +45,22 @@ type KafkaConfig struct {
 	Message Message `json:"message"`
 }
 
-func validConfig(config interface{}) error {
-	cfg := config.(*KafkaConfig)
+func (k *KafkaConfig) GetBrokers() []string {
+	return strings.Split(k.Brokers, ",")
+}
 
-	if len(cfg.Brokers) < 1 {
-		return errors.New("missing brokers parameter")
+func validConfig(config interface{}) error {
+	cfg, ok := config.(*KafkaConfig)
+	if !ok {
+		return fmt.Errorf("interface conversion: config is %T, not KafkaConfig", cfg)
 	}
 
-	for _, b := range cfg.Brokers {
-		if b == "" {
-			return errors.New("an item of the brokers list is empty")
-		}
+	if cfg.Brokers == "" {
+		return errors.New("missing or empty brokers parameter")
+	}
 
+	brokers := cfg.GetBrokers()
+	for _, b := range brokers {
 		u, err := url.Parse("http://" + b)
 		if err != nil {
 			return fmt.Errorf("failed to parse broker: %s", err)
@@ -85,14 +89,19 @@ func validConfig(config interface{}) error {
 }
 
 func resourcesKafka(config interface{}) []string {
-	cfg := config.(*KafkaConfig)
 	resources := []string{
 		"socket",
 	}
 
+	cfg, ok := config.(*KafkaConfig)
+	if !ok {
+		return resources
+	}
+
 	exist := make(map[string]struct{})
 
-	for _, broker := range cfg.Brokers {
+	brokers := cfg.GetBrokers()
+	for _, broker := range brokers {
 		s := strings.Split(broker, ":")
 		hostname := s[0]
 
@@ -145,14 +154,17 @@ func getKafkaConfig(cfg *KafkaConfig) (*sarama.Config, error) {
 }
 
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
-	cfg := config.(*KafkaConfig)
+	cfg, ok := config.(*KafkaConfig)
+	if !ok {
+		return nil, nil, fmt.Errorf("interface conversion: config is %T, not KafkaConfig", cfg)
+	}
 
 	kafkaConfig, err := getKafkaConfig(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	producer, err := sarama.NewSyncProducer(cfg.Brokers, kafkaConfig)
+	producer, err := sarama.NewSyncProducer(cfg.GetBrokers(), kafkaConfig)
 	if err != nil {
 		return nil, nil, err
 	}
