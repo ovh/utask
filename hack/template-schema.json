@@ -138,6 +138,9 @@
                     "$ref": "#/definitions/ActionCallback"
                 },
                 {
+                    "$ref": "#/definitions/ActionKafka"
+                },
+                {
                     "$ref": "#/definitions/ActionPing"
                 },
                 {
@@ -167,6 +170,7 @@
                                     "ssh",
                                     "subtask",
                                     "callback",
+                                    "kafka",
                                     "ping",
                                     "notify",
                                     "email",
@@ -572,6 +576,79 @@
             "title": "Callback Action",
             "additionalProperties": false,
             "description": "Callback action allows to create a callback and to wait for the resolution"
+        },
+        "ActionKafka": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "kafka"
+                },
+                "configuration": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "brokers",
+                        "message"
+                    ],
+                    "properties": {
+                        "brokers": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "kafka_version": {
+                            "type": "string"
+                        },
+                        "timeout": {
+                            "type": "string"
+                        },
+                        "sasl": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                                "user",
+                                "password"
+                            ],
+                            "properties": {
+                                "user": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "with_tls": {
+                            "type": "string",
+                            "pattern": "^(true|false)$",
+                            "default": false
+                        },
+                        "message": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                                "topic",
+                                "value"
+                            ],
+                            "properties": {
+                                "topic": {
+                                    "type": "string"
+                                },
+                                "key": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "title": "Kafka Action",
+            "additionalProperties": false,
+            "description": "Kafka action publishes a message to a Kafka topic"
         },
         "ActionTag": {
             "type": "object",
