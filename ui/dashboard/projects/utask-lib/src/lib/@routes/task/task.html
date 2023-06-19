@@ -2,7 +2,7 @@
 <lib-utask-error-message [data]="errors.main" *ngIf="errors.main"></lib-utask-error-message>
 <ng-container *ngIf="((!loaders.task && !loaders.resolution)) && !errors.main">
     <nz-page-header nzBackIcon [nzGhost]="false">
-        <nz-page-header-title><span class="bloc_status task_state_{{task.state}}">{{task.state}}</span> {{task.title}}
+        <nz-page-header-title><span class="bloc_status task_state_{{(task$ | async).state}}">{{(task$ | async).state}}</span> {{(task$ | async).title}}
         </nz-page-header-title>
         <nz-page-header-extra>
             <span>Autorefresh (5s)</span>
@@ -29,18 +29,18 @@
     </ng-template>
 
     <!-- Task info -->
-    <nz-descriptions class="task-description" *ngIf="task.tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
-        <nz-descriptions-item *ngIf="task?.tags?._utask_parent_task_id" nzTitle="Parent task">
-            <a [routerLink]="[uiBaseUrl, 'task', task.tags._utask_parent_task_id]">
-                {{task.tags._utask_parent_task_id}}
+    <nz-descriptions class="task-description" *ngIf="(task$ | async).tags" nzBordered [nzSize]="'small'" [nzColumn]="1">
+        <nz-descriptions-item *ngIf="(task$ | async)?.tags?._utask_parent_task_id" nzTitle="Parent task">
+            <a [routerLink]="[uiBaseUrl, 'task', (task$ | async).tags._utask_parent_task_id]">
+                {{(task$ | async).tags._utask_parent_task_id}}
             </a>
         </nz-descriptions-item>
-        <nz-descriptions-item *ngIf="task.tags" nzTitle="Tags">
+        <nz-descriptions-item *ngIf="(task$ | async).tags" nzTitle="Tags">
             <table>
                 <tbody>
-                    <tr *ngFor="let tagKey of objectKeys(task.tags)">
+                    <tr *ngFor="let tagKey of objectKeys((task$ | async).tags)">
                         <td>{{tagKey}}</td>
-                        <td>{{task.tags[tagKey]}}</td>
+                        <td>{{(task$ | async).tags[tagKey]}}</td>
                     </tr>
                 </tbody>
             </table>
@@ -49,7 +49,7 @@
 
     <!-- Result box -->
     <lib-utask-box [header]="{openable: true, init: display.result, class: 'primary'}"
-        *ngIf="task.result && task.resolution">
+        *ngIf="(task$ | async).result && (task$ | async).resolution">
         <div app-box-header>Result</div>
         <div app-box-content>
             <lib-utask-editor [ngModel]="taskJson" ngDefaultControl [ngModelOptions]="{standalone: true}"
@@ -61,44 +61,44 @@
     <!-- Request box -->
     <lib-utask-box [header]="{openable: true, init: display.request, class: 'primary'}">
         <div app-box-header>
-            Request - {{task.id}}
+            Request - {{(task$ | async).id}}
         </div>
         <nz-button-group nzSize="small" app-box-header-extra>
             <button type="button" nz-button title="View as code" (click)="previewTask(); $event.stopPropagation();"><i
                     nz-icon nzType="file-text"></i></button>
             <button type="button" nz-button title="Edit the task"
-                (click)="editRequest(task); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
+                (click)="editRequest(); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
             <button type="button" nz-button title="Delete the task"
-                (click)="deleteTask(task.id); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
+                (click)="deleteTask(); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
         </nz-button-group>
         <div app-box-content>
-            <nz-descriptions *ngIf="task.input" nzBordered [nzSize]="'small'" [nzColumn]="1">
+            <nz-descriptions *ngIf="(task$ | async).input" nzBordered [nzSize]="'small'" [nzColumn]="1">
                 <nz-descriptions-item nzTitle="Template">
-                    <a [routerLink]="[uiBaseUrl, 'template', task.template_name]"
-                        title="Template {{task.template_name}}" *ngIf="meta.user_is_admin">
-                        {{task.template_name}}
+                    <a [routerLink]="[uiBaseUrl, 'template', (task$ | async).template_name]"
+                        title="Template {{(task$ | async).template_name}}" *ngIf="(meta$ | async).user_is_admin">
+                        {{(task$ | async).template_name}}
                     </a>
-                    <span *ngIf="!meta.user_is_admin">{{task.template_name}}</span>
+                    <span *ngIf="!(meta$ | async).user_is_admin">{{(task$ | async).template_name}}</span>
                 </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Inputs">
                     <table>
                         <tbody>
-                            <tr *ngFor="let inputKey of objectKeys(task.input)">
+                            <tr *ngFor="let inputKey of objectKeys((task$ | async).input)">
                                 <td>{{inputKey}}</td>
-                                <td>{{task.input[inputKey] | json}}</td>
+                                <td>{{(task$ | async).input[inputKey] | json}}</td>
                             </tr>
                         </tbody>
                     </table>
                 </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Information">
-                    Created by {{task.requester_username}} <abbr
-                        title="{{task.created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.created |
+                    Created by {{(task$ | async).requester_username}} <abbr
+                        title="{{(task$ | async).created | date : 'yyyy/MM/dd HH:mm'}}"><em>{{(task$ | async).created |
                             utaskFromNow}}</em></abbr>
                     <span
-                        *ngIf="task.created != task.last_activity || task.requester_username != task.resolver_username">
+                        *ngIf="(task$ | async).created != (task$ | async).last_activity || (task$ | async).requester_username != (task$ | async).resolver_username">
                         and
-                        updated {{task.resolver_username ? 'by' : ''}} {{task.resolver_username}} <abbr
-                            title="{{task.last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{task.last_activity |
+                        updated {{(task$ | async).resolver_username ? 'by' : ''}} {{(task$ | async).resolver_username}} <abbr
+                            title="{{(task$ | async).last_activity | date : 'yyyy/MM/dd HH:mm'}}"><em>{{(task$ | async).last_activity |
                                 utaskFromNow}}</em></abbr></span>
                 </nz-descriptions-item>
             </nz-descriptions>
@@ -109,7 +109,7 @@
 
         <!-- Execution box -->
         <lib-utask-box [header]="{openable: true, init: display.execution, class: 'primary'}"
-            *ngIf="resolution && resolution.steps">
+            *ngIf="resolution$ | async as resolution">
             <div app-box-header>
                 Execution -
                 <small>{{resolution.id}}</small> -
@@ -120,12 +120,16 @@
             </div>
             <div app-box-header-extra>
                 <nz-button-group nzSize="small">
-                    <button type="button" nz-button title="Run" (click)="runResolution(resolution)"><i nz-icon
-                            nzType="caret-right"></i></button>
-                    <button type="button" nz-button title="Cancel" (click)="cancelResolution(resolution)"><i nz-icon
-                            nzType="stop"></i></button>
-                    <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'"
-                        (click)="$event.stopPropagation()">More</button>
+                    <button type="button" nz-button title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)">
+                        <i nz-icon nzType="caret-right"></i>
+                    </button>
+                    <button type="button" nz-button title="Start over the task" (click)="$event.stopPropagation(); display.restartTask = true" [disabled]="!(startOver$ | async)">
+                        <i nz-icon nzType="rollback"></i>
+                    </button>
+                    <button type="button" nz-button title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)">
+                        <i nz-icon nzType="stop"></i>
+                    </button>
+                    <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
                 </nz-button-group>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
@@ -226,9 +230,9 @@
                 Sub Tasks
             </div>
             <div app-box-content>
-                <lib-utask-tasks-list [meta]="meta" [params]="{
+                <lib-utask-tasks-list [meta]="(meta$ | async)" [params]="{
                 page_size: 10,
-                type: meta.user_is_admin ? 'all' : 'own',
+                type: (meta$ | async).user_is_admin ? 'all' : 'own',
                 tag: '_utask_parent_task_id=' + taskId
             }" (event)="eventUtask($event)" [options]="listOptions">
                 </lib-utask-tasks-list>
@@ -239,11 +243,11 @@
         <lib-utask-box [header]="{openable: true, init: display.comments, class: 'primary'}">
             <div app-box-header>
                 Comments - <span class="badge"
-                    [ngClass]="{'badge-warning': task.comments.length > 0, 'badge-secondary': !task.comments || task.comments.length === 0}">{{task.comments.length}}</span>
+                    [ngClass]="{'badge-warning': (task$ | async).comments.length > 0, 'badge-secondary': !(task$ | async).comments || (task$ | async).comments.length === 0}">{{(task$ | async).comments.length}}</span>
                 <span *ngIf="loaders.task || loaders.addComment">&nbsp;<i nz-icon nzType="loading"></i></span>
             </div>
             <div app-box-content>
-                <nz-list *ngIf="task.comments && task.comments.length" [nzDataSource]="task.comments"
+                <nz-list *ngIf="(task$ | async).comments && (task$ | async).comments.length" [nzDataSource]="(task$ | async).comments"
                     [nzRenderItem]="comment" [nzItemLayout]="'horizontal'">
                     <ng-template #comment let-comment>
                         <nz-comment [nzAuthor]="comment.username" [nzDatetime]="comment.created | utaskFromNow">
@@ -255,7 +259,7 @@
                     </ng-template>
                 </nz-list>
                 <nz-comment>
-                    <nz-avatar nz-comment-avatar [nzText]="this.meta.username[0].toUpperCase()"></nz-avatar>
+                    <nz-avatar nz-comment-avatar [nzText]="(meta$ | async).username[0].toUpperCase()"></nz-avatar>
                     <nz-comment-content>
                         <nz-form-item>
                             <textarea [(ngModel)]="comment.content" nz-input [nzAutosize]="{ minRows: 2 }"></textarea>
