@@ -5,6 +5,7 @@ export default class Template {
     blocked: boolean;
     auto_runnable: boolean;
     allow_all_resolver_usernames: boolean;
+    allow_task_start_over: boolean;
     allowed_resolver_usernames: string[];
     allowed_resolver_groups: string[];
     doc_link: string;

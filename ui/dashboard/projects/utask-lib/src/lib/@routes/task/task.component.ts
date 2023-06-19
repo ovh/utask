@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewContainerRef, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { interval, Subscription } from 'rxjs';
-import { concatMap, filter } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, interval, Subscription } from 'rxjs';
+import { concatMap, filter, map, switchMap } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { ApiService, UTaskLibOptions } from '../../@services/api.service';
 import { ResolutionService } from '../../@services/resolution.service';
@@ -16,6 +16,7 @@ import Task, { Comment, ResolverInput } from '../../@models/task.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
+import Resolution from '../../@models/resolution.model';
 
 @Component({
   selector: 'lib-utask-task',
@@ -23,6 +24,26 @@ import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-li
   styleUrls: ['./task.sass']
 })
 export class TaskComponent implements OnInit, OnDestroy {
+  private _meta$ = new BehaviorSubject<Meta | null>(null);
+  readonly meta$ = this._meta$.asObservable();
+
+  private _task$ = new BehaviorSubject<Task | null>(null);
+  readonly task$ = this._task$.asObservable();
+
+  readonly template$ = this.task$.pipe(switchMap(task => this.api.template.get(task.template_name)));
+
+  private _resolution$ = new BehaviorSubject<Resolution | null>(null);
+  readonly resolution$ = this._resolution$.asObservable();
+
+  readonly startOver$ = combineLatest([this.meta$, this.template$, this.resolution$]).pipe(map(([meta, template, resolution]) => {
+    if (['PAUSED', 'CANCELLED', 'BLOCKED_BADREQUEST'].indexOf(resolution?.state) === -1) {
+      return false;
+    }
+
+    return !!meta?.user_is_admin || !!template?.allow_task_start_over;
+  }));
+
+
   validateResolveForm!: FormGroup;
   validateRejectForm!: FormGroup;
   inputControls: Array<string> = [];
@@ -39,13 +60,10 @@ export class TaskComponent implements OnInit, OnDestroy {
     resolver_inputs: {},
     task_id: null
   };
-  task: Task = null;
   taskJson: string;
   taskIsResolvable = false;
   taskId = '';
-  resolution: any = null;
   selectedStep = '';
-  meta: Meta = null;
   resolverInputs: Array<ResolverInput> = [];
 
   JSON = JSON;
@@ -90,20 +108,20 @@ export class TaskComponent implements OnInit, OnDestroy {
       agree: [false, [Validators.requiredTrue]]
     });
 
-    this.meta = this.route.parent.snapshot.data.meta;
+    this._meta$.next(this.route.parent.snapshot.data.meta)
     this.route.params.subscribe(params => {
       this.errors.main = null;
       this.taskId = params.id;
       this.loadTask().then(() => {
-        this.display.request = (!this.task.result && !this.resolution) || (!this.resolution && this.taskIsResolvable);
-        this.display.result = this.task.state === 'DONE';
-        this.display.execution = !!this.resolution;
-        this.display.reject = !this.resolution && this.taskIsResolvable;
-        this.display.resolution = !this.resolution && this.taskIsResolvable;
-        this.display.comments = this.task.comments && this.task.comments.length > 0;
+        this.display.request = (!this._task$.value.result && !this._resolution$.value) || (!this._resolution$.value && this.taskIsResolvable);
+        this.display.result = this._task$.value.state === 'DONE';
+        this.display.execution = !!this._resolution$.value;
+        this.display.reject = !this._resolution$.value && this.taskIsResolvable;
+        this.display.resolution = !this._resolution$.value && this.taskIsResolvable;
+        this.display.comments = this._task$.value.comments && this._task$.value.comments.length > 0;
       }).catch((err) => {
         console.log(err);
-        if (!this.task || this.task.id !== params.id) {
+        if (!this._task$.value || this._task$.value.id !== params.id) {
           this.errors.main = err;
         }
       });
@@ -119,9 +137,9 @@ export class TaskComponent implements OnInit, OnDestroy {
 
   addComment() {
     this.loaders.addComment = true;
-    this.api.task.comment.add(this.task.id, this.comment.content).toPromise().then((comment: Comment) => {
-      this.task.comments = get(this.task, 'comments', []);
-      this.task.comments.push(comment);
+    this.api.task.comment.add(this._task$.value.id, this.comment.content).toPromise().then((comment: Comment) => {
+      this._task$.value.comments = get(this._task$.value, 'comments', []);
+      this._task$.value.comments.push(comment);
       this.errors.addComment = null;
       this.comment.content = '';
     }).catch((err) => {
@@ -150,13 +168,13 @@ export class TaskComponent implements OnInit, OnDestroy {
       nzWidth: '80%',
       nzViewContainerRef: this.viewContainerRef,
       nzComponentParams: {
-        apiCall: () => this.api.resolution.getAsYaml(this.resolution.id).toPromise()
+        apiCall: () => this.api.resolution.getAsYaml(this._resolution$.value.id).toPromise()
       },
     });
   }
 
-  editRequest(task: Task) {
-    this.requestService.edit(task).then((data: any) => {
+  editRequest() {
+    this.requestService.edit(this._task$.value).then((data: any) => {
       this.loadTask(true);
       this._notif.info('', 'The request has been edited.');
     }).catch((err) => {
@@ -221,8 +239,8 @@ export class TaskComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteTask(taskId: string) {
-    this.taskService.delete(taskId).then((data: any) => {
+  deleteTask() {
+    this.taskService.delete(this._task$.value.id).then((data: any) => {
       this.router.navigate([this._options.uiBaseUrl + '/']);
       this._notif.info('', 'The task has been deleted.');
     }).catch((err) => {
@@ -244,7 +262,7 @@ export class TaskComponent implements OnInit, OnDestroy {
     }
 
     this.loaders.rejectTask = true;
-    this.api.task.reject(this.task.id).toPromise().then((res: any) => {
+    this.api.task.reject(this._task$.value.id).toPromise().then((res: any) => {
       this.errors.rejectTask = null;
       this.loadTask(true);
     }).catch((err) => {
@@ -316,7 +334,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       });
       this.inputControls = this.resolverInputs.map(input => 'input_' + input.name);
     }
-    this.item.task_id = this.task.id;
+    this.item.task_id = this._task$.value.id;
   }
 
   loadTask(refresh: boolean = false) {
@@ -327,18 +345,18 @@ export class TaskComponent implements OnInit, OnDestroy {
         this.api.task.get(this.taskId).toPromise(),
         this.api.task.list({
           page_size: 10,
-          type: this.meta.user_is_admin ? 'all' : 'own',
+          type: this._meta$.value.user_is_admin ? 'all' : 'own',
           tag: '_utask_parent_task_id=' + this.taskId
         } as any).toPromise(),
       ]).then(async (data) => {
-        this.task = data[0];
+        this._task$.next(data[0]);
         this.taskJson = JSON.stringify(data[0].result, null, 2);
         this.haveAtLeastOneChilTask = data[1].body.length > 0;
-        this.task.comments = get(this.task, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
+        this._task$.value.comments = get(this._task$.value, 'comments', []).sort((a, b) => a.created < b.created ? -1 : 1);
 
-        if (this.template?.name !== this.task.template_name) {
+        if (this.template?.name !== this._task$.value.template_name) {
           try {
-            this.template = await this.getTemplate(this.task.template_name);
+            this.template = await this.getTemplate(this._task$.value.template_name);
             this.resolverInputs = this.template.resolver_inputs;
           } catch (err) {
             reject(err);
@@ -349,26 +367,26 @@ export class TaskComponent implements OnInit, OnDestroy {
           this.taskChanged();
         }
 
-        this.taskIsResolvable = this.requestService.isResolvable(this.task, this.meta, this.template);
-        if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this.task.state) > -1) {
+        this.taskIsResolvable = this.requestService.isResolvable(this._task$.value, this._meta$.value, this.template);
+        if (['DONE', 'WONTFIX', 'CANCELLED'].indexOf(this._task$.value.state) > -1) {
           this.autorefresh.enable = false;
           this.autorefresh.actif = false;
         } else {
           this.autorefresh.enable = true;
           if (!this.autorefresh.hasChanged) {
-            this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN', 'WAITING'].indexOf(this.task.state) > -1;
+            this.autorefresh.actif = ['TODO', 'RUNNING', 'TO_AUTORUN', 'WAITING'].indexOf(this._task$.value.state) > -1;
           }
         }
 
-        if (this.task.resolution) {
+        if (this._task$.value.resolution) {
           this.loaders.resolution = !refresh;
           this.loaders.refreshResolution = !refresh;
-          this.loadResolution(this.task.resolution).then(rData => {
-            if (!this.resolution && rData) {
+          this.loadResolution(this._task$.value.resolution).then(rData => {
+            if (!this._resolution$.value && rData) {
               this.display.execution = true;
               this.display.request = false;
             }
-            this.resolution = rData;
+            this._resolution$.next(rData);
             resolve();
           }).catch((err) => {
             reject(err);
@@ -377,7 +395,7 @@ export class TaskComponent implements OnInit, OnDestroy {
             this.loaders.refreshResolution = false;
           });
         } else {
-          this.resolution = null;
+          this._resolution$.next(null);
           resolve();
         }
       }).catch((err: any) => {
