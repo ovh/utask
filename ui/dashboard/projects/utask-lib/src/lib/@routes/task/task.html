@@ -272,7 +272,7 @@
 
         <!-- Templating expression box -->
         <lib-utask-box [header]="{openable: true, init: false, class: 'primary'}"
-            *ngIf="meta.user_is_admin && resolution && resolution.steps">
+            *ngIf="(meta$ | async).user_is_admin && (resolution$ | async) as resolution">
             <div app-box-header>
                 Template expression
                 <span *ngIf="loaders.execution || loaders.refreshTask">&nbsp;<i nz-icon nzType="loading"></i></span>
