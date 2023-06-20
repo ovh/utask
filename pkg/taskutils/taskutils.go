@@ -62,8 +62,13 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 		delayTime := time.Now().Add(delayDuration)
 		delayUntil = &delayTime
 	}
-	if _, err := resolution.Create(dbp, t, nil, reqUsername, true, delayUntil); err != nil {
+	resolution, err := resolution.Create(dbp, t, nil, reqUsername, true, delayUntil)
+	if err != nil {
 		return nil, err
+	}
+
+	if resolution != nil {
+		t.Resolution = &resolution.PublicID
 	}
 
 	return t, nil
