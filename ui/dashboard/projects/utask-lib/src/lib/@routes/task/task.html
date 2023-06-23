@@ -64,12 +64,15 @@
             Request - {{(task$ | async).id}}
         </div>
         <nz-button-group nzSize="small" app-box-header-extra>
-            <button type="button" nz-button title="View as code" (click)="previewTask(); $event.stopPropagation();"><i
-                    nz-icon nzType="file-text"></i></button>
-            <button type="button" nz-button title="Edit the task"
-                (click)="editRequest(); $event.stopPropagation();"><i nz-icon nzType="edit"></i></button>
-            <button type="button" nz-button title="Delete the task"
-                (click)="deleteTask(); $event.stopPropagation();"><i nz-icon nzType="delete"></i></button>
+            <button type="button" nz-button title="View as code" (click)="previewTask(); $event.stopPropagation();">
+                <i nz-icon nzType="file-text"></i>
+            </button>
+            <button type="button" nz-button title="Edit the task" (click)="editRequest(); $event.stopPropagation();" [disabled]="!(canEditRequest$ | async)">
+                <i nz-icon nzType="edit"></i>
+            </button>
+            <button type="button" nz-button title="Delete the task" (click)="deleteTask(); $event.stopPropagation();" [disabled]="!(canDeleteRequest$ | async)">
+                <i nz-icon nzType="delete"></i>
+            </button>
         </nz-button-group>
         <div app-box-content>
             <nz-descriptions *ngIf="(task$ | async).input" nzBordered [nzSize]="'small'" [nzColumn]="1">
@@ -113,38 +116,28 @@
             <div app-box-header>
                 Execution -
                 <small>{{resolution.id}}</small> -
-                <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state
-                    ===
-                    'ERROR' ? ' (retrying)' : ''}}</small>
+                <small class="bloc_status resolution_state_{{resolution.state}}">{{resolution.state}}{{resolution.state === 'ERROR' ? ' (retrying)' : ''}}</small>
                 <span *ngIf="loaders.execution || loaders.refreshTask">&nbsp;<i nz-icon nzType="loading"></i></span>
             </div>
             <div app-box-header-extra>
                 <nz-button-group nzSize="small">
-                    <button type="button" nz-button title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)">
+                    <button type="button" nz-button title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)" [disabled]="!(canRun$ | async)">
                         <i nz-icon nzType="caret-right"></i>
                     </button>
-                    <button type="button" nz-button title="Start over the task" (click)="$event.stopPropagation(); display.restartTask = true" [disabled]="!(startOver$ | async)">
+                    <button type="button" nz-button title="Start over the task" (click)="$event.stopPropagation(); display.restartTask = true" [disabled]="!(canStartOver$ | async)">
                         <i nz-icon nzType="rollback"></i>
                     </button>
-                    <button type="button" nz-button title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)">
+                    <button type="button" nz-button title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)" [disabled]="!(canCancel$ | async)">
                         <i nz-icon nzType="stop"></i>
                     </button>
                     <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
                 </nz-button-group>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
-                        <li nz-menu-item (click)="previewResolution()">
-                            View as code
-                        </li>
-                        <li nz-menu-item (click)="pauseResolution(resolution)">
-                            Pause
-                        </li>
-                        <li nz-menu-item (click)="extendResolution(resolution)">
-                            Extend</li>
-                        <li nz-menu-item (click)="editResolution(resolution)">Edit</li>
-                        <li nz-menu-item
-                            [nzDisabled]="['PAUSED', 'CANCELLED', 'BLOCKED_BADREQUEST'].indexOf(resolution.state) == -1"
-                            (click)="display.restartTask = true;$event.stopPropagation();">Start over</li>
+                        <li nz-menu-item (click)="previewResolution()">View as code</li>
+                        <li nz-menu-item [nzDisabled]="!(canPause$ | async)" (click)="pauseResolution(resolution)">Pause</li>
+                        <li nz-menu-item [nzDisabled]="!(canExtend$ | async)" (click)="extendResolution(resolution)">Extend</li>
+                        <li nz-menu-item [nzDisabled]="!(canEdit$ | async)" (click)="editResolution(resolution)">Edit</li>
                     </ul>
                 </nz-dropdown-menu>
             </div>
@@ -170,6 +163,7 @@
                         </lib-utask-steps-list>
                     </div>
                     <div nz-col [nzSpan]="16">
+                        <nz-alert *ngIf="canStartOver$ | async" nzBanner nzMessage="It appears that the task is stuck. If you're experiencing difficulties or need to correct the inputs, you can simply click the 'Start Over' button to reset and try again"></nz-alert>
                         <lib-utask-steps-viewer [resolution]="resolution" (select)="selectStepFromViewer($event)">
                         </lib-utask-steps-viewer>
                     </div>
