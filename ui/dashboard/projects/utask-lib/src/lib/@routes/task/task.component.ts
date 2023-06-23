@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { BehaviorSubject, combineLatest, interval, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, interval, of, Subscription } from 'rxjs';
 import { concatMap, filter, map, switchMap } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { ApiService, UTaskLibOptions } from '../../@services/api.service';
@@ -30,19 +30,124 @@ export class TaskComponent implements OnInit, OnDestroy {
   private _task$ = new BehaviorSubject<Task | null>(null);
   readonly task$ = this._task$.asObservable();
 
-  readonly template$ = this.task$.pipe(switchMap(task => this.api.template.get(task.template_name)));
+  readonly template$ = this.task$.pipe(switchMap(task => {
+    if (!task) {
+      return of(null);
+    }
+    return this.api.template.get(task.template_name)
+  }));
 
   private _resolution$ = new BehaviorSubject<Resolution | null>(null);
   readonly resolution$ = this._resolution$.asObservable();
 
-  readonly startOver$ = combineLatest([this.meta$, this.template$, this.resolution$]).pipe(map(([meta, template, resolution]) => {
-    if (['PAUSED', 'CANCELLED', 'BLOCKED_BADREQUEST'].indexOf(resolution?.state) === -1) {
+  private _isResolver$ = combineLatest([
+    this.meta$, this.template$, this.task$, this.resolution$
+  ]).pipe(map(([meta, template, task, resolution]) => {
+    if (meta?.user_is_admin) {
+      return true;
+    }
+
+    // check if the current user is declared as resolver in the task template
+    if (meta && (template?.allowed_resolver_usernames ?? []).includes(meta.username)) {
+      return true;
+    }
+
+    // check if the current user has at least one group declared as resolver in the task template
+    if (meta && (template?.allowed_resolver_groups ?? []).some(v => meta.user_groups.includes(v))) {
+      return true;
+    }
+
+    // check if the current user is declared as resolver in the task
+    if (meta && (task?.resolver_usernames ?? []).includes(meta.username)) {
+      return true;
+    }
+
+    // check if the current user has at least one group declared as resolver in the task
+    if (meta && (task?.resolver_groups ?? []).some(v => meta.user_groups.includes(v))) {
+      return true;
+    }
+
+    // check if the current user is the resolution resolver
+    if (meta && resolution && meta.username === resolution.resolver_username) {
+      return true;
+    }
+
+    return false;
+  }))
+
+  readonly canStartOver$ = combineLatest([
+    this.meta$, this.template$, this.resolution$, this._isResolver$
+  ]).pipe(map(([meta, template, resolution, isResolver]) => {
+    if (!['PAUSED', 'CANCELLED', 'BLOCKED_BADREQUEST'].includes(resolution?.state)) {
       return false;
     }
 
-    return !!meta?.user_is_admin || !!template?.allow_task_start_over;
+    if (meta?.user_is_admin) {
+      return true;
+    }
+
+    if (!template?.allow_task_start_over) {
+      return false;
+    }
+
+    return isResolver;
   }));
 
+  readonly canRun$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
+    if (['CANCELLED', 'RUNNING', 'DONE'].includes(resolution?.state)) {
+      return false;
+    }
+
+    return isResolver;
+  }));
+
+  readonly canPause$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
+    if (['CANCELLED', 'RUNNING', 'DONE', 'PAUSED'].includes(resolution?.state)) {
+      return false;
+    }
+
+    return isResolver;
+  }));
+
+  readonly canExtend$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
+    if (resolution?.state !== 'BLOCKED_MAXRETRIES') {
+      return false;
+    }
+
+    return isResolver;
+  }));
+
+  readonly canCancel$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
+    if (['CANCELLED', 'RUNNING', 'DONE'].includes(resolution?.state)) {
+      return false;
+    }
+
+    return isResolver;
+  }));
+
+  readonly canEdit$ = combineLatest([this.resolution$, this.meta$]).pipe(map(([resolution, meta]) => {
+    if (resolution?.state !== 'PAUSED') {
+      return false;
+    }
+
+    return !!meta?.user_is_admin;
+  }));
+
+  readonly canEditRequest$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
+    if (resolution?.state !== 'PAUSED') {
+      return false;
+    }
+
+    return isResolver;
+  }));;
+
+  readonly canDeleteRequest$ = combineLatest([this.task$, this.meta$]).pipe(map(([task, meta]) => {
+    if (['RUNNING', 'BLOCKED'].includes(task?.state)) {
+      return false;
+    }
+
+    return !!meta?.user_is_admin;
+  }));
 
   validateResolveForm!: FormGroup;
   validateRejectForm!: FormGroup;
