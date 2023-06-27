@@ -96,7 +96,14 @@ func LoadStateCount(dbp zesty.DBProvider, tags map[string]string) (sc map[string
 func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string]float64, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to load task stats")
 
-	subQuery := sqlgenerator.PGsql.Select(`t."id"`, `t."state"`, `coalesce(nullif(t."resolver_groups", 'null'::jsonb), nullif(tt."allowed_resolver_groups", 'null'::jsonb)) as "groups"`).
+	subQuery := sqlgenerator.PGsql.Select(
+		`t."id"`,
+		`t."state"`,
+		`coalesce(
+			nullif(t."resolver_groups", 'null'::jsonb),
+			nullif(tt."allowed_resolver_groups", 'null'::jsonb),
+			'[""]'::jsonb
+		) as "groups"`).
 		From(`"task" t`).
 		LeftJoin(`"task_template" tt ON t."id_template" = tt."id"`)
 

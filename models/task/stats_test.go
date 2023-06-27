@@ -109,6 +109,9 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	assert.NoError(t, err)
 
+	err = task.DeleteAllTasks(dbp)
+	assert.NoError(t, err)
+
 	tests := []struct {
 		name      string
 		tasks     map[string][]string
@@ -119,7 +122,16 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			"no-group",
 			map[string][]string{"task": nil},
 			map[string][]string{"task": nil},
-			map[string]map[string]float64{},
+			map[string]map[string]float64{
+				"": {
+					task.StateTODO:      1,
+					task.StateBlocked:   0,
+					task.StateRunning:   0,
+					task.StateWontfix:   0,
+					task.StateDone:      0,
+					task.StateCancelled: 0,
+				},
+			},
 		},
 		{
 			"no-override",
