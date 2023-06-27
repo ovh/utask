@@ -296,6 +296,7 @@ func UpdateResolution(c *gin.Context, in *updateResolutionIn) error {
 		// valid and normalize steps
 		for name, st := range r.Steps {
 			if err := st.ValidAndNormalize(name, tt.BaseConfigurations, r.Steps); err != nil {
+				_ = dbp.Rollback()
 				return errors.NewNotValid(err, fmt.Sprintf("invalid step %s", name))
 			}
 
