@@ -2,7 +2,7 @@ BINARY			= utask
 
 MAIN_LOCATION	= ./cmd
 
-TEST_LOCATION	= ./...
+TEST_LOCATION	?= ./...
 # timeout for go test is here to prevent tests running infinitely if one runResolution leads to a step that never recovers (e.g. missing push on a stepChan)
 # 30 seconds per unit tests should be enough
 TEST_CMD		= go test -count=1 -timeout 30s -v -cover -p 1 ${TEST_LOCATION}
