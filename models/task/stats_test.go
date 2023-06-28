@@ -116,20 +116,22 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 		name      string
 		tasks     map[string][]string
 		templates map[string][]string
-		wantSc    map[string]map[string]float64
+		wantSc    map[string]map[string]map[string]float64
 	}{
 		{
 			"no-group",
 			map[string][]string{"task": nil},
 			map[string][]string{"task": nil},
-			map[string]map[string]float64{
+			map[string]map[string]map[string]float64{
 				"": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 			},
 		},
@@ -137,14 +139,16 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			"no-override",
 			map[string][]string{"task": nil},
 			map[string][]string{"task": {"foo"}},
-			map[string]map[string]float64{
+			map[string]map[string]map[string]float64{
 				"foo": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 			},
 		},
@@ -152,14 +156,16 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			"with-override",
 			map[string][]string{"task": {"bar"}},
 			map[string][]string{"task": {"foo"}},
-			map[string]map[string]float64{
+			map[string]map[string]map[string]float64{
 				"bar": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 			},
 		},
@@ -167,22 +173,26 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			"no-override-multiple",
 			map[string][]string{"task": nil},
 			map[string][]string{"task": {"foo", "bar"}},
-			map[string]map[string]float64{
+			map[string]map[string]map[string]float64{
 				"foo": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 				"bar": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 			},
 		},
@@ -190,22 +200,26 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			"with-override-multiple",
 			map[string][]string{"task": {"foo", "bar"}},
 			map[string][]string{"task": {"dummy"}},
-			map[string]map[string]float64{
+			map[string]map[string]map[string]float64{
 				"foo": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 				"bar": {
-					task.StateTODO:      1,
-					task.StateBlocked:   0,
-					task.StateRunning:   0,
-					task.StateWontfix:   0,
-					task.StateDone:      0,
-					task.StateCancelled: 0,
+					"task": {
+						task.StateTODO:      1,
+						task.StateBlocked:   0,
+						task.StateRunning:   0,
+						task.StateWontfix:   0,
+						task.StateDone:      0,
+						task.StateCancelled: 0,
+					},
 				},
 			},
 		},
@@ -218,6 +232,20 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 			}
 
 			prefix := fmt.Sprintf("task-%d-", time.Now().UnixNano())
+
+			prefixedWantSc := make(map[string]map[string]map[string]float64)
+
+			for group, groupStats := range tt.wantSc {
+				prefixedWantSc[group] = map[string]map[string]float64{}
+
+				for template, templateStats := range groupStats {
+					prefixedWantSc[group][prefix+template] = map[string]float64{}
+
+					for state, count := range templateStats {
+						prefixedWantSc[group][prefix+template][state] = count
+					}
+				}
+			}
 
 			templates, err := createTemplates(dbp, prefix, tt.templates)
 			if err != nil {
@@ -237,8 +265,8 @@ func TestLoadStateCountResolverGroup(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(gotSc, tt.wantSc) {
-				t.Errorf("LoadStateCountResolverGroup() = %v, want %v", gotSc, tt.wantSc)
+			if !reflect.DeepEqual(gotSc, prefixedWantSc) {
+				t.Errorf("LoadStateCountResolverGroup() = %v, want %v", gotSc, prefixedWantSc)
 			}
 
 			if err := dbp.Rollback(); err != nil {

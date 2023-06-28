@@ -27,7 +27,8 @@ type stateCount struct {
 
 type stateCountResolverGroup struct {
 	stateCount
-	Group string `db:"group_name"`
+	Template string `db:"template"`
+	Group    string `db:"group_name"`
 }
 
 // RegisterValidationTime computes the duration between the task creation and
@@ -93,11 +94,12 @@ func LoadStateCount(dbp zesty.DBProvider, tags map[string]string) (sc map[string
 }
 
 // LoadStateCountResolverGroup returns a map containing the count of tasks grouped by state and by resolver_group
-func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string]float64, err error) {
+func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string]map[string]float64, err error) {
 	defer errors.DeferredAnnotatef(&err, "Failed to load task stats")
 
 	subQuery := sqlgenerator.PGsql.Select(
 		`t."id"`,
+		`tt."name" as "template"`,
 		`t."state"`,
 		`coalesce(
 			nullif(t."resolver_groups", 'null'::jsonb),
@@ -107,11 +109,11 @@ func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string
 		From(`"task" t`).
 		LeftJoin(`"task_template" tt ON t."id_template" = tt."id"`)
 
-	sel := sqlgenerator.PGsql.Select(`"group_name"`, `"state"`, `count("sq"."state") as "state_count"`).
+	sel := sqlgenerator.PGsql.Select(`"group_name"`, `"state"`, `"sq"."template"`, `count("sq"."state") as "state_count"`).
 		FromSelect(subQuery, "sq").
 		Join(`jsonb_array_elements_text("sq"."groups") "group_name" ON true`).
 		Where(`"sq"."groups" IS NOT NULL`).
-		GroupBy(`"group_name"`, `"sq"."state"`)
+		GroupBy(`"group_name"`, `"sq"."state"`, `"sq"."template"`)
 
 	query, params, err := sel.ToSql()
 	if err != nil {
@@ -123,11 +125,15 @@ func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string
 		return nil, pgjuju.Interpret(err)
 	}
 
-	sc = make(map[string]map[string]float64)
+	sc = make(map[string]map[string]map[string]float64)
 
 	for _, gsc := range s {
 		if _, exists := sc[gsc.Group]; !exists {
-			sc[gsc.Group] = map[string]float64{
+			sc[gsc.Group] = map[string]map[string]float64{}
+		}
+
+		if _, exists := sc[gsc.Group][gsc.Template]; !exists {
+			sc[gsc.Group][gsc.Template] = map[string]float64{
 				StateTODO:      0,
 				StateBlocked:   0,
 				StateRunning:   0,
@@ -136,7 +142,8 @@ func LoadStateCountResolverGroup(dbp zesty.DBProvider) (sc map[string]map[string
 				StateCancelled: 0,
 			}
 		}
-		sc[gsc.Group][gsc.State] = gsc.Count
+
+		sc[gsc.Group][gsc.Template][gsc.State] = gsc.Count
 	}
 
 	return sc, nil

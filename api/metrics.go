@@ -17,18 +17,20 @@ import (
 )
 
 var (
-	metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state"}, []string{"status", "group"})
+	metrics = promauto.NewGaugeVec(prometheus.GaugeOpts{Name: "utask_task_state"}, []string{"status", "template", "group"})
 )
 
 func updateMetrics(dbp zesty.DBProvider) {
-	// utask_task_state_per_resolver_group
-	statsResolverGroup, err := task.LoadStateCountResolverGroup(dbp)
+	stats, err := task.LoadStateCountResolverGroup(dbp)
 	if err != nil {
 		logrus.Warn(err)
 	}
-	for group, groupStats := range statsResolverGroup {
-		for state, count := range groupStats {
-			metrics.WithLabelValues(state, group).Set(count)
+
+	for group, groupStats := range stats {
+		for template, templateStats := range groupStats {
+			for state, count := range templateStats {
+				metrics.WithLabelValues(state, template, group).Set(count)
+			}
 		}
 	}
 }
