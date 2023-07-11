@@ -134,7 +134,7 @@ export class TaskComponent implements OnInit, OnDestroy {
   }));
 
   readonly canEditRequest$ = combineLatest([this.resolution$, this._isResolver$]).pipe(map(([resolution, isResolver]) => {
-    if (resolution?.state !== 'PAUSED') {
+    if (!['TODO', 'PAUSED'].includes(resolution?.state)) {
       return false;
     }
 
