@@ -240,6 +240,8 @@ A user can be allowed to resolve a task in four ways:
 - `.step.[STEP_NAME].children`: the collection of results from a 'foreach' step
 - `.step.[STEP_NAME].error`: error message from a failed step
 - `.step.[STEP_NAME].state`: current state of the given step
+- `.step.[STEP_NAME].max_retries`: max retries of the given step
+- `.step.[STEP_NAME].try_count`: try count of the given step
 - `.config.[CONFIG_ITEM].bar`: field `bar` from a config item (configstore, see above)
 - `.iterator.foo`: field `foo` from the iterator in a loop (see `foreach` steps below)
 - `.pre_hook.output.foo`: field `foo` from the output of the step's pre-hook (see [pre-hooks](#pre-hooks))

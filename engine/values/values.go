@@ -27,12 +27,15 @@ const (
 	VarKey           = "var"
 	IteratorKey      = "iterator" // reserved for transient one-off values, set/unset when applying values to template
 
-	StateKey    = "state"
-	PreHookKey  = "pre_hook"
-	OutputKey   = "output"
-	MetadataKey = "metadata"
-	ChildrenKey = "children"
-	ErrorKey    = "error"
+	StateKey      = "state"
+	PreHookKey    = "pre_hook"
+	OutputKey     = "output"
+	MetadataKey   = "metadata"
+	ResolutionKey = "resolution"
+	ChildrenKey   = "children"
+	ErrorKey      = "error"
+	TryCountKey   = "try_count"
+	MaxRetriesKey = "max_retries"
 )
 
 // Values is a container for all the live data of a running task
@@ -201,6 +204,36 @@ func (v *Values) UnsetError(stepName string) {
 	v.unsetStepData(stepName, ErrorKey)
 }
 
+// GetTryCount returns the try count for a step
+func (v *Values) GetTryCount(stepName string) interface{} {
+	return v.getStepData(stepName, TryCountKey)
+}
+
+// SetTryCount stores the try count for a step
+func (v *Values) SetTryCount(stepName string, value interface{}) {
+	v.setStepData(stepName, TryCountKey, value)
+}
+
+// UnsetTryCount empties the try count for a step
+func (v *Values) UnsetTryCount(stepName string) {
+	v.unsetStepData(stepName, TryCountKey)
+}
+
+// GetMaxRetries returns the max retries for a step
+func (v *Values) GetMaxRetries(stepName string) interface{} {
+	return v.getStepData(stepName, MaxRetriesKey)
+}
+
+// SetMaxRetries stores the max retries for a step
+func (v *Values) SetMaxRetries(stepName string, value interface{}) {
+	v.setStepData(stepName, MaxRetriesKey, value)
+}
+
+// UnsetMaxRetries empties the max retries for a step
+func (v *Values) UnsetMaxRetries(stepName string) {
+	v.unsetStepData(stepName, MaxRetriesKey)
+}
+
 // GetState returns the state of a step
 func (v *Values) GetState(stepName string) interface{} {
 	return v.getStepData(stepName, StateKey)
@@ -313,6 +346,12 @@ func (v *Values) Apply(templateStr string, item interface{}, stepName string) ([
 
 		v.SetError(utask.This, v.GetError(stepName))
 		defer v.UnsetError(utask.This)
+
+		v.SetTryCount(utask.This, v.GetTryCount(stepName))
+		defer v.UnsetTryCount(utask.This)
+
+		v.SetMaxRetries(utask.This, v.GetMaxRetries(stepName))
+		defer v.UnsetMaxRetries(utask.This)
 
 		v.SetState(utask.This, v.GetState(stepName))
 		defer v.UnsetState(utask.This)

@@ -422,6 +422,8 @@ forLoop:
 			res.Values.SetOutput(s.Name, s.Output)
 			res.Values.SetMetadata(s.Name, s.Metadata)
 			res.Values.SetChildren(s.Name, s.Children)
+			res.Values.SetTryCount(s.Name, s.TryCount)
+			res.Values.SetMaxRetries(s.Name, s.MaxRetries)
 			res.Values.SetError(s.Name, s.Error)
 			res.Values.SetState(s.Name, s.State)
 
