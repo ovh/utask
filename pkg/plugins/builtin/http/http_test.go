@@ -3,7 +3,7 @@ package pluginhttp
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"testing"
@@ -158,7 +158,7 @@ func Test_exec(t *testing.T) {
 				var httpResponse = new(http.Response)
 				httpResponse.Header = http.Header{"Set-Cookie": {"Cookie-1=foo"}, "Content-Type": {"application/json"}}
 				var bodyResponse = []byte(`{"foo": "bar"}`)
-				httpResponse.Body = ioutil.NopCloser(bytes.NewBuffer(bodyResponse))
+				httpResponse.Body = io.NopCloser(bytes.NewBuffer(bodyResponse))
 				httpResponse.StatusCode = 200
 				return httpResponse, nil
 			},

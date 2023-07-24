@@ -2,7 +2,6 @@ package tasktemplate_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -69,7 +68,7 @@ func TestLoadFromDir(t *testing.T) {
 	assert.Len(t, taskTemplatesFromDatabase, 2, "wrong size of imported templates")
 
 	tt := tasktemplate.TaskTemplate{}
-	tmpl, err := ioutil.ReadFile(path.Join("templates_tests", "hello-world-now.yaml"))
+	tmpl, err := os.ReadFile(path.Join("templates_tests", "hello-world-now.yaml"))
 	assert.Nil(t, err, "unable to read file hello-world-now.yaml")
 	err = yaml.Unmarshal(tmpl, &tt)
 	assert.Nil(t, err, "unable to unmarshal tasktemplate")
@@ -118,7 +117,7 @@ func TestLoadFromDir(t *testing.T) {
 
 func TestInvalidVariablesTemplates(t *testing.T) {
 	tt := tasktemplate.TaskTemplate{}
-	tmpl, err := ioutil.ReadFile(path.Join("templates_errors_tests", "error-variables.yaml"))
+	tmpl, err := os.ReadFile(path.Join("templates_errors_tests", "error-variables.yaml"))
 	assert.Nil(t, err, "unable to read file error-variables.yaml")
 	err = yaml.Unmarshal(tmpl, &tt)
 	assert.Nil(t, err, "unable to unmarshal tasktemplate")
@@ -158,7 +157,7 @@ func TestInvalidVariablesTemplates(t *testing.T) {
 
 func TestDependenciesValidation(t *testing.T) {
 	tt := tasktemplate.TaskTemplate{}
-	tmpl, err := ioutil.ReadFile(path.Join("templates_errors_tests", "error-variables.yaml"))
+	tmpl, err := os.ReadFile(path.Join("templates_errors_tests", "error-variables.yaml"))
 	assert.Nil(t, err, "unable to read file error-variables.yaml")
 	err = yaml.Unmarshal(tmpl, &tt)
 	assert.Nil(t, err, "unable to unmarshal tasktemplate")

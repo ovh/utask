@@ -2,7 +2,7 @@ package tasktemplate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -20,7 +20,7 @@ var (
 // LoadFromDir reads yaml-formatted task templates
 // from a folder and upserts them in database
 func LoadFromDir(dbp zesty.DBProvider, dir string) error {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return fmt.Errorf("Failed to open template directory %s: %s", dir, err)
 	}
@@ -28,7 +28,7 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 		if file.IsDir() || !strings.HasSuffix(file.Name(), ".yaml") {
 			continue
 		}
-		tmpl, err := ioutil.ReadFile(path.Join(dir, file.Name()))
+		tmpl, err := os.ReadFile(path.Join(dir, file.Name()))
 		if err != nil {
 			return fmt.Errorf("failed to read template '%s': %s", file.Name(), err)
 		}

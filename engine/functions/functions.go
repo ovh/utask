@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"reflect"
 	"regexp"
@@ -149,7 +149,7 @@ func (f *Function) MetadataSchema() json.RawMessage {
 
 // LoadFromDir loads recursively all the function from a given directory.
 func LoadFromDir(directory string) error {
-	files, err := ioutil.ReadDir(directory)
+	files, err := os.ReadDir(directory)
 	if err != nil {
 		logrus.Warnf("Ignoring functions directory %s: %s", directory, err)
 		return nil
@@ -167,7 +167,7 @@ func LoadFromDir(directory string) error {
 			continue
 		}
 
-		content, err := ioutil.ReadFile(path.Join(directory, file.Name()))
+		content, err := os.ReadFile(path.Join(directory, file.Name()))
 		if err != nil {
 			return err
 		}

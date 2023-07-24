@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -99,14 +98,15 @@ func TestMain(m *testing.M) {
 
 func loadTemplates() map[string][]byte {
 	templateList := map[string][]byte{}
-	files, err := ioutil.ReadDir(testDirTemplates)
+	files, err := os.ReadDir(testDirTemplates)
 	if err != nil {
 		panic(err)
 	}
 
 	for _, file := range files {
-		if file.Mode().IsRegular() {
-			bytes, err := ioutil.ReadFile(filepath.Join(testDirTemplates, file.Name()))
+		info, _ := file.Info()
+		if info.Mode().IsRegular() {
+			bytes, err := os.ReadFile(filepath.Join(testDirTemplates, file.Name()))
 			if err != nil {
 				panic(err)
 			}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 
@@ -30,7 +29,7 @@ type yamlBinding struct{}
 
 func (yamlBinding) Name() string { return "yamlBinding" }
 func (yamlBinding) Bind(req *http.Request, obj interface{}) error {
-	bodyBytes, err := ioutil.ReadAll(req.Body)
+	bodyBytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}

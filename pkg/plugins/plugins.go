@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"plugin"
 	"reflect"
 	"strings"
@@ -71,7 +71,7 @@ func InitializersFromFolder(path string, service *Service) error {
 }
 
 func loadPlugins(path string, load func(string, plugin.Symbol) error) error {
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		logrus.Warnf("Ignoring plugin directory %s: %s", path, err)
 	} else {
