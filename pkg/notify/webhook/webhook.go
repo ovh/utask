@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -79,7 +79,7 @@ func (w *NotificationSender) Send(m *notify.Message, name string) {
 	if res.StatusCode >= 400 {
 		resErr := fmt.Errorf("failed to send notification using %q: backend returned with status code %d", name, res.StatusCode)
 
-		resBody, err := ioutil.ReadAll(res.Body)
+		resBody, err := io.ReadAll(res.Body)
 		if err == nil {
 			notify.WrappedSendErrorWithBody(resErr, m, Type, name, string(resBody))
 		} else {

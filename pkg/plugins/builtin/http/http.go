@@ -6,7 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -301,13 +301,13 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	// remove response magic prefix
 	if cfg.TrimPrefix != "" {
 		trimPrefixBytes := []byte(cfg.TrimPrefix)
-		respBody, err := ioutil.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, nil, fmt.Errorf("HTTP cannot read response: %s", err.Error())
 		}
 		resp.Body.Close()
 		respBody = bytes.TrimPrefix(respBody, trimPrefixBytes)
-		resp.Body = ioutil.NopCloser(bytes.NewReader(respBody))
+		resp.Body = io.NopCloser(bytes.NewReader(respBody))
 	}
 
 	return httputil.UnmarshalResponse(resp)
