@@ -384,6 +384,7 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 	stepChan := make(chan *step.Step)
 
 	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
+	recheckWaiting := true
 
 forLoop:
 	for expectedMessages > 0 {
@@ -521,6 +522,21 @@ forLoop:
 		// from candidate resolution states, choose a resolution state by priority
 		for _, status := range []string{resolution.StateCrashed, resolution.StateBlockedFatal, resolution.StateBlockedBadRequest, resolution.StateError, resolution.StateWaiting, resolution.StateBlockedDeadlock, resolution.StateToAutorunDelayed} {
 			if mapStatus[status] {
+				if status == resolution.StateWaiting && recheckWaiting {
+					for name, s := range res.Steps {
+						if s.State == step.StateWaiting {
+							delete(executedSteps, name)
+						}
+					}
+
+					expectedMessages = runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
+					recheckWaiting = false
+
+					debugLogger.Debugf("Engine: resolve() %s loop, try to resolve %d waiting step(s)", res.PublicID, expectedMessages)
+
+					goto forLoop
+				}
+
 				res.SetState(status)
 				break
 			}
