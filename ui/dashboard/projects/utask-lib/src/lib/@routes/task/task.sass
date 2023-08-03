@@ -102,3 +102,15 @@ lib-utask-steps-viewer
   &_WAITING, &_TO_AUTORUN_DELAYED
     background: $color-waiting !important
     color: white !important
+
+.inputs
+  display: flex
+  flex-direction: column
+
+.input
+  .key
+    &::after
+      content: ": "
+
+  .value
+    font-family: monospace
