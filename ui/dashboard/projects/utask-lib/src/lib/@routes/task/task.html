@@ -83,15 +83,11 @@
                     </a>
                     <span *ngIf="!(meta$ | async).user_is_admin">{{(task$ | async).template_name}}</span>
                 </nz-descriptions-item>
-                <nz-descriptions-item nzTitle="Inputs">
-                    <table>
-                        <tbody>
-                            <tr *ngFor="let inputKey of objectKeys((task$ | async).input)">
-                                <td>{{inputKey}}</td>
-                                <td>{{(task$ | async).input[inputKey] | json}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <nz-descriptions-item *ngIf="(task$ | async) as task" nzTitle="Inputs" class="inputs">
+                    <div *ngFor="let inputKey of objectKeys(task.input)" class="input">
+                        <span class="key">{{ inputKey }}</span>
+                        <span class="value">{{task.input[inputKey] | json}}</span>
+                    </div>
                 </nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Information">
                     Created by {{(task$ | async).requester_username}} <abbr
@@ -141,6 +137,7 @@
                     </ul>
                 </nz-dropdown-menu>
             </div>
+            <pre>{{resolution|json}}</pre>
             <div app-box-content>
                 <div nz-row [nzGutter]="16">
                     <div nz-col [nzSpan]="8">
@@ -153,6 +150,12 @@
                             </nz-descriptions-item>
                             <nz-descriptions-item nzTitle="Last stop">
                                 {{resolution.last_stop | date: 'yyyy/MM/dd HH:mm'}}
+                            </nz-descriptions-item>
+                            <nz-descriptions-item *ngIf="resolution.resolver_inputs" nzTitle="Resolver inputs" class="inputs">
+                                <div *ngFor="let inputKey of objectKeys(resolution.resolver_inputs)" class="input">
+                                    <span class="key">{{ inputKey }}</span>
+                                    <span class="value">{{resolution.resolver_inputs[inputKey] | json}}</span>
+                                </div>
                             </nz-descriptions-item>
                             <nz-descriptions-item nzTitle="Run count">
                                 {{resolution.run_count}} / {{resolution.run_max}}

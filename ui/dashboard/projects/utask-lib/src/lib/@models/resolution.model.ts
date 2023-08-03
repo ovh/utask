@@ -13,6 +13,7 @@ export default class Resolution {
     base_configurations: any;
     task_id: string;
     task_title: string;
+    resolver_inputs?: { [key: string]: any };
     steps: { [key: string]: Step };
 }
 
