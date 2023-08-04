@@ -3,6 +3,7 @@ package condition
 import (
 	"fmt"
 
+	"github.com/juju/errors"
 	"github.com/ovh/utask/engine/values"
 )
 
@@ -13,13 +14,45 @@ const (
 	CHECK = "check"
 )
 
+const (
+	// ForEachChildren executes the condition on the children of a foreach step.
+	// The children are created, the condition is copied in them, then run.
+	// This is the default value.
+	ForEachChildren = "children"
+	// ForEachParent executes the condition on the foreach step itself.
+	ForEachParent = "parent"
+)
+
 // Condition defines a condition to be evaluated before or after a step's action
 type Condition struct {
 	Type    string            `json:"type"`
 	If      []*Assert         `json:"if"`
 	Then    map[string]string `json:"then"`
 	Final   bool              `json:"final"`
+	ForEach string            `json:"foreach"`
 	Message string            `json:"message"`
+}
+
+// Valid asserts that a condition's definition is valid
+// ie. the type and foreach are among the accepted values listed above
+func (c *Condition) Valid() error {
+	if c == nil {
+		return nil
+	}
+
+	switch c.Type {
+	case SKIP, CHECK:
+	default:
+		return errors.BadRequestf("Unknown condition type: %s", c.Type)
+	}
+
+	switch c.ForEach {
+	case "", ForEachChildren, ForEachParent:
+	default:
+		return errors.BadRequestf("Unknown condition foreach: %s", c.ForEach)
+	}
+
+	return nil
 }
 
 // Eval runs the condition against a set of values, evaluating the underlying Condition

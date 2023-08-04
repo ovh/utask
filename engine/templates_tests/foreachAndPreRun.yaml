@@ -88,3 +88,52 @@ steps:
       configuration:
         output:
           url: 'https://eu.httpbin.org/delay/1'
+  stepForeachPrune:
+    description: a foreach step that prune its children
+    foreach: '["1","2"]'
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/{{ .iterator }}'
+    conditions:
+      - type: skip
+        if:
+          - value: 'foo'
+            operator: EQ
+            expected: 'foo'
+        then:
+          this: PRUNE
+  stepDepOnForeachPrune:
+    dependencies: [stepForeachPrune]
+    description: a dep on a foreach which pruned its children
+    action:
+      type: echo
+      configuration:
+        output:
+          ok: "ok"
+  stepForeachPruneParentTask:
+    description: a foreach step that prune its children
+    foreach: '["1","2"]'
+    action:
+      type: echo
+      configuration:
+        output:
+          url: 'https://eu.httpbin.org/delay/{{ .iterator }}'
+    conditions:
+      - type: skip
+        foreach: parent # This is the difference between this one and stepForeachPrune
+        if:
+          - value: 'foo'
+            operator: EQ
+            expected: 'foo'
+        then:
+          this: PRUNE
+  stepDepOnForeachPruneParentTask:
+    dependencies: [stepForeachPruneParentTask]
+    description: a dep on a foreach which was pruned
+    action:
+      type: echo
+      configuration:
+        output:
+          ok: "ok"

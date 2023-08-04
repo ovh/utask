@@ -697,6 +697,52 @@ It can be declared in the template like this:
 foreach_strategy: "sequence"
 ```
 
+When writing `skip` conditions on loops, an additional property `foreach` can be added. It can have two values:
+- `children`: default value. If no value is set, this value is used. The condition will be run on every iteration of the foreach loop;
+- `parent`: the condition will be run on the step itself before creating its children.
+
+For example:
+
+```yaml
+foreach: '{{.step.aPreviousStep.output.ids | toJson}}'
+action:
+  type: echo
+  configuration:
+    output:
+      url: '{{ .iterator }}'
+conditions:
+  - type: skip
+    foreach: children  # <- this line can be omitted
+    if:
+      - value: '{{ .iterator }}'
+        operator: EQ
+        expected: '{{ .step.something.output.dontTouchId }}'
+    then:
+      this: PRUNE
+```
+
+will be run on every children and skip the child by pruning it the condition is true. And
+
+```yaml
+foreach: '{{.step.aPreviousStep.output.ids | toJson}}'
+action:
+  type: echo
+  configuration:
+    output:
+      url: '{{ .iterator }}'
+conditions:
+  - type: skip
+    foreach: parent
+    if:
+      - value: '{{ step.previousCheck.output.result }}'
+        operator: EQ
+        expected: 'already_done'
+    then:
+      this: PRUNE
+```
+
+will be run before creating any children, by pruning the parent.
+
 #### Resources <a name="resources"></a>
 
 Resources are a way to restrict the concurrency factor of operations, to control the throughput and avoid dangerous behavior (e.g. flooding the targets).

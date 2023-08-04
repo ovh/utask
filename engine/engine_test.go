@@ -194,11 +194,6 @@ func templateFromYAML(dbp zesty.DBProvider, filename string) (*tasktemplate.Task
 	return tasktemplate.LoadFromName(dbp, tmpl.Name)
 }
 
-type lintingAndValidationTest struct {
-	NilResolution bool
-	NilError      bool
-}
-
 func TestSimpleTemplate(t *testing.T) {
 	input := map[string]interface{}{
 		"foo": "bar",
@@ -333,41 +328,48 @@ func TestStepMaxRetries(t *testing.T) {
 }
 
 func TestLintingAndValidation(t *testing.T) {
-	expectedResult := map[string]lintingAndValidationTest{
-		"lintingError.yaml":                {true, false},
-		"lintingRootKey.yaml":              {true, false},
-		"lintingReservedStep.yaml":         {true, false},
-		"customStates.yaml":                {true, false},
-		"forbiddenStateImpact.yaml":        {true, false},
-		"stepDetailsLintingError.yaml":     {true, false},
-		"circularDependencies.yaml":        {true, false},
-		"selfDependency.yaml":              {true, false},
-		"orphanDependencies.yaml":          {true, false},
-		"functionEchoHelloWorldError.yaml": {true, false},
+	expectedResult := map[string]struct {
+		nilResolution bool
+		errstr        string
+	}{
+		"lintingError.yaml":                   {true, `Variable notfound does not exist`},
+		"lintingRootKey.yaml":                 {true, `Variable grault does not exist`},
+		"lintingReservedStep.yaml":            {true, `'this' step name is reserved`},
+		"customStates.yaml":                   {true, `Custom state "SERVER_ERROR" is not allowed as it's a reserved state`},
+		"forbiddenStateImpact.yaml":           {true, `Step condition cannot impact the state of step stepTwo, only those who belong to the dependency chain are allowed`},
+		"stepDetailsLintingError.yaml":        {true, `Wrong step key: stepNotFound`},
+		"circularDependencies.yaml":           {true, `Invalid: circular dependency [stepOne stepThree stepTwo] <-> step`}, // Last step name is random
+		"selfDependency.yaml":                 {true, `Invalid: circular dependency [stepOne] <-> stepOne`},
+		"orphanDependencies.yaml":             {true, `Invalid dependency, no step with that name: "stepTwo"`},
+		"functionEchoHelloWorldError.yaml":    {true, `Invalid executor action: missing function_args "name"`},
+		"conditionForeachSkipOnly.yaml":       {true, `Step condition can set foreach on a skip condition`},
+		"conditionForeachInvalid.yaml":        {true, `Unknown condition foreach: invalid`},
+		"conditionForeachStepNotForeach.yaml": {true, `Step condition cannot set foreach on a non-foreach step`},
 
-		"lintingInfiniteOk.yaml":           {false, true},
-		"lintingObject.yaml":               {false, true},
-		"allowedStateImpact.yaml":          {false, true},
-		"functionEchoHelloWorld.yaml":      {false, true},
-		"functionCustomState.yaml":         {false, true},
-		"functionPreHook.yaml":             {false, true},
-		"functionEchoTemplatedOutput.yaml": {false, true},
+		"lintingInfiniteOk.yaml":           {false, ""},
+		"lintingObject.yaml":               {false, ""},
+		"allowedStateImpact.yaml":          {false, ""},
+		"functionEchoHelloWorld.yaml":      {false, ""},
+		"functionCustomState.yaml":         {false, ""},
+		"functionPreHook.yaml":             {false, ""},
+		"functionEchoTemplatedOutput.yaml": {false, ""},
 	}
 
 	for template, testCase := range expectedResult {
 		t.Run(template, func(t *testing.T) {
 			res, err := createResolution(template, map[string]interface{}{}, nil)
 
-			if testCase.NilResolution {
+			if testCase.nilResolution {
 				assert.Nil(t, res)
 			} else {
 				assert.NotNil(t, res)
 			}
 
-			if testCase.NilError {
+			if testCase.errstr == "" {
 				assert.Nil(t, err)
 			} else {
-				assert.NotNil(t, err)
+				require.NotNil(t, err)
+				assert.Contains(t, err.Error(), testCase.errstr)
 			}
 		})
 	}
@@ -711,7 +713,7 @@ func TestForeach(t *testing.T) {
 }
 
 func TestForeachWithChainedIterations(t *testing.T) {
-	_, require := td.AssertRequire(t)
+	assert, require := td.AssertRequire(t)
 	res, err := createResolution("foreach.yaml", map[string]interface{}{
 		"list": []interface{}{"a", "b", "c", "d", "e"},
 	}, nil)
@@ -733,6 +735,7 @@ func TestForeachWithChainedIterations(t *testing.T) {
 			Then: map[string]string{
 				"this": "SERVER_ERROR",
 			},
+			ForEach: condition.ForEachChildren,
 		},
 	)
 	res.Steps["generateItems"].ForEachStrategy = "sequence"
@@ -744,24 +747,24 @@ func TestForeachWithChainedIterations(t *testing.T) {
 	require.Nil(err)
 	require.Cmp(res.State, resolution.StateError)
 
-	td.Cmp(t, res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
-	td.Cmp(t, res.Steps["concatItems"].State, step.StateTODO)
-	td.Cmp(t, res.Steps["finalStep"].State, step.StateTODO)
-	td.Cmp(t, res.Steps["bStep"].State, "B")
-	td.Cmp(t, res.Steps["generateItems-0"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-1"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-2"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-3"].State, step.StateServerError)
-	td.Cmp(t, res.Steps["generateItems-4"].State, step.StateTODO)
-	td.CmpLen(t, res.Steps["generateItems-0"].Dependencies, 0)
-	td.Cmp(t, res.Steps["generateItems-1"].Dependencies, []string{"generateItems-0"})
-	td.Cmp(t, res.Steps["generateItems-2"].Dependencies, []string{"generateItems-1"})
-	td.Cmp(t, res.Steps["generateItems-3"].Dependencies, []string{"generateItems-2"})
-	td.Cmp(t, res.Steps["generateItems-4"].Dependencies, []string{"generateItems-3"})
+	assert.Cmp(res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
+	assert.Cmp(res.Steps["concatItems"].State, step.StateTODO)
+	assert.Cmp(res.Steps["finalStep"].State, step.StateTODO)
+	assert.Cmp(res.Steps["bStep"].State, "B")
+	assert.Cmp(res.Steps["generateItems-0"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-1"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-2"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-3"].State, step.StateServerError)
+	assert.Cmp(res.Steps["generateItems-4"].State, step.StateTODO)
+	assert.Len(res.Steps["generateItems-0"].Dependencies, 0)
+	assert.Cmp(res.Steps["generateItems-1"].Dependencies, []string{"generateItems-0"})
+	assert.Cmp(res.Steps["generateItems-2"].Dependencies, []string{"generateItems-1"})
+	assert.Cmp(res.Steps["generateItems-3"].Dependencies, []string{"generateItems-2"})
+	assert.Cmp(res.Steps["generateItems-4"].Dependencies, []string{"generateItems-3"})
 }
 
 func TestForeachWithChainedIterationsWithDepOnParent(t *testing.T) {
-	_, require := td.AssertRequire(t)
+	assert, require := td.AssertRequire(t)
 	res, err := createResolution("foreach.yaml", map[string]interface{}{
 		"list": []interface{}{"a", "b", "c", "d", "e"},
 	}, nil)
@@ -784,6 +787,7 @@ func TestForeachWithChainedIterationsWithDepOnParent(t *testing.T) {
 			Then: map[string]string{
 				"this": "SERVER_ERROR",
 			},
+			ForEach: condition.ForEachChildren,
 		},
 	)
 	res.Steps["generateItems"].ForEachStrategy = "sequence"
@@ -795,39 +799,64 @@ func TestForeachWithChainedIterationsWithDepOnParent(t *testing.T) {
 	require.Nil(err)
 	require.Cmp(res.State, resolution.StateError)
 
-	td.Cmp(t, res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
-	td.Cmp(t, res.Steps["concatItems"].State, step.StateTODO)
-	td.Cmp(t, res.Steps["finalStep"].State, step.StateTODO)
-	td.Cmp(t, res.Steps["bStep"].State, "B")
-	td.Cmp(t, res.Steps["generateItems-0"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-1"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-2"].State, step.StateDone)
-	td.Cmp(t, res.Steps["generateItems-3"].State, step.StateServerError)
-	td.Cmp(t, res.Steps["generateItems-4"].State, step.StateTODO)
-	td.Cmp(t, res.Steps["generateItems"].Dependencies, []string{"emptyLoop", "generateItems-0:ANY", "generateItems-1:ANY", "generateItems-2:ANY", "generateItems-3:ANY", "generateItems-4:ANY"})
-	td.Cmp(t, res.Steps["generateItems-0"].Dependencies, []string{"emptyLoop"})
-	td.Cmp(t, res.Steps["generateItems-1"].Dependencies, []string{"emptyLoop", "generateItems-0"})
-	td.Cmp(t, res.Steps["generateItems-2"].Dependencies, []string{"emptyLoop", "generateItems-1"})
-	td.Cmp(t, res.Steps["generateItems-3"].Dependencies, []string{"emptyLoop", "generateItems-2"})
-	td.Cmp(t, res.Steps["generateItems-4"].Dependencies, []string{"emptyLoop", "generateItems-3"})
+	assert.Cmp(res.Steps["emptyLoop"].State, step.StateDone) // running on empty collection is ok
+	assert.Cmp(res.Steps["concatItems"].State, step.StateTODO)
+	assert.Cmp(res.Steps["finalStep"].State, step.StateTODO)
+	assert.Cmp(res.Steps["bStep"].State, "B")
+	assert.Cmp(res.Steps["generateItems-0"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-1"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-2"].State, step.StateDone)
+	assert.Cmp(res.Steps["generateItems-3"].State, step.StateServerError)
+	assert.Cmp(res.Steps["generateItems-4"].State, step.StateTODO)
+	assert.Cmp(res.Steps["generateItems"].Dependencies, []string{"emptyLoop", "generateItems-0:ANY", "generateItems-1:ANY", "generateItems-2:ANY", "generateItems-3:ANY", "generateItems-4:ANY"})
+	assert.Cmp(res.Steps["generateItems-0"].Dependencies, []string{"emptyLoop"})
+	assert.Cmp(res.Steps["generateItems-1"].Dependencies, []string{"emptyLoop", "generateItems-0"})
+	assert.Cmp(res.Steps["generateItems-2"].Dependencies, []string{"emptyLoop", "generateItems-1"})
+	assert.Cmp(res.Steps["generateItems-3"].Dependencies, []string{"emptyLoop", "generateItems-2"})
+	assert.Cmp(res.Steps["generateItems-4"].Dependencies, []string{"emptyLoop", "generateItems-3"})
 }
 
 func TestForeachWithPreRun(t *testing.T) {
-	input := map[string]interface{}{}
-	res, err := createResolution("foreachAndPreRun.yaml", input, nil)
-	require.Nilf(t, err, "expecting nil error, got %s", err)
-	require.NotNil(t, res)
+	for _, switchToToRetry := range []bool{false, true} {
+		t.Run(fmt.Sprintf("%s-%t", t.Name(), switchToToRetry), func(t *testing.T) {
+			input := map[string]interface{}{}
+			res, err := createResolution("foreachAndPreRun.yaml", input, nil)
+			require.Nilf(t, err, "expecting nil error, got %s", err)
+			require.NotNil(t, res)
 
-	res, err = runResolution(res)
+			if switchToToRetry {
+				for _, st := range []string{"stepForeachPrune", "stepDepOnForeachPrune", "stepForeachPruneParentTask", "stepDepOnForeachPruneParentTask"} {
+					res.Steps[st].State = step.StateToRetry
+				}
+				require.NoError(t, updateResolution(res))
+			}
 
-	require.Nilf(t, err, "got error %s", err)
-	require.NotNil(t, res)
-	assert.Equal(t, resolution.StateDone, res.State)
-	for _, st := range []string{"stepForeachNoDep", "stepSkippedNoDep", "stepNoDep", "stepForeachWithDep", "stepSkippedWithDep"} {
-		assert.Equal(t, step.StateDone, res.Steps[st].State)
-	}
-	for _, st := range []string{"stepDep", "stepDep2"} {
-		assert.Equal(t, step.StatePrune, res.Steps[st].State)
+			res, err = runResolution(res)
+
+			require.Nilf(t, err, "got error %s", err)
+			require.NotNil(t, res)
+			assert.Equal(t, resolution.StateDone, res.State)
+			for _, st := range []string{"stepForeachNoDep", "stepSkippedNoDep", "stepNoDep", "stepForeachWithDep", "stepSkippedWithDep"} {
+				assert.Equal(t, step.StateDone, res.Steps[st].State)
+			}
+			for _, st := range []string{"stepDep", "stepDep2"} {
+				assert.Equal(t, step.StatePrune, res.Steps[st].State)
+			}
+
+			// skip prune on a foreach step's children means:
+			// - foreach children are set to prune
+			// - the foreach step itself is set to done
+			// - the dependencies are not pruned
+			assert.Equal(t, step.StateDone, res.Steps["stepForeachPrune"].State)
+			assert.Equal(t, step.StateDone, res.Steps["stepDepOnForeachPrune"].State)
+
+			// skip prune on a foreach step itself means:
+			// - foreach children are not generated
+			// - the foreach step itself is set to prune
+			// - the dependencies are pruned
+			assert.Equal(t, step.StatePrune, res.Steps["stepForeachPruneParentTask"].State)
+			assert.Equal(t, step.StatePrune, res.Steps["stepDepOnForeachPruneParentTask"].State)
+		})
 	}
 }
 
