@@ -8,11 +8,16 @@ import (
 
 // ValidCondition asserts that the definition for a StepCondition is valid
 func ValidCondition(sc *condition.Condition, stepName string, steps map[string]*Step) error {
+	if err := sc.Valid(); err != nil {
+		return err
+	}
+
 	for _, c := range sc.If {
 		if err := c.Valid(); err != nil {
 			return err
 		}
 	}
+
 	for thenStep, thenState := range sc.Then {
 		// force the use of "this" for single steps
 		// except in the case of "loop" steps: the condition will belong to its children,
@@ -45,6 +50,17 @@ func ValidCondition(sc *condition.Condition, stepName string, steps map[string]*
 			return errors.BadRequestf("Step condition implies invalid state for step %s: %s", thenStep, thenState)
 		}
 	}
+
+	if sc.ForEach != "" {
+		if steps[stepName].ForEach == "" {
+			return errors.BadRequestf("Step condition cannot set foreach on a non-foreach step")
+		}
+
+		if sc.Type != condition.SKIP {
+			return errors.BadRequestf("Step condition can set foreach on a skip condition")
+		}
+	}
+
 	return nil
 }
 

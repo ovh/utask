@@ -1,0 +1,21 @@
+name: conditionForeachInvalid
+description: Invalid value inside foreach on a condition
+title_format: "[test] invalid value in condition foreach"
+steps:
+    stepOne:
+        foreach: '[1, 2]'
+        description: "step one"
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "bar: {{.iterator}}"
+        conditions:
+            - type: skip
+              foreach: invalid
+              if:
+                - value: 1
+                  operator: EQ
+                  expected: 1
+              then:
+                  this: CLIENT_ERROR

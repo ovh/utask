@@ -1,0 +1,20 @@
+name: conditionForeachStepNotForeach
+description: Cannot put a foreach condition on a non foreach step
+title_format: "[test] foreach condition on a non foreach step"
+steps:
+    stepOne:
+        description: "step one"
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "bar: {{.iterator}}"
+        conditions:
+            - type: skip
+              foreach: children
+              if:
+                - value: 1
+                  operator: EQ
+                  expected: 1
+              then:
+                  this: CLIENT_ERROR

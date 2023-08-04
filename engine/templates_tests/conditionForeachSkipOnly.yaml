@@ -1,0 +1,21 @@
+name: conditionForeachSkipOnly
+description: Foreach on condition can only be set on skip confitoins
+title_format: "[test] foreach condition only on skip"
+steps:
+    stepOne:
+        foreach: '[1, 2]'
+        description: "step one"
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: "bar: {{.iterator}}"
+        conditions:
+            - type: check
+              foreach: children
+              if:
+                - value: 1
+                  operator: EQ
+                  expected: 1
+              then:
+                  this: CLIENT_ERROR

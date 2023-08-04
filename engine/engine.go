@@ -660,6 +660,13 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 			// prepare step
 			s.Name = name
 			if s.ForEach != "" { // loop step
+				// run "skip" step conditions in step in in todo or to_retry
+				switch s.State {
+				case step.StateTODO, step.StateToRetry:
+					step.PreRun(s, res.Values, resolutionStateSetter(res, preRunModifiedSteps), executedSteps)
+					_ = commit(dbp, res, nil)
+				}
+
 				switch s.State {
 				case step.StateTODO:
 					expanded++
@@ -751,12 +758,19 @@ func expandStep(s *step.Step, res *resolution.Resolution) {
 		// to be shared between multiple steps
 		dependencies := make([]string, len(s.Dependencies))
 		customStates := make([]string, len(s.CustomStates))
-		conditions := make([]*condition.Condition, len(s.Conditions))
 		resources := make([]string, len(s.Resources))
+		conditions := []*condition.Condition{}
+
 		copy(dependencies, s.Dependencies)
 		copy(customStates, s.CustomStates)
-		copy(conditions, s.Conditions)
 		copy(resources, s.Resources)
+		for _, c := range s.Conditions {
+			// Only copy skip conditions that are flagged with foreach: children
+			if c.Type == condition.SKIP && c.ForEach != condition.ForEachChildren {
+				continue
+			}
+			conditions = append(conditions, c)
+		}
 
 		res.Steps[childStepName] = &step.Step{
 			Name:         childStepName,

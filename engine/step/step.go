@@ -489,6 +489,10 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 		if sc.Type != condition.SKIP {
 			continue
 		}
+		if st.ForEach != "" && sc.ForEach != condition.ForEachParent {
+			continue
+		}
+
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {
 			if _, ok := err.(condition.ErrConditionNotMet); ok {
 				logrus.Debugf("PreRun: Step [%s] condition eval: %s", st.Name, err)
@@ -576,7 +580,6 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 // - validates the provided json schema for result validation
 // - checks dependency declaration against the task's execution tree
 func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMessage, steps map[string]*Step) error {
-
 	if name == stepRefThis {
 		return errors.BadRequestf("'%s' step name is reserved", stepRefThis)
 	}
@@ -639,6 +642,9 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 
 	// valid step conditions
 	for _, sc := range st.Conditions {
+		if st.ForEach != "" && sc.Type == condition.SKIP && sc.ForEach == "" {
+			sc.ForEach = condition.ForEachChildren
+		}
 		if err := ValidCondition(sc, name, steps); err != nil {
 			return err
 		}
@@ -685,7 +691,8 @@ func (st *Step) ValidAndNormalize(name string, baseConfigs map[string]json.RawMe
 	// no circular dependencies,
 	sourceChain := dependenciesChain(steps, st.Dependencies)
 	if utils.ListContainsString(sourceChain, name) {
-		return errors.BadRequestf("Invalid: circular dependency %v <-> %s", sourceChain, st.Name)
+		sort.Strings(sourceChain)
+		return errors.BadRequestf("Invalid: circular dependency %v <-> %s", sourceChain, name)
 	}
 
 	return nil
