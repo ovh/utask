@@ -334,16 +334,23 @@ A step is the smallest unit of work that can be performed within a task. At is's
 A sequence of ordered steps constitutes the entire workload of a task. Steps are ordered by declaring **dependencies** between each other. A step declares its dependencies as a list of step names on which it waits, meaning that a step's execution will be on hold until its dependencies have been resolved. [More details about dependencies](#dependencies).
 
 The flow of this sequence can further be controlled with **conditions** on the steps: a condition is a clause that can be run before or after the step's action. A condition can either be used:
+
 - to skip a step altogether
 - to analyze its outcome and override the engine's default behaviour
 
-Several conditions can be specified, the first one to evaluate as `true` is applied. A condition is composed of:
+Several conditions can be specified.
+Unless `final` is set to `true`, they are all evaluated in order. If multiple conditions evaluate to `true`, they will be applied sequentially. Once a condition is applied, the next condition is evaluated using the new context (i.e. using the new `state` value of steps that got updated). If multiple conditions are evaluated to `true` and are changing the same step `state`  value, then the last condition to evaluate as `true` will be the one that will change the `state` step _for real_.
+
+A condition is composed of:
+
 - a `type` (skip or check)
 - a list of `if` assertions (`value`, `operator`, `expected`) which all have to be true (AND on the collection),
 - a `then` object to impact the state of steps (`this` refers to the current step)
+- a `final` boolean, defaulting to `false`. When set to `true`, it prevents the evaluation of the next conditions if this one is evaluated to `true`
 - an optional `message` to convey the intention of the condition, making it easier to inspect tasks
 
-Here's an example of a `skip` condition. The value of an input is evaluated to determine the result: if the value of `runType` is `dry`, the `createUser` step will not be executed, its state will be set directly to DONE.
+Here's an example of a `skip` condition. The value of an input is evaluated to determine the result: if the value of `runType` is `dry`, the `createUser` step will not be executed, its state will be set directly to `DONE`.
+
 ```yaml
 inputs:
 - name: runType
@@ -365,7 +372,7 @@ steps:
       message: Dry run, skip user creation
 ```
 
-Here's an example of a `check` condition. Here the return of an http call is inspected: a 404 status will put the step in a custom NOT_FOUND state. The default behavior would be to consider any 4xx status as a client error, which blocks execution of the task. The check condition allows you to consider this situation as normal, and proceed with other steps that take the NOT_FOUND state into account (creating the missing resource, for instance).
+Here's an example of a `check` condition. Here the return of an http call is inspected: a 404 status will put the step in a custom `NOT_FOUND` state. The default behavior would be to consider any 4xx status as a client error, which blocks execution of the task. The check condition allows you to consider this situation as normal, and proceed with other steps that take the `NOT_FOUND` state into account (creating the missing resource, for instance).
 
 ```yaml
 steps:

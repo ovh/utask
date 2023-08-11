@@ -504,14 +504,22 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 				break
 			}
 		}
+
+		// Reaching this means the condition is met: set the step to skipped
 		st.skipped = true
-		// inserting current skipped step into executedSteps to avoid being picked-up again in availableSteps candidates
+
+		// Inserting current skipped step into executedSteps to avoid being picked-up again in availableSteps candidates
 		executedSteps[st.Name] = true
 		for step, state := range sc.Then {
 			if step == stepRefThis {
 				step = st.Name
 			}
 			ss(step, state, sc.Message)
+		}
+
+		// If the condition is final, don't continue
+		if sc.Final {
+			break
 		}
 	}
 }
@@ -544,11 +552,18 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 				break
 			}
 		}
+
+		// Reaching this means the condition is met
 		for step, state := range sc.Then {
 			if step == stepRefThis {
 				step = st.Name
 			}
 			ss(step, state, sc.Message)
+		}
+
+		// If the condition is final, don't continue
+		if sc.Final {
+			break
 		}
 	}
 }

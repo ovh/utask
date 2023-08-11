@@ -26,6 +26,31 @@ steps:
               then:
                   this: TO_RETRY
               message: Second condition is also true, overrides the impact of the first
+    stepOneFinal:
+        description: first step final
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+        conditions:
+            - type: check
+              if:
+                  - value: "{{.step.stepOneFinal.output.foo}}"
+                    operator: EQ
+                    expected: bar
+              then:
+                  this: PRUNE
+              final: true
+              message: First condition evals to true and is applied
+            - type: check
+              if:
+                  - value: "{{.step.stepOneFinal.output.foo}}"
+                    operator: NE
+                    expected: grault
+              then:
+                  this: TO_RETRY
+              message: Second condition is not run since the first one is final
     stepTwo:
         description: a regexp condition is applied
         custom_states: [REGEXP_MATCH]
@@ -213,3 +238,52 @@ steps:
                     {
                         concat: "hello world",
                     }
+    stepSkip:
+        description: skip condition step
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+        conditions:
+            - type: skip
+              if:
+                  - value: 1
+                    operator: EQ
+                    expected: 1
+              then:
+                  this: PRUNE
+              message: First condition evals to true and is applied
+            - type: skip
+              if:
+                  - value: 1
+                    operator: NE
+                    expected: 2
+              then:
+                  this: CLIENT_ERROR
+              message: Second condition is also true, overrides the impact of the first
+    stepSkipFinal:
+        description: skip condition step final
+        action:
+            type: echo
+            configuration:
+                output:
+                    foo: bar
+        conditions:
+            - type: skip
+              if:
+                  - value: 1
+                    operator: EQ
+                    expected: 1
+              then:
+                  this: PRUNE
+              final: true
+              message: First condition evals to true and is applied
+            - type: skip
+              if:
+                  - value: 1
+                    operator: NE
+                    expected: 2
+              then:
+                  this: CLIENT_ERROR
+              message: Second condition is not run since the first one is final
