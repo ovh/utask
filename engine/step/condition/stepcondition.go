@@ -18,6 +18,7 @@ type Condition struct {
 	Type    string            `json:"type"`
 	If      []*Assert         `json:"if"`
 	Then    map[string]string `json:"then"`
+	Final   bool              `json:"final"`
 	Message string            `json:"message"`
 }
 
