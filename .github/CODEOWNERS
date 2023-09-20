@@ -1,4 +1,2 @@
 # see doc on: https://help.github.com/articles/about-codeowners/
-* @rbeuque74 @loopfz
-# UI files
-/ui/ @simonmartinez
+* @rbeuque74 @loopfz @rclsilver @wI2L
