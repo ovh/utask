@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
-import get from 'lodash-es/get';
 import isString from 'lodash-es/isString';
+import { parse } from 'yaml'
 
 @Component({
     selector: 'lib-utask-error-message',
@@ -26,10 +26,22 @@ export class ErrorMessageComponent implements OnChanges {
         }
         if (isString(this.data)) {
             this.text = this.data;
-        } else if (this.data.error && this.data.error.error) {
-            this.text = this.data.error.error;
-        } else if (this.data.message) {
-            this.text = this.data.message;
+        } else {
+            this.text = this.data.message || this.text;
+            if (this.data.error) {
+                let error = this.data.error;
+                const contentType = this.data.headers.get("content-type");
+                if (typeof error == 'string') {
+                    if (contentType.indexOf('application/x-yaml') > -1) {
+                        try { error = parse(error) } catch { }
+                    } else if (contentType.indexOf('application/json') > -1) {
+                        try { error = JSON.parse(error) } catch { }
+                    }
+                }
+                if (error.error) {
+                    this.text = `${this.text} - Details: ${error.error}`;
+                }
+            }
         }
         this._cd.markForCheck();
     }
