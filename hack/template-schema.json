@@ -850,6 +850,11 @@
                     "type": "object",
                     "description": "Describes state changement if all conditions match"
                 },
+                "final": {
+                    "type": "boolean",
+                    "description": "Whether the condition execution continues if this one evaluates to true",
+                    "default": false
+                },
                 "message": {
                     "type": "string",
                     "description": "Message to display in the UI if condition match"
