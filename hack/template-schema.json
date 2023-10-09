@@ -801,6 +801,15 @@
                         "check"
                     ]
                 },
+                "foreach": {
+                    "type": "string",
+                    "description": "Whether this skip condition stops the parent or the children of a foreach step (parent forbidden ouside of foreach or on a check condition)",
+                    "default": "children",
+                    "enum": [
+                        "parent",
+                        "children"
+                    ]
+                },
                 "if": {
                     "type": "array",
                     "items": {
@@ -849,6 +858,11 @@
                 "then": {
                     "type": "object",
                     "description": "Describes state changement if all conditions match"
+                },
+                "final": {
+                    "type": "boolean",
+                    "description": "Whether the condition execution continues if this one evaluates to true",
+                    "default": false
                 },
                 "message": {
                     "type": "string",
