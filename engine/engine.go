@@ -703,7 +703,9 @@ func runAvailableSteps(dbp zesty.DBProvider, modifiedSteps map[string]bool, res 
 				// rebuild step dependency tree to include generated loop steps
 				res.BuildStepTree()
 				commit(dbp, res, nil)
-				go func() { stepChan <- s }()
+				go func(s *step.Step) {
+					stepChan <- s
+				}(s)
 			} else { // regular step
 				s.ResultValidate = jsonschema.Validator(s.Name, s.Schema)
 
