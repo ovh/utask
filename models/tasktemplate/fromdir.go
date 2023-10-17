@@ -22,7 +22,7 @@ var (
 func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return fmt.Errorf("Failed to open template directory %s: %s", dir, err)
+		return fmt.Errorf("failed to open template directory %s: %s", dir, err)
 	}
 	for _, file := range files {
 		if file.IsDir() || !strings.HasSuffix(file.Name(), ".yaml") {

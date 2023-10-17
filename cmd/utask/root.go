@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -79,7 +80,7 @@ func init() {
 
 	flags.StringVar(&utask.FInitializersFolder, "init-path", defaultInitializersFolder, "Initializer folder absolute path")
 	flags.StringVar(&utask.FPluginFolder, "plugins-path", defaultPluginFolder, "Plugins folder absolute path")
-	flags.StringVar(&utask.FTemplatesFolder, "templates-path", defaultTemplatesFolder, "Templates folder absolute path")
+	flags.StringVar(&utask.FTemplatesFolders, "templates-path", defaultTemplatesFolder, "Templates folders absolute paths, colon separated")
 	flags.StringVar(&utask.FFunctionsFolder, "functions-path", defaultFunctionsFolder, "Functions folder absolute path")
 	flags.StringVar(&utask.FScriptsFolder, "scripts-path", defaultScriptsFolder, "Scripts folder absolute path")
 	flags.StringVar(&utask.FRegion, "region", defaultRegion, "Region in which instance is located")
@@ -110,7 +111,7 @@ var rootCmd = &cobra.Command{
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		utask.FInitializersFolder = viper.GetString(envInit)
 		utask.FPluginFolder = viper.GetString(envPlugins)
-		utask.FTemplatesFolder = viper.GetString(envTemplates)
+		utask.FTemplatesFolders = viper.GetString(envTemplates)
 		utask.FScriptsFolder = viper.GetString(envScripts)
 		utask.FRegion = viper.GetString(envRegion)
 		utask.FPort = viper.GetUint(envHTTPPort)
@@ -197,9 +198,11 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-
-		if err := tasktemplate.LoadFromDir(dbp, utask.FTemplatesFolder); err != nil {
-			return err
+		ds := strings.Split(utask.FTemplatesFolders, ":")
+		for _, dir := range ds {
+			if err := tasktemplate.LoadFromDir(dbp, dir); err != nil {
+				return err
+			}
 		}
 		var wg sync.WaitGroup
 		ctx, cancel := context.WithCancel(context.Background())

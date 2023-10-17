@@ -136,7 +136,7 @@ The µTask binary accepts the following arguments as binary args or env var.
 All are optional and have a default value:
 - `init-path`: the directory from where initialization plugins (see "Developing plugins") are loaded in *.so form (default: `./init`)
 - `plugins-path`: the directory from where action plugins (see "Developing plugins") are loaded in *.so form (default: `./plugins`)
-- `templates-path`: the directory where yaml-formatted task templates are loaded from (default: `./templates`)
+- `templates-path`: the directories where yaml-formatted task templates are loaded from, can be a colon separated list (default: `./templates`)
 - `functions-path`: the directory where yaml-formatted functions templates are loaded from (default: `./functions`)
 - `region`: an arbitrary identifier, to aggregate a running group of µTask instances (commonly containers), and differentiate them from another group, in a separate region (default: `default`)
 - `http-port`: the port on which the HTTP API listents (default: `8081`)
