@@ -33,9 +33,9 @@ var (
 	// FPluginFolder is the path to a folder containing
 	// .so plugins to be registered as step action executors
 	FPluginFolder string
-	// FTemplatesFolder is the path to a folder containing
+	// FTemplatesFolders is a list of paths, colon separated, to folders containing
 	// .yaml templates for tasks
-	FTemplatesFolder string
+	FTemplatesFolders string
 	// FFunctionsFolder is the path to a folder containing
 	// functions files used by script plugin
 	FFunctionsFolder string
