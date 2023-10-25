@@ -19,28 +19,30 @@ var (
 
 // LoadFromDir reads yaml-formatted task templates
 // from a folder and upserts them in database
-func LoadFromDir(dbp zesty.DBProvider, dir string) error {
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return fmt.Errorf("failed to open template directory %s: %s", dir, err)
-	}
-	for _, file := range files {
-		if file.IsDir() || !strings.HasSuffix(file.Name(), ".yaml") {
-			continue
-		}
-		tmpl, err := os.ReadFile(path.Join(dir, file.Name()))
+func LoadFromDir(dbp zesty.DBProvider, directories ...string) error {
+	for _, dir := range directories {
+		files, err := os.ReadDir(dir)
 		if err != nil {
-			return fmt.Errorf("failed to read template '%s': %s", file.Name(), err)
+			return fmt.Errorf("failed to open template directory %s: %s", dir, err)
 		}
-		var tt TaskTemplate
-		if err := yaml.Unmarshal(tmpl, &tt); err != nil {
-			return fmt.Errorf("failed to unmarshal template '%s': '%s'", file.Name(), err)
+		for _, file := range files {
+			if file.IsDir() || !strings.HasSuffix(file.Name(), ".yaml") {
+				continue
+			}
+			tmpl, err := os.ReadFile(path.Join(dir, file.Name()))
+			if err != nil {
+				return fmt.Errorf("failed to read template '%s': %s", file.Name(), err)
+			}
+			var tt TaskTemplate
+			if err := yaml.Unmarshal(tmpl, &tt); err != nil {
+				return fmt.Errorf("failed to unmarshal template '%s': '%s'", file.Name(), err)
+			}
+
+			tt.Normalize()
+
+			discoveredTemplates = append(discoveredTemplates, tt)
+			templateimport.AddTemplate(tt.Name)
 		}
-
-		tt.Normalize()
-
-		discoveredTemplates = append(discoveredTemplates, tt)
-		templateimport.AddTemplate(tt.Name)
 	}
 
 	for _, tt := range discoveredTemplates {
@@ -89,12 +91,12 @@ func LoadFromDir(dbp zesty.DBProvider, dir string) error {
 			}
 		}
 		if !found {
-			if err = tt.Delete(dbp); err == nil {
+			if err := tt.Delete(dbp); err == nil {
 				logrus.Infof("Deleted task template %q", tt.Name)
 				continue
 			}
 			// unable to delete TaskTemplate, probably some old Tasks still in database, archiving it
-			tt, err = LoadFromID(dbp, tt.ID)
+			tt, err := LoadFromID(dbp, tt.ID)
 			if err != nil {
 				return fmt.Errorf("unable to load template %q for archiving: %s", tt.Name, err)
 			}
