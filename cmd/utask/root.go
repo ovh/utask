@@ -198,11 +198,8 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		ds := strings.Split(utask.FTemplatesFolders, ":")
-		for _, dir := range ds {
-			if err := tasktemplate.LoadFromDir(dbp, dir); err != nil {
-				return err
-			}
+		if err := tasktemplate.LoadFromDir(dbp, strings.Split(utask.FTemplatesFolders, ":")...); err != nil {
+			return err
 		}
 		var wg sync.WaitGroup
 		ctx, cancel := context.WithCancel(context.Background())
