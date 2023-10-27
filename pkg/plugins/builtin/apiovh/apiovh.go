@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
+	"text/template"
 
 	"github.com/ovh/configstore"
 	"github.com/ovh/go-ovh/ovh"
+
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
@@ -34,7 +37,7 @@ type APIOVHConfig struct {
 	Body        string `json:"body,omitempty"`
 }
 
-// ovhConfig holds the the credentials needed to instantiate
+// ovhConfig holds the credentials needed to instantiate
 // an OVH API client
 type ovhConfig struct {
 	Endpoint    string `json:"endpoint"`
@@ -51,25 +54,30 @@ func validConfig(config interface{}) error {
 	default:
 		return fmt.Errorf("unknown method for gw runner: %q", cfg.Method)
 	}
+	// If the API credentials is a template, try to parse it.
+	if strings.Index(cfg.Credentials, "{{") == -1 {
+		ovhCfgStr, err := configstore.GetItemValue(cfg.Credentials)
+		if err != nil {
+			return fmt.Errorf("can't retrieve credentials from configstore: %s", err)
+		}
 
-	ovhCfgStr, err := configstore.GetItemValue(cfg.Credentials)
-	if err != nil {
-		return fmt.Errorf("can't retrieve credentials from configstore: %s", err)
+		var ovhcfg ovhConfig
+		if err := json.Unmarshal([]byte(ovhCfgStr), &ovhcfg); err != nil {
+			return fmt.Errorf("can't unmarshal ovhConfig from configstore: %s", err)
+		}
+
+		if _, err := ovh.NewClient(
+			ovhcfg.Endpoint,
+			ovhcfg.AppKey,
+			ovhcfg.AppSecret,
+			ovhcfg.ConsumerKey); err != nil {
+			return fmt.Errorf("can't create new OVH client: %s", err)
+		}
+	} else {
+		if _, err := template.New("credentials").Parse(cfg.Credentials); err != nil {
+			return fmt.Errorf("failed to parse credentials template: %w", err)
+		}
 	}
-
-	var ovhcfg ovhConfig
-	if err := json.Unmarshal([]byte(ovhCfgStr), &ovhcfg); err != nil {
-		return fmt.Errorf("can't unmarshal ovhConfig from configstore: %s", err)
-	}
-
-	if _, err := ovh.NewClient(
-		ovhcfg.Endpoint,
-		ovhcfg.AppKey,
-		ovhcfg.AppSecret,
-		ovhcfg.ConsumerKey); err != nil {
-		return fmt.Errorf("can't create new OVH client: %s", err)
-	}
-
 	return nil
 }
 
