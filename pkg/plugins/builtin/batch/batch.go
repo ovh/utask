@@ -1,0 +1,373 @@
+package pluginbatch
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/Masterminds/squirrel"
+	jujuErrors "github.com/juju/errors"
+	"github.com/loopfz/gadgeto/zesty"
+	"github.com/sirupsen/logrus"
+
+	"github.com/ovh/utask"
+	"github.com/ovh/utask/db/sqlgenerator"
+	"github.com/ovh/utask/models/resolution"
+	"github.com/ovh/utask/models/task"
+	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/auth"
+	"github.com/ovh/utask/pkg/batch"
+	"github.com/ovh/utask/pkg/constants"
+	"github.com/ovh/utask/pkg/plugins/taskplugin"
+	"github.com/ovh/utask/pkg/templateimport"
+	"github.com/ovh/utask/pkg/utils"
+)
+
+// The batch plugin spawns X new µTask tasks, given a template and inputs, and waits for them to be completed.
+// Resolver usernames can be dynamically set for the task
+var Plugin = taskplugin.New(
+	"batch",
+	"0.1",
+	exec,
+	taskplugin.WithConfig(validConfigBatch, BatchConfig{}),
+	taskplugin.WithContextFunc(ctxBatch),
+)
+
+var (
+	// States in which the task won't ever be run again
+	FinalStates = []string{task.StateDone, task.StateCancelled, task.StateWontfix}
+)
+
+// BatchConfig is the necessary configuration to spawn a new task
+type BatchConfig struct {
+	TemplateName      string                   `json:"template_name" binding:"required"`
+	CommonInput       map[string]interface{}   `json:"common_input"`
+	JSONCommonInput   string                   `json:"json_common_input"`
+	Inputs            []map[string]interface{} `json:"inputs"`
+	JSONInputs        string                   `json:"json_inputs"`
+	Comment           string                   `json:"comment"`
+	WatcherUsernames  []string                 `json:"watcher_usernames"`
+	WatcherGroups     []string                 `json:"watcher_groups"`
+	Tags              map[string]string        `json:"tags"`
+	ResolverUsernames string                   `json:"resolver_usernames"`
+	ResolverGroups    string                   `json:"resolver_groups"`
+	// How many tasks will run concurrently. 0 for infinity (default)
+	SubBatchSize int `json:"sub_batch_size"`
+}
+
+// BatchContext is the metadata inherited from the "parent" task"
+type BatchContext struct {
+	ParentTaskID      string `json:"parent_task_id"`
+	RequesterUsername string `json:"requester_username"`
+	RequesterGroups   string `json:"requester_groups"`
+	// Raw metadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
+	// as is in case something goes wrong in a subsequent run.
+	RawMetadata string `json:"metadata"`
+	metadata    BatchMetadata
+	StepName    string `json:"step_name"`
+}
+
+type BatchMetadata struct {
+	BatchID        string `json:"batch_id"`
+	RemainingTasks int64  `json:"remaining_tasks"`
+	TasksStarted   int64  `json:"tasks_started"`
+}
+
+func ctxBatch(stepName string) interface{} {
+	return &BatchContext{
+		ParentTaskID:      "{{ .task.task_id }}",
+		RequesterUsername: "{{.task.requester_username}}",
+		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
+		RawMetadata: fmt.Sprintf(
+			"{{ if (index .step `%s` ) }}{{ if (index .step `%s` `metadata`) }}{{ index .step `%s` `metadata` }}{{ end }}{{ end }}",
+			stepName,
+			stepName,
+			stepName,
+		),
+		StepName: stepName,
+	}
+}
+
+func validConfigBatch(config any) error {
+	conf := config.(*BatchConfig)
+
+	if err := utils.ValidateTags(conf.Tags); err != nil {
+		return err
+	}
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return fmt.Errorf("can't retrieve connection to DB: %s", err)
+	}
+
+	_, err = tasktemplate.LoadFromName(dbp, conf.TemplateName)
+	if err != nil {
+		if !jujuErrors.IsNotFound(err) {
+			return fmt.Errorf("can't load template from name: %s", err)
+		}
+
+		// searching into currently imported templates
+		templates := templateimport.GetTemplates()
+		for _, template := range templates {
+			if template == conf.TemplateName {
+				return nil
+			}
+		}
+
+		return jujuErrors.NotFoundf("batch template %q", conf.TemplateName)
+	}
+
+	return nil
+}
+
+func exec(stepName string, config any, ictx any) (any, any, error) {
+	var metadata BatchMetadata
+	var stepError error
+
+	conf := config.(*BatchConfig)
+	batchCtx := ictx.(*BatchContext)
+	if err := parseInputs(conf, batchCtx); err != nil {
+		return nil, batchCtx.RawMetadata, err
+	}
+
+	if conf.Tags == nil {
+		conf.Tags = map[string]string{}
+	}
+	conf.Tags[constants.SubtaskTagParentTaskID] = batchCtx.ParentTaskID
+
+	ctx := auth.WithIdentity(context.Background(), batchCtx.RequesterUsername)
+	requesterGroups := strings.Split(batchCtx.RequesterGroups, utask.GroupsSeparator)
+	ctx = auth.WithGroups(ctx, requesterGroups)
+
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	if err != nil {
+		return nil, batchCtx.RawMetadata, err
+	}
+
+	if err := dbp.Tx(); err != nil {
+		return nil, batchCtx.RawMetadata, err
+	}
+
+	if batchCtx.metadata.BatchID == "" {
+		// The batch needs to be started
+		metadata, err = startBatch(ctx, dbp, conf, batchCtx)
+		if err != nil {
+			dbp.Rollback()
+			return nil, nil, err
+		}
+
+		// A step returning a NotAssigned error is set to WAITING by the engine
+		stepError = jujuErrors.NewNotAssigned(fmt.Errorf("tasks from batch %q will start shortly", metadata.BatchID), "")
+	} else {
+		// Batch already started, we either need to start new tasks or check whether they're all done
+		metadata, err = runBatch(ctx, conf, batchCtx, dbp)
+		if err != nil {
+			dbp.Rollback()
+			return nil, batchCtx.RawMetadata, err
+		}
+
+		if metadata.RemainingTasks != 0 {
+			// A step returning a NotAssigned error is set to WAITING by the engine
+			stepError = jujuErrors.NewNotAssigned(fmt.Errorf("batch %q is currently RUNNING", metadata.BatchID), "")
+		} else {
+			// The batch is done.
+			// Increasing the resolution's maximum amount of retries to compensate for the amount of runs consumed
+			// by child tasks waking up the parent when they're done.
+			err := increaseRunMax(dbp, batchCtx.ParentTaskID, batchCtx.StepName)
+			if err != nil {
+				return nil, batchCtx.RawMetadata, err
+			}
+		}
+	}
+
+	formattedMetadata, err := metadata.Format(batchCtx.RawMetadata)
+	if err != nil {
+		dbp.Rollback()
+		return nil, batchCtx.RawMetadata, err
+	}
+
+	if err := dbp.Commit(); err != nil {
+		dbp.Rollback()
+		return nil, batchCtx.RawMetadata, err
+	}
+	return nil, formattedMetadata, stepError
+}
+
+// startBatch creates a batch a tasks as described in the given batchArgs.
+func startBatch(
+	ctx context.Context,
+	dbp zesty.DBProvider,
+	conf *BatchConfig,
+	batchCtx *BatchContext,
+) (BatchMetadata, error) {
+	b, err := task.CreateBatch(dbp)
+	if err != nil {
+		return BatchMetadata{}, err
+	}
+
+	taskIDs, err := populateBatch(ctx, b, dbp, conf, batchCtx)
+	if err != nil {
+		return BatchMetadata{}, err
+	}
+
+	return BatchMetadata{
+		BatchID:        b.PublicID,
+		RemainingTasks: int64(len(conf.Inputs)),
+		TasksStarted:   int64(len(taskIDs)),
+	}, nil
+}
+
+// populateBatch spawns new tasks in the batch and returns their public identifier.
+func populateBatch(
+	ctx context.Context,
+	b *task.Batch,
+	dbp zesty.DBProvider,
+	conf *BatchConfig,
+	batchCtx *BatchContext,
+) ([]string, error) {
+	tasksStarted := batchCtx.metadata.TasksStarted
+	running, err := runningTasks(dbp, b.ID)
+	if err != nil {
+		return []string{}, err
+	}
+
+	// Computing how many tasks to start
+	remaining := int64(len(conf.Inputs)) - tasksStarted
+	toStart := int64(conf.SubBatchSize) - running // How many tasks can be started
+	if remaining < toStart {
+		toStart = remaining // There's less tasks to start remaining than the amount of available running slots
+	}
+
+	args := batch.TaskArgs{
+		TemplateName:     conf.TemplateName,
+		CommonInput:      conf.CommonInput,
+		Inputs:           conf.Inputs[tasksStarted : tasksStarted+toStart],
+		Comment:          conf.Comment,
+		WatcherGroups:    conf.WatcherGroups,
+		WatcherUsernames: conf.WatcherUsernames,
+		Tags:             conf.Tags,
+	}
+
+	taskIDs, err := batch.Populate(ctx, b, dbp, args)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return taskIDs, nil
+}
+
+// runBatch runs batch, spawning new tasks if needed and checking whether they're all done.
+func runBatch(
+	ctx context.Context,
+	conf *BatchConfig,
+	batchCtx *BatchContext,
+	dbp zesty.DBProvider,
+) (BatchMetadata, error) {
+	metadata := batchCtx.metadata
+
+	b, err := task.LoadBatchFromPublicID(dbp, metadata.BatchID)
+	if err != nil {
+		if jujuErrors.IsNotFound(err) {
+			// The batch has been collected (deleted in DB) because no remaining task referenced it. There's
+			// nothing more to do.
+			return metadata, nil
+		}
+		return metadata, err
+	}
+
+	if metadata.TasksStarted < int64(len(conf.Inputs)) {
+		// New tasks need to be added to the batch
+
+		taskIDs, err := populateBatch(ctx, b, dbp, conf, batchCtx)
+		if err != nil {
+			return metadata, err
+		}
+
+		started := int64(len(taskIDs))
+		metadata.TasksStarted += started
+		metadata.RemainingTasks -= started // Starting X tasks means that X tasks became DONE
+		return metadata, nil
+	}
+	// else, all tasks are started, we need to wait for the last ones to become DONE
+
+	running, err := runningTasks(dbp, b.ID)
+	if err != nil {
+		return metadata, err
+	}
+	metadata.RemainingTasks = running
+	return metadata, nil
+}
+
+// runningTasks returns the amount of running tasks linked to the given batchId.
+func runningTasks(dbp zesty.DBProvider, batchId int64) (int64, error) {
+	query, params, err := sqlgenerator.PGsql.
+		Select("count (*)").
+		From("task t").
+		Join("batch b on b.id = t.id_batch").
+		Where(squirrel.Eq{"b.id": batchId}).
+		Where(squirrel.NotEq{"t.state": FinalStates}).
+		ToSql()
+	if err != nil {
+		return -1, err
+	}
+
+	return dbp.DB().SelectInt(query, params...)
+}
+
+// increaseRunMax increases the maximum amount of runs of the resolution matching the given parentTaskID by the run
+// count of the given batchStepName.
+// Since child tasks wake their parent up when they're done, the resolution's RunCount gets incremented everytime. We
+// compensate this by increasing the RunMax property once the batch is done.
+func increaseRunMax(dbp zesty.DBProvider, parentTaskID string, batchStepName string) error {
+	t, err := task.LoadFromPublicID(dbp, parentTaskID)
+	if err != nil {
+		return err
+	}
+	res, err := resolution.LoadLockedFromPublicID(dbp, *t.Resolution)
+	if err != nil {
+		return err
+	}
+	step, ok := res.Steps[batchStepName]
+	if !ok {
+		return fmt.Errorf("step '%s' not found in resolution", batchStepName)
+	}
+
+	res.ExtendRunMax(step.TryCount)
+	return nil
+}
+
+// parseInputs parses the step's inputs as well as metadata from the previous run (if it exists).
+func parseInputs(conf *BatchConfig, batchCtx *BatchContext) error {
+	if batchCtx.RawMetadata != "" {
+		// Metadata from a previous run is available
+		if err := json.Unmarshal([]byte(batchCtx.RawMetadata), &batchCtx.metadata); err != nil {
+			return jujuErrors.NewBadRequest(err, "metadata unmarshalling failure")
+		}
+	}
+
+	if conf.JSONCommonInput != "" {
+		if err := json.Unmarshal([]byte(conf.JSONCommonInput), &conf.CommonInput); err != nil {
+			return jujuErrors.NewBadRequest(err, "JSON common input unmarshalling failure")
+		}
+	}
+
+	if conf.JSONInputs != "" {
+		if err := json.Unmarshal([]byte(conf.JSONInputs), &conf.Inputs); err != nil {
+			return jujuErrors.NewBadRequest(err, "JSON inputs unmarshalling failure")
+		}
+	}
+	return nil
+}
+
+// Format formats the BatchOutput as a uTask-friendly output
+func (o BatchMetadata) Format(previousMetadata string) (string, error) {
+	rawOutput, err := json.Marshal(o)
+	if err != nil {
+		logrus.WithError(err).Error("Couldn't marshal batch metadata")
+		return previousMetadata, err
+	}
+
+	out := strings.ReplaceAll(string(rawOutput), `"`, `\"`)
+	return out, nil
+}
