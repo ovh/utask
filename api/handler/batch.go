@@ -2,14 +2,12 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/models/task"
-	"github.com/ovh/utask/models/tasktemplate"
+	"github.com/ovh/utask/pkg/batch"
 	"github.com/ovh/utask/pkg/metadata"
-	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
 
@@ -34,11 +32,6 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 
 	metadata.AddActionMetadata(c, metadata.TemplateName, in.TemplateName)
 
-	tt, err := tasktemplate.LoadFromName(dbp, in.TemplateName)
-	if err != nil {
-		return nil, err
-	}
-
 	if err := utils.ValidateTags(in.Tags); err != nil {
 		return nil, err
 	}
@@ -49,45 +42,30 @@ func CreateBatch(c *gin.Context, in *createBatchIn) (*task.Batch, error) {
 
 	b, err := task.CreateBatch(dbp)
 	if err != nil {
-		dbp.Rollback()
+		_ = dbp.Rollback()
 		return nil, err
 	}
 
 	metadata.AddActionMetadata(c, metadata.BatchID, b.PublicID)
 
-	for _, inp := range in.Inputs {
-		input, err := conjMap(in.CommonInput, inp)
-		if err != nil {
-			dbp.Rollback()
-			return nil, err
-		}
-
-		_, err = taskutils.CreateTask(c, dbp, tt, in.WatcherUsernames, in.WatcherGroups, []string{}, []string{}, input, b, in.Comment, nil, in.Tags)
-		if err != nil {
-			dbp.Rollback()
-			return nil, err
-		}
+	_, err = batch.Populate(c, b, dbp, batch.TaskArgs{
+		TemplateName:     in.TemplateName,
+		Inputs:           in.Inputs,
+		CommonInput:      in.CommonInput,
+		Comment:          in.Comment,
+		WatcherUsernames: in.WatcherUsernames,
+		WatcherGroups:    in.WatcherGroups,
+		Tags:             in.Tags,
+	})
+	if err != nil {
+		_ = dbp.Rollback()
+		return nil, err
 	}
 
 	if err := dbp.Commit(); err != nil {
-		dbp.Rollback()
+		_ = dbp.Rollback()
 		return nil, err
 	}
 
 	return b, nil
-}
-
-func conjMap(common, particular map[string]interface{}) (map[string]interface{}, error) {
-	conj := make(map[string]interface{})
-	for key, value := range particular {
-		conj[key] = value
-	}
-
-	for key, value := range common {
-		if _, ok := conj[key]; ok {
-			return nil, errors.NewBadRequest(nil, "Conflicting keys in input maps")
-		}
-		conj[key] = value
-	}
-	return conj, nil
 }

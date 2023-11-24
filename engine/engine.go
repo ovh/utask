@@ -29,6 +29,7 @@ import (
 	"github.com/ovh/utask/pkg/jsonschema"
 	"github.com/ovh/utask/pkg/metadata"
 	"github.com/ovh/utask/pkg/now"
+	pluginbatch "github.com/ovh/utask/pkg/plugins/builtin/batch"
 	"github.com/ovh/utask/pkg/taskutils"
 	"github.com/ovh/utask/pkg/utils"
 )
@@ -524,7 +525,9 @@ forLoop:
 			if mapStatus[status] {
 				if status == resolution.StateWaiting && recheckWaiting {
 					for name, s := range res.Steps {
-						if s.State == step.StateWaiting {
+						// Steps using the batch plugin shouldn't be run again when WAITING. Running them second time
+						// may lead to a race condition when the last task of a sub-batch tries to resume its parent
+						if s.State == step.StateWaiting && s.Action.Type != pluginbatch.Plugin.PluginName() {
 							delete(executedSteps, name)
 						}
 					}

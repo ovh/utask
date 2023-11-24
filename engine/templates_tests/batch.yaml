@@ -1,0 +1,26 @@
+name: batchTemplate
+description: Template to test the batch plugin
+title_format: "[test] batch template test"
+
+steps:
+  batchJsonInputs:
+    description: Batching tasks JSON
+    action:
+      type: batch
+      configuration:
+        template_name: batchedtasktemplate
+        json_inputs: '[{"specific_string": "specific-1"}, {"specific_string": "specific-2"}]'
+        common_json_inputs: '{"common_string": "common"}'
+        sub_batch_size: 2
+  batchYamlInputs:
+    description: Batching tasks YAML
+    action:
+      type: batch
+      configuration:
+        template_name: batchedtasktemplate
+        inputs:
+          - specific_string: specific-1
+          - specific_string: specific-2
+        common_inputs:
+          common_string: common
+        sub_batch_size: 2
