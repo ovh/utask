@@ -56,18 +56,19 @@ type BatchConfig struct {
 	SubBatchSize int `json:"sub_batch_size"`
 }
 
-// BatchContext is the metadata inherited from the "parent" task"
+// BatchContext holds data about the parent task as well as the metadata of previous runs, if any.
 type BatchContext struct {
 	ParentTaskID      string `json:"parent_task_id"`
 	RequesterUsername string `json:"requester_username"`
 	RequesterGroups   string `json:"requester_groups"`
 	// Raw metadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
 	// as is in case something goes wrong in a subsequent run.
-	RawMetadata string `json:"metadata"`
-	metadata    BatchMetadata
-	StepName    string `json:"step_name"`
+	RawMetadata string        `json:"metadata"`
+	metadata    BatchMetadata // Unmarshalled version of the metadata
+	StepName    string        `json:"step_name"`
 }
 
+// BatchMetadata holds batch-progress data, communicated between each run of the plugin.
 type BatchMetadata struct {
 	BatchID        string `json:"batch_id"`
 	RemainingTasks int64  `json:"remaining_tasks"`
