@@ -34,10 +34,8 @@ var Plugin = taskplugin.New(
 	taskplugin.WithContextFunc(ctxBatch),
 )
 
-var (
-	// States in which the task won't ever be run again
-	FinalStates = []string{task.StateDone, task.StateCancelled, task.StateWontfix}
-)
+// States in which the task won't ever be run again
+var FinalStates = []string{task.StateDone, task.StateCancelled, task.StateWontfix}
 
 // BatchConfig is the necessary configuration to spawn a new task
 type BatchConfig struct {
@@ -56,16 +54,19 @@ type BatchConfig struct {
 	SubBatchSize int `json:"sub_batch_size"`
 }
 
+// rawMetadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
+// "as is" in case something goes wrong in a subsequent run, to know what the batch's progress was when the
+// error occured.
+type rawMetadata string
+
 // BatchContext holds data about the parent task as well as the metadata of previous runs, if any.
 type BatchContext struct {
-	ParentTaskID      string `json:"parent_task_id"`
-	RequesterUsername string `json:"requester_username"`
-	RequesterGroups   string `json:"requester_groups"`
-	// Raw metadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
-	// as is in case something goes wrong in a subsequent run.
-	RawMetadata string        `json:"metadata"`
-	metadata    BatchMetadata // Unmarshalled version of the metadata
-	StepName    string        `json:"step_name"`
+	ParentTaskID      string        `json:"parent_task_id"`
+	RequesterUsername string        `json:"requester_username"`
+	RequesterGroups   string        `json:"requester_groups"`
+	RawMetadata       rawMetadata   `json:"metadata"`
+	metadata          BatchMetadata // Unmarshalled version of the metadata
+	StepName          string        `json:"step_name"`
 }
 
 // BatchMetadata holds batch-progress data, communicated between each run of the plugin.
@@ -80,12 +81,12 @@ func ctxBatch(stepName string) interface{} {
 		ParentTaskID:      "{{ .task.task_id }}",
 		RequesterUsername: "{{.task.requester_username}}",
 		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
-		RawMetadata: fmt.Sprintf(
+		RawMetadata: rawMetadata(fmt.Sprintf(
 			"{{ if (index .step `%s` ) }}{{ if (index .step `%s` `metadata`) }}{{ index .step `%s` `metadata` }}{{ end }}{{ end }}",
 			stepName,
 			stepName,
 			stepName,
-		),
+		)),
 		StepName: stepName,
 	}
 }
@@ -129,7 +130,7 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 	conf := config.(*BatchConfig)
 	batchCtx := ictx.(*BatchContext)
 	if err := parseInputs(conf, batchCtx); err != nil {
-		return nil, batchCtx.RawMetadata, err
+		return nil, batchCtx.RawMetadata.Format(), err
 	}
 
 	if conf.Tags == nil {
@@ -143,11 +144,11 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 
 	dbp, err := zesty.NewDBProvider(utask.DBName)
 	if err != nil {
-		return nil, batchCtx.RawMetadata, err
+		return nil, batchCtx.RawMetadata.Format(), err
 	}
 
 	if err := dbp.Tx(); err != nil {
-		return nil, batchCtx.RawMetadata, err
+		return nil, batchCtx.RawMetadata.Format(), err
 	}
 
 	if batchCtx.metadata.BatchID == "" {
@@ -165,7 +166,7 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 		metadata, err = runBatch(ctx, conf, batchCtx, dbp)
 		if err != nil {
 			dbp.Rollback()
-			return nil, batchCtx.RawMetadata, err
+			return nil, batchCtx.RawMetadata.Format(), err
 		}
 
 		if metadata.RemainingTasks != 0 {
@@ -177,20 +178,20 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 			// by child tasks waking up the parent when they're done.
 			err := increaseRunMax(dbp, batchCtx.ParentTaskID, batchCtx.StepName)
 			if err != nil {
-				return nil, batchCtx.RawMetadata, err
+				return nil, batchCtx.RawMetadata.Format(), err
 			}
 		}
 	}
 
-	formattedMetadata, err := metadata.Format(batchCtx.RawMetadata)
+	formattedMetadata, err := metadata.Format()
 	if err != nil {
 		dbp.Rollback()
-		return nil, batchCtx.RawMetadata, err
+		return nil, batchCtx.RawMetadata.Format(), err
 	}
 
 	if err := dbp.Commit(); err != nil {
 		dbp.Rollback()
-		return nil, batchCtx.RawMetadata, err
+		return nil, batchCtx.RawMetadata.Format(), err
 	}
 	return nil, formattedMetadata, stepError
 }
@@ -361,14 +362,18 @@ func parseInputs(conf *BatchConfig, batchCtx *BatchContext) error {
 	return nil
 }
 
-// Format formats the BatchOutput as a uTask-friendly output
-func (o BatchMetadata) Format(previousMetadata string) (string, error) {
-	rawOutput, err := json.Marshal(o)
+// Format formats the rawMetadata to make sure it's parsable by subsequent runs of the plugin (like escaping
+// double quotes).
+func (rm rawMetadata) Format() string {
+	return strings.ReplaceAll(string(rm), `"`, `\"`)
+}
+
+// Format formats the BatchOutput as a uTask-friendly output.
+func (bm BatchMetadata) Format() (string, error) {
+	marshalled, err := json.Marshal(bm)
 	if err != nil {
 		logrus.WithError(err).Error("Couldn't marshal batch metadata")
-		return previousMetadata, err
+		return "", err
 	}
-
-	out := strings.ReplaceAll(string(rawOutput), `"`, `\"`)
-	return out, nil
+	return rawMetadata(marshalled).Format(), nil
 }
