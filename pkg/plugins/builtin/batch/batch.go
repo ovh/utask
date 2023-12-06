@@ -33,9 +33,6 @@ var Plugin = taskplugin.New(
 	taskplugin.WithContextFunc(ctxBatch),
 )
 
-// States in which the task won't ever be run again
-var FinalStates = []string{task.StateDone, task.StateCancelled, task.StateWontfix}
-
 // BatchConfig is the necessary configuration to spawn a new task
 type BatchConfig struct {
 	TemplateName      string                   `json:"template_name" binding:"required"`
@@ -53,19 +50,22 @@ type BatchConfig struct {
 	SubBatchSize int `json:"sub_batch_size"`
 }
 
-// rawMetadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
-// "as is" in case something goes wrong in a subsequent run, to know what the batch's progress was when the
-// error occured.
-type rawMetadata string
+// utaskString is a string with doubly escaped quotes, so the string stays simply escaped after being processed
+// as the plugin context (see ctxBatch).
+type utaskString string
 
 // BatchContext holds data about the parent task as well as the metadata of previous runs, if any.
 type BatchContext struct {
-	ParentTaskID      string        `json:"parent_task_id"`
-	RequesterUsername string        `json:"requester_username"`
-	RequesterGroups   string        `json:"requester_groups"`
-	RawMetadata       rawMetadata   `json:"metadata"`
-	metadata          BatchMetadata // Unmarshalled version of the metadata
-	StepName          string        `json:"step_name"`
+	ParentTaskID      string `json:"parent_task_id"`
+	RequesterUsername string `json:"requester_username"`
+	RequesterGroups   string `json:"requester_groups"`
+	// RawMetadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
+	// "as is" in case something goes wrong in a subsequent run, to know what the batch's progress was when the
+	// error occured.
+	RawMetadata utaskString `json:"metadata"`
+	// Unmarshalled version of the metadata
+	metadata BatchMetadata
+	StepName string `json:"step_name"`
 }
 
 // BatchMetadata holds batch-progress data, communicated between each run of the plugin.
@@ -80,7 +80,7 @@ func ctxBatch(stepName string) interface{} {
 		ParentTaskID:      "{{ .task.task_id }}",
 		RequesterUsername: "{{.task.requester_username}}",
 		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
-		RawMetadata: rawMetadata(fmt.Sprintf(
+		RawMetadata: utaskString(fmt.Sprintf(
 			"{{ if (index .step `%s` ) }}{{ if (index .step `%s` `metadata`) }}{{ index .step `%s` `metadata` }}{{ end }}{{ end }}",
 			stepName,
 			stepName,
@@ -182,7 +182,7 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 		}
 	}
 
-	formattedMetadata, err := metadata.Format()
+	formattedMetadata, err := formatOutput(metadata)
 	if err != nil {
 		dbp.Rollback()
 		return nil, batchCtx.RawMetadata.Format(), err
@@ -345,18 +345,18 @@ func parseInputs(conf *BatchConfig, batchCtx *BatchContext) error {
 	return nil
 }
 
-// Format formats the rawMetadata to make sure it's parsable by subsequent runs of the plugin (like escaping
+// Format formats the utaskString to make sure it's parsable by subsequent runs of the plugin (i.e.: escaping
 // double quotes).
-func (rm rawMetadata) Format() string {
+func (rm utaskString) Format() string {
 	return strings.ReplaceAll(string(rm), `"`, `\"`)
 }
 
-// Format formats the BatchOutput as a uTask-friendly output.
-func (bm BatchMetadata) Format() (string, error) {
-	marshalled, err := json.Marshal(bm)
+// formatOutput formats an output (plugin output or metadata) as a uTask-friendly output.
+func formatOutput(result any) (string, error) {
+	marshalled, err := json.Marshal(result)
 	if err != nil {
 		logrus.WithError(err).Error("Couldn't marshal batch metadata")
 		return "", err
 	}
-	return rawMetadata(marshalled).Format(), nil
+	return utaskString(marshalled).Format(), nil
 }
