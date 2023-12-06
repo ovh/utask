@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Masterminds/squirrel"
 	jujuErrors "github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/utask"
-	"github.com/ovh/utask/db/sqlgenerator"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
 	"github.com/ovh/utask/pkg/auth"
 	"github.com/ovh/utask/pkg/batch"
+	"github.com/ovh/utask/pkg/batchutils"
 	"github.com/ovh/utask/pkg/constants"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/templateimport"
@@ -229,7 +228,7 @@ func populateBatch(
 	batchCtx *BatchContext,
 ) ([]string, error) {
 	tasksStarted := batchCtx.metadata.TasksStarted
-	running, err := runningTasks(dbp, b.ID)
+	running, err := batchutils.RunningTasks(dbp, b.ID)
 	if err != nil {
 		return []string{}, err
 	}
@@ -279,7 +278,7 @@ func runBatch(
 	}
 
 	if metadata.TasksStarted < int64(len(conf.Inputs)) {
-		// New tasks need to be added to the batch
+		// New tasks still need to be added to the batch
 
 		taskIDs, err := populateBatch(ctx, b, dbp, conf, batchCtx)
 		if err != nil {
@@ -293,28 +292,12 @@ func runBatch(
 	}
 	// else, all tasks are started, we need to wait for the last ones to become DONE
 
-	running, err := runningTasks(dbp, b.ID)
+	running, err := batchutils.RunningTasks(dbp, b.ID)
 	if err != nil {
 		return metadata, err
 	}
 	metadata.RemainingTasks = running
 	return metadata, nil
-}
-
-// runningTasks returns the amount of running tasks linked to the given batchId.
-func runningTasks(dbp zesty.DBProvider, batchId int64) (int64, error) {
-	query, params, err := sqlgenerator.PGsql.
-		Select("count (*)").
-		From("task t").
-		Join("batch b on b.id = t.id_batch").
-		Where(squirrel.Eq{"b.id": batchId}).
-		Where(squirrel.NotEq{"t.state": FinalStates}).
-		ToSql()
-	if err != nil {
-		return -1, err
-	}
-
-	return dbp.DB().SelectInt(query, params...)
 }
 
 // increaseRunMax increases the maximum amount of runs of the resolution matching the given parentTaskID by the run
@@ -336,7 +319,7 @@ func increaseRunMax(dbp zesty.DBProvider, parentTaskID string, batchStepName str
 	}
 
 	res.ExtendRunMax(step.TryCount)
-	return nil
+	return res.Update(dbp)
 }
 
 // parseInputs parses the step's inputs as well as metadata from the previous run (if it exists).
