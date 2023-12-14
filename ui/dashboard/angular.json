@@ -197,5 +197,7 @@
             }
         }
     },
-    "defaultProject": "utask-ui"
+    "cli": {
+      "analytics": false
+    }
 }

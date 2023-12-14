@@ -16,7 +16,7 @@ export class ModalService {
 			this._modal.confirm({
 				nzTitle: title,
 				nzContent: NzModalContentWithErrorComponent,
-				nzComponentParams: { content },
+				nzData: { content },
 				nzOkText: 'Yes',
 				nzOkDanger: okBtnDanger,
 				nzCancelText: 'No',
@@ -47,7 +47,7 @@ export class ModalService {
 			this._modal.confirm({
 				nzTitle: title,
 				nzContent: NzModalContentWithErrorComponent,
-				nzComponentParams: { content },
+				nzData: { content },
 				nzOkText: 'Yes',
 				nzCancelText: 'No',
 				nzOkType: okBtnType,

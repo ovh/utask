@@ -1,8 +1,13 @@
 import { Component, Input } from '@angular/core';
 
+interface IModalData {
+	content?: string;
+	errors?: Array<any>;
+}
+
 @Component({
 	selector: 'lib-modal-content-with-error',
-  templateUrl: './modal-content-with-error.html',
+	templateUrl: './modal-content-with-error.html',
 	styleUrls: ['./modal-content-with-error.sass']
 })
 export class NzModalContentWithErrorComponent {

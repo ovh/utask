@@ -29,9 +29,8 @@ const routes: Routes = [
 ];
 
 export const routing: ModuleWithProviders<AppModule> = RouterModule.forRoot(routes, {
-  initialNavigation: 'enabledNonBlocking',
-  preloadingStrategy: PreloadAllModules,
-  relativeLinkResolution: 'legacy',
-  useHash: true,
-  paramsInheritanceStrategy: 'always'
+    initialNavigation: 'enabledNonBlocking',
+    preloadingStrategy: PreloadAllModules,
+    useHash: true,
+    paramsInheritanceStrategy: 'always'
 });

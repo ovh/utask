@@ -78,7 +78,7 @@ export class StepsListComponent implements OnChanges {
             nzTitle: title,
             nzContent: ModalApiYamlComponent,
             nzWidth: '80%',
-            nzComponentParams: {
+            nzData: {
                 apiCall: () => {
                     return new Promise((resolve) => {
                         if (typeof (item) === 'string') {
@@ -97,7 +97,7 @@ export class StepsListComponent implements OnChanges {
             nzTitle: `Edit ${step.name} state`,
             nzContent: ModalEditResolutionStepStateComponent,
             nzWidth: '80%',
-            nzComponentParams: {
+            nzData: {
                 step,
                 resolution: this.resolution,
             },
@@ -114,7 +114,7 @@ export class StepsListComponent implements OnChanges {
             nzTitle: 'Request preview',
             nzContent: ModalApiYamlEditComponent,
             nzWidth: '80%',
-            nzComponentParams: {
+            nzData: {
                 apiCall: () => this._api.resolution.getStep(this.resolution.id, step.name).toPromise().then((d: any) => {
                     return JSON.stringify(d, null, 2);
                 }).catch(err => {

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Stats } from '../@models/task.model';
 import { ApiService } from '../@services/api.service';
 
 @Injectable()
-export class StatsResolve implements Resolve<any> {
+export class StatsResolve  {
     constructor(
         private _api: ApiService
     ) { }

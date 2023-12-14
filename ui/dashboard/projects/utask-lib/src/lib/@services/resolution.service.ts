@@ -95,7 +95,7 @@ export class ResolutionService {
                 nzTitle: 'Resolution preview',
                 nzContent: ModalApiYamlEditComponent,
                 nzWidth: '80%',
-                nzComponentParams: {
+                nzData: {
                     apiCall: () => this.api.resolution.getAsYaml(resolution.id).toPromise(),
                     apiCallSubmit: (data: any) => this.api.resolution.updateAsYaml(resolution.id, data).toPromise()
                 },
