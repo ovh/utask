@@ -8,7 +8,7 @@ services:
     working_dir: /app
     command: 'bash -c "npm install && npm run watch"'
   webview:
-    image: node:lts
+    image: node:18.10
     volumes:
       - ./:/app
     working_dir: /app/web
