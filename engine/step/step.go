@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -65,6 +66,7 @@ var (
 	stepConditionValidStates = []string{StateDone, StatePrune, StateToRetry, StateRetryNow, StateFatalError, StateClientError}
 	runnableStates           = []string{StateTODO, StateServerError, StateClientError, StateFatalError, StateCrashed, StateToRetry, StateRetryNow, StateAfterrunError, StateExpanded, StateWaiting} // everything but RUNNING, DONE, PRUNE
 	retriableStates          = []string{StateServerError, StateToRetry, StateAfterrunError}
+	validAfterRunStates      = []string{StateDone, StateClientError, StateAfterrunError}
 )
 
 // Step describes one unit of work within a task, and its dependency to other steps
@@ -531,7 +533,8 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 // AfterRun evaluates a step's "check" conditions after the Step's action has been performed
 // and impacts the entire task's execution flow through the provided StateSetter
 func AfterRun(st *Step, values *values.Values, ss StateSetter) {
-	if st.skipped || st.State == StateServerError || st.State == StateFatalError || st.ForEach != "" {
+	// Not all steps' states should trigger evaluation of AfterRun conditions
+	if st.skipped || st.ForEach != "" || !slices.Contains(validAfterRunStates, st.State) {
 		return
 	}
 
