@@ -29,7 +29,7 @@ var Plugin = taskplugin.New(
 	"batch",
 	"0.1",
 	exec,
-	taskplugin.WithConfig(validConfigBatch, BatchConfig{}),
+	taskplugin.WithConfig(validateConfigBatch, BatchConfig{}),
 	taskplugin.WithContextFunc(ctxBatch),
 )
 
@@ -50,11 +50,11 @@ type BatchConfig struct {
 	SubBatchSize int `json:"sub_batch_size"`
 }
 
-// utaskString is a string with doubly escaped quotes, so the string stays simply escaped after being processed
-// as the plugin context (see ctxBatch).
-type utaskString string
+// quotedString is a string with doubly escaped quotes, so the string stays simply escaped after being processed
+// as the plugin's context (see ctxBatch).
+type quotedString string
 
-// BatchContext holds data about the parent task as well as the metadata of previous runs, if any.
+// BatchContext holds data about the parent task execution as well as the metadata of previous runs, if any.
 type BatchContext struct {
 	ParentTaskID      string `json:"parent_task_id"`
 	RequesterUsername string `json:"requester_username"`
@@ -62,7 +62,7 @@ type BatchContext struct {
 	// RawMetadata of the previous run. Metadata are used to communicate batch progress between runs. It's returned
 	// "as is" in case something goes wrong in a subsequent run, to know what the batch's progress was when the
 	// error occured.
-	RawMetadata utaskString `json:"metadata"`
+	RawMetadata quotedString `json:"metadata"`
 	// Unmarshalled version of the metadata
 	metadata BatchMetadata
 	StepName string `json:"step_name"`
@@ -80,7 +80,7 @@ func ctxBatch(stepName string) interface{} {
 		ParentTaskID:      "{{ .task.task_id }}",
 		RequesterUsername: "{{.task.requester_username}}",
 		RequesterGroups:   "{{ if .task.requester_groups }}{{ .task.requester_groups }}{{ end }}",
-		RawMetadata: utaskString(fmt.Sprintf(
+		RawMetadata: quotedString(fmt.Sprintf(
 			"{{ if (index .step `%s` ) }}{{ if (index .step `%s` `metadata`) }}{{ index .step `%s` `metadata` }}{{ end }}{{ end }}",
 			stepName,
 			stepName,
@@ -90,7 +90,7 @@ func ctxBatch(stepName string) interface{} {
 	}
 }
 
-func validConfigBatch(config any) error {
+func validateConfigBatch(config any) error {
 	conf := config.(*BatchConfig)
 
 	if err := utils.ValidateTags(conf.Tags); err != nil {
@@ -195,7 +195,7 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 	return nil, formattedMetadata, stepError
 }
 
-// startBatch creates a batch a tasks as described in the given batchArgs.
+// startBatch creates a batch of tasks as described in the given batchArgs.
 func startBatch(
 	ctx context.Context,
 	dbp zesty.DBProvider,
@@ -258,7 +258,7 @@ func populateBatch(
 	return taskIDs, nil
 }
 
-// runBatch runs batch, spawning new tasks if needed and checking whether they're all done.
+// runBatch runs a batch, spawning new tasks if needed and checking whether they're all done.
 func runBatch(
 	ctx context.Context,
 	conf *BatchConfig,
@@ -347,7 +347,7 @@ func parseInputs(conf *BatchConfig, batchCtx *BatchContext) error {
 
 // Format formats the utaskString to make sure it's parsable by subsequent runs of the plugin (i.e.: escaping
 // double quotes).
-func (rm utaskString) Format() string {
+func (rm quotedString) Format() string {
 	return strings.ReplaceAll(string(rm), `"`, `\"`)
 }
 
@@ -358,5 +358,5 @@ func formatOutput(result any) (string, error) {
 		logrus.WithError(err).Error("Couldn't marshal batch metadata")
 		return "", err
 	}
-	return utaskString(marshalled).Format(), nil
+	return quotedString(marshalled).Format(), nil
 }

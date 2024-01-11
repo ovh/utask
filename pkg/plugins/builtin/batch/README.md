@@ -1,22 +1,22 @@
 # `batch` Plugin
 
-This plugin creates a batch of tasks based on the same template and waits for it to complete. It acts like the `subtask` combined with a `foreach`, but doesn't modify the resolution by adding new steps dynamically. As it makes less calls to the underlying database, this plugin is suited for large batches of task, where the `subtask` + foreach combination would usually struggle, escpecially by bloating the database.
+This plugin creates a batch of tasks based on the same template and waits for it to complete. It acts like the `subtask` combined with a `foreach`, but doesn't modify the resolution by adding new steps dynamically. As it makes less calls to the underlying database, this plugin is suited for large batches of tasks, where the `subtask` / `foreach` combination would usually struggle, escpecially by bloating the database.
 Tasks belonging to the same batch share a common `BatchID` as well as tag holding their parent's ID.
 
-##### Note:
+##### Remarks:
 The output of child tasks is not made available in this plugin's output. This feature will come later.
 
 ## Configuration
 
 | Fields               | Description                                                                                                       |
 |----------------------|-------------------------------------------------------------------------------------------------------------------|
-| `template_name`      | the name of a task template, as accepted through µTask's  API                                                     |
-| `inputs`             | a list of map of named values, as accepted on µTask's API. One task will be created by map in the list            |
+| `template_name`      | the name of a task template, as accepted through µTask's API                                                      |
+| `inputs`             | a list of mapped key/value, as accepted on µTask's API. Each element represents the input of an individual task   |
 | `json_inputs`        | same as `inputs`, but as a JSON string. If specified, it overrides `inputs`                                       |
 | `common_input`       | a map of named values, as accepted on µTask's API, given to all task in the batch by combining it with each input |
 | `json_common_input`  | same a `common_input` but as a JSON string. If specified, it overrides `common_input`                             |
 | `tags`               | a map of named strings added as tags when creating child tasks                                                    |
-| `sub_batch_size`     | how many tasks to create and run at once. 0 for infinity (i.e.: all tasks are created at once and waited for).(default). Higher values reduce the amount calls made to the database, but increase sensitivity to database unavailability (if a task creation fails, the whole sub batch must be created again) |
+| `sub_batch_size`     | the number tasks to create and run at once. `0` for infinity (i.e.: all tasks are created at once and waited for) (default). Higher values reduce the amount calls made to the database, but increase sensitivity to database unavailability (if a task creation fails, the whole sub batch must be created again) |
 | `comment`            | a string set as `comment` when creating child tasks                                                               |
 | `resolver_usernames` | a string containing a JSON array of additional resolver users for child tasks                                     |
 | `resolver_groups`    | a string containing a JSON array of additional resolver groups for child tasks                                    |

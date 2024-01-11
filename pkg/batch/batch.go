@@ -29,14 +29,14 @@ type TaskArgs struct {
 func Populate(ctx context.Context, batch *task.Batch, dbp zesty.DBProvider, args TaskArgs) ([]string, error) {
 	tt, err := tasktemplate.LoadFromName(dbp, args.TemplateName)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
 	taskIDs := make([]string, 0, len(args.Inputs))
 	for _, inp := range args.Inputs {
-		input, err := conjMap(args.CommonInput, inp)
+		input, err := mergeMaps(args.CommonInput, inp)
 		if err != nil {
-			return []string{}, err
+			return nil, err
 		}
 
 		t, err := taskutils.CreateTask(
@@ -54,24 +54,24 @@ func Populate(ctx context.Context, batch *task.Batch, dbp zesty.DBProvider, args
 			args.Tags,
 		)
 		if err != nil {
-			return []string{}, err
+			return nil, err
 		}
 		taskIDs = append(taskIDs, t.PublicID)
 	}
 	return taskIDs, nil
 }
 
-func conjMap(common, particular map[string]interface{}) (map[string]interface{}, error) {
-	conj := make(map[string]interface{})
+func mergeMaps(common, particular map[string]interface{}) (map[string]interface{}, error) {
+	merged := make(map[string]interface{})
 	for key, value := range particular {
-		conj[key] = value
+		merged[key] = value
 	}
 
 	for key, value := range common {
-		if _, ok := conj[key]; ok {
+		if _, ok := merged[key]; ok {
 			return nil, errors.NewBadRequest(nil, "Conflicting keys in input maps")
 		}
-		conj[key] = value
+		merged[key] = value
 	}
-	return conj, nil
+	return merged, nil
 }

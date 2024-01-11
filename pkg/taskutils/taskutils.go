@@ -95,7 +95,7 @@ func ShouldResumeParentTask(dbp zesty.DBProvider, t *task.Task) (*task.Task, err
 		// Note on race conditions:
 		// When two sibling tasks complete, they either complete at the very same time or with a delay. In the former
 		// case, two attempts to resume the parent may be triggered, but a DB lock already prevents the parent
-		// from being run twice at the same time. In the later case, no race condition exists since finished before
+		// from being run twice at the same time. In the later case, no race condition exists since one finished before
 		// the other.
 		running, err := batchutils.RunningTasks(dbp, *t.BatchID)
 		if err != nil {
