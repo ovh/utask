@@ -33,7 +33,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/wI2L/fizz v0.22.0
 	github.com/ybriffa/go-http-digest-auth-client v0.6.3
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
 	gopkg.in/mail.v2 v2.3.1
