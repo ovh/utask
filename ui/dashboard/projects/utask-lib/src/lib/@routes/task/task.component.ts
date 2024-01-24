@@ -260,7 +260,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       nzContent: ModalApiYamlComponent,
       nzWidth: '80%',
       nzViewContainerRef: this.viewContainerRef,
-      nzComponentParams: {
+      nzData: {
         apiCall: () => this.api.task.getAsYaml(this.taskId).toPromise()
       },
     });
@@ -272,7 +272,7 @@ export class TaskComponent implements OnInit, OnDestroy {
       nzContent: ModalApiYamlComponent,
       nzWidth: '80%',
       nzViewContainerRef: this.viewContainerRef,
-      nzComponentParams: {
+      nzData: {
         apiCall: () => this.api.resolution.getAsYaml(this._resolution$.value.id).toPromise()
       },
     });

@@ -65,6 +65,5 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
     MetaResolve
   ],
   bootstrap: [AppComponent],
-  entryComponents: []
 })
 export class AppModule { }

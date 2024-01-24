@@ -93,17 +93,23 @@
                     "defaultConfiguration": "development"
                 },
                 "serve": {
-                    "builder": "@angular-builders/custom-webpack:dev-server",
+                    "builder": "@angular-devkit/build-angular:dev-server",
                     "options": {
-                        "proxyConfig": "proxy.conf.js",
-                        "browserTarget": "utask-ui:build",
+                        "proxyConfig": "/home/proxy.conf.js",
                         "disableHostCheck": true
                     },
                     "configurations": {
                         "production": {
                             "browserTarget": "utask-ui:build:production"
+                        },
+                        "development": {
+                            "browserTarget": "utask-ui:build:development"
+                        },
+                        "experimental": {
+                            "browserTarget": "utask-ui:experimental:development"
                         }
-                    }
+                    },
+                    "defaultConfiguration": "development"
                 },
                 "extract-i18n": {
                     "builder": "@angular-devkit/build-angular:extract-i18n",
@@ -153,6 +159,59 @@
                             "devServerTarget": "utask-ui:serve:production"
                         }
                     }
+                },
+                "experimental": {
+                    "builder": "@angular-devkit/build-angular:browser-esbuild",
+                    "options": {
+                        "outputPath": "dist/utask-ui",
+                        "index": "src/index.html",
+                        "main": "src/main.ts",
+                        "polyfills": "src/polyfills.ts",
+                        "tsConfig": "tsconfig.app.json",
+                        "aot": true,
+                        "assets": [
+                            "src/assets",
+                            {
+                                "glob": "**/*",
+                                "input": "./node_modules/@ant-design/icons-angular/src/inline-svg/",
+                                "output": "/assets/"
+                            },
+                            {
+                                "glob": "ng-zorro-antd.dark.min.css",
+                                "input": "./node_modules/ng-zorro-antd",
+                                "output": "/assets/"
+                            },
+                            {
+                                "glob": "**/*",
+                                "input": "./node_modules/monaco-editor/min/vs",
+                                "output": "/assets/vs/"
+                            }
+                        ],
+                        "styles": [
+                            "./node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
+                            "./node_modules/ng-zorro-antd/graph/style/index.css",
+                            "./node_modules/ng-zorro-antd/code-editor/style/index.min.css",
+                            "src/styles.sass"
+                        ],
+                        "scripts": [],
+                        "allowedCommonJsDependencies": [
+                            "dagre-d3"
+                        ]
+                    },
+                    "configurations": {
+                        "development": {
+                            "buildOptimizer": false,
+                            "optimization": {
+                                "scripts": false,
+                                "styles": false,
+                                "fonts": false
+                            },
+                            "vendorChunk": true,
+                            "extractLicenses": false,
+                            "sourceMap": true,
+                            "namedChunks": true
+                        }
+                    }
                 }
             }
         },
@@ -197,5 +256,7 @@
             }
         }
     },
-    "defaultProject": "utask-ui"
+    "cli": {
+        "analytics": false
+    }
 }

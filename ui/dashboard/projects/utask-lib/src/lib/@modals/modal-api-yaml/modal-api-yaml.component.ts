@@ -1,5 +1,9 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { Component, OnInit, inject } from '@angular/core';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    apiCall: any
+}
 
 @Component({
     selector: 'lib-utask-modal-yaml-preview',
@@ -17,17 +21,18 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
     styleUrls: ['./modal-api-yaml.sass']
 })
 export class ModalApiYamlComponent implements OnInit {
-    @Input() apiCall: any;
     public text: string;
     loading = false;
     error = null;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(public modal: NzModalRef) {
     }
 
     ngOnInit() {
         this.loading = true;
-        this.apiCall().then((data) => {
+        this.nzModalData.apiCall().then((data) => {
             this.text = data;
         }).catch((err: any) => {
             this.error = err;

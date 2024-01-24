@@ -1,5 +1,10 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { Component, OnInit, inject } from '@angular/core';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    apiCall: any
+    apiCallSubmit: any
+}
 
 @Component({
     selector: 'lib-utask-modal-yaml-preview',
@@ -18,12 +23,12 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
     styleUrls: ['./modal-api-yaml-edit.sass'],
 })
 export class ModalApiYamlEditComponent implements OnInit {
-    @Input() apiCall: any;
-    @Input() apiCallSubmit: any;
     public text: string;
     loaders: { [key: string]: boolean } = {};
     errors: { [key: string]: any } = {};
     result: any;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(
         public modal: NzModalRef
@@ -31,7 +36,7 @@ export class ModalApiYamlEditComponent implements OnInit {
 
     ngOnInit() {
         this.loaders.main = true;
-        this.apiCall().then((data) => {
+        this.nzModalData.apiCall().then((data) => {
             this.text = data;
         }).catch((err: any) => {
             this.errors.main = err;
@@ -42,7 +47,7 @@ export class ModalApiYamlEditComponent implements OnInit {
 
     submit() {
         this.loaders.submit = true;
-        this.apiCallSubmit(this.text).then((data) => {
+        this.nzModalData.apiCallSubmit(this.text).then((data) => {
             this.errors.submit = null;
             this.result = data;
             this.modal.triggerOk();

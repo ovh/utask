@@ -63,14 +63,14 @@
         <div app-box-header>
             Request - {{(task$ | async).id}}
         </div>
-        <nz-button-group nzSize="small" app-box-header-extra>
-            <button type="button" nz-button title="View as code" (click)="previewTask(); $event.stopPropagation();">
+        <nz-button-group app-box-header-extra>
+            <button type="button" nz-button nzSize="small" title="View as code" (click)="previewTask(); $event.stopPropagation();">
                 <i nz-icon nzType="file-text"></i>
             </button>
-            <button type="button" nz-button title="Edit the task" (click)="editRequest(); $event.stopPropagation();" [disabled]="!(canEditRequest$ | async)">
+            <button type="button" nz-button nzSize="small" title="Edit the task" (click)="editRequest(); $event.stopPropagation();" [disabled]="!(canEditRequest$ | async)">
                 <i nz-icon nzType="edit"></i>
             </button>
-            <button type="button" nz-button title="Delete the task" (click)="deleteTask(); $event.stopPropagation();" [disabled]="!(canDeleteRequest$ | async)">
+            <button type="button" nz-button nzSize="small" title="Delete the task" (click)="deleteTask(); $event.stopPropagation();" [disabled]="!(canDeleteRequest$ | async)">
                 <i nz-icon nzType="delete"></i>
             </button>
         </nz-button-group>
@@ -117,13 +117,13 @@
             </div>
             <div app-box-header-extra>
                 <nz-button-group nzSize="small">
-                    <button type="button" nz-button title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)" [disabled]="!(canRun$ | async)">
+                    <button type="button" nz-button nzSize="small" title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)" [disabled]="!(canRun$ | async)">
                         <i nz-icon nzType="caret-right"></i>
                     </button>
-                    <button type="button" nz-button title="Start over the task" (click)="$event.stopPropagation(); display.restartTask = true" [disabled]="!(canStartOver$ | async)">
+                    <button type="button" nz-button nzSize="small" title="Start over the task" (click)="$event.stopPropagation(); display.restartTask = true" [disabled]="!(canStartOver$ | async)">
                         <i nz-icon nzType="rollback"></i>
                     </button>
-                    <button type="button" nz-button title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)" [disabled]="!(canCancel$ | async)">
+                    <button type="button" nz-button nzSize="small" title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)" [disabled]="!(canCancel$ | async)">
                         <i nz-icon nzType="stop"></i>
                     </button>
                     <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>

@@ -20,7 +20,7 @@ export class RequestService {
                 nzTitle: 'Request preview',
                 nzContent: ModalApiYamlEditComponent,
                 nzWidth: '80%',
-                nzComponentParams: {
+                nzData: {
                     apiCall: () => this.api.task.getAsYaml(task.id).toPromise(),
                     apiCallSubmit: (data: any) => this.api.task.updateAsYaml(task.id, data).toPromise()
                 },

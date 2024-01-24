@@ -11,7 +11,7 @@
     "module": "es2020",
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2017",
+    "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -24,7 +24,8 @@
         "dist/utask-lib/utask-lib",
         "dist/utask-lib"
       ]
-    }
+    },
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
