@@ -24,7 +24,7 @@ require (
 	github.com/ovh/symmecrypt v0.6.0
 	github.com/ovh/tat v5.2.5+incompatible
 	github.com/prometheus/client_golang v1.17.0
-	github.com/robertkrimen/otto v0.2.1
+	github.com/robertkrimen/otto v0.3.0
 	github.com/santhosh-tekuri/jsonschema v1.2.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
