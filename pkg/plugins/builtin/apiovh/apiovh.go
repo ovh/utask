@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"text/template"
 
 	"github.com/ovh/configstore"
 	"github.com/ovh/go-ovh/ovh"
 
+	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/pkg/plugins/builtin/httputil"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
@@ -55,7 +55,7 @@ func validConfig(config interface{}) error {
 		return fmt.Errorf("unknown method for gw runner: %q", cfg.Method)
 	}
 	// If the API credentials is a template, try to parse it.
-	if strings.Index(cfg.Credentials, "{{") == -1 {
+	if !strings.Contains(cfg.Credentials, "{{") {
 		ovhCfgStr, err := configstore.GetItemValue(cfg.Credentials)
 		if err != nil {
 			return fmt.Errorf("can't retrieve credentials from configstore: %s", err)
@@ -74,7 +74,8 @@ func validConfig(config interface{}) error {
 			return fmt.Errorf("can't create new OVH client: %s", err)
 		}
 	} else {
-		if _, err := template.New("credentials").Parse(cfg.Credentials); err != nil {
+		v := values.NewValues()
+		if _, err := v.Apply(cfg.Credentials, nil, ""); err != nil {
 			return fmt.Errorf("failed to parse credentials template: %w", err)
 		}
 	}
