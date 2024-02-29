@@ -4,6 +4,7 @@ import (
 	"github.com/ovh/utask/engine/step"
 	"github.com/ovh/utask/pkg/plugins"
 	pluginapiovh "github.com/ovh/utask/pkg/plugins/builtin/apiovh"
+	pluginbatch "github.com/ovh/utask/pkg/plugins/builtin/batch"
 	plugincallback "github.com/ovh/utask/pkg/plugins/builtin/callback"
 	pluginecho "github.com/ovh/utask/pkg/plugins/builtin/echo"
 	pluginemail "github.com/ovh/utask/pkg/plugins/builtin/email"
@@ -43,6 +44,7 @@ func Register() error {
 		pluginscript.Plugin,
 		plugintag.Plugin,
 		plugincallback.Plugin,
+		pluginbatch.Plugin,
 	} {
 		if err := step.RegisterRunner(p.PluginName(), p); err != nil {
 			return err
