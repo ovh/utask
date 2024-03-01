@@ -1,6 +1,8 @@
 package step
 
 import (
+	"fmt"
+
 	"github.com/juju/errors"
 	"github.com/ovh/utask/engine/step/condition"
 	"github.com/ovh/utask/pkg/utils"
@@ -42,7 +44,7 @@ func ValidCondition(sc *condition.Condition, stepName string, steps map[string]*
 
 		customStates, err := impactedStep.GetCustomStates()
 		if err != nil {
-			return errors.New("Step custom states are invalid")
+			return fmt.Errorf("Step custom states are invalid: %s", err)
 		}
 
 		validStates := utils.AppendUniq(stepConditionValidStates, customStates...)
