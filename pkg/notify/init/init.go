@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/utask/pkg/notify"
 	"github.com/ovh/utask/pkg/notify/opsgenie"
 	"github.com/ovh/utask/pkg/notify/slack"
-	"github.com/ovh/utask/pkg/notify/tat"
 	"github.com/ovh/utask/pkg/notify/webhook"
 )
 
@@ -50,22 +49,6 @@ func Init(store *configstore.Store) error {
 				return fmt.Errorf("failed to instantiate opsgenie notification sender: %s", err)
 			}
 			notify.RegisterSender(name, ogns, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
-
-		case tat.Type:
-			f := utask.NotifyBackendTat{}
-			if err := json.Unmarshal(ncfg.Config, &f); err != nil {
-				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
-			}
-			tn, err := tat.NewTatNotificationSender(
-				f.URL,
-				f.Username,
-				f.Password,
-				f.Topic,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to instantiate tat notification sender: %s", err)
-			}
-			notify.RegisterSender(name, tn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 
 		case slack.Type:
 			f := utask.NotifyBackendSlack{}
