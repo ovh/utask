@@ -19,7 +19,6 @@ github.com/fabienm/go-logrus-formatters; MIT
 github.com/facebookgo/httpcontrol; BSD-3-Clause
 github.com/fsnotify/fsnotify; BSD-3-Clause
 github.com/gabriel-vasile/mimetype; MIT
-github.com/ghodss/yaml; BSD-3-Clause
 github.com/gin-contrib/sse; MIT
 github.com/gin-gonic/gin; MIT
 github.com/go-gorp/gorp; MIT

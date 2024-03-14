@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/maxatome/go-testdeep/td"
 	"github.com/ovh/configstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/api"

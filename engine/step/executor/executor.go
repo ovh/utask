@@ -3,7 +3,7 @@ package executor
 import (
 	"encoding/json"
 
-	"github.com/ghodss/yaml"
+	"sigs.k8s.io/yaml"
 )
 
 // Executor matches an executor type with its required configuration
