@@ -3,9 +3,9 @@ package api
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	"github.com/gin-gonic/gin"
 	"github.com/markusthoemmes/goautoneg"
+	"sigs.k8s.io/yaml"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/ghodss/yaml"
 	"github.com/gin-gonic/gin"
+	"sigs.k8s.io/yaml"
 )
 
 const (

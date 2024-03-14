@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/maxatome/go-testdeep/td"
 	"github.com/ovh/utask/engine/values"
 	"github.com/ovh/utask/pkg/utils"
+	"sigs.k8s.io/yaml"
 )
 
 func TestTmpl(t *testing.T) {
