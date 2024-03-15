@@ -48,7 +48,6 @@ postgres://user:pass@db/utask?sslmode=disable
     // notify_config contains a map of named notification configurations, composed of a type and config data,
     // implemented notifiers include:
     // - opsgenie (https://www.atlassian.com/software/opsgenie); available zones are: global, eu, sandbox
-    // - tat (github.com/ovh/tat)
     // - slack webhook (https://api.slack.com/messaging/webhooks)
     // - generic webhook (custom URL, with HTTP POST method)
     // notification strategies can be declared per backend:
