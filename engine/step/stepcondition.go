@@ -44,7 +44,7 @@ func ValidCondition(sc *condition.Condition, stepName string, steps map[string]*
 
 		customStates, err := impactedStep.GetCustomStates()
 		if err != nil {
-			return fmt.Errorf("Step custom states are invalid: %s", err)
+			return fmt.Errorf("invalid custom stats found for step %s: %s", stepName, err)
 		}
 
 		validStates := utils.AppendUniq(stepConditionValidStates, customStates...)
