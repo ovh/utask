@@ -1,14 +1,10 @@
-# 1.10.0 (2023-11-06)
-
-Declare 1.30 version for JSON schema ([1051e38](https://github.com/ovh/utask/commit/1051e38))
-
-# 1.9.0 (2023-10-19)
-
-Declare 1.29 version for JSON schema ([b231ec8](https://github.com/ovh/utask/commit/b231ec8))
-
-# 1.8.0 (2023-08-29)
+# 1.8.0 (2024-01-24)
 
 Declare 1.28 version for JSON schema ([0b46169](https://github.com/ovh/utask/commit/0b46169))
+Declare 1.29 version for JSON schema ([b231ec8](https://github.com/ovh/utask/commit/b231ec8))
+Declare 1.30 version for JSON schema ([1051e38](https://github.com/ovh/utask/commit/1051e38))
+Upgrade to Angular 16 ([20f6d3a](https://github.com/ovh/utask/commit/20f6d3a))
+Declare 1.31 version for JSON schema ([1b98882](https://github.com/ovh/utask/commit/1b98882))
 
 # 1.7.0 (2023-05-25)
 

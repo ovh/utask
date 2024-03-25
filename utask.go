@@ -168,14 +168,6 @@ type NotifyBackendOpsGenie struct {
 	Timeout string `json:"timeout"`
 }
 
-// NotifyBackendTat holds configuration for instantiating a Tat notify client
-type NotifyBackendTat struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	URL      string `json:"url"`
-	Topic    string `json:"topic"`
-}
-
 // NotifyBackendSlack holds configuration for instantiating a Slack notify client
 type NotifyBackendSlack struct {
 	WebhookURL string `json:"webhook_url"`

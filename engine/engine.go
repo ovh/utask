@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	"github.com/ghodss/yaml"
 	expbk "github.com/jpillora/backoff"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
+	"sigs.k8s.io/yaml"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/engine/step"

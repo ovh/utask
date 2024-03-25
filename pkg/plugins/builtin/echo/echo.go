@@ -3,10 +3,10 @@ package echo
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/ovh/utask/pkg/plugins/taskplugin"
 	"github.com/ovh/utask/pkg/utils"
+	"sigs.k8s.io/yaml"
 )
 
 // the echo plugin is used to "manually" build result outputs

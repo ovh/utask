@@ -6,11 +6,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/utask/pkg/templateimport"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 )
 
 var (

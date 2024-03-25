@@ -6,11 +6,11 @@ import (
 	"path"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/ovh/configstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/yaml"
 
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/db"
