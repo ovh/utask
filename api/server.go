@@ -172,7 +172,8 @@ func generatePathPrefixAPI(pathPrefix string) string {
 // build registers all routes and their corresponding handlers for the Server's API
 func (s *Server) build(ctx context.Context) {
 	if s.httpHandler == nil {
-		ginEngine := gin.Default()
+		ginEngine := gin.New()
+		ginEngine.Use(gin.Recovery())
 
 		ginEngine.
 			Group("/",
