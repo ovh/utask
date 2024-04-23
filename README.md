@@ -158,7 +158,7 @@ Extending this basic authentication mechanism is possible by developing an "init
 ### Notification
 
 Every task state change can be notified to a notification backend.
-µTask implements three differents notification backends: Slack, [TaT](https://github.com/ovh/tat), and generic webhooks.
+µTask implements three differents notification backends: Slack, Opsgenie, and generic webhooks.
 
 Default payload that will be sent for generic webhooks are:
 

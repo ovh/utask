@@ -66,27 +66,6 @@ postgres://user:pass@db/utask?sslmode=disable
                 "task_state_update": "failure_only"
             }
         },
-        "tat-internal": {
-            "type": "tat",
-            "config": {
-                "username": "foo",
-                "password": "very-secret",
-                "url": "http://localhost:9999/tat",
-                "topic": "utask.notifications"
-            },
-            "default_notification_strategy": {
-                "task_state_update": "silent",
-                "task_validation": "always"
-            },
-            "template_notification_strategies": {
-                "task_state_update": [
-                    {
-                        "templates": ["hello-world", "hello-world-2"],
-                        "notification_strategy": "always"
-                    }
-                ]
-            }
-        },
         "slack-webhook": {
             "type": "slack",
             "config": {
@@ -102,6 +81,22 @@ postgres://user:pass@db/utask?sslmode=disable
                 "webhook_url": "https://example.org/webhook/XXXXXXXXXXXXXXXXXXXX",
                 "username": "foo",
                 "password": "very-secret",
+                "headers": {
+                    "X-Specific-Header": "foobar"
+                }
+            }
+        },
+        "webhook-secure.org": {
+            "type": "webhook",
+            "config": {
+                "webhook_url": "https://example.org/webhook/XXXXXXXXXXXXXXXXXXXX",
+                // username and password can be stored in another configstore item which must be aliases with "notify-webhook-credentials":
+                // {
+                //     "credentials_name": "foobar",
+                //     "username": "foo",
+                //     "password": "very-secret"
+                // }
+                "credentials_name": "foobar",
                 "headers": {
                     "X-Specific-Header": "foobar"
                 }

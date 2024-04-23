@@ -63,6 +63,45 @@ func Init(store *configstore.Store) error {
 			if err := json.Unmarshal(ncfg.Config, &f); err != nil {
 				return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
 			}
+
+			if f.CredentialsName != "" {
+				items, err := configstore.Filter().
+					Store(store).
+					Slice(utask.NotificationCredentialsSecretAlias).
+					Unmarshal(func() interface{} { return &utask.NotifyBackendWebhookCredentials{} }).
+					Rekey(func(s *configstore.Item) string {
+						i, err := s.Unmarshaled()
+						if err == nil {
+							return i.(*utask.NotifyBackendWebhookCredentials).CredentialsName
+						}
+						return s.Key()
+					}).
+					Slice(f.CredentialsName).
+					GetItemList()
+				if err != nil {
+					return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
+				}
+				if items.Len() == 0 {
+					return fmt.Errorf("%s: %s, %s: no credential found with name %q", errRetrieveCfg, ncfg.Type, name, f.CredentialsName)
+				}
+				if items.Len() > 1 {
+					return fmt.Errorf("%s: %s, %s: more than one credentials found with name %q", errRetrieveCfg, ncfg.Type, name, f.CredentialsName)
+				}
+
+				iValue, err := items.Items[0].Unmarshaled()
+				if err != nil {
+					return fmt.Errorf("%s: %s, %s: %s", errRetrieveCfg, ncfg.Type, name, err)
+				}
+
+				value, ok := iValue.(*utask.NotifyBackendWebhookCredentials)
+				if !ok {
+					return fmt.Errorf("%s: %s, %s: expected *utask.NotifyBackendWebhookCredentials, got %T", errRetrieveCfg, ncfg.Type, name, value)
+				}
+
+				f.Username = value.Username
+				f.Password = value.Password
+			}
+
 			sn := webhook.NewWebhookNotificationSender(f.WebhookURL, f.Username, f.Password, f.Headers)
 			notify.RegisterSender(name, sn, ncfg.DefaultNotificationStrategy, ncfg.TemplateNotificationStrategies)
 

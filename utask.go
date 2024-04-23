@@ -94,6 +94,9 @@ const (
 	// UtaskCfgSecretAlias is the key for the config item containing global configuration data
 	UtaskCfgSecretAlias = "utask-cfg"
 
+	// NotificationCredentialsSecretAlias is the key for the config item containing notification backend credentials
+	NotificationCredentialsSecretAlias = "notify-webhook-credentials" // #nosec G101
+
 	// NotificationStrategySilent corresponds to the mode where notifications will never be sent for the given templates
 	NotificationStrategySilent = "silent"
 	// NotificationStrategyAlways corresponds to the mode where notifications will always be sent for the given templates
@@ -173,11 +176,19 @@ type NotifyBackendSlack struct {
 	WebhookURL string `json:"webhook_url"`
 }
 
+// NotifyBackendWebhookCredentials holds the credentials for instantiating a Webhook notify client
+type NotifyBackendWebhookCredentials struct {
+	CredentialsName string `json:"credentials_name"`
+
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // NotifyBackendWebhook holds configuration for instantiating a Webhook notify client
 type NotifyBackendWebhook struct {
+	NotifyBackendWebhookCredentials
+
 	WebhookURL string            `json:"webhook_url"`
-	Username   string            `json:"username"`
-	Password   string            `json:"password"`
 	Headers    map[string]string `json:"headers"`
 }
 
