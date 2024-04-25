@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "16.0.1",
-    "@angular-devkit/build-angular": "16.2.10",
+    "@angular-devkit/build-angular": "16.2.14",
     "@angular/cli": "16.2.10",
     "@angular/compiler-cli": "16.2.12",
     "@angular/language-service": "16.2.12",
