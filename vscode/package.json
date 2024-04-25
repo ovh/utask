@@ -2,7 +2,7 @@
 	"name": "vscode-utask",
 	"displayName": "%displayName%",
 	"description": "%description%",
-	"version": "1.8.0",
+	"version": "1.9.0",
 	"publisher": "ovh",
 	"contributors": [
 		{
