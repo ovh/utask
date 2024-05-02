@@ -2,6 +2,7 @@ package values
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -77,6 +78,8 @@ func NewValues() *Values {
 	v.funcMap["fromJson"] = v.fromJSON
 	v.funcMap["mustFromJson"] = v.mustFromJSON
 	v.funcMap["uuid"] = uuid.NewV4
+	v.funcMap["b64RawEnc"] = v.b64RawEnc
+	v.funcMap["b64RawDec"] = v.b64RawDec
 
 	return v
 }
@@ -497,6 +500,18 @@ func (v *Values) mustFromJSON(s string) (reflect.Value, error) {
 	var output interface{}
 	err := json.Unmarshal([]byte(s), &output)
 	return reflect.ValueOf(output), err
+}
+
+func (v *Values) b64RawDec(s string) string {
+	data, err := base64.RawStdEncoding.DecodeString(s)
+	if err != nil {
+		return err.Error()
+	}
+	return string(data)
+}
+
+func (v *Values) b64RawEnc(s string) string {
+	return base64.RawStdEncoding.EncodeToString([]byte(s))
 }
 
 var errTimedOut = errors.New("Timed out variable evaluation")

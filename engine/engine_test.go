@@ -1355,3 +1355,18 @@ func TestResolveCallback(t *testing.T) {
 	// callback has been created, waiting for its resolution
 	assert.Equal(t, resolution.StateWaiting, res.State)
 }
+
+func TestB64RawEncodeDecode(t *testing.T) {
+	res, err := createResolution("rawb64EncodingDecoding.yaml", nil, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+	assert.Equal(t, resolution.StateDone, res.State)
+
+	output := res.Steps["stepOne"].Output.(map[string]interface{})
+	assert.Equal(t, "cmF3IG1lc3NhZ2U", output["a"])
+	assert.Equal(t, "raw message", output["b"])
+}
