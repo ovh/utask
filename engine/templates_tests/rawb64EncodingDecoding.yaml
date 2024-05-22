@@ -1,0 +1,24 @@
+name: rawb64EncodingDecoding
+description: Ensure that b64 encoding and decoding can be used in template
+title_format: "[test] correct b64 raw encoding and decoding"
+auto_runnable: true
+
+
+
+variables:
+  - name: rawDecoded
+    expression: |-
+      "raw message";
+  - name: rawEncoded
+    expression: |-
+      "cmF3IG1lc3NhZ2U";
+
+steps:
+  stepOne:
+    description: first step
+    action:
+      type: echo
+      configuration:
+        output:
+          a: '{{ eval `rawDecoded` | b64RawEnc }}'
+          b: '{{ eval `rawEncoded` | b64RawDec }}'
