@@ -1,0 +1,23 @@
+name: batchedTaskTemplate
+description: Template made to be spawned by the testing batch plugin
+title_format: "[test] batched task template"
+
+inputs:
+  - name: specific_string
+    description: A string specific to this task
+    type: string
+  - name: common_string
+    description: A string common to all tasks in the same batch
+    type: string
+
+steps:
+  simpleStep:
+    description: Simple step
+    action:
+      type: echo
+      configuration:
+        output: >-
+          {
+            "specific": "{{.input.specific_string}}",
+            "common": "{{.input.common_string}}"
+          }

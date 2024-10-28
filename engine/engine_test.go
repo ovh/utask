@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/juju/errors"
 	"github.com/loopfz/gadgeto/zesty"
 	"github.com/maxatome/go-testdeep/td"
@@ -23,6 +25,7 @@ import (
 	"github.com/ovh/utask/api"
 	"github.com/ovh/utask/db"
 	"github.com/ovh/utask/db/pgjuju"
+	"github.com/ovh/utask/db/sqlgenerator"
 	"github.com/ovh/utask/engine"
 	"github.com/ovh/utask/engine/functions"
 	functionrunner "github.com/ovh/utask/engine/functions/runner"
@@ -36,6 +39,7 @@ import (
 	compress "github.com/ovh/utask/pkg/compress/init"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/plugins"
+	pluginbatch "github.com/ovh/utask/pkg/plugins/builtin/batch"
 	plugincallback "github.com/ovh/utask/pkg/plugins/builtin/callback"
 	"github.com/ovh/utask/pkg/plugins/builtin/echo"
 	"github.com/ovh/utask/pkg/plugins/builtin/script"
@@ -91,6 +95,7 @@ func TestMain(m *testing.M) {
 	step.RegisterRunner(echo.Plugin.PluginName(), echo.Plugin)
 	step.RegisterRunner(script.Plugin.PluginName(), script.Plugin)
 	step.RegisterRunner(pluginsubtask.Plugin.PluginName(), pluginsubtask.Plugin)
+	step.RegisterRunner(pluginbatch.Plugin.PluginName(), pluginbatch.Plugin)
 	step.RegisterRunner(plugincallback.Plugin.PluginName(), plugincallback.Plugin)
 
 	os.Exit(m.Run())
@@ -192,6 +197,21 @@ func templateFromYAML(dbp zesty.DBProvider, filename string) (*tasktemplate.Task
 		}
 	}
 	return tasktemplate.LoadFromName(dbp, tmpl.Name)
+}
+
+func listBatchTasks(dbp zesty.DBProvider, batchID int64) ([]string, error) {
+	query, params, err := sqlgenerator.PGsql.
+		Select("public_id").
+		From("task").
+		Where(squirrel.Eq{"id_batch": batchID}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	var taskIDs []string
+	_, err = dbp.DB().Select(&taskIDs, query, params...)
+	return taskIDs, err
 }
 
 func TestSimpleTemplate(t *testing.T) {
@@ -1369,4 +1389,107 @@ func TestB64RawEncodeDecode(t *testing.T) {
 	output := res.Steps["stepOne"].Output.(map[string]interface{})
 	assert.Equal(t, "cmF3IG1lc3NhZ2U", output["a"])
 	assert.Equal(t, "raw message", output["b"])
+}
+
+func TestBatch(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	require.Nil(t, err)
+
+	_, err = templateFromYAML(dbp, "batchedTask.yaml")
+	require.Nil(t, err)
+
+	_, err = templateFromYAML(dbp, "batch.yaml")
+	require.Nil(t, err)
+
+	res, err := createResolution("batch.yaml", map[string]interface{}{}, nil)
+	require.Nil(t, err, "failed to create resolution: %s", err)
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateWaiting, res.State)
+
+	for _, batchStepName := range []string{"batchJsonInputs", "batchYamlInputs"} {
+		batchStepMetadataRaw, ok := res.Steps[batchStepName].Metadata.(string)
+		assert.True(t, ok, "wrong type of metadata for step '%s'", batchStepName)
+
+		assert.Nil(t, res.Steps[batchStepName].Output, "output nil for step '%s'", batchStepName)
+
+		// The plugin formats Metadata in a special way that we need to revert before unmarshalling them
+		batchStepMetadataRaw = strings.ReplaceAll(batchStepMetadataRaw, `\"`, `"`)
+		var batchStepMetadata map[string]any
+		err := json.Unmarshal([]byte(batchStepMetadataRaw), &batchStepMetadata)
+		require.Nil(t, err, "metadata unmarshalling of step '%s'", batchStepName)
+
+		batchPublicID := batchStepMetadata["batch_id"].(string)
+		assert.NotEqual(t, "", batchPublicID, "wrong batch ID '%s'", batchPublicID)
+
+		b, err := task.LoadBatchFromPublicID(dbp, batchPublicID)
+		require.Nil(t, err)
+
+		taskIDs, err := listBatchTasks(dbp, b.ID)
+		require.Nil(t, err)
+		assert.Len(t, taskIDs, 2)
+
+		for i, publicID := range taskIDs {
+			child, err := task.LoadFromPublicID(dbp, publicID)
+			require.Nil(t, err)
+			assert.Equal(t, task.StateTODO, child.State)
+
+			childResolution, err := resolution.Create(dbp, child, nil, "", false, nil)
+			require.Nil(t, err)
+
+			childResolution, err = runResolution(childResolution)
+			require.Nil(t, err)
+			assert.Equal(t, resolution.StateDone, childResolution.State)
+
+			for k, v := range childResolution.Steps {
+				assert.Equal(t, step.StateDone, v.State, "not valid state for step %s", k)
+			}
+
+			child, err = task.LoadFromPublicID(dbp, child.PublicID)
+			require.Nil(t, err)
+			assert.Equal(t, task.StateDone, child.State)
+
+			parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, child)
+			require.Nil(t, err)
+			if i == len(taskIDs)-1 {
+				// Only the last child task should resume the parent
+				require.NotNil(t, parentTaskToResume)
+				assert.Equal(t, res.TaskID, parentTaskToResume.ID)
+			} else {
+				require.Nil(t, parentTaskToResume)
+			}
+		}
+	}
+
+	// checking if the parent task is picked up after that the subtask is resolved.
+	// need to sleep a bit because the parent task is resumed asynchronously
+	ti := time.Second
+	i := time.Duration(0)
+	for i < ti {
+		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+		require.Nil(t, err)
+		if res.State != resolution.StateWaiting {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 10)
+		i += time.Millisecond * 10
+	}
+
+	ti = time.Second
+	i = time.Duration(0)
+	for i < ti {
+		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+		require.Nil(t, err)
+		if res.State != resolution.StateRunning {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 10)
+		i += time.Millisecond * 10
+
+	}
+	assert.Equal(t, resolution.StateDone, res.State)
 }
