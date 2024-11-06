@@ -1463,8 +1463,8 @@ func TestBatch(t *testing.T) {
 		}
 	}
 
-	// checking if the parent task is picked up after that the subtask is resolved.
-	// need to sleep a bit because the parent task is resumed asynchronously
+	// checking if the parent task is picked up after the subtask is resolved.
+	// We need to sleep a bit because the parent task is resumed asynchronously
 	ti := time.Second
 	i := time.Duration(0)
 	for i < ti {
@@ -1489,7 +1489,6 @@ func TestBatch(t *testing.T) {
 
 		time.Sleep(time.Millisecond * 10)
 		i += time.Millisecond * 10
-
 	}
 	assert.Equal(t, resolution.StateDone, res.State)
 }
