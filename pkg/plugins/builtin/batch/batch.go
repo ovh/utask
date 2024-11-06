@@ -236,8 +236,9 @@ func populateBatch(
 	// Computing how many tasks to start
 	remaining := int64(len(conf.Inputs)) - tasksStarted
 	toStart := int64(conf.SubBatchSize) - running // How many tasks can be started
-	if remaining < toStart {
-		toStart = remaining // There's less tasks to start remaining than the amount of available running slots
+	if remaining < toStart || conf.SubBatchSize == 0 {
+		// There's less tasks remaining to start than the amount of available running slots or slots are unlimited
+		toStart = remaining
 	}
 
 	args := batch.TaskArgs{
@@ -310,7 +311,7 @@ func increaseRunMax(dbp zesty.DBProvider, parentTaskID string, batchStepName str
 		return err
 	}
 
-	if t.Resolution != nil {
+	if t.Resolution == nil {
 		return fmt.Errorf("resolution not found for step '%s' of task '%s'", batchStepName, parentTaskID)
 	}
 
