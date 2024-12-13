@@ -11,7 +11,7 @@ steps:
         template_name: batchedtasktemplate
         json_inputs: '[{"specific_string": "specific-1"}, {"specific_string": "specific-2"}]'
         common_json_inputs: '{"common_string": "common"}'
-        sub_batch_size: 2
+        sub_batch_size: "2"
   batchYamlInputs:
     description: Batching tasks YAML
     action:
@@ -23,4 +23,4 @@ steps:
           - specific_string: specific-2
         common_inputs:
           common_string: common
-        sub_batch_size: 2
+        sub_batch_size: "2"

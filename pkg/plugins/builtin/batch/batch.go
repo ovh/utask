@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	jujuErrors "github.com/juju/errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/utask"
+	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/models/resolution"
 	"github.com/ovh/utask/models/task"
 	"github.com/ovh/utask/models/tasktemplate"
@@ -46,8 +48,9 @@ type BatchConfig struct {
 	Tags              map[string]string        `json:"tags"`
 	ResolverUsernames string                   `json:"resolver_usernames"`
 	ResolverGroups    string                   `json:"resolver_groups"`
-	// How many tasks will run concurrently. 0 for infinity (default)
-	SubBatchSize int `json:"sub_batch_size"`
+	// How many tasks will run concurrently. 0 for infinity (default). It's supplied as a string to support templating
+	SubBatchSizeStr string `json:"sub_batch_size"`
+	SubBatchSize    int64  `json:"-"`
 }
 
 // quotedString is a string with doubly escaped quotes, so the string stays simply escaped after being processed
@@ -130,6 +133,11 @@ func exec(stepName string, config any, ictx any) (any, any, error) {
 	batchCtx := ictx.(*BatchContext)
 	if err := parseInputs(conf, batchCtx); err != nil {
 		return nil, batchCtx.RawMetadata.Format(), err
+	}
+
+	if len(conf.Inputs) == 0 {
+		// Empty input, there's nothing to do
+		return nil, BatchMetadata{}, nil
 	}
 
 	if conf.Tags == nil {
@@ -235,7 +243,7 @@ func populateBatch(
 
 	// Computing how many tasks to start
 	remaining := int64(len(conf.Inputs)) - tasksStarted
-	toStart := int64(conf.SubBatchSize) - running // How many tasks can be started
+	toStart := conf.SubBatchSize - running // How many tasks can be started
 	if remaining < toStart || conf.SubBatchSize == 0 {
 		// There's less tasks remaining to start than the amount of available running slots or slots are unlimited
 		toStart = remaining
@@ -270,12 +278,25 @@ func runBatch(
 
 	b, err := task.LoadBatchFromPublicID(dbp, metadata.BatchID)
 	if err != nil {
-		if jujuErrors.IsNotFound(err) {
-			// The batch has been collected (deleted in DB) because no remaining task referenced it. There's
-			// nothing more to do.
+		if !jujuErrors.Is(err, jujuErrors.NotFound) {
+			return metadata, err
+		}
+		// else, the batch has been collected (deleted in DB) because no task referenced it anymore.
+
+		if metadata.TasksStarted == int64(len(conf.Inputs)) {
+			// There is no more tasks to create, the work is done
+			metadata.RemainingTasks = 0
 			return metadata, nil
 		}
-		return metadata, err
+		// else, the batch was collected but we still have tasks to create. We need to recreate the batch with
+		// the same public ID and populate it.
+		// It can happen when the garbage collector runs after a sub-batch is done, but before the batch plugin
+		// could populate the batch with more tasks.
+
+		b = &task.Batch{BatchDBModel: task.BatchDBModel{PublicID: metadata.BatchID}}
+		if err := dbp.DB().Insert(&b.BatchDBModel); err != nil {
+			return metadata, pgjuju.Interpret(err)
+		}
 	}
 
 	if metadata.TasksStarted < int64(len(conf.Inputs)) {
@@ -349,6 +370,17 @@ func parseInputs(conf *BatchConfig, batchCtx *BatchContext) error {
 			return jujuErrors.NewBadRequest(err, "JSON inputs unmarshalling failure")
 		}
 	}
+
+	if conf.SubBatchSizeStr == "" {
+		conf.SubBatchSize = 0
+	} else {
+		subBatchSize, err := strconv.ParseInt(conf.SubBatchSizeStr, 10, 64)
+		if err != nil {
+			return jujuErrors.NewBadRequest(err, "parsing failure of field 'SubBatchSize'")
+		}
+		conf.SubBatchSize = subBatchSize
+	}
+
 	return nil
 }
 
