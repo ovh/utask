@@ -248,6 +248,8 @@ A user can be allowed to resolve a task in four ways:
 - `.pre_hook.metadata.HTTPStatus`: field `HTTPStatus` from the metadata of the step's pre-hook (see [pre-hooks](#pre-hooks))
 - `.function_args.[ARG_NAME]`: argument that needs to be given in the conifguration section to the function (see `functions` below)
 
+`STEP_NAME` can bear the special value `this`, which refers to the current step.
+
 The following templating functions are available:
 
 | Name               | Description                                                                                                                                                                                                                                                                                                                                                     | Reference                                                |
@@ -736,7 +738,7 @@ conditions:
   - type: skip
     foreach: parent
     if:
-      - value: '{{ step.previousCheck.output.result }}'
+      - value: '{{ .step.previousCheck.output.result }}'
         operator: EQ
         expected: 'already_done'
     then:
@@ -744,6 +746,27 @@ conditions:
 ```
 
 will be run before creating any children, by pruning the parent.
+
+It's also possible to write a `check` condition on the result of a child step with `.step.this`:
+
+```yaml
+foreach: '{{.step.aPreviousStep.output.ids | toJson}}'
+custom_states: [NOT_FOUND]
+action:
+  type: echo
+  configuration:
+    output:
+      url: '{{ .iterator }}'
+conditions:
+  - type: check
+    foreach: children  # <- can be omitted
+    if:
+      - value: '{{ .step.this.metadata.HTTPStatus }}'
+        operator: EQ
+        expected: '404'
+    then:
+      this: NOT_FOUND
+```
 
 #### Resources <a name="resources"></a>
 
