@@ -1,4 +1,4 @@
-FROM node:18 AS js-builder
+FROM node:22 AS js-builder
 
 COPY ./ui /home/node/ui
 

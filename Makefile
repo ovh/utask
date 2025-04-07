@@ -10,9 +10,10 @@ TEST_CMD_COV	= ${TEST_CMD} -covermode=count -coverprofile=coverage.out
 
 SOURCE_FILES 	= $(shell find ./ -type f -name "*.go" | grep -v _test.go)
 
-VERSION 		:= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)
-ifndef VERSION
-	VERSION = $(shell git describe --abbrev=3 --tags $(git rev-list --tags --max-count=1))-dev
+VERSION	?= $(shell git describe --exact-match --abbrev=0 --tags $(git rev-list --tags --max-count=1) 2> /dev/null)
+
+ifeq ($(strip $(VERSION)),)
+VERSION := $(shell git describe --abbrev=3 --tags $(git rev-list --tags --max-count=1))-dev
 endif
 
 LAST_COMMIT		:= $(shell git rev-parse HEAD)
@@ -54,7 +55,7 @@ release:
 
 release-utask-lib:
 	cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version
-	cd ui/dashboard && npm ci && ng build --configuration production utask-lib
+	cd ui/dashboard && npm ci && npm run ng -- build utask-lib --configuration production
 	npm publish ui/dashboard/dist/utask-lib --access public
 
 test:
