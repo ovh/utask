@@ -12,9 +12,8 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
+    - copyloopvar
     - errcheck
-    - exportloopref
     - goconst
     - gofmt
     - goimports
@@ -22,35 +21,25 @@ linters:
     - gosimple
     - govet
     - ineffassign
-    - megacheck
     - misspell
     - nolintlint
     - prealloc
     - predeclared
     - revive
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - wastedassign
     - whitespace
 
   disable:
-    - maligned
-
     # cosmetic
     - lll
     - gochecknoglobals
     - gochecknoinits
-
-linters-settings:
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
 
 issues:
   # only reports issues that have been introduced in commits ahead of origin/master
