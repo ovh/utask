@@ -610,12 +610,13 @@ forLoop:
 
 	utask.ReleaseResource("template:" + t.TemplateName)
 	utask.ReleaseExecutionSlot()
-	if err := resumeParentTask(dbp, t, sm, debugLogger); err != nil {
+	if err := wakeParentTask(dbp, t, debugLogger); err != nil {
 		debugLogger.WithError(err).Debugf("Engine: resolver(): failed to resume parent task: %s", err)
 	}
 }
 
-func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphore.Weighted, debugLogger *logrus.Entry) error {
+// wakeParentTask wakes up the current task's parent if needed by changing it's next_retry to now.
+func wakeParentTask(dbp zesty.DBProvider, currentTask *task.Task, debugLogger *logrus.Entry) error {
 	parentTask, err := taskutils.ShouldResumeParentTask(dbp, currentTask)
 	if err != nil {
 		return err
@@ -625,9 +626,17 @@ func resumeParentTask(dbp zesty.DBProvider, currentTask *task.Task, sm *semaphor
 		return nil
 	}
 
-	debugLogger.Debugf("resuming parent task %q resolution %q", parentTask.PublicID, *parentTask.Resolution)
-	debugLogger.WithFields(logrus.Fields{"task_id": parentTask.PublicID, "resolution_id": *parentTask.Resolution}).Debugf("resuming resolution %q as child task %q state changed", *parentTask.Resolution, currentTask.PublicID)
-	return GetEngine().Resolve(*parentTask.Resolution, sm)
+	res, err := resolution.LoadFromPublicID(dbp, *parentTask.Resolution)
+	if err != nil {
+		return err
+	}
+
+	if _, err := res.UpdateNextRetry(dbp, time.Now()); err != nil {
+		return errors.Annotatef(err, "next_retry update failure for parent task '%s'", parentTask.PublicID)
+	}
+
+	debugLogger.Debugf("updated parent task %q resolution %q next_retry", parentTask.PublicID, *parentTask.Resolution)
+	return nil
 }
 
 func commit(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task) error {

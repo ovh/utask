@@ -1,0 +1,18 @@
+name: noOutputSubtaskTemplate
+description: Template that spawns two simple subtasks
+title_format: "[test] simple subtasks template test"
+
+steps:
+    subtaskCreation:
+        description: creating a subtask
+        action:
+            type: subtask
+            configuration:
+                template: no-output
+
+    otherSubtaskCreation:
+        description: creating another subtask
+        action:
+            type: subtask
+            configuration:
+                template: no-output
