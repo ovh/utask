@@ -1258,6 +1258,11 @@ func TestResolveSubTask(t *testing.T) {
 	require.NotNil(t, res)
 	assert.Equal(t, resolution.StateWaiting, res.State)
 
+	nextRetryBeforeRun := time.Time{}
+	if res.NextRetry != nil {
+		nextRetryBeforeRun = *res.NextRetry
+	}
+
 	for _, subtaskName := range []string{"subtaskCreation", "jsonInputSubtask", "templatingJsonInputSubtask"} {
 		subtaskCreationOutput := res.Steps[subtaskName].Output.(map[string]interface{})
 		subtaskPublicID := subtaskCreationOutput["id"].(string)
@@ -1285,27 +1290,25 @@ func TestResolveSubTask(t *testing.T) {
 		assert.Equal(t, res.TaskID, parentTaskToResume.ID)
 	}
 
-	// checking if the parent task is picked up after that the subtask is resolved.
-	// need to sleep a bit because the parent task is resumed asynchronously
+	// checking whether the parent task will be picked up by the RetryCollector after the subtask is resolved.
+	res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+	require.Nil(t, err)
+	assert.NotNil(t, res.NextRetry)
+	assert.False(t, res.NextRetry.IsZero())
+	assert.True(t, res.NextRetry.After(nextRetryBeforeRun))
+	assert.True(t, res.NextRetry.Before(time.Now()))
+
+	// Starting the RetryCollector to resume the parent task
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+	engine.RetryCollector(ctx)
+
 	ti := time.Second
 	i := time.Duration(0)
 	for i < ti {
 		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
 		require.Nil(t, err)
-		if res.State != resolution.StateWaiting {
-			break
-		}
-
-		time.Sleep(time.Millisecond * 10)
-		i += time.Millisecond * 10
-	}
-
-	ti = time.Second
-	i = time.Duration(0)
-	for i < ti {
-		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
-		require.Nil(t, err)
-		if res.State != resolution.StateRunning {
+		if res.State == resolution.StateDone {
 			break
 		}
 
@@ -1409,6 +1412,11 @@ func TestBatch(t *testing.T) {
 	require.NotNil(t, res)
 	assert.Equal(t, resolution.StateWaiting, res.State)
 
+	nextRetryBeforeRun := time.Time{}
+	if res.NextRetry != nil {
+		nextRetryBeforeRun = *res.NextRetry
+	}
+
 	for _, batchStepName := range []string{"batchJsonInputs", "batchYamlInputs"} {
 		batchStepMetadataRaw, ok := res.Steps[batchStepName].Metadata.(string)
 		assert.True(t, ok, "wrong type of metadata for step '%s'", batchStepName)
@@ -1463,27 +1471,25 @@ func TestBatch(t *testing.T) {
 		}
 	}
 
-	// checking if the parent task is picked up after the subtask is resolved.
-	// We need to sleep a bit because the parent task is resumed asynchronously
+	// checking whether the parent task will be picked up by the RetryCollector after the subtask is resolved.
+	res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+	require.Nil(t, err)
+	assert.NotNil(t, res.NextRetry)
+	assert.False(t, res.NextRetry.IsZero())
+	assert.True(t, res.NextRetry.After(nextRetryBeforeRun))
+	assert.True(t, res.NextRetry.Before(time.Now()))
+
+	// Starting the RetryCollector to resume the parent task
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+	engine.RetryCollector(ctx)
+
 	ti := time.Second
 	i := time.Duration(0)
 	for i < ti {
 		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
 		require.Nil(t, err)
-		if res.State != resolution.StateWaiting {
-			break
-		}
-
-		time.Sleep(time.Millisecond * 10)
-		i += time.Millisecond * 10
-	}
-
-	ti = time.Second
-	i = time.Duration(0)
-	for i < ti {
-		res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
-		require.Nil(t, err)
-		if res.State != resolution.StateRunning {
+		if res.State == resolution.StateDone {
 			break
 		}
 
@@ -1491,4 +1497,53 @@ func TestBatch(t *testing.T) {
 		i += time.Millisecond * 10
 	}
 	assert.Equal(t, resolution.StateDone, res.State)
+}
+
+func TestWakeParent(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	require.Nil(t, err)
+
+	// Create a task that spawns two simple subtasks
+	_, err = templateFromYAML(dbp, "no-output.yaml")
+	require.Nil(t, err)
+
+	res, err := createResolution("noOutputSubtask.yaml", map[string]interface{}{}, nil)
+	require.Nil(t, err, "failed to create resolution: %s", err)
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	require.Equal(t, resolution.StateWaiting, res.State)
+	assert.True(t, res.NextRetry.IsZero())
+
+	// Force the parent task to the RUNNING state
+	res.SetState(resolution.StateRunning)
+	res.Update(dbp)
+
+	// Create and run one of the subtasks
+	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
+	subtaskPublicID := subtaskCreationOutput["id"].(string)
+
+	subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	require.Equal(t, task.StateTODO, subtask.State)
+
+	subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
+	require.Nil(t, err)
+
+	beforeRun := time.Now()
+	subtaskResolution, err = runResolution(subtaskResolution)
+	require.Nil(t, err)
+	require.Equal(t, task.StateDone, subtaskResolution.State)
+	afterRun := time.Now()
+
+	// Refreshing parent resolution to check its next_retry value
+	res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+	require.Nil(t, err)
+	assert.Equal(t, res.State, resolution.StateRunning) // Parent should still be RUNNING
+
+	// The parent's next_retry should have been updated so that the RetryCollector would pick it up
+	assert.NotNil(t, res.NextRetry)
+	assert.True(t, res.NextRetry.After(beforeRun))
+	assert.True(t, res.NextRetry.Before(afterRun))
 }
