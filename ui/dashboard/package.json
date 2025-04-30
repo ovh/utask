@@ -48,8 +48,8 @@
     "zone.js": "0.13.3"
   },
   "devDependencies": {
-    "@angular-builders/custom-webpack": "16.0.1",
-    "@angular-devkit/build-angular": "16.2.10",
+    "@angular-builders/custom-webpack": "19.0.1",
+    "@angular-devkit/build-angular": "19.2.10",
     "@angular/cli": "16.2.10",
     "@angular/compiler-cli": "16.2.12",
     "@angular/language-service": "16.2.12",
