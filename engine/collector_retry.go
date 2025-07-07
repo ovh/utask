@@ -53,7 +53,8 @@ func getUpdateErrorResolution(dbp zesty.DBProvider) (*resolution.Resolution, err
 			SELECT id
 			FROM "resolution"
 			WHERE ((instance_id = $1 AND state = $2) OR
-				  ((state = $3 OR state = $4) AND next_retry < NOW()))
+				  ((state = $3 OR state = $4) AND next_retry < NOW()) OR
+				  (state = $5 AND next_retry > last_start AND next_retry < NOW()))
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED
 		)
@@ -62,7 +63,16 @@ func getUpdateErrorResolution(dbp zesty.DBProvider) (*resolution.Resolution, err
 	var r resolution.Resolution
 
 	instanceID := utask.InstanceID
-	if err := dbp.DB().SelectOne(&r, sqlStmt, instanceID, resolution.StateRetry, resolution.StateError, resolution.StateToAutorunDelayed); err != nil {
+	err := dbp.DB().SelectOne(
+		&r,
+		sqlStmt,
+		instanceID,
+		resolution.StateRetry,
+		resolution.StateError,
+		resolution.StateToAutorunDelayed,
+		resolution.StateWaiting,
+	)
+	if err != nil {
 		return nil, pgjuju.Interpret(err)
 	}
 

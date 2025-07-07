@@ -6,6 +6,11 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Masterminds/squirrel"
+	"github.com/gofrs/uuid"
+	"github.com/juju/errors"
+	"github.com/loopfz/gadgeto/zesty"
+
 	"github.com/ovh/utask"
 	"github.com/ovh/utask/db/pgjuju"
 	"github.com/ovh/utask/db/sqlgenerator"
@@ -17,11 +22,6 @@ import (
 	"github.com/ovh/utask/pkg/compress"
 	"github.com/ovh/utask/pkg/now"
 	"github.com/ovh/utask/pkg/utils"
-
-	"github.com/Masterminds/squirrel"
-	"github.com/gofrs/uuid"
-	"github.com/juju/errors"
-	"github.com/loopfz/gadgeto/zesty"
 )
 
 // all valid resolution states
@@ -410,6 +410,22 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 	// force empty to stop using old crypto code
 	r.CryptKey = []byte{}
 
+	var nextRetry time.Time
+	if r.NextRetry == nil || r.NextRetry.IsZero() {
+		// No local next_retry value. It may have been set in DB since the last read, so we need to refresh it
+		nextRetry, err = getNextRetry(dbp, r.ID)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Updating the next_retry individually to prevent overriding it with a nil value or a later date
+		nextRetry, err = r.UpdateNextRetry(dbp, *r.NextRetry)
+		if err != nil {
+			return errors.Annotatef(err, "failed to update resolution's next_retry")
+		}
+	}
+	r.NextRetry = &nextRetry
+
 	rows, err := dbp.DB().Update(&r.DBModel)
 	if err != nil {
 		return pgjuju.Interpret(err)
@@ -418,6 +434,63 @@ func (r *Resolution) Update(dbp zesty.DBProvider) (err error) {
 	}
 
 	return nil
+}
+
+// UpdateNextRetry updates the Resolution's next_retry field while respecting the current next_retry value in DB. It
+// can only shorten the time before the resolution will be retried next, not increase it.
+func (r *Resolution) UpdateNextRetry(dbp zesty.DBProvider, newNextRetry time.Time) (time.Time, error) {
+	sp, err := dbp.TxSavepoint()
+	if err != nil {
+		return time.Time{}, err
+	}
+	defer dbp.RollbackTo(sp) //nolint:errcheck
+
+	// Using the Resolution's ID to soft lock the update and prevent concurrent updates
+	if _, err := dbp.DB().Exec(`SELECT pg_advisory_xact_lock($1)`, r.ID); err != nil {
+		return time.Time{}, err
+	}
+
+	query, params, err := sqlgenerator.PGsql.
+		Update("resolution").
+		Where(squirrel.Eq{"public_id": r.PublicID}).
+		// Is the new next_retry valid
+		Where("? > last_start", newNextRetry).
+		// And, is the current next_retry outdated or further in time than the new one
+		Where("(next_retry < last_start OR ? < next_retry OR next_retry IS NULL)", newNextRetry).
+		Set("next_retry", newNextRetry).
+		Suffix("RETURNING next_retry").
+		ToSql()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	res, err := dbp.DB().Query(query, params...)
+	if err != nil {
+		return time.Time{}, err
+	}
+	defer res.Close()
+
+	if !res.Next() {
+		// Update returned no result
+		if err := res.Err(); err != nil {
+			// An error happened when reading the query's result
+			return time.Time{}, err
+		}
+
+		// The nextRetry wasn't updated, we need to fetch its current value
+		nextRetry, err := getNextRetry(dbp, r.ID)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return nextRetry, nil
+	}
+
+	var nextRetry time.Time
+	if err := res.Scan(&nextRetry); err != nil {
+		return time.Time{}, err
+	}
+
+	return nextRetry, dbp.Commit()
 }
 
 // Delete removes the Resolution from DB
@@ -579,6 +652,21 @@ func (r *Resolution) SetStepState(stepName, state string) {
 // SetInput stores the inputs provided by the task's resolver
 func (r *Resolution) SetInput(input map[string]interface{}) {
 	r.ResolverInput = input
+}
+
+// getNextRetry fetches from the database the current next_retry value of the resolution with given ID
+func getNextRetry(dbp zesty.DBProvider, resolutionID int64) (time.Time, error) {
+	var tmpRes Resolution
+	err := dbp.DB().SelectOne(&tmpRes, `SELECT next_retry FROM resolution WHERE id = $1`, resolutionID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if tmpRes.NextRetry == nil {
+		return time.Time{}, nil
+	}
+
+	return *tmpRes.NextRetry, nil
 }
 
 var rSelector = sqlgenerator.PGsql.Select(
