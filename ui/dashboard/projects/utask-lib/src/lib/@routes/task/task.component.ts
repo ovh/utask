@@ -133,8 +133,12 @@ export class TaskComponent implements OnInit, OnDestroy {
     return !!meta?.user_is_admin;
   }));
 
-  readonly canEditRequest$ = combineLatest([this.task$, this._isResolver$]).pipe(map(([task, isResolver]) => {
-    if (!['TODO', 'PAUSED'].includes(task?.state)) {
+  readonly canEditRequest$ = combineLatest([this.task$, this._isResolver$, this.resolution$]).pipe(map(([task, isResolver, resolution]) => {
+    if (['TODO', 'DELAYED'].includes(task?.state)) {
+      return isResolver;
+    }
+
+    if (resolution?.state !== 'PAUSED') {
       return false;
     }
 
