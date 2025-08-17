@@ -16,3 +16,8 @@ export default class Resolution {
     resolver_inputs?: { [key: string]: any };
     steps: { [key: string]: Step };
 }
+
+export class TemplateExpression {
+    result: string;
+    error?: string;
+}
