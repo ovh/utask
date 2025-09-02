@@ -1,4 +1,4 @@
-FROM node:22 AS js-builder
+FROM node:24 AS js-builder
 
 COPY ./ui /home/node/ui
 
@@ -6,7 +6,7 @@ COPY ./ui /home/node/ui
 WORKDIR /home/node/ui/dashboard
 RUN BASEHREF=___UTASK_DASHBOARD_BASEHREF___ PREFIX_API_BASE_URL=___UTASK_DASHBOARD_PREFIXAPIBASEURL___ SENTRY_DSN=___UTASK_DASHBOARD_SENTRY_DSN___ make build-prod
 
-FROM golang:1.24
+FROM golang:1.25
 
 COPY .  /go/src/github.com/ovh/utask
 WORKDIR /go/src/github.com/ovh/utask
