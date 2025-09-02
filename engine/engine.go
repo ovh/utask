@@ -582,7 +582,7 @@ forLoop:
 		recapLog = append(recapLog, fmt.Sprintf("step %s = %s", stepK, stepV.State))
 	}
 
-	debugLogger.Debugf(strings.Join(recapLog, ", "))
+	debugLogger.Debug(strings.Join(recapLog, ", "))
 
 	bkoff := backoff.NewExponentialBackOff()
 	bkoff.InitialInterval = time.Second
