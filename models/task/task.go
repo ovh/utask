@@ -672,6 +672,9 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	if t.ResolverUsername != nil {
 		m["resolver_username"] = t.ResolverUsername
 	}
+	if t.ResolverUsername != nil && len(t.ResolverGroups) > 0 {
+		m["resolver_groups"] = strings.Join(t.ResolverGroups, utask.GroupsSeparator)
+	}
 	if len(t.WatcherUsernames) > 0 {
 		m["watcher_usernames"] = strings.Join(t.WatcherUsernames, utask.UsernamesSeparator)
 	}
