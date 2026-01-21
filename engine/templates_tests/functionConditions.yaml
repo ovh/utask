@@ -1,0 +1,29 @@
+name: functionConditions
+description: Test function conditions
+title_format: "[test] Test function conditions"
+auto_runnable: true
+steps:
+  asExpected:
+    description: Say hello to foobar
+    action:
+      type: hello-with-conditions
+      configuration:
+        name: foobar
+        expected: foobar
+
+  notExpected:
+    description: Say hello to foo but expect bar
+    action:
+      type: hello-with-conditions
+      configuration:
+        name: foo
+        expected: bar
+
+  skipped:
+    description: Say hello to foo but skipping step before it starts
+    action:
+      type: hello-with-conditions
+      configuration:
+        name: foo
+        expected: foor
+        skip: true
