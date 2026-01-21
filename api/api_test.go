@@ -617,40 +617,6 @@ func waitChecker(dur time.Duration) iffy.Checker {
 	}
 }
 
-func templatesWithInvalidInputs() []tasktemplate.TaskTemplate {
-	var tt []tasktemplate.TaskTemplate
-	for _, inp := range []input.Input{
-		{
-			Name:        "input-with-redundant-regex",
-			LegalValues: []interface{}{"a", "b", "c"},
-			Regex:       strPtr("^d.+$"),
-		},
-		{
-			Name:  "input-with-bad-regex",
-			Regex: strPtr("^^[d.+$"),
-		},
-		{
-			Name: "input-with-bad-type",
-			Type: "bad-type",
-		},
-		{
-			Name:        "input-with-bad-legal-values",
-			Type:        "number",
-			LegalValues: []interface{}{"a", "b", "c"},
-		},
-	} {
-		tt = append(tt, tasktemplate.TaskTemplate{
-			Name:        "invalid-template",
-			Description: "Invalid template",
-			TitleFormat: "Invalid template",
-			Inputs: []input.Input{
-				inp,
-			},
-		})
-	}
-	return tt
-}
-
 func templateWithPasswordInput() tasktemplate.TaskTemplate {
 	return tasktemplate.TaskTemplate{
 		Name:        "input-password",
@@ -765,6 +731,63 @@ func dummyTemplate() tasktemplate.TaskTemplate {
 	}
 }
 
+func clientErrorTemplate() tasktemplate.TaskTemplate {
+	return tasktemplate.TaskTemplate{
+		Name:        "client-error-template",
+		Description: "does nothing",
+		TitleFormat: "this task does nothing at all",
+		Inputs: []input.Input{
+			{
+				Name: "id",
+			},
+		},
+		Variables: []values.Variable{
+			{
+				Name:  "var1",
+				Value: "hello id {{.input.id }} for {{ .step.step1.output.foo }} and {{ .step.this.state | default \"BROKEN_TEMPLATING\" }}",
+			},
+			{
+				Name:       "var2",
+				Expression: "var a = 3+2; a;",
+			},
+		},
+		Steps: map[string]*step.Step{
+			"step1": {
+				Action: executor.Executor{
+					Type: "echo",
+					Configuration: json.RawMessage(`{
+						"output": {"foo":"bar"}
+					}`),
+				},
+			},
+			"step2": {
+				Action: executor.Executor{
+					Type: "echo",
+					Configuration: json.RawMessage(`{
+						"output": {"foo":"bar"}
+					}`),
+				},
+				Dependencies: []string{"step1"},
+				Conditions: []*condition.Condition{
+					{
+						If: []*condition.Assert{
+							{
+								Expected: "1",
+								Value:    "1",
+								Operator: "EQ",
+							},
+						},
+						Then: map[string]string{
+							"this": "CLIENT_ERROR",
+						},
+						Type: "skip",
+					},
+				},
+			},
+		},
+	}
+}
+
 func blockedHidden(name string, blocked, hidden bool) tasktemplate.TaskTemplate {
 	return tasktemplate.TaskTemplate{
 		Name:        name,
@@ -816,14 +839,6 @@ func expectStringPresent(value string) iffy.Checker {
 		}
 		return nil
 	}
-}
-
-func marshalJSON(t *testing.T, i interface{}) string {
-	jsonBytes, err := json.Marshal(i)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(jsonBytes)
 }
 
 func strPtr(s string) *string { return &s }

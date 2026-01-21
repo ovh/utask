@@ -3,7 +3,6 @@ package engine
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -66,38 +65,13 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 	if err != nil {
 		return err
 	}
-	// get all configuration items
-	itemList, err := store.GetItemList()
-	if err != nil {
-		return err
-	}
-	// Squash to ensure that secrets with lower priority
-	// are dismissed.
-	itemList = configstore.Filter().Squash().Apply(itemList)
 
-	// drop those that shouldnt be available for task execution
-	// (don't let DB credentials leak, for instance...)
-	config, err := filteredConfig(itemList, cfg.ConcealedSecrets...)
-	if err != nil {
+	var engineCfg map[string]interface{}
+	if engineCfg, err = utask.GetTemplatingConfig(store); err != nil {
 		return err
 	}
-	// attempt to deserialize json formatted config items
-	// -> make it easier to access internal nodes/values when templating
-	eng.config = make(map[string]interface{})
-	for k, v := range config {
-		var i interface{}
-		if v != nil {
-			err := yaml.Unmarshal([]byte(*v), &i, func(dec *json.Decoder) *json.Decoder {
-				dec.UseNumber()
-				return dec
-			})
-			if err != nil {
-				eng.config[k] = v
-			} else {
-				eng.config[k] = i
-			}
-		}
-	}
+
+	eng.config = engineCfg
 
 	// channels for handling graceful shutdown
 	shutdownCtx = ctx
@@ -150,27 +124,6 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 		}
 	}
 	return nil
-}
-
-// filteredConfig takes a configstore item list, drops some items by key
-// then reduces the result into a map of key->values
-func filteredConfig(list *configstore.ItemList, dropAlias ...string) (map[string]*string, error) {
-	cfg := make(map[string]*string)
-	for _, i := range list.Items {
-		if !utils.ListContainsString(dropAlias, i.Key()) {
-			// assume only one value per alias
-			if _, ok := cfg[i.Key()]; !ok {
-				v, err := i.Value()
-				if err != nil {
-					return nil, err
-				}
-				if len(v) > 0 {
-					cfg[i.Key()] = &v
-				}
-			}
-		}
-	}
-	return cfg, nil
 }
 
 // GetEngine returns the singleton instance of Engine

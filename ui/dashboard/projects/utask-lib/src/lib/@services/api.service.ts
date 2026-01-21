@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import Meta from '../@models/meta.model';
 import Template from '../@models/template.model';
+import Resolution, { TemplateExpression } from '../@models/resolution.model';
 
 export class ParamsListTasks {
     page_size?: number;
@@ -314,6 +315,16 @@ export class ApiServiceResolution {
         return this.http.post(
             `${this.base}resolution`,
             resolution
+        );
+    }
+
+    templating(resolution: Resolution, step: string, expression: string) {
+        return this.http.post<TemplateExpression>(
+            `${this.base}resolution/${resolution.id}/templating`,
+            {
+                step_name: step,
+                templating_expression: expression,
+            }
         );
     }
 }

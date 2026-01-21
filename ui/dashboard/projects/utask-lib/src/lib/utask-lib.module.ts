@@ -15,6 +15,7 @@ import { InputsFormComponent } from './@components/inputs-form/inputs-form.compo
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { InputEditorComponent } from './@components/input-editor/input-editor.component';
 import { LoaderComponent } from './@components/loader/loader.component';
+import { ResolutionExpressionComponent } from './@components/resolution-expression/resolution-expression.component';
 import { MetaResolve } from './@resolves/meta.resolve';
 import { ModalApiYamlComponent } from './@modals/modal-api-yaml/modal-api-yaml.component';
 import { ModalEditResolutionStepStateComponent } from './@modals/modal-edit-resolution-step-state/modal-edit-resolution-step-state.component';
@@ -77,6 +78,7 @@ const components: any[] = [
   ModalEditResolutionStepStateComponent,
   ModalApiYamlEditComponent,
   NzModalContentWithErrorComponent,
+  ResolutionExpressionComponent,
   StepNodeComponent,
   StepsListComponent,
   StepsViewerComponent,
