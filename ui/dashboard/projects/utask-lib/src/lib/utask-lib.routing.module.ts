@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
@@ -94,62 +94,52 @@ const utaskLibRoutes: Routes = [
 	}
 ];
 
-@NgModule({
-	declarations: [
-		TasksComponent,
-		TaskComponent,
-		NewComponent,
-		TemplatesComponent,
-		TemplateComponent,
-		FunctionsComponent,
-		FunctionComponent,
-		StatsComponent,
-		ErrorComponent
-	],
-	imports: [
-		CommonModule,
-		HttpClientModule,
-		FormsModule,
-		ReactiveFormsModule,
-		RouterModule,
-
-		ChartCommonModule,
-		PieChartModule,
-
-		NzTableModule,
-		NzButtonModule,
-		NzIconModule,
-		NzDividerModule,
-		NzDropDownModule,
-		NzInputModule,
-		NzSelectModule,
-		NzAutocompleteModule,
-		NzModalModule,
-		NzGridModule,
-		NzAlertModule,
-		NzCollapseModule,
-		NzCodeEditorModule,
-		NzFormModule,
-		NzGraphModule,
-		NzCheckboxModule,
-		NzSpinModule,
-		NzDescriptionsModule,
-		NzToolTipModule,
-		NzCommentModule,
-		NzAvatarModule,
-		NzListModule,
-		NzSwitchModule,
-		NzPageHeaderModule,
-		NzResultModule,
-		NzNotificationModule,
-
-		UTaskLibModule,
-
-		RouterModule.forChild(utaskLibRoutes)
-	],
-	providers: [
-		{ provide: NZ_I18N, useValue: en_US }
-	]
-})
+@NgModule({ declarations: [
+        TasksComponent,
+        TaskComponent,
+        NewComponent,
+        TemplatesComponent,
+        TemplateComponent,
+        FunctionsComponent,
+        FunctionComponent,
+        StatsComponent,
+        ErrorComponent
+    ], imports: [CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        ChartCommonModule,
+        PieChartModule,
+        NzTableModule,
+        NzButtonModule,
+        NzIconModule,
+        NzDividerModule,
+        NzDropDownModule,
+        NzInputModule,
+        NzSelectModule,
+        NzAutocompleteModule,
+        NzModalModule,
+        NzGridModule,
+        NzAlertModule,
+        NzCollapseModule,
+        NzCodeEditorModule,
+        NzFormModule,
+        NzGraphModule,
+        NzCheckboxModule,
+        NzSpinModule,
+        NzDescriptionsModule,
+        NzToolTipModule,
+        NzCommentModule,
+        NzAvatarModule,
+        NzListModule,
+        NzSwitchModule,
+        NzPageHeaderModule,
+        NzResultModule,
+        NzNotificationModule,
+        UTaskLibModule,
+        RouterModule.forChild(utaskLibRoutes)], providers: [
+        { provide: NZ_I18N, useValue: en_US },
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class UTaskLibRoutingModule { }
 

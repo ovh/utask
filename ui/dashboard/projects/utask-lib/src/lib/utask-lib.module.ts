@@ -10,7 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FromNowPipe } from './@pipes/fromNow.pipe';
 import { FullHeightDirective } from './@directives/fullheight.directive';
 import { FunctionsResolve } from './@resolves/functions.resolve';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { InputsFormComponent } from './@components/inputs-form/inputs-form.component';
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { InputEditorComponent } from './@components/input-editor/input-editor.component';
@@ -91,60 +91,52 @@ const components: any[] = [
   AutofocusDirective
 ];
 
-@NgModule({
-  declarations: components,
-  imports: [
-    CommonModule,
-    HttpClientModule,
-    FormsModule,
-    ReactiveFormsModule,
-    RouterModule,
-
-    ChartCommonModule,
-    PieChartModule,
-
-    NzTableModule,
-    NzButtonModule,
-    NzIconModule,
-    NzDividerModule,
-    NzDropDownModule,
-    NzInputModule,
-    NzSelectModule,
-    NzAutocompleteModule,
-    NzModalModule,
-    NzGridModule,
-    NzGraphModule,
-    NzAlertModule,
-    NzCollapseModule,
-    NzCodeEditorModule,
-    NzFormModule,
-    NzCheckboxModule,
-    NzSpinModule,
-    NzDescriptionsModule,
-    NzToolTipModule,
-    NzCommentModule,
-    NzAvatarModule,
-    NzListModule,
-    NzSwitchModule,
-    NzPageHeaderModule,
-    NzResultModule,
-    NzNotificationModule,
-  ],
-  exports: components,
-  bootstrap: [],
-  providers: [
-    { provide: NZ_I18N, useValue: en_US },
-    ModalService,
-    ResolutionService,
-    TaskService,
-    RequestService,
-    WorkflowService,
-    MetaResolve,
-    TemplatesResolve,
-    FunctionsResolve,
-    StatsResolve
-  ]
-})
+@NgModule({ declarations: components,
+    exports: components,
+    bootstrap: [], imports: [CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        ChartCommonModule,
+        PieChartModule,
+        NzTableModule,
+        NzButtonModule,
+        NzIconModule,
+        NzDividerModule,
+        NzDropDownModule,
+        NzInputModule,
+        NzSelectModule,
+        NzAutocompleteModule,
+        NzModalModule,
+        NzGridModule,
+        NzGraphModule,
+        NzAlertModule,
+        NzCollapseModule,
+        NzCodeEditorModule,
+        NzFormModule,
+        NzCheckboxModule,
+        NzSpinModule,
+        NzDescriptionsModule,
+        NzToolTipModule,
+        NzCommentModule,
+        NzAvatarModule,
+        NzListModule,
+        NzSwitchModule,
+        NzPageHeaderModule,
+        NzResultModule,
+        NzNotificationModule], providers: [
+        { provide: NZ_I18N, useValue: en_US },
+        ModalService,
+        ResolutionService,
+        TaskService,
+        RequestService,
+        WorkflowService,
+        MetaResolve,
+        TemplatesResolve,
+        FunctionsResolve,
+        StatsResolve,
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class UTaskLibModule { }
 
 export function UTaskLibOptionsFactory(apiBaseUrl: string, uiBaseUrl: string, refresh: UtaskLibOptionsRefresh): any {
