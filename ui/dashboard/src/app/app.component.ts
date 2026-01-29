@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ThemeService } from './@services/theme.service';
 
 @Component({
+    standalone: false,
   selector: 'app-root',
   template: `
     <router-outlet></router-outlet>
