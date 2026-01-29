@@ -45,7 +45,7 @@
     "rxjs": "7.5.5",
     "tslib": "2.3.0",
     "yaml": "2.3.2",
-    "zone.js": "0.13.3"
+    "zone.js": "0.14.0"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "16.0.1",
@@ -69,7 +69,7 @@
     "ng-packagr": "16.2.3",
     "protractor": "7.0.0",
     "ts-node": "10.7.0",
-    "typescript": "4.9.5",
+    "typescript": "5.9.3",
     "webpack-bundle-analyzer": "4.5.0"
   }
 }
