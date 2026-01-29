@@ -16,7 +16,8 @@ import { NzGraphComponent, NzGraphData, NzGraphLayoutConfig, NzGraphZoomDirectiv
     selector: 'lib-utask-steps-viewer',
     templateUrl: './steps-viewer.html',
     styleUrls: ['./steps-viewer.sass'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class StepsViewerComponent implements OnChanges {
     // Inputs & Outputs

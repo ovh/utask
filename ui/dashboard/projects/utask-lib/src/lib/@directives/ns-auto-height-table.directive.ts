@@ -11,7 +11,8 @@ import {
 import { NzTableComponent } from 'ng-zorro-antd/table';
 
 @Directive({
-  selector: '[nsAutoHeightTable]'
+    selector: '[nsAutoHeightTable]',
+    standalone: false
 })
 export class NsAutoHeightTableDirective {
   @Input('nsAutoHeightTable') offset: number;

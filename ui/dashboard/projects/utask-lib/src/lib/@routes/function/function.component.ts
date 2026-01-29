@@ -5,9 +5,10 @@ import { catchError, finalize } from 'rxjs/operators';
 import { ApiService } from '../../@services/api.service';
 
 @Component({
-  templateUrl: './function.html',
-  styleUrls: ['./function.sass'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    templateUrl: './function.html',
+    styleUrls: ['./function.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class FunctionComponent implements OnInit {
   functionName: string;

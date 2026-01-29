@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ResolverInput } from '../../@models/task.model';
 @Component({
-	selector: 'lib-utask-inputs-form',
-	templateUrl: './inputs-form.html',
-	styleUrls: ['./inputs-form.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-utask-inputs-form',
+    templateUrl: './inputs-form.html',
+    styleUrls: ['./inputs-form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class InputsFormComponent {
 	@Input() inputs: Array<ResolverInput>;

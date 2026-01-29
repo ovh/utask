@@ -5,8 +5,9 @@ import Template from '../../@models/template.model';
 import { UTaskLibOptions } from '../../@services/api.service';
 
 @Component({
-  templateUrl: './templates.html',
-  styleUrls: ['./templates.sass']
+    templateUrl: './templates.html',
+    styleUrls: ['./templates.sass'],
+    standalone: false
 })
 export class TemplatesComponent implements OnInit {
   uiBaseUrl: string;

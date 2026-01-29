@@ -5,17 +5,18 @@ import { NzConfigService } from "ng-zorro-antd/core/config";
 import { OnChangeType, OnTouchedType } from "ng-zorro-antd/core/types";
 
 @Component({
-	selector: 'lib-utask-input-editor',
-	templateUrl: './input-editor.html',
-	styleUrls: ['./input-editor.sass'],
-	providers: [
-		{
-			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => InputEditorComponent),
-			multi: true
-		}
-	],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-utask-input-editor',
+    templateUrl: './input-editor.html',
+    styleUrls: ['./input-editor.sass'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => InputEditorComponent),
+            multi: true
+        }
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class InputEditorComponent implements ControlValueAccessor, OnInit {
 	@Input() set config(c: EditorOptions) {

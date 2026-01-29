@@ -19,9 +19,10 @@ import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-li
 import Resolution from '../../@models/resolution.model';
 
 @Component({
-  selector: 'lib-utask-task',
-  templateUrl: './task.html',
-  styleUrls: ['./task.sass']
+    selector: 'lib-utask-task',
+    templateUrl: './task.html',
+    styleUrls: ['./task.sass'],
+    standalone: false
 })
 export class TaskComponent implements OnInit, OnDestroy {
   private _meta$ = new BehaviorSubject<Meta | null>(null);

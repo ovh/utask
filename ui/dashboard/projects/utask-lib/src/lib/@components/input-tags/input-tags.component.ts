@@ -16,7 +16,8 @@ import { ENTER } from '@angular/cdk/keycodes';
     selector: 'lib-utask-input-tags',
     templateUrl: './input-tags.html',
     styleUrls: ['./input-tags.sass'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class InputTagsComponent implements AfterViewInit {
     @Input() rawTags: string[];

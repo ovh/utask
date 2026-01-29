@@ -3,8 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { UTaskLibOptions } from '../../@services/api.service';
 
 @Component({
-  templateUrl: './functions.html',
-  styleUrls: ['./functions.sass'],
+    templateUrl: './functions.html',
+    styleUrls: ['./functions.sass'],
+    standalone: false
 })
 export class FunctionsComponent implements OnInit {
   uiBaseUrl: string;

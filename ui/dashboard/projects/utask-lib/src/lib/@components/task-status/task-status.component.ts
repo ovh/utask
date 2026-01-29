@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges
 import Task from '../../@models/task.model';
 
 @Component({
-	selector: 'lib-utask-task-status',
-	templateUrl: './task-status.html',
-	styleUrls: ['./task-status.sass'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'lib-utask-task-status',
+    templateUrl: './task-status.html',
+    styleUrls: ['./task-status.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TaskStatusComponent implements OnChanges {
 	@Input() task: Task;

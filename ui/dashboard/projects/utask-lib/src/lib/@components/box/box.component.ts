@@ -14,6 +14,7 @@ class HeaderConfig {
     selector: 'lib-utask-box',
     templateUrl: './box.html',
     styleUrls: ['./box.sass'],
+    standalone: false
 })
 export class BoxComponent implements OnChanges {
     @ViewChild('panel') panel: NzCollapsePanelComponent;

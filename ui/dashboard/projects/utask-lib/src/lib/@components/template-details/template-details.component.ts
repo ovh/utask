@@ -8,7 +8,8 @@ import { ApiService } from '../../@services/api.service';
     selector: 'lib-utask-template-details',
     templateUrl: 'template-details.html',
     styleUrls: ['template-details.sass'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TemplateDetailsComponent implements OnInit {
     @Input() templateName: string;

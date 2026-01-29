@@ -101,7 +101,8 @@ export class TasksListComponentOptions {
     selector: 'lib-utask-tasks-list',
     templateUrl: './tasks-list.html',
     styleUrls: ['./tasks-list.sass'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TasksListComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
     @ViewChild('virtualTable') nzTableComponent?: NzTableComponent<Task>;

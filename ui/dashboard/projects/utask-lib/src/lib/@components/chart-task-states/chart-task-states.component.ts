@@ -10,7 +10,8 @@ export class VMTaskState {
 @Component({
     selector: 'lib-utask-chart-task-states',
     templateUrl: './chart-task-states.html',
-    styleUrls: ['./chart-task-states.sass']
+    styleUrls: ['./chart-task-states.sass'],
+    standalone: false
 })
 export class ChartTaskStatesComponent implements OnChanges {
     @Input() data: VMTaskState[];

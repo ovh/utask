@@ -14,7 +14,8 @@ interface IModalData {
 @Component({
     selector: 'lib-utask-modal-edit-resolution-step-state',
     templateUrl: './modal-edit-resolution-step-state.html',
-    styleUrls: ['./modal-edit-resolution-step-state.sass']
+    styleUrls: ['./modal-edit-resolution-step-state.sass'],
+    standalone: false
 })
 export class ModalEditResolutionStepStateComponent implements OnInit {
     modalForm: FormGroup;

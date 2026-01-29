@@ -4,7 +4,8 @@ import Step from '../../@models/step.model';
 @Component({
     selector: 'lib-utask-step-node',
     templateUrl: './step-node.html',
-    styleUrls: ['./step-node.sass']
+    styleUrls: ['./step-node.sass'],
+    standalone: false
 })
 export class StepNodeComponent implements OnInit, OnChanges {
     @ViewChild('div', { static: false }) div: ElementRef;

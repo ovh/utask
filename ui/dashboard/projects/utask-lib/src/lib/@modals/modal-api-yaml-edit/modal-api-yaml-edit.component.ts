@@ -21,6 +21,7 @@ interface IModalData {
         </div>
   `,
     styleUrls: ['./modal-api-yaml-edit.sass'],
+    standalone: false
 })
 export class ModalApiYamlEditComponent implements OnInit {
     public text: string;
