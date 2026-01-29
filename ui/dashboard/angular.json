@@ -100,13 +100,13 @@
                     },
                     "configurations": {
                         "production": {
-                            "browserTarget": "utask-ui:build:production"
+                          "buildTarget": "utask-ui:build:production"
                         },
                         "development": {
-                            "browserTarget": "utask-ui:build:development"
+                          "buildTarget": "utask-ui:build:development"
                         },
                         "experimental": {
-                            "browserTarget": "utask-ui:experimental:development"
+                          "buildTarget": "utask-ui:experimental:development"
                         }
                     },
                     "defaultConfiguration": "development"
@@ -114,7 +114,7 @@
                 "extract-i18n": {
                     "builder": "@angular-devkit/build-angular:extract-i18n",
                     "options": {
-                        "browserTarget": "utask-ui:build"
+                      "buildTarget": "utask-ui:build"
                     }
                 },
                 "test": {
