@@ -15,6 +15,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { UTaskLibOptions } from 'projects/utask-lib/src/lib/@services/api.service';
@@ -40,6 +41,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
         NzGraphModule,
         NzMenuModule,
         NzButtonModule,
+        NzSpaceModule,
         NzAvatarModule,
         NzBadgeModule,
         NzElementPatchModule,

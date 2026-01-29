@@ -68,7 +68,7 @@
                     {{item.last_activity | utaskFromNow}}
                 </td>
                 <td nzRight>
-                    <nz-button-group>
+                    <nz-space-compact>
                         <button type="button" nz-button nzType="primary" title="Run"
                             (click)="runResolution(item.resolution, item.id)" [disabled]="!tasksActions[index].run"><i
                                 nz-icon nzType="caret-right"></i></button>
@@ -78,7 +78,7 @@
                         <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu"
                             [nzPlacement]="'bottomRight'" nzType="primary"
                             [disabled]="!tasksActions[index].more">More</button>
-                    </nz-button-group>
+                    </nz-space-compact>
                     <nz-dropdown-menu #menu="nzDropdownMenu">
                         <ul nz-menu>
                             <li nz-menu-item (click)="pauseResolution(item.resolution, item.id)"

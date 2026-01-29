@@ -26,6 +26,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
@@ -41,7 +42,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -94,37 +94,37 @@ const components: any[] = [
 @NgModule({ declarations: components,
     exports: components,
     bootstrap: [], imports: [CommonModule,
-        FormsModule,
-        ReactiveFormsModule,
-        RouterModule,
-        ChartCommonModule,
-        PieChartModule,
-        NzTableModule,
-        NzButtonModule,
-        NzIconModule,
-        NzDividerModule,
-        NzDropDownModule,
-        NzInputModule,
-        NzSelectModule,
-        NzAutocompleteModule,
-        NzModalModule,
-        NzGridModule,
-        NzGraphModule,
-        NzAlertModule,
-        NzCollapseModule,
-        NzCodeEditorModule,
-        NzFormModule,
-        NzCheckboxModule,
-        NzSpinModule,
-        NzDescriptionsModule,
-        NzToolTipModule,
-        NzCommentModule,
-        NzAvatarModule,
-        NzListModule,
-        NzSwitchModule,
-        NzPageHeaderModule,
-        NzResultModule,
-        NzNotificationModule], providers: [
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+    ChartCommonModule,
+    PieChartModule,
+    NzTableModule,
+    NzButtonModule,
+    NzSpaceModule,
+    NzIconModule,
+    NzDividerModule,
+    NzDropDownModule,
+    NzInputModule,
+    NzSelectModule,
+    NzAutocompleteModule,
+    NzModalModule,
+    NzGridModule,
+    NzGraphModule,
+    NzAlertModule,
+    NzCollapseModule,
+    NzCodeEditorModule,
+    NzFormModule,
+    NzCheckboxModule,
+    NzSpinModule,
+    NzDescriptionsModule,
+    NzToolTipModule,
+    NzCommentModule,
+    NzAvatarModule,
+    NzListModule,
+    NzSwitchModule,
+    NzPageHeaderModule,
+    NzResultModule], providers: [
         { provide: NZ_I18N, useValue: en_US },
         ModalService,
         ResolutionService,

@@ -63,7 +63,7 @@
         <div app-box-header>
             Request - {{(task$ | async).id}}
         </div>
-        <nz-button-group app-box-header-extra>
+        <nz-space-compact>
             <button type="button" nz-button nzSize="small" title="View as code" (click)="previewTask(); $event.stopPropagation();">
                 <i nz-icon nzType="file-text"></i>
             </button>
@@ -73,7 +73,7 @@
             <button type="button" nz-button nzSize="small" title="Delete the task" (click)="deleteTask(); $event.stopPropagation();" [disabled]="!(canDeleteRequest$ | async)">
                 <i nz-icon nzType="delete"></i>
             </button>
-        </nz-button-group>
+        </nz-space-compact>
         <div app-box-content>
             <nz-descriptions *ngIf="(task$ | async).input" nzBordered [nzSize]="'small'" [nzColumn]="1">
                 <nz-descriptions-item nzTitle="Template">
@@ -116,7 +116,7 @@
                 <span *ngIf="loaders.execution || loaders.refreshTask">&nbsp;<i nz-icon nzType="loading"></i></span>
             </div>
             <div app-box-header-extra>
-                <nz-button-group nzSize="small">
+                <nz-space-compact nzSize="small">
                     <button type="button" nz-button nzSize="small" title="Run the waiting steps" (click)="$event.stopPropagation(); runResolution(resolution)" [disabled]="!(canRun$ | async)">
                         <i nz-icon nzType="caret-right"></i>
                     </button>
@@ -126,8 +126,8 @@
                     <button type="button" nz-button nzSize="small" title="Cancel the resolution" (click)="$event.stopPropagation(); cancelResolution(resolution)" [disabled]="!(canCancel$ | async)">
                         <i nz-icon nzType="stop"></i>
                     </button>
-                    <button type="button" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
-                </nz-button-group>
+                    <button type="button" class="compactDropdown" nz-button nz-dropdown [nzDropdownMenu]="menu" [nzPlacement]="'bottomRight'" (click)="$event.stopPropagation()">More</button>
+                </nz-space-compact>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
                         <li nz-menu-item (click)="previewResolution()">View as code</li>
