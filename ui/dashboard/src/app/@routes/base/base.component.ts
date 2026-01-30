@@ -6,6 +6,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 import { ThemeService } from 'src/app/@services/theme.service';
 
 @Component({
+    standalone: false,
   templateUrl: './base.html',
   styleUrls: ['./base.scss']
 })

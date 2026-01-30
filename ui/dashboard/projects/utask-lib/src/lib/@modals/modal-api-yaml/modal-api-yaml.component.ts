@@ -18,7 +18,8 @@ interface IModalData {
             <button type="button" nz-button (click)="modal.close()">Close</button>
         </div>
   `,
-    styleUrls: ['./modal-api-yaml.sass']
+    styleUrls: ['./modal-api-yaml.sass'],
+    standalone: false
 })
 export class ModalApiYamlComponent implements OnInit {
     public text: string;

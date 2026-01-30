@@ -5,7 +5,8 @@ import { NzConfigService } from 'ng-zorro-antd/core/config';
 @Component({
     selector: 'lib-utask-editor',
     templateUrl: './editor.html',
-    styleUrls: ['./editor.sass']
+    styleUrls: ['./editor.sass'],
+    standalone: false
 })
 export class EditorComponent implements OnInit, OnChanges {
     @Input() set config(c: EditorOptions) {

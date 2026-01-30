@@ -17,6 +17,7 @@ import { TasksListComponentOptions } from '../tasks-list/tasks-list.component';
     selector: 'lib-utask-steps-list',
     templateUrl: 'stepslist.html',
     styleUrls: ['stepslist.sass'],
+    standalone: false
 })
 export class StepsListComponent implements OnChanges {
     @Input() resolution: any;

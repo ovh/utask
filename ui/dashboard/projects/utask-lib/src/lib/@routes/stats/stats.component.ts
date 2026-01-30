@@ -4,8 +4,9 @@ import { VMTaskState } from '../../@components/chart-task-states/chart-task-stat
 import { UTaskLibOptions } from '../../@services/api.service';
 
 @Component({
-  templateUrl: './stats.html',
-  styleUrls: ['./stats.sass'],
+    templateUrl: './stats.html',
+    styleUrls: ['./stats.sass'],
+    standalone: false
 })
 export class StatsComponent implements OnInit {
   taskStates: VMTaskState[];

@@ -6,9 +6,10 @@ interface IModalData {
 }
 
 @Component({
-	selector: 'lib-modal-content-with-error',
-	templateUrl: './modal-content-with-error.html',
-	styleUrls: ['./modal-content-with-error.sass']
+    selector: 'lib-modal-content-with-error',
+    templateUrl: './modal-content-with-error.html',
+    styleUrls: ['./modal-content-with-error.sass'],
+    standalone: false
 })
 export class NzModalContentWithErrorComponent {
 	@Input() content?: string;

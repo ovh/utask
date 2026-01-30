@@ -10,7 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FromNowPipe } from './@pipes/fromNow.pipe';
 import { FullHeightDirective } from './@directives/fullheight.directive';
 import { FunctionsResolve } from './@resolves/functions.resolve';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { InputsFormComponent } from './@components/inputs-form/inputs-form.component';
 import { InputTagsComponent } from './@components/input-tags/input-tags.component';
 import { InputEditorComponent } from './@components/input-editor/input-editor.component';
@@ -26,6 +26,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
@@ -41,7 +42,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzModalContentWithErrorComponent } from './@modals/modal-content-with-error/modal-content-with-error.component';
 import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -91,20 +91,17 @@ const components: any[] = [
   AutofocusDirective
 ];
 
-@NgModule({
-  declarations: components,
-  imports: [
-    CommonModule,
-    HttpClientModule,
+@NgModule({ declarations: components,
+    exports: components,
+    bootstrap: [], imports: [CommonModule,
     FormsModule,
     ReactiveFormsModule,
     RouterModule,
-
     ChartCommonModule,
     PieChartModule,
-
     NzTableModule,
     NzButtonModule,
+    NzSpaceModule,
     NzIconModule,
     NzDividerModule,
     NzDropDownModule,
@@ -127,24 +124,19 @@ const components: any[] = [
     NzListModule,
     NzSwitchModule,
     NzPageHeaderModule,
-    NzResultModule,
-    NzNotificationModule,
-  ],
-  exports: components,
-  bootstrap: [],
-  providers: [
-    { provide: NZ_I18N, useValue: en_US },
-    ModalService,
-    ResolutionService,
-    TaskService,
-    RequestService,
-    WorkflowService,
-    MetaResolve,
-    TemplatesResolve,
-    FunctionsResolve,
-    StatsResolve
-  ]
-})
+    NzResultModule], providers: [
+        { provide: NZ_I18N, useValue: en_US },
+        ModalService,
+        ResolutionService,
+        TaskService,
+        RequestService,
+        WorkflowService,
+        MetaResolve,
+        TemplatesResolve,
+        FunctionsResolve,
+        StatsResolve,
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class UTaskLibModule { }
 
 export function UTaskLibOptionsFactory(apiBaseUrl: string, uiBaseUrl: string, refresh: UtaskLibOptionsRefresh): any {

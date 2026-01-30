@@ -2,6 +2,7 @@ import { Directive, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 
 @Directive({
     selector: '[fullHeight]',
+    standalone: false
 })
 export class FullHeightDirective implements AfterViewInit, OnDestroy {
     myElement: any;

@@ -8,9 +8,10 @@ import { ApiService, NewTask, UTaskLibOptions } from '../../@services/api.servic
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 
 @Component({
-  templateUrl: './new.html',
-  styleUrls: ['./new.sass'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    templateUrl: './new.html',
+    styleUrls: ['./new.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class NewComponent implements OnInit {
   validateForm!: FormGroup;

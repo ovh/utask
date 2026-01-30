@@ -10,9 +10,9 @@
 			<li nz-menu-item nzMatchRouter routerLink="/functions">Functions</li>
 			<li nz-menu-item nzMatchRouter routerLink="/stats">Stats</li>
 		</ul>
-		<nz-button-group>
+		<nz-space-compact>
 			<button type="button" nz-button nzType="primary" routerLink="/new"><i nz-icon nzType="plus"></i> New task</button>
-		</nz-button-group>
+		</nz-space-compact>
 		<nz-switch [ngModel]="darkThemeActive" (ngModelChange)="switchDarkTheme($event)" nzCheckedChildren="☾"
 			nzUnCheckedChildren="☾"></nz-switch>
 		<nz-badge [nzCount]="iconTemplate" [nzShowZero]="true" style="margin-right: 24px;">

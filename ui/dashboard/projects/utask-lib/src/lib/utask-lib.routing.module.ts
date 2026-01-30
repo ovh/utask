@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
@@ -8,6 +8,7 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
@@ -23,7 +24,6 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -94,62 +94,52 @@ const utaskLibRoutes: Routes = [
 	}
 ];
 
-@NgModule({
-	declarations: [
-		TasksComponent,
-		TaskComponent,
-		NewComponent,
-		TemplatesComponent,
-		TemplateComponent,
-		FunctionsComponent,
-		FunctionComponent,
-		StatsComponent,
-		ErrorComponent
-	],
-	imports: [
-		CommonModule,
-		HttpClientModule,
-		FormsModule,
-		ReactiveFormsModule,
-		RouterModule,
-
-		ChartCommonModule,
-		PieChartModule,
-
-		NzTableModule,
-		NzButtonModule,
-		NzIconModule,
-		NzDividerModule,
-		NzDropDownModule,
-		NzInputModule,
-		NzSelectModule,
-		NzAutocompleteModule,
-		NzModalModule,
-		NzGridModule,
-		NzAlertModule,
-		NzCollapseModule,
-		NzCodeEditorModule,
-		NzFormModule,
-		NzGraphModule,
-		NzCheckboxModule,
-		NzSpinModule,
-		NzDescriptionsModule,
-		NzToolTipModule,
-		NzCommentModule,
-		NzAvatarModule,
-		NzListModule,
-		NzSwitchModule,
-		NzPageHeaderModule,
-		NzResultModule,
-		NzNotificationModule,
-
-		UTaskLibModule,
-
-		RouterModule.forChild(utaskLibRoutes)
-	],
-	providers: [
-		{ provide: NZ_I18N, useValue: en_US }
-	]
-})
+@NgModule({ declarations: [
+        TasksComponent,
+        TaskComponent,
+        NewComponent,
+        TemplatesComponent,
+        TemplateComponent,
+        FunctionsComponent,
+        FunctionComponent,
+        StatsComponent,
+        ErrorComponent
+    ], imports: [CommonModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterModule,
+        ChartCommonModule,
+        PieChartModule,
+        NzTableModule,
+        NzButtonModule,
+        NzSpaceModule,
+        NzIconModule,
+        NzDividerModule,
+        NzDropDownModule,
+        NzInputModule,
+        NzSelectModule,
+        NzAutocompleteModule,
+        NzModalModule,
+        NzGridModule,
+        NzAlertModule,
+        NzCollapseModule,
+        NzCodeEditorModule,
+        NzFormModule,
+        NzGraphModule,
+        NzCheckboxModule,
+        NzSpinModule,
+        NzDescriptionsModule,
+        NzToolTipModule,
+        NzCommentModule,
+        NzAvatarModule,
+        NzListModule,
+        NzSwitchModule,
+        NzPageHeaderModule,
+        NzResultModule,
+        UTaskLibModule,
+        RouterModule.forChild(utaskLibRoutes)], providers: [
+        { provide: NZ_I18N, useValue: en_US },
+        provideHttpClient(withInterceptorsFromDi())
+    ] })
 export class UTaskLibRoutingModule { }
 

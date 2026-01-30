@@ -8,7 +8,8 @@ import { parse } from 'yaml'
     template: `
         <nz-alert nzType="error" [nzMessage]="text"></nz-alert>
     `,
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ErrorMessageComponent implements OnChanges {
     @Input() data: HttpErrorResponse | string;

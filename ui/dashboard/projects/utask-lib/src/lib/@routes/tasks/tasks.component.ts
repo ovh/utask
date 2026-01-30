@@ -10,9 +10,10 @@ import { ParamsListTasks, UTaskLibOptions } from '../../@services/api.service';
 import { TaskService } from '../../@services/task.service';
 
 @Component({
-  templateUrl: './tasks.html',
-  styleUrls: ['./tasks.sass'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    templateUrl: './tasks.html',
+    styleUrls: ['./tasks.sass'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TasksComponent implements OnInit {
   tags: string[] = [];
