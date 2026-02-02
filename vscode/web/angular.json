@@ -83,10 +83,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "utask.preview:build:production"
+              "buildTarget": "utask.preview:build:production"
             },
             "development": {
-              "browserTarget": "utask.preview:build:development"
+              "buildTarget": "utask.preview:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -94,7 +94,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "utask.preview:build"
+            "buildTarget": "utask.preview:build"
           }
         },
         "test": {
