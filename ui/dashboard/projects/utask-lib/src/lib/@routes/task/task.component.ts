@@ -10,13 +10,13 @@ import { ApiService, UTaskLibOptions } from '../../@services/api.service';
 import { ResolutionService } from '../../@services/resolution.service';
 import { RequestService } from '../../@services/request.service';
 import { TaskService } from '../../@services/task.service';
-import Template from '../../@models/template.model';
-import Meta from '../../@models/meta.model';
-import Task, { Comment, ResolverInput } from '../../@models/task.model';
+import { Template } from '../../@models/template.model';
+import { Meta } from '../../@models/meta.model';
+import { Task, Comment, ResolverInput } from '../../@models/task.model';
 import { ModalApiYamlComponent } from '../../@modals/modal-api-yaml/modal-api-yaml.component';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
-import Resolution from '../../@models/resolution.model';
+import { Resolution } from '../../@models/resolution.model';
 
 @Component({
     selector: 'lib-utask-task',

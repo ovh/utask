@@ -8,7 +8,7 @@ import { EditorOptions } from 'ng-zorro-antd/code-editor';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalEditResolutionStepStateComponent } from '../../@modals/modal-edit-resolution-step-state/modal-edit-resolution-step-state.component';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import Step from '../../@models/step.model';
+import { Step } from '../../@models/step.model';
 import { ModalApiYamlEditComponent } from '../../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ApiService, UTaskLibOptions } from '../../@services/api.service';
 import { TasksListComponentOptions } from '../tasks-list/tasks-list.component';

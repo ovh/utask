@@ -1,4 +1,4 @@
-export default class Step {
+export class Step {
     name: string;
     description: string;
     idempotent: boolean;

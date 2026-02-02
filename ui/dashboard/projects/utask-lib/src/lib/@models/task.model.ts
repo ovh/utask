@@ -62,7 +62,7 @@ export class ResolverInput {
     default: any;
 }
 
-export default class Task {
+export class Task {
     batch: string;
     comments: Comment[];
     created: Date;

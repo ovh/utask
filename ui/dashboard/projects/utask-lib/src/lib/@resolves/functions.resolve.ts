@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 import { HttpHeaders } from '@angular/common/http';
 import { ApiService, ParamsListFunctions, UTaskLibOptions } from '../@services/api.service';
-import Function from '../@models/function.model';
+import { Function } from '../@models/function.model';
 
 @Injectable()
 export class FunctionsResolve  {

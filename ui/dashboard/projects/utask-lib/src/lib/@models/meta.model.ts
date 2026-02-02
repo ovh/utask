@@ -1,4 +1,4 @@
-export default class Meta {
+export class Meta {
     application_name: string;
     user_is_admin: boolean;
     username: string;

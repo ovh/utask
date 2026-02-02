@@ -1,6 +1,6 @@
-import Step from "./step.model";
+import { Step } from "./step.model";
 
-export default class Resolution {
+export class Resolution {
     id: string;
     resolver_username: string;
     state: string;

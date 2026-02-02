@@ -1,3 +1,4 @@
+@use "sass:color"
 $color-success: #28a745
 $color-secondary: #434966
 $color-tercery: #636986
@@ -22,7 +23,7 @@ $color-warning: #fd7e14
 
 .box.success
     border-color: $color-success
-    background: darken($color-success, 10%)
+    background: color.scale($color-success, $lightness: -10%)
     nz-collapse-panel
         border-color: $color-success
     ::ng-deep
@@ -30,7 +31,7 @@ $color-warning: #fd7e14
             border-color: $color-success
 .box.secondary
     border-color: $color-secondary
-    background: darken($color-secondary, 10%)
+    background: color.scale($color-secondary, $lightness: -10%)
     nz-collapse-panel
         border-color: $color-secondary
     ::ng-deep
@@ -38,7 +39,7 @@ $color-warning: #fd7e14
             border-color: $color-secondary
 .box.tercery
     border-color: $color-tercery
-    background: darken($color-tercery, 10%)
+    background: color.scale($color-tercery, $lightness: -10%)
     nz-collapse-panel
         border-color: $color-tercery
     ::ng-deep
@@ -46,7 +47,7 @@ $color-warning: #fd7e14
             border-color: $color-tercery
 .box.danger
     border-color: $color-danger
-    background: darken($color-danger, 10%)
+    background: color.scale($color-danger, $lightness: -10%)
     nz-collapse-panel
         border-color: $color-danger
     ::ng-deep
@@ -54,7 +55,7 @@ $color-warning: #fd7e14
             border-color: $color-danger
 .box.warning
     border-color: $color-warning
-    background: darken($color-warning, 10%)
+    background: color.scale($color-warning, $lightness: -10%)
     nz-collapse-panel
         border-color: $color-warning
     ::ng-deep

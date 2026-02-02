@@ -33,9 +33,9 @@ import {
 import get from 'lodash-es/get';
 import cloneDeep from 'lodash-es/cloneDeep';
 import moment from 'moment';
-import Task, { TaskType } from '../../@models/task.model';
+import { Task, TaskType } from '../../@models/task.model';
 import { ParamsListTasks, ApiService, UTaskLibOptions } from '../../@services/api.service';
-import Meta from '../../@models/meta.model';
+import { Meta } from '../../@models/meta.model';
 import { ResolutionService } from '../../@services/resolution.service';
 import { TaskService } from '../../@services/task.service';
 import { NzTableComponent } from 'ng-zorro-antd/table';

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
-import Task from '../../@models/task.model';
+import { Task } from '../../@models/task.model';
 
 @Component({
     selector: 'lib-utask-task-status',

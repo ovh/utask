@@ -9,7 +9,7 @@ import {
     ChangeDetectionStrategy
 } from '@angular/core';
 import keys from 'lodash-es/keys';
-import Resolution from '../../@models/resolution.model';
+import { Resolution } from '../../@models/resolution.model';
 import { NzGraphComponent, NzGraphData, NzGraphLayoutConfig, NzGraphZoomDirective, NzRankDirection } from "ng-zorro-antd/graph";
 
 @Component({
