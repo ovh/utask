@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NzTableComponent } from 'ng-zorro-antd/table';
-import Template from '../../@models/template.model';
+import { Template } from '../../@models/template.model';
 import { UTaskLibOptions } from '../../@services/api.service';
 
 @Component({

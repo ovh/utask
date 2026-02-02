@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@angular/core';
-import Task, { TaskType, TaskState, ResolutionStep, Comment, Stats } from '../@models/task.model';
-import Function from '../@models/function.model';
+import { Task, TaskType, TaskState, ResolutionStep, Comment, Stats } from '../@models/task.model';
+import { Function } from '../@models/function.model';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import Meta from '../@models/meta.model';
-import Template from '../@models/template.model';
+import { Meta } from '../@models/meta.model';
+import { Template } from '../@models/template.model';
 
 export class ParamsListTasks {
     page_size?: number;

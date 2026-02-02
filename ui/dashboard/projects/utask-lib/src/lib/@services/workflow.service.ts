@@ -1,4 +1,4 @@
-import StepState from '../@models/stepstate.model';
+import { StepState } from '../@models/stepstate.model';
 import { Injectable } from '@angular/core';
 
 @Injectable()

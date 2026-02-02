@@ -1,3 +1,4 @@
+@use "sass:color"
 $color-danger: #dc3545
 $color-warning: #fd7e14
 $color-success: #28a745
@@ -19,10 +20,10 @@ $color-text-sub: #888
 
 $theme-colors: ("primary": $color-primary, "danger": $color-danger, "info": $color-info, "success": $color-success, "warning": $color-warning, "secondary": $color-secondary, "dark": $color-dark, "white": $color-white, "light": $color-light)
 
-$bloc-header-bg: lighten($color-dark, 4%)
+$bloc-header-bg: color.scale($color-dark, $lightness: +4%)
 $bloc-header-color: $color-white
 $bloc-section-bg: $color-white
-$bloc-section-color: darken($color-dark, 4%)
+$bloc-section-color: color.scale($color-dark, $lightness: -4%)
 
 $body-bg: $color-light
 $body-color: $color-text-dark

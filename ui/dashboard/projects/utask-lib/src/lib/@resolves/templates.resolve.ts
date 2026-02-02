@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 import { HttpHeaders } from '@angular/common/http';
 import { ApiService, ParamsListTemplates, UTaskLibOptions } from '../@services/api.service';
-import Template from '../@models/template.model';
+import { Template } from '../@models/template.model';
 
 @Injectable()
 export class TemplatesResolve  {

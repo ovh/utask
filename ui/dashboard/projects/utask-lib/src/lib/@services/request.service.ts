@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import Task from '../@models/task.model';
-import Meta from '../@models/meta.model';
+import { Task } from '../@models/task.model';
+import { Meta } from '../@models/meta.model';
 import { ModalApiYamlEditComponent } from '../@modals/modal-api-yaml-edit/modal-api-yaml-edit.component';
 import { ApiService } from './api.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import Template from '../@models/template.model';
+import { Template } from '../@models/template.model';
 
 @Injectable()
 export class RequestService {

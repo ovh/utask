@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import get from 'lodash-es/get';
 import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import isArray from 'lodash-es/isArray';
-import Template from '../../@models/template.model';
+import { Template } from '../../@models/template.model';
 import { ApiService, NewTask, UTaskLibOptions } from '../../@services/api.service';
 import { InputsFormComponent } from '../../@components/inputs-form/inputs-form.component';
 

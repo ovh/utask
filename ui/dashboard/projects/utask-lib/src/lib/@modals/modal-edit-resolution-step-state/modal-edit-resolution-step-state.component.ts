@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
-import Resolution from '../../@models/resolution.model';
-import Step from '../../@models/step.model';
+import { Resolution} from '../../@models/resolution.model';
+import { Step } from '../../@models/step.model';
 import { ApiService } from '../../@services/api.service';
 import orderBy from 'lodash-es/orderBy';
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { forkJoin, throwError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
-import Template from '../../@models/template.model';
+import { Template } from '../../@models/template.model';
 import { ApiService } from '../../@services/api.service';
 
 @Component({

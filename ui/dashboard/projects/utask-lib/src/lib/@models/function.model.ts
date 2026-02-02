@@ -1,4 +1,4 @@
-export default class Function {
+export class Function {
     name: string;
     action: any;
     pre_hook: any;

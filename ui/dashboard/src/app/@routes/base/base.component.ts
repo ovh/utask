@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
-import Meta from 'projects/utask-lib/src/lib/@models/meta.model';
+import { Meta } from 'projects/utask-lib/src/lib/@models/meta.model';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { ThemeService } from 'src/app/@services/theme.service';
 

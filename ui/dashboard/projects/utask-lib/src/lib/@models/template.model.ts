@@ -1,4 +1,4 @@
-export default class Template {
+export class Template {
     name: string;
     description: string;
     long_description: string;

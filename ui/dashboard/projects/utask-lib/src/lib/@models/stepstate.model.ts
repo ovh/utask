@@ -1,4 +1,4 @@
-export default class StepState {
+export class StepState {
     key: string;
     color: string;
     fontColor: string;

@@ -53,6 +53,10 @@ re: clean all
 release:
 	bash hack/generate-install-script.sh
 
+package-lib:
+	cd ui/dashboard && npm ci && npm run ng -- build utask-lib --configuration production
+	cd ui/dashboard/dist && tar zvcf utask-lib.tar.gz utask-lib/*
+
 release-utask-lib:
 	npm i -g @angular/cli
 	cd ui/dashboard/projects/utask-lib && npm version $(VERSION) --allow-same-version

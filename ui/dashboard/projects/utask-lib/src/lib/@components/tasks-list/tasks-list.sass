@@ -1,3 +1,4 @@
+@use "sass:color"
 :host
   display: block
   overflow: hidden
@@ -16,10 +17,10 @@ $color-dark: #242939
 $color-light: #f8f9fa
 $color-white: #fff
 
-$bloc-header-bg: lighten($color-dark, 4%)
+$bloc-header-bg: color.scale($color-dark, $lightness: +4%)
 $bloc-header-color: $color-white
 $bloc-section-bg: $color-white
-$bloc-section-color: darken($color-dark, 4%)
+$bloc-section-color: color.scale($color-dark, $lightness: -4%)
 
 $body-bg: $color-light
 $body-color: $color-dark
@@ -54,7 +55,7 @@ $body-color: $color-dark
     height: 40px
 
     &:hover
-      background: lighten($bloc-header-bg, 10%)
+      background: color.scale($bloc-header-bg, $lightness: +10%)
       transition: background .3s linear
 
     &:after

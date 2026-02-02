@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ElementRef, ViewChild, Output, EventEmitter, OnChanges } from '@angular/core';
-import Step from '../../@models/step.model';
+import { Step } from '../../@models/step.model';
 
 @Component({
     selector: 'lib-utask-step-node',

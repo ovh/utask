@@ -3,9 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import isArray from 'lodash-es/isArray';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { TasksListComponentOptions } from '../../@components/tasks-list/tasks-list.component';
-import Meta from '../../@models/meta.model';
+import { Meta } from '../../@models/meta.model';
 import { TaskState, TaskType } from '../../@models/task.model';
-import Template from '../../@models/template.model';
+import { Template } from '../../@models/template.model';
 import { ParamsListTasks, UTaskLibOptions } from '../../@services/api.service';
 import { TaskService } from '../../@services/task.service';
 
