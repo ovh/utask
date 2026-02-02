@@ -4,9 +4,10 @@ import Resolution from '@ovhcloud/utask-lib/lib/@models/resolution.model';
 import { parse } from 'yaml';
 
 @Component({
-  selector: 'app-preview',
-  templateUrl: './preview.component.html',
-  styleUrls: ['./preview.component.scss']
+    selector: 'app-preview',
+    templateUrl: './preview.component.html',
+    styleUrls: ['./preview.component.scss'],
+    standalone: false
 })
 export class PreviewComponent implements AfterViewInit {
   // @ts-ignore
