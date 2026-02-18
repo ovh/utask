@@ -63,7 +63,7 @@
         <div app-box-header>
             Request - {{(task$ | async).id}}
         </div>
-        <nz-space-compact>
+        <nz-space-compact app-box-header-extra>
             <button type="button" nz-button nzSize="small" title="View as code" (click)="previewTask(); $event.stopPropagation();">
                 <i nz-icon nzType="file-text"></i>
             </button>
