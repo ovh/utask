@@ -40,7 +40,13 @@ type APIOVHConfig struct {
 // ovhConfig holds the credentials needed to instantiate
 // an OVH API client
 type ovhConfig struct {
-	Endpoint    string `json:"endpoint"`
+	Endpoint string `json:"endpoint"`
+
+	// OAuth2 credentials
+	ClientID     string `json:"clientId"`
+	ClientSecret string `json:"clientSecret"`
+
+	// Legacy credentials
 	AppKey      string `json:"appKey"`
 	AppSecret   string `json:"appSecret"`
 	ConsumerKey string `json:"consumerKey"`
@@ -66,12 +72,21 @@ func validConfig(config interface{}) error {
 			return fmt.Errorf("can't unmarshal ovhConfig from configstore: %s", err)
 		}
 
-		if _, err := ovh.NewClient(
-			ovhcfg.Endpoint,
-			ovhcfg.AppKey,
-			ovhcfg.AppSecret,
-			ovhcfg.ConsumerKey); err != nil {
-			return fmt.Errorf("can't create new OVH client: %s", err)
+		if ovhcfg.ConsumerKey != "" {
+			if _, err := ovh.NewClient(
+				ovhcfg.Endpoint,
+				ovhcfg.AppKey,
+				ovhcfg.AppSecret,
+				ovhcfg.ConsumerKey); err != nil {
+				return fmt.Errorf("can't create new OVH client: %s", err)
+			}
+		} else {
+			if _, err := ovh.NewOAuth2Client(
+				ovhcfg.Endpoint,
+				ovhcfg.ClientID,
+				ovhcfg.ClientSecret); err != nil {
+				return fmt.Errorf("can't create new OVH client: %s", err)
+			}
 		}
 	} else {
 		v := values.NewValues()
@@ -124,11 +139,19 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		return nil, nil, fmt.Errorf("can't unmarshal ovhConfig from configstore: %s", err)
 	}
 
-	cli, err := ovh.NewClient(
-		ovhcfg.Endpoint,
-		ovhcfg.AppKey,
-		ovhcfg.AppSecret,
-		ovhcfg.ConsumerKey)
+	var cli *ovh.Client
+	if ovhcfg.ConsumerKey != "" {
+		cli, err = ovh.NewClient(
+			ovhcfg.Endpoint,
+			ovhcfg.AppKey,
+			ovhcfg.AppSecret,
+			ovhcfg.ConsumerKey)
+	} else {
+		cli, err = ovh.NewOAuth2Client(
+			ovhcfg.Endpoint,
+			ovhcfg.ClientID,
+			ovhcfg.ClientSecret)
+	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't create new OVH client: %s", err)
 	}
