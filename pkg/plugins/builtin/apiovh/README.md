@@ -38,9 +38,8 @@ The `apiovh` plugin requires a config item to be found under the key given in th
 ```js
 {
   "endpoint": "ovh-eu",
-  "appKey": "XXXX",
-  "appSecret": "YYYY",
-  "consumerKey": "ZZZZ"
+  "clientId": "XXXX",
+  "clientSecret": "YYYY"
 }
 ```
 
