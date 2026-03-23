@@ -57,7 +57,8 @@ CREATE TABLE "task" (
     crypt_key BYTEA NOT NULL,
     encrypted_input BYTEA NOT NULL,
     encrypted_result BYTEA NOT NULL,
-    tags JSONB NOT NULL DEFAULT 'null'
+    tags JSONB NOT NULL DEFAULT 'null',
+    due_date_at TIMESTAMP with time zone
 );
 
 CREATE INDEX ON "task"(id_template);
