@@ -14,7 +14,7 @@ import (
 
 // the email plugin send email
 var (
-	Plugin = taskplugin.New("email", "0.2", exec,
+	Plugin = taskplugin.New("email", "0.3", exec,
 		taskplugin.WithConfig(validConfig, Config{}),
 		taskplugin.WithResources(resourcesemail),
 	)
@@ -26,6 +26,7 @@ type mailParameters struct {
 	To          []string `json:"to"`
 	Subject     string   `json:"subject"`
 	Body        string   `json:"body"`
+	Attachments []string `json:"attachments,omitempty"`
 }
 
 // Config is the configuration needed to send an email
@@ -90,15 +91,7 @@ func resourcesemail(i interface{}) []string {
 func exec(stepName string, config interface{}, ctx interface{}) (interface{}, interface{}, error) {
 	cfg := config.(*Config)
 
-	message := mail.NewMessage()
-
-	message.SetAddressHeader("From", cfg.FromAddress, cfg.FromName)
-	message.SetHeader("To", cfg.To...)
-	message.SetHeader("Subject", cfg.Subject)
-	message.SetBody(
-		http.DetectContentType([]byte(cfg.Body)),
-		cfg.Body,
-	)
+	message := buildMessage(cfg)
 
 	// port and skipTLS already checked at validConfig() lvl
 	// values must be correct so errors are not evaluated
@@ -112,4 +105,22 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 	}
 
 	return &cfg.mailParameters, nil, nil
+}
+
+func buildMessage(cfg *Config) *mail.Message {
+	message := mail.NewMessage()
+
+	message.SetAddressHeader("From", cfg.FromAddress, cfg.FromName)
+	message.SetHeader("To", cfg.To...)
+	message.SetHeader("Subject", cfg.Subject)
+	message.SetBody(
+		http.DetectContentType([]byte(cfg.Body)),
+		cfg.Body,
+	)
+
+	for _, v := range cfg.Attachments {
+		message.Attach(v)
+	}
+
+	return message
 }
