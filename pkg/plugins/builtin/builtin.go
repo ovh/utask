@@ -5,6 +5,7 @@ import (
 	"github.com/ovh/utask/pkg/plugins"
 	pluginapiovh "github.com/ovh/utask/pkg/plugins/builtin/apiovh"
 	pluginbatch "github.com/ovh/utask/pkg/plugins/builtin/batch"
+	plugincache "github.com/ovh/utask/pkg/plugins/builtin/cache"
 	plugincallback "github.com/ovh/utask/pkg/plugins/builtin/callback"
 	pluginecho "github.com/ovh/utask/pkg/plugins/builtin/echo"
 	pluginemail "github.com/ovh/utask/pkg/plugins/builtin/email"
@@ -22,6 +23,7 @@ import (
 func RegisterInit(service *plugins.Service) error {
 	for pluginName, pluginSymbol := range map[string]plugins.InitializerPlugin{
 		"callback": plugincallback.Init,
+		"cache":    plugincache.Init,
 	} {
 		if err := plugins.RegisterInit(pluginName, pluginSymbol, service); err != nil {
 			return err
@@ -45,6 +47,7 @@ func Register() error {
 		plugintag.Plugin,
 		plugincallback.Plugin,
 		pluginbatch.Plugin,
+		plugincache.Plugin,
 	} {
 		if err := step.RegisterRunner(p.PluginName(), p); err != nil {
 			return err

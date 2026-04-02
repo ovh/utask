@@ -555,6 +555,7 @@ Browse [builtin actions](./pkg/plugins/builtin)
 | **`script`**   | Execute a script under `scripts` folder                                                                                                                                                                                                           | [Access plugin doc](./pkg/plugins/builtin/script/README.md)   |
 | **`tag`**      | Add tags to the current running task                                                                                                                                                                                                              | [Access plugin doc](./pkg/plugins/builtin/tag/README.md)      |
 | **`callback`** | Use callbacks to manage your tasks  life-cycle                                                                                                                                                                                                    | [Access plugin doc](./pkg/plugins/builtin/callback/README.md) |
+| **`cache`**    | Store and retrieve values in a key-value cache with optional TTL support                                                                                                                                                                          | [Access plugin doc](./pkg/plugins/builtin/cache/README.md)    |
 
 #### Pre-hooks <a name="pre-hooks"></a>
 
