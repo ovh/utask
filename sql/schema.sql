@@ -134,6 +134,14 @@ CREATE TABLE "utask_sql_migrations" (
     current_migration_applied TEXT PRIMARY KEY
 );
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.21.1-migration010');
+CREATE TABLE "cache" (
+    "key" TEXT PRIMARY KEY,
+    "value" BYTEA NOT NULL,
+    "expires_at" TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX "cache_expires_at_idx" ON "cache" ("expires_at") WHERE "expires_at" IS NOT NULL;
+
+INSERT INTO "utask_sql_migrations" VALUES ('v1.21.1-migration011');
 
 END;
