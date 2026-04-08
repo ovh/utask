@@ -263,6 +263,7 @@ type updateTaskIn struct {
 	WatcherUsernames []string               `json:"watcher_usernames"`
 	WatcherGroups    []string               `json:"watcher_groups"`
 	Tags             map[string]string      `json:"tags"`
+	DueDateAt        *time.Time             `json:"due_date_at"`
 }
 
 // UpdateTask modifies a task, allowing it's requester or an administrator
@@ -324,6 +325,7 @@ func UpdateTask(c *gin.Context, in *updateTaskIn) (*task.Task, error) {
 	t.SetInput(clearInput)
 	t.SetWatcherUsernames(in.WatcherUsernames)
 	t.SetWatcherGroups(in.WatcherGroups)
+	t.SetDueDateAt(in.DueDateAt)
 
 	// validate read-only tags
 	v, readOnlyTagUpdated := in.Tags[constants.SubtaskTagParentTaskID]

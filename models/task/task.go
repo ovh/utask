@@ -85,6 +85,7 @@ type DBModel struct {
 	StepsTotal        int               `json:"steps_total" db:"steps_total"`
 	LastActivity      time.Time         `json:"last_activity" db:"last_activity"`
 	Tags              map[string]string `json:"tags,omitempty" db:"tags"`
+	DueDateAt         *time.Time        `json:"due_date_at,omitempty" db:"due_date_at"`
 
 	CryptKey        []byte `json:"-" db:"crypt_key"` // key for encrypting steps (itself encrypted with master key)
 	EncryptedInput  []byte `json:"-" db:"encrypted_input"`
@@ -574,6 +575,12 @@ func (t *Task) SetWatcherGroups(watcherGroups []string) {
 	t.WatcherGroups = watcherGroups
 }
 
+// SetDueDateAt sets the due date for the task
+// Pass nil to clear the due date
+func (t *Task) SetDueDateAt(dueDateAt *time.Time) {
+	t.DueDateAt = dueDateAt
+}
+
 // SetInput sets the provided input for the task
 func (t *Task) SetInput(input map[string]interface{}) {
 	t.Input = input
@@ -692,7 +699,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 
 var (
 	tSelector = sqlgenerator.PGsql.Select(
-		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".requester_groups, "task".watcher_usernames, "task".watcher_groups, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
+		`"task".id, "task".public_id, "task".title, "task".id_template, "task".id_batch, "task".requester_username, "task".requester_groups, "task".watcher_usernames, "task".watcher_groups, "task".created, "task".state, "task".tags, "task".steps_done, "task".steps_total, "task".crypt_key, "task".encrypted_input, "task".encrypted_result, "task".last_activity, "task".resolver_usernames, "task".resolver_groups, "task".due_date_at, "task_template".name as template_name, "task_template".resolver_inputs as resolver_inputs, "resolution".public_id as resolution_public_id, "resolution".last_start as last_start, "resolution".last_stop as last_stop, "resolution".resolver_username as resolver_username, "batch".public_id as batch_public_id`,
 	).From(
 		`"task"`,
 	).Join(
