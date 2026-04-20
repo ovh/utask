@@ -25,12 +25,13 @@ const (
 
 // Condition defines a condition to be evaluated before or after a step's action
 type Condition struct {
-	Type    string            `json:"type"`
-	If      []*Assert         `json:"if"`
-	Then    map[string]string `json:"then"`
-	Final   bool              `json:"final"`
-	ForEach string            `json:"foreach"`
-	Message string            `json:"message"`
+	Type           string            `json:"type"`
+	If             []*Assert         `json:"if"`
+	Then           map[string]string `json:"then"`
+	Final          bool              `json:"final"`
+	ForEach        string            `json:"foreach"`
+	Message        string            `json:"message"`
+	RunOnRetryable bool              `json:"run_on_retryable"`
 }
 
 // Valid asserts that a condition's definition is valid
