@@ -1,8 +1,9 @@
-== github.com/gabriel-vasile/mimetype ==
+== github.com/shopspring/decimal ==
 
 The MIT License (MIT)
 
-Copyright (c) 2018 Gabriel Vasile
+Copyright (c) 2015 Spring, Inc.
+Copyright (c) 2013 Oguz Bilgic
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
