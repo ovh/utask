@@ -91,23 +91,3 @@ func deleteCacheEntry(dbp zesty.DBProvider, key string) error {
 
 	return nil
 }
-
-func purgeExpiredEntries(dbp zesty.DBProvider) (int64, error) {
-	query, args, err := sqlgenerator.PGsql.
-		Delete(`"cache"`).
-		Where(squirrel.And{
-			squirrel.NotEq{`"expires_at"`: nil},
-			squirrel.Lt{`"expires_at"`: now.Get()},
-		}).
-		ToSql()
-	if err != nil {
-		return 0, err
-	}
-
-	res, err := dbp.DB().Exec(query, args...)
-	if err != nil {
-		return 0, pgjuju.Interpret(err)
-	}
-
-	return res.RowsAffected()
-}

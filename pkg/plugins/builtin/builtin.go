@@ -23,7 +23,6 @@ import (
 func RegisterInit(service *plugins.Service) error {
 	for pluginName, pluginSymbol := range map[string]plugins.InitializerPlugin{
 		"callback": plugincallback.Init,
-		"cache":    plugincache.Init,
 	} {
 		if err := plugins.RegisterInit(pluginName, pluginSymbol, service); err != nil {
 			return err
