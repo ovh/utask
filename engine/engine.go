@@ -136,6 +136,10 @@ func Init(ctx context.Context, wg *sync.WaitGroup, store *configstore.Store) err
 		if err := GarbageCollector(ctx, cfg.CompletedTaskExpiration); err != nil {
 			return err
 		}
+		// init cache collector (delete expired entries from the cache plugin)
+		if err := CacheCollector(ctx); err != nil {
+			return err
+		}
 		// init autorun collector (create resolution + run for tasks with state == autorun)
 		if err := AutorunCollector(ctx); err != nil {
 			return err
