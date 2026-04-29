@@ -359,6 +359,15 @@ func initialize(dbp zesty.DBProvider, publicID string, debugLogger *logrus.Entry
 		return nil, nil, nil
 	}
 
+	{
+		// Making sure to prune steps whose dependencies were updated outside the engine (API, manually in DB, etc)
+		stepsToCheck := map[string]bool{}
+		for stepName := range res.Steps {
+			stepsToCheck[stepName] = true
+		}
+		pruneSteps(res, stepsToCheck)
+	}
+
 	if err := dbp.Commit(); err != nil {
 		dbp.Rollback()
 		return nil, nil, err
