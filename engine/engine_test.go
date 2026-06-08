@@ -641,6 +641,28 @@ func TestIndirectDependencies(t *testing.T) {
 	assert.Equal(t, step.StateTODO, res.Steps["stepFour"].State)
 }
 
+func TestAnyDependencyTransitivePrune(t *testing.T) {
+	res, err := createResolution("anyDependencyTransitivePrune.yaml", map[string]interface{}{}, nil)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	res, err = runResolution(res)
+	assert.NotNil(t, res)
+	assert.Nil(t, err)
+
+	// the cold branch and everything cascading from it must be pruned
+	assert.Equal(t, step.StatePrune, res.Steps["coldStep"].State)
+	assert.Equal(t, step.StatePrune, res.Steps["joinStep"].State)
+	assert.Equal(t, step.StatePrune, res.Steps["deployStep"].State)
+
+	// the late sibling must still complete
+	assert.Equal(t, step.StateDone, res.Steps["lateStep"].State)
+
+	// the ANY dependent of the (pruned) deployStep must run, not deadlock in TODO
+	assert.Equal(t, step.StateDone, res.Steps["unlockStep"].State)
+	assert.Equal(t, resolution.StateDone, res.State)
+}
+
 func TestMetadata(t *testing.T) {
 	res, err := createResolution("metadata.yaml", map[string]interface{}{}, nil)
 	assert.NotNil(t, res)

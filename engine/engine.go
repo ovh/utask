@@ -386,6 +386,19 @@ func resolve(dbp zesty.DBProvider, res *resolution.Resolution, t *task.Task, sm 
 
 	expectedMessages := runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
 	recheckWaiting := true
+	// recheckDeadlock guards a full re-evaluation of all steps before concluding that the
+	// resolution is deadlocked. Incremental step selection only reconsiders the *direct*
+	// dependents of a modified step (see StepTreeIndex), but an ANY dependency also depends
+	// *transitively* on the whole ancestor tree through parentDepsAreFinal(). When an ANY
+	// parent reaches a final state before its own transitive ancestors do, its dependent is
+	// evaluated once, found ineligible, and never reconsidered once those ancestors settle.
+	// A full rescan catches this case the same way a fresh resolution run would.
+	//
+	// It starts false: the initial runAvailableSteps() above already performs a full scan, so
+	// a resolution deadlocked from the start (e.g. impossible dependencies, no step ever runs)
+	// needs no second scan. It is only armed once a step settles, since the race can only
+	// surface after a state transition the incremental selection may have missed.
+	recheckDeadlock := false
 
 forLoop:
 	for expectedMessages > 0 {
@@ -440,6 +453,10 @@ forLoop:
 			if s.ForEach == "" {
 				executedSteps[s.Name] = true
 			}
+
+			// a step just settled: allow one more full rescan before concluding a deadlock,
+			// in case this transition turned a transitively-blocked ANY dependent eligible
+			recheckDeadlock = true
 
 			debugLogger := debugLogger.WithFields(logrus.Fields{"step_name": s.Name, "step_state": s.State})
 			debugLogger.Debugf("Engine: resolve() %s loop, step %s (#%d) result: %s", res.PublicID, s.Name, s.TryCount, s.State)
@@ -536,6 +553,20 @@ forLoop:
 					recheckWaiting = false
 
 					debugLogger.Debugf("Engine: resolve() %s loop, try to resolve %d waiting step(s)", res.PublicID, expectedMessages)
+
+					goto forLoop
+				}
+
+				if status == resolution.StateBlockedDeadlock && recheckDeadlock {
+					// Incremental step selection may have missed an ANY dependent whose
+					// transitive ancestors only settled after its (final) direct parent did.
+					// Re-evaluate every step before declaring a deadlock; if something is
+					// actually runnable, resume the loop, otherwise the deadlock is genuine.
+					recheckDeadlock = false
+
+					expectedMessages = runAvailableSteps(dbp, map[string]bool{}, res, t, stepChan, executedSteps, []string{}, wg, debugLogger)
+
+					debugLogger.Debugf("Engine: resolve() %s loop, deadlock suspected, re-evaluated %d step(s)", res.PublicID, expectedMessages)
 
 					goto forLoop
 				}

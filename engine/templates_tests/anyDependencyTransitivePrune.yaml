@@ -1,0 +1,64 @@
+name: anyDependencyTransitivePrune
+description: An ANY dependent of a step pruned early must still run once its transitive ancestors settle
+title_format: "[test] any dependency with transitive prune race"
+
+# Reproduces a deadlock race: an ANY-dependent step (unlockStep) hangs in TODO because its
+# direct parent (deployStep) was pruned by cascade BEFORE a sibling branch of the join step
+# (lateStep) reached a final state. parentDepsAreFinal() then rejects it once, and the
+# incremental candidate selection (direct dependents only) never reconsiders it.
+steps:
+  # runs first, with no dependency, and prunes coldStep right away
+  trigger:
+    action:
+      type: echo
+      configuration: {output: {}}
+    conditions:
+      - type: check
+        if:
+          - value: '1'
+            operator: EQ
+            expected: '1'
+        then:
+          coldStep: PRUNE
+
+  # pruned by trigger -> cascades up to joinStep/deployStep
+  coldStep:
+    dependencies: [trigger]
+    action:
+      type: echo
+      configuration: {output: {}}
+
+  # gated behind trigger so it can only settle AFTER the prune cascade has happened
+  slowDep:
+    dependencies: [trigger]
+    action:
+      type: echo
+      configuration: {output: {}}
+
+  # the late sibling branch of joinStep: still TODO when the cascade prunes joinStep
+  lateStep:
+    dependencies: [slowDep]
+    action:
+      type: echo
+      configuration: {output: {}}
+
+  # join/fan-in step: pruned because coldStep is pruned (cascade), even though lateStep is pending
+  joinStep:
+    dependencies: [coldStep, lateStep]
+    action:
+      type: echo
+      configuration: {output: {}}
+
+  # pruned by cascade from joinStep
+  deployStep:
+    dependencies: [joinStep]
+    action:
+      type: echo
+      configuration: {output: {}}
+
+  # ANY dependent: must run even though deployStep was pruned
+  unlockStep:
+    dependencies: [deployStep:ANY]
+    action:
+      type: echo
+      configuration: {output: {unlocked: 'yes'}}
