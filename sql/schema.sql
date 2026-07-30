@@ -137,11 +137,13 @@ CREATE TABLE "utask_sql_migrations" (
 CREATE TABLE "cache" (
     "key" TEXT PRIMARY KEY,
     "value" BYTEA NOT NULL,
-    "expires_at" TIMESTAMP WITH TIME ZONE
+    "expires_at" TIMESTAMP WITH TIME ZONE,
+    "owner" UUID
 );
 
 CREATE INDEX "cache_expires_at_idx" ON "cache" ("expires_at") WHERE "expires_at" IS NOT NULL;
+CREATE INDEX "cache_owner_idx" ON "cache" ("owner");
 
-INSERT INTO "utask_sql_migrations" VALUES ('v1.21.1-migration011');
+INSERT INTO "utask_sql_migrations" VALUES ('v1.21.1-migration012');
 
 END;

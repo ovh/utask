@@ -21,12 +21,15 @@ var (
 // Action: "set", "get", or "delete"
 // Key: the cache key (required)
 // Value: the value to store (required for "set", ignored otherwise)
-// TTL: time-to-live in seconds (0 means no expiration, only used with "set")
+// TTL: time-to-live in seconds (0 means no expiration, only used with "set", mutually exclusive with Owner).
+// Owner: Public ID of a Task that owns this cache-entry; the entry will be kept until the owner task is deleted (only
+// used with "set", mutually exclusive with TTL).
 type Config struct {
 	Action string      `json:"action"`
 	Key    string      `json:"key"`
 	Value  interface{} `json:"value,omitempty"`
 	TTL    int64       `json:"ttl,omitempty"`
+	Owner  string      `json:"owner"`
 }
 
 func validConfig(config interface{}) error {
@@ -74,7 +77,7 @@ func execSet(dbp zesty.DBProvider, cfg *Config) (interface{}, interface{}, error
 		return nil, nil, fmt.Errorf("failed to marshal value: %s", err)
 	}
 
-	if err := setCacheEntry(dbp, cfg.Key, valueBytes, cfg.TTL); err != nil {
+	if err := setCacheEntry(dbp, cfg.Key, valueBytes, cfg.TTL, cfg.Owner); err != nil {
 		return nil, nil, err
 	}
 

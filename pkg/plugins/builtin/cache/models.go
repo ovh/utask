@@ -23,18 +23,32 @@ func (c *cacheEntry) isExpired() bool {
 	return c.ExpiresAt != nil && now.Get().After(*c.ExpiresAt)
 }
 
-func setCacheEntry(dbp zesty.DBProvider, key string, value []byte, ttl int64) error {
+func setCacheEntry(dbp zesty.DBProvider, key string, value []byte, ttl int64, owner string) error {
+	if ttl > 0 && owner != "" {
+		return errors.BadRequestf("can't use both 'ttl' and 'owner' as expiration condition")
+	}
+
 	var expiresAt *time.Time
 	if ttl > 0 {
 		t := now.Get().Add(time.Duration(ttl) * time.Second)
 		expiresAt = &t
 	}
 
+	ownerPtr := &owner
+	if owner == "" {
+		ownerPtr = nil
+	}
+
 	query, args, err := sqlgenerator.PGsql.
 		Insert(`"cache"`).
-		Columns(`"key"`, `"value"`, `"expires_at"`).
-		Values(key, value, expiresAt).
-		Suffix(`ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "expires_at" = EXCLUDED."expires_at"`).
+		Columns(`"key"`, `"value"`, `"expires_at"`, `"owner"`).
+		Values(key, value, expiresAt, ownerPtr).
+		Suffix(
+			`ON CONFLICT ("key") DO UPDATE SET
+			"value" = EXCLUDED."value",
+			"expires_at" = EXCLUDED."expires_at",
+			"owner" = EXCLUDED."owner"`,
+		).
 		ToSql()
 	if err != nil {
 		return err
