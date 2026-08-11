@@ -533,19 +533,25 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 // AfterRun evaluates a step's "check" conditions after the Step's action has been performed
 // and impacts the entire task's execution flow through the provided StateSetter
 func AfterRun(st *Step, values *values.Values, ss StateSetter) {
-	// Not all steps' states should trigger evaluation of AfterRun conditions
-	if st.skipped || st.ForEach != "" || !slices.Contains(validAfterRunStates, st.State) {
-		return
-	}
-
 	conditions, err := st.GetConditions()
 	if err != nil {
 		ss(st.Name, StateServerError, err.Error())
 		return
 	}
 
+	containsRunOnRetryable := slices.ContainsFunc(conditions, func(c *condition.Condition) bool { return c.RunOnRetryable })
+	isRetryableState := slices.Contains(retriableStates, st.State)
+	isValidAfterRunState := slices.Contains(validAfterRunStates, st.State)
+
+	runnableBecauseState := isValidAfterRunState || (isRetryableState && containsRunOnRetryable)
+
+	// Not all steps' states should trigger evaluation of AfterRun conditions
+	if st.skipped || st.ForEach != "" || !runnableBecauseState {
+		return
+	}
+
 	for _, sc := range conditions {
-		if sc.Type != condition.CHECK {
+		if sc.Type != condition.CHECK || (isRetryableState && !sc.RunOnRetryable) {
 			continue
 		}
 		if err := sc.Eval(values, st.Item, st.Name); err != nil {

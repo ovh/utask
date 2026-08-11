@@ -350,6 +350,7 @@ A condition is composed of:
 - a `then` object to impact the state of steps (`this` refers to the current step)
 - a `final` boolean, defaulting to `false`. When set to `true`, it prevents the evaluation of the next conditions if this one is evaluated to `true`
 - an optional `message` to convey the intention of the condition, making it easier to inspect tasks
+- a `run_on_retryable` boolean, defaulting to `false`. When set to `true`, the condition will apply even on retryable states which usualy don't trigger conditions. Retryable states are `SERVER_ERROR`, `TO_RETRY` and `AFTERRUN_ERROR`
 
 Here's an example of a `skip` condition. The value of an input is evaluated to determine the result: if the value of `runType` is `dry`, the `createUser` step will not be executed, its state will be set directly to `DONE`.
 
