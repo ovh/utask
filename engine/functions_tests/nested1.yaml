@@ -16,5 +16,8 @@ conditions:
         - value: '{{.step.this.state}}'
           operator: EQ
           expected: 'NESTED2_STATE2'
+        - value: '{{ .function_args.name }}'
+          operator: EQ
+          expected: foobar
     then:
         this: NESTED1_STATE

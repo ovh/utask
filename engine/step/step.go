@@ -487,6 +487,23 @@ func PreRun(st *Step, values *values.Values, ss StateSetter, executedSteps map[s
 		return
 	}
 
+	// Check if we have a function as runner or not.
+	runner, err := getRunner(st.Action.Type)
+	if err != nil {
+		ss(st.Name, StateServerError, err.Error())
+		return
+	}
+
+	_, isFunction := runner.(*functions.Function)
+	if isFunction {
+		var functionInput map[string]interface{}
+		if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(st.Action.Configuration), &functionInput); err != nil {
+			ss(st.Name, StateServerError, err.Error())
+			return
+		}
+		values.SetFunctionsArgs(functionInput)
+	}
+
 	for _, sc := range conditions {
 		if sc.Type != condition.SKIP {
 			continue
@@ -542,6 +559,23 @@ func AfterRun(st *Step, values *values.Values, ss StateSetter) {
 	if err != nil {
 		ss(st.Name, StateServerError, err.Error())
 		return
+	}
+
+	// Check if we have a function as runner or not.
+	runner, err := getRunner(st.Action.Type)
+	if err != nil {
+		ss(st.Name, StateServerError, err.Error())
+		return
+	}
+
+	_, isFunction := runner.(*functions.Function)
+	if isFunction {
+		var functionInput map[string]interface{}
+		if err := utils.JSONnumberUnmarshal(bytes.NewBuffer(st.Action.Configuration), &functionInput); err != nil {
+			ss(st.Name, StateServerError, err.Error())
+			return
+		}
+		values.SetFunctionsArgs(functionInput)
 	}
 
 	for _, sc := range conditions {
