@@ -1,0 +1,84 @@
+== github.com/ovh/utask ==
+
+Copyright (c) 2013-2019, OVH SAS
+Copyright [yyyy] [name of copyright owner]
+Copyright (C) 2014-2019, Matt Butcher and Matt Farina
+Copyright (C) 2013-2020 Masterminds
+Copyright (c) 2014-2015, Lann Martin. Copyright (C) 2015-2016, Google. Copyright (C) 2015, Matt Farina and Matt Butcher.
+Copyright (c) 2015 Alexander Scheel, Joel May, Matthew Burket
+Copyright (C) 2013 Blake Mizerany
+Copyright (c) 2014 Cenk Altı
+Copyright (c) 2016 Caleb Spare
+Copyright (c) 2018 Fabien Meurillon
+Copyright (c) 2015, Facebook, Inc. All rights reserved.
+Copyright © 2012 The Go Authors. All rights reserved.
+Copyright © fsnotify Authors. All rights reserved.
+Copyright (c) 2018-2020 Gabriel Vasile
+Copyright (c) 2014 Manuel Martínez-Almeida
+Copyright (c) 2012 James Cooper <james@bitmechanic.com>
+Copyright (c) 2016 Cameron Sparr and contributors.
+Copyright (c) 2016 Go Playground
+Copyright (c) 2015 Dean Karn
+Copyright (C) 2013-2018 by Maxim Bublis <b@codemonkey.ru>
+Copyright (c) 2009 The Go Authors. All rights reserved.
+Copyright 2010 The Go Authors.  All rights reserved.
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+Copyright (c) 2015 HashiCorp, Inc.
+Copyright (c) 2014 HashiCorp, Inc.
+Copyright (c) 2015 Huan Du
+Copyright (c) 2013 Dario Castañé. All rights reserved.
+Copyright (c) 2012 The Go Authors. All rights reserved.
+Copyright 2016, Jonathan Turner <jt@jtnet.co.uk>
+Copyright (c) 2013-NOW  Jinzhu <wosmvp@gmail.com>
+Copyright (c) 2017 Jaime Pillora
+Copyright (c) 2014-2015 Lann Martin
+Copyright (c) 2013 Michael Hendricks
+Copyright (c) 2018 Leonardo Di Donato
+Copyright (c) 2011-2013, 'pq' Contributors
+Copyright (c) 2015 Thomas Schaffer
+Copyright (c) 2013-2020, Frank Schroeder
+Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
+Copyright 2012 Matt T. Proud (matt.proud@gmail.com)
+Copyright (c) 2017-2019 The Miscreant Developers. The canonical list of project
+Copyright (c) 2017-2019 [The Miscreant Developers][AUTHORS].
+Copyright (c) 2014 Mitchell Hashimoto
+Copyright (c) 2013 Mitchell Hashimoto
+Copyright (c) 2018, OVH SAS.
+Copyright (c) 2015-2023, OVH SAS
+Copyright (c) 2021 - 2023 Thomas Pelletier
+Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+Copyright 2012-2015 The Prometheus Authors
+Copyright 2013-2015 Blake Mizerany, Björn Rabenstein
+Copyright 2010 The Go Authors
+Copyright 2013 Matt T. Proud
+Copyright 2015 The Prometheus Authors
+Copyright (c) 2011, Open Knowledge Foundation Ltd.
+Copyright 2014-2015 The Prometheus Authors
+Copyright (c) 2012 Robert Krimen
+Copyright (c) 2014 Simon Eskildsen
+Copyright (c) 2014 Steve Francia
+Copyright (c) 2012 Alex Ogier. All rights reserved.
+Copyright (c) 2016 Josh Baker
+Copyright (c) 2017 Josh Baker
+Copyright (c) 2012-2020 Ugorji Nwoke.
+Copyright (c) 2018-2021 William Poussier <william.poussier@gmail.com>
+Copyright (c) 2016, Xinyun Zhou All rights reserved.
+Copyright (c) 2018 The Go Authors. All rights reserved.
+Copyright (c) 2014 Alexandre Cesaro
+Copyright (c) 2016 The github.com/go-sourcemap/sourcemap Contributors.
+Copyright (c) 2006-2010 Kirill Simonov
+Copyright (c) 2006-2011 Kirill Simonov
+Copyright (c) 2011-2019 Canonical Ltd
+Copyright 2011-2016 Canonical Ltd.
+Copyright (c) 2016 Giles Hall
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
