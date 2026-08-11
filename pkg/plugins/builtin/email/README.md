@@ -16,6 +16,7 @@ This plugin send an email.
 | `to`                  | receiver(s) of your email                     |
 | `subject`             | subject of your email                         |
 | `body`                | content of your email                         |
+| `attachments`         | file names of files to attach to the message  |
 
 ## Example
 
@@ -46,6 +47,8 @@ action:
     # mandatory, string
     body: |
       I love baguette
+    attachments:
+      - /tmp/generated-report.xlsx
 ```
 
 ## Note
@@ -54,11 +57,12 @@ The plugin returns an object to reuse the parameters in a future component:
 
 ```json
 {
-  "from_address":"foo@example.org",
-  "from_name":"uTask bot",
+  "from_address": "foo@example.org",
+  "from_name": "uTask bot",
   "to": ["bar@example.org", "hey@example.org"],
-  "subject":"Hello from µTask",
-  "body":"I love baguette"
+  "subject": "Hello from µTask",
+  "body": "I love baguette",
+  "attachments": ["/tmp/generated-report.xlsx"]
 }
 ```
 
