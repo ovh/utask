@@ -670,7 +670,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 		m["requester_groups"] = strings.Join(t.RequesterGroups, utask.GroupsSeparator)
 	}
 	if t.ResolverUsername != nil {
-		m["resolver_username"] = t.ResolverUsername
+		m["resolver_username"] = *t.ResolverUsername
 	}
 	if t.ResolverUsername != nil && len(t.ResolverGroups) > 0 {
 		m["resolver_groups"] = strings.Join(t.ResolverGroups, utask.GroupsSeparator)
@@ -684,7 +684,7 @@ func (t *Task) ExportTaskInfos(values *values.Values) {
 	m["last_activity"] = t.LastActivity
 	m["region"] = utask.FRegion
 	if t.Resolution != nil {
-		m["resolution_id"] = t.Resolution
+		m["resolution_id"] = *t.Resolution
 	}
 
 	values.SetTaskInfos(m)
