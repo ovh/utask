@@ -1363,6 +1363,60 @@ func TestResolveSubTaskParentTaskPaused(t *testing.T) {
 	require.Nil(t, err)
 }
 
+func TestResolveSubTaskBlocked(t *testing.T) {
+	dbp, err := zesty.NewDBProvider(utask.DBName)
+	require.Nil(t, err)
+
+	_, err = templateFromYAML(dbp, "fatalError.yaml")
+	require.Nil(t, err)
+
+	res, err := createResolution("subtaskFatalError.yaml", map[string]interface{}{}, nil)
+	require.Nil(t, err, "failed to create resolution: %s", err)
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, resolution.StateWaiting, res.State)
+	assert.Equal(t, step.StateWaiting, res.Steps["subtaskCreation"].State)
+
+	subtaskCreationOutput := res.Steps["subtaskCreation"].Output.(map[string]interface{})
+	subtaskPublicID := subtaskCreationOutput["id"].(string)
+
+	subtask, err := task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+
+	subtaskResolution, err := resolution.Create(dbp, subtask, nil, "", false, nil)
+	require.Nil(t, err)
+
+	subtaskResolution, err = runResolution(subtaskResolution)
+	require.Nil(t, err)
+	assert.Equal(t, resolution.StateBlockedFatal, subtaskResolution.State)
+
+	subtask, err = task.LoadFromPublicID(dbp, subtaskPublicID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateBlocked, subtask.State)
+
+	parentTaskToResume, err := taskutils.ShouldResumeParentTask(dbp, subtask)
+	require.Nil(t, err)
+	require.NotNil(t, parentTaskToResume)
+	assert.Equal(t, res.TaskID, parentTaskToResume.ID)
+
+	res, err = resolution.LoadFromPublicID(dbp, res.PublicID)
+	require.Nil(t, err)
+	require.NotNil(t, res.NextRetry)
+	assert.True(t, res.NextRetry.Before(time.Now()))
+
+	res, err = runResolution(res)
+	require.Nil(t, err)
+	require.NotNil(t, res)
+	assert.Equal(t, step.StateClientError, res.Steps["subtaskCreation"].State)
+	assert.Equal(t, resolution.StateBlockedBadRequest, res.State)
+
+	parentTask, err := task.LoadFromID(dbp, res.TaskID)
+	require.Nil(t, err)
+	assert.Equal(t, task.StateBlocked, parentTask.State)
+}
+
 func TestResolveCallback(t *testing.T) {
 	res, err := createResolution("callback.yaml", map[string]interface{}{}, nil)
 	require.NoError(t, err)
