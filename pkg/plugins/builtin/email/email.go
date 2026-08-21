@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	mail "gopkg.in/mail.v2"
 
@@ -45,15 +46,17 @@ func validConfig(config interface{}) error {
 		return errors.New("smtp_port is missing")
 	}
 
-	if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 16); err != nil {
-		return fmt.Errorf("can't parse smtp_port field %q: %s", cfg.SMTPPort, err.Error())
+	if !isTemplated(cfg.SMTPPort) {
+		if _, err := strconv.ParseUint(cfg.SMTPPort, 10, 16); err != nil {
+			return fmt.Errorf("can't parse smtp_port field %q: %s", cfg.SMTPPort, err.Error())
+		}
 	}
 
 	if cfg.SMTPHostname == "" {
 		return errors.New("smtp_hostname is missing")
 	}
 
-	if cfg.SMTPSkipTLSVerify != "" {
+	if cfg.SMTPSkipTLSVerify != "" && !isTemplated(cfg.SMTPSkipTLSVerify) {
 		if _, err := strconv.ParseBool(cfg.SMTPSkipTLSVerify); err != nil {
 			return fmt.Errorf("can't parse smtp_skip_tls_verify field %q: %s", cfg.SMTPSkipTLSVerify, err)
 		}
@@ -78,6 +81,10 @@ func validConfig(config interface{}) error {
 	return nil
 }
 
+func isTemplated(value string) bool {
+	return strings.Contains(value, "{{")
+}
+
 func resourcesemail(i interface{}) []string {
 	cfg := i.(*Config)
 
@@ -100,10 +107,18 @@ func exec(stepName string, config interface{}, ctx interface{}) (interface{}, in
 		cfg.Body,
 	)
 
-	// port and skipTLS already checked at validConfig() lvl
-	// values must be correct so errors are not evaluated
-	port, _ := strconv.ParseUint(cfg.SMTPPort, 10, 16)     // no defaults, must be set by user
-	skipTLS, _ := strconv.ParseBool(cfg.SMTPSkipTLSVerify) // defaults to false
+	port, err := strconv.ParseUint(cfg.SMTPPort, 10, 16)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't parse smtp_port field %q: %s", cfg.SMTPPort, err.Error())
+	}
+
+	skipTLS := false
+	if cfg.SMTPSkipTLSVerify != "" {
+		skipTLS, err = strconv.ParseBool(cfg.SMTPSkipTLSVerify)
+		if err != nil {
+			return nil, nil, fmt.Errorf("can't parse smtp_skip_tls_verify field %q: %s", cfg.SMTPSkipTLSVerify, err.Error())
+		}
+	}
 
 	d := mail.NewDialer(cfg.SMTPHostname, int(port), cfg.SMTPUsername, cfg.SMTPPassword)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: skipTLS, ServerName: cfg.SMTPHostname}
