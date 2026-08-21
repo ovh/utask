@@ -1,10 +1,10 @@
 # `subtask` Plugin
 
 This plugin creates a new task. A step based on this type of action will remain incomplete until the subtask is
-fully `DONE`.
+fully `DONE`. If the subtask ends up `BLOCKED` (e.g. one of its steps reached `FATAL_ERROR`), `CANCELLED` or
+`WONTFIX`, the parent step stops waiting and fails with a client error, blocking the parent task.
 
 ## Configuration
-
 | Fields               | Description                                                                                                       |
 |----------------------|-------------------------------------------------------------------------------------------------------------------|
 | `template`           | the name of a task template, as accepted through µTask's  API                                                     |

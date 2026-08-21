@@ -77,7 +77,7 @@ func CreateTask(c context.Context, dbp zesty.DBProvider, tt *tasktemplate.TaskTe
 
 func ShouldResumeParentTask(dbp zesty.DBProvider, t *task.Task) (*task.Task, error) {
 	switch t.State {
-	case task.StateDone, task.StateWontfix, task.StateCancelled:
+	case task.StateDone, task.StateWontfix, task.StateCancelled, task.StateBlocked:
 	default:
 		return nil, nil
 	}
